@@ -223,11 +223,14 @@ namespace GuWorld.Editor
                             continue;
                         }
 
-                        var body = mid + wall.Back * (wall.Thick / 2);
+                        // A curving wall (the terraced town's): each length turned its own way, a little longer so the bends close.
+                        var back = wall.Backs != null ? (wall.Backs[i] + wall.Backs[i + 1]).normalized : wall.Back;
+                        var overlap = wall.Backs != null ? 0.5f : 0.06f;
+                        var body = mid + back * (wall.Thick / 2);
                         var turn = Mathf.Atan2(along.x, along.y) * Mathf.Rad2Deg;
                         var stone = stones.At(new Vector3(body.x, 0, body.y), turn);
-                        stone.Box(Rubble, new Vector3(0, (low + high) / 2, 0), new Vector3(wall.Thick, high - low, length + 0.06f));
-                        stone.Box(Stone, new Vector3(0, high + 0.06f, 0), new Vector3(wall.Thick + 0.2f, 0.12f, length + 0.08f));
+                        stone.Box(Rubble, new Vector3(0, (low + high) / 2, 0), new Vector3(wall.Thick, high - low, length + overlap));
+                        stone.Box(Stone, new Vector3(0, high + 0.06f, 0), new Vector3(wall.Thick + 0.2f, 0.12f, length + overlap + 0.02f));
                         continue;
                     }
 
@@ -434,8 +437,10 @@ namespace GuWorld.Editor
                         return At(at, Mathf.Lerp(fall.Top, fall.Bottom, t * t * 0.4f + t * 0.6f));
                     }
 
+                    // The sheet's streaks as long whatever the drop (a texture's length every 3.3 m of it).
+                    var v = (fall.Top - fall.Bottom) / 3.3f / rows;
                     kit.QuadUV(sheet, P(r, -half), P(r, half), P(r + 1, half), P(r + 1, -half),
-                        new Vector2(0, r / 3f), new Vector2(1, r / 3f), new Vector2(1, (r + 1) / 3f), new Vector2(0, (r + 1) / 3f), new Vector3(fall.Out.x, 0, fall.Out.y));
+                        new Vector2(0, r * v), new Vector2(1, r * v), new Vector2(1, (r + 1) * v), new Vector2(0, (r + 1) * v), new Vector3(fall.Out.x, 0, fall.Out.y));
                 }
 
                 // The spout the water leaves the wall by; the spray where it lands (small: a channel's fall).
@@ -473,12 +478,9 @@ namespace GuWorld.Editor
         static string MarkName(string place, Clan clan) => clan == Clan.GuYue && place.StartsWith("gate") ? place switch
         {
             "gate south" => "Главные ворота",
-            "gate west" => "Нижние западные ворота",
-            "gate east lower" => "Нижние восточные ворота",
-            "gate west middle" => "Средние западные ворота",
-            "gate east" => "Средние восточные ворота",
-            "gate north" => "Верхние западные ворота",
-            "gate east upper" => "Верхние восточные ворота",
+            "gate north" => "Северные ворота",
+            "gate west" => "Западные ворота",
+            "gate east" => "Восточные ворота",
             _ => place,
         } : place switch
         {
@@ -509,7 +511,7 @@ namespace GuWorld.Editor
         {
             // The artist's model where the plan chose one (VillageModels.cs): no procedural design, no room inside;
             // on a pad it stands level, on a lot it gets the footing or stilts the ground under it asks for.
-            if (b.Model != null && PlaceVillageModel(parent, b.Model, string.IsNullOrEmpty(b.Name) ? $"{b.Kind} {index}" : b.Name, b.Centre, b.Yaw, b.Floor, b.Scale) != null)
+            if (b.Model != null && PlaceVillageModel(parent, b.Model, string.IsNullOrEmpty(b.Name) ? $"{b.Kind} {index}" : b.Name, b.Centre, b.Yaw, b.Floor, b.Stretch * b.Scale) != null)
             {
                 if (!b.Pad)
                 {
@@ -549,7 +551,7 @@ namespace GuWorld.Editor
                     height = 8;
                     break;
                 default:
-                    var design = DesignFor(clan, b.Kind, b.Size, b.Seed);
+                    var design = DesignFor(b.Mortal ? Clan.Mortal : clan, b.Kind, b.Size, b.Seed);
                     openDesign = design.Open ? design : null;
                     near = design.Near;
                     far = design.Far;

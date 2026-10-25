@@ -86,7 +86,8 @@ namespace GuWorld.Editor
             layers[Rock] = Layer("Rock", Texture("Rock", 512, (u, v) =>
             {
                 var n = TileFbm(u, v, 6, 5);
-                var streak = TileNoise(u * 4, v * 32, 32, 6);
+                // Even both ways and wrapping (2026-10-25: strata along x became streaks down every east or west cliff).
+                var streak = TileNoise(u * 8, v * 8, 8, 6);
                 var crack = Mathf.Abs(TileFbm(u, v, 5, 7) - 0.5f) < 0.02f ? 0.55f : 1;
                 return Shade(0x4e4d48, n * 0.7f + streak * 0.3f) * crack;
             }), 9);

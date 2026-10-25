@@ -76,6 +76,8 @@ namespace GuWorld.Editor
             /// <summary>Its points on its face, its body `Thick` deep towards `Back` (the high side): the terraced town's walls (else a dry-stone wall astride its line).</summary>
             public bool Face;
             public Vector2 Back;
+            /// <summary>A curving face wall's way back at each of its points (else `Back` for all).</summary>
+            public List<Vector2> Backs;
             public float Thick = 0.75f;
         }
 
@@ -97,6 +99,10 @@ namespace GuWorld.Editor
             /// <summary>The artist's model standing here (VillageModels.cs) and its scale; none: a procedural design.</summary>
             public string Model;
             public float Scale = 1;
+            /// <summary>The model stretched (and mirrored, x below 0) a little on top of its scale, so no two houses are quite alike.</summary>
+            public Vector3 Stretch = Vector3.one;
+            /// <summary>No model: a mortal's hut of the procedural kit (as in the hamlets), whatever the clan.</summary>
+            public bool Mortal;
             /// <summary>On a level pad of its own (no footing or stilts under it).</summary>
             public bool Pad;
         }
@@ -138,7 +144,7 @@ namespace GuWorld.Editor
         public readonly List<Street> Streets = new List<Street>();
         public readonly List<Pad> Pads = new List<Pad>();
         /// <summary>Stairs from the artist's models down the fronts of the great buildings' pads: model, its middle, turn, its foot's level, scale.</summary>
-        public readonly List<(string model, Vector2 centre, float yaw, float foot, float scale)> ModelStairs = new List<(string, Vector2, float, float, float)>();
+        public readonly List<(string model, Vector2 centre, float yaw, float foot, Vector3 scale)> ModelStairs = new List<(string, Vector2, float, float, Vector3)>();
         /// <summary>The ground under each of those stairs: kept below its treads (foot, the way up, run, foot's and top's levels).</summary>
         readonly List<(Vector2 foot, Vector2 up, float run, float low, float high)> ramps = new List<(Vector2, Vector2, float, float, float)>();
         public Pad Square;
@@ -719,7 +725,7 @@ namespace GuWorld.Editor
                     {
                         var x = (k - (count - 1) / 2f) * size.x;
                         var centre = World(x, top - size.y / 2);
-                        ModelStairs.Add((model, centre, yaw, level - QingMaoBuilder.VillageGlb[model].Height * scale, scale));
+                        ModelStairs.Add((model, centre, yaw, level - QingMaoBuilder.VillageGlb[model].Height * scale, Vector3.one * scale));
                         var index = (short)ramps.Count;
                         ramps.Add((World(x, top - size.y), -Down, size.y, level - QingMaoBuilder.VillageGlb[model].Height * scale, level));
                         Inside(centre, size / 2 + new Vector2(0.15f, 0), yaw, 0, c => rampOf[c] = index);
@@ -798,7 +804,7 @@ namespace GuWorld.Editor
                 var size = QingMaoBuilder.VillageGlb[model].Size * scale;
                 var low = pad.Level - QingMaoBuilder.VillageGlb[model].Height * scale;
                 var centre = edge + f * (size.y / 2);
-                ModelStairs.Add((model, centre, yaw, low, scale));
+                ModelStairs.Add((model, centre, yaw, low, Vector3.one * scale));
                 var index = (short)ramps.Count;
                 ramps.Add((edge + f * size.y, -f, size.y, low, pad.Level));
                 Inside(centre, size / 2 + new Vector2(0.4f, 0), yaw, 0, cell => rampOf[cell] = index);

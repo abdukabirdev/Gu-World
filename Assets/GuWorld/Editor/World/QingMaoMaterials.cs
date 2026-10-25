@@ -322,8 +322,10 @@ namespace GuWorld.Editor
             // Dressed blocks in courses, each its own shade, the joints dark.
             var row = Mathf.FloorToInt(v * 4);
             var x = u * 2 + (row % 2) * 0.5f;
-            var joint = Mathf.Min(Mathf.Abs(Mathf.Repeat(v * 4, 1) - 0.5f), Mathf.Abs(Mathf.Repeat(x, 1) - 0.5f)) > 0.47f;
-            var block = TileNoise(Mathf.Floor(x) * 3.1f, row * 1.7f, 64, 81);
+            // A joint along either edge of a block (2026-10-25: Min gave joints only at the corners); the block's own
+            // shade wrapped with the texture (else a block split at the seam).
+            var joint = Mathf.Max(Mathf.Abs(Mathf.Repeat(v * 4, 1) - 0.5f), Mathf.Abs(Mathf.Repeat(x, 1) - 0.5f)) > 0.47f;
+            var block = TileNoise(Mathf.Repeat(Mathf.Floor(x), 2) * 3.1f, row * 1.7f, 64, 81);
             var grain = TileFbm(u, v, 8, 82);
             var shade = joint ? 0.5f : 0.8f + 0.12f * block + 0.12f * grain;
             return new Color(shade, shade, shade * 1.02f);
@@ -342,15 +344,18 @@ namespace GuWorld.Editor
                 {
                     var cx = Mathf.Floor(u * 6) + i;
                     var cy = Mathf.Floor(v * 6) + k;
-                    var px = cx + TileNoise(cx * 1.7f, cy * 2.3f, 64, 91);
-                    var py = cy + TileNoise(cx * 2.9f, cy * 1.3f, 64, 92);
+                    // Each stone's own numbers from its cell wrapped with the texture: the stones across the seam match.
+                    var hx = Mathf.Repeat(cx, 6);
+                    var hy = Mathf.Repeat(cy, 6);
+                    var px = cx + TileNoise(hx * 1.7f, hy * 2.3f, 64, 91);
+                    var py = cy + TileNoise(hx * 2.9f, hy * 1.3f, 64, 92);
                     var d = Vector2.Distance(new Vector2(u * 6, v * 6), new Vector2(px, py));
 
                     if (d < best)
                     {
                         second = best;
                         best = d;
-                        id = TileNoise(cx * 3.7f, cy * 5.1f, 64, 93);
+                        id = TileNoise(hx * 3.7f, hy * 5.1f, 64, 93);
                     }
                     else if (d < second)
                     {

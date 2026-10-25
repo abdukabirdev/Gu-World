@@ -6,26 +6,31 @@ using UnityEngine;
 namespace GuWorld.Editor
 {
     /// <summary>
-    /// Gu Yue as a terraced town (2026-10-25; the user: six times bigger, two or three tiers on the mountain's side, the
-    /// stairs we made put to use, streams and the rain led off, each faction of the clan its own quarter; planned by
-    /// two agents: Claude/plans/guyue-2026-10-25*.md). A rectangle 1080 by 500 m across the slope, cut and banked into
-    /// three level tiers 27.06 m apart (one tall stair of the artist's, three flights, climbs each), held by stone
-    /// retaining walls with a parapet; a stone plinth under the lowest tier's front, a rock cut behind the highest.
-    /// Inside the fort's wall (a tower on each corner, every ~70 m and where the side walls step up a tier), seven
-    /// gates: the main one below, its forecourt on the plinth with a ramp down along the plinth each side; two on each
-    /// side, one per tier, each on the line where the tier meets the mountain's own ground.
+    /// Gu Yue as a mountain town of many low terraces (v4, 2026-10-25 evening; the user, over his screenshots: the 27 m
+    /// tiers far too high, 7 m each; the houses too even in their rows and too alike, a village that grew instead; four
+    /// gates, the great hall in the middle; two agents studied the textures and the buildings first:
+    /// Claude/plans/guyue-2026-10-25-v4.md).
     ///
-    /// The tiers, from the top: the clan head's court in the middle (the great hall over the axis, the spring's pavilion,
-    /// the elders' and the ancestors' halls), the Mo family's quarter west of it and the Chi family's east, behind
-    /// bamboo fences. The middle tier: the middle square at the stairs' head, the academy and its yard west of it, the
-    /// healers' hall and their beds east of it, the masters' quarters beyond. The lowest: the gate square and the
-    /// market by the main gate, the mortals' and servants' quarter to the west round the lotus pond, the crafts and the
-    /// clan's granaries to the east.
+    /// The rectangle 1080 by 500 m across the slope (its fort's wall unchanged) is cut into terraces 7 m apart that
+    /// follow the mountain: a plane through its ground, bent by about half its hollows and by a slow wander, rounded
+    /// to whole terraces. So their edges curve, bay and run on; each is a stone retaining wall a terrace high with a
+    /// parapet, the ground stepping hidden in its body. Level pads under the great buildings and the squares, along
+    /// the fort's lower and upper walls and down the main way bend the terraces round them.
     ///
-    /// Water: the spring rises under its pavilion on the top tier and runs down the west channel, falling over each
-    /// retaining wall into a stone basin, to the lotus pond and out of the west water gate; the golden channel crosses
-    /// the head's forecourt to the east channel, which falls the same way to the east water gate. Gutters at the foot
-    /// of every retaining wall and of the rock cut take the rain to the channels.
+    /// In the middle the clan head's court: the great hall facing down the main way, the elders' and the inner
+    /// affairs' halls at its sides, the ancestors' and the punishments' behind, the square with its stalls before it.
+    /// The academy west of it, the healers east; the Mo and the Chi families' fenced quarters in the upper corners; the
+    /// market, the inn and the great tavern by the main gate below; the mortals to the south-west round the lotus
+    /// pond, the crafts to the south-east. Four gates: the main one below, one above, one each side.
+    ///
+    /// The streets: the main way straight up the middle from the lower gate to the court and on to the upper gate, a
+    /// double stair at each terrace; along every terrace its own winding lane (where the ground is a little above its
+    /// level: a contour, so it bends as the terrace does); stairs up the walls between the lanes here and there. The
+    /// houses: of many kinds mixed by quarter, set along the lanes at uneven distances, turned a little, now and then
+    /// side on, and more in the room behind them, facing the nearest lane.
+    ///
+    /// The water: the spring's channel down the west of the court, the east channel from the upper pond, each falling
+    /// over every retaining wall into a basin and ending in a pond above the lower wall.
     ///
     /// The village's own frame: along the slope (Along, "east") and uphill (-Down, "north"), from the settlement's middle.
     /// </summary>
@@ -33,38 +38,49 @@ namespace GuWorld.Editor
     {
         // The rectangle the fort's wall stands on, m (the earthworks reach out round it).
         const float West = -500, East = 580, South = -190, North = 310;
-        /// <summary>The main way's line: the gate, the stairs, the great hall.</summary>
+        /// <summary>The main way's line: the lower gate, the court, the great hall, the upper gate.</summary>
         const float AxisAlong = 40;
-        /// <summary>The retaining walls' faces (uphill): tier k lies between the k-1'th and the k'th.</summary>
-        static readonly float[] TierEdge = { -20, 145 };
-        /// <summary>Each tier's street from its west gate to its east one.</summary>
-        static readonly float[] TierStreet = { -120, 45, 190 };
-        /// <summary>The channels' lines (along): the spring's on the west, the golden one's on the east.</summary>
+        /// <summary>A terrace's rise over the one below (the user, 2026-10-25: 7 m each).</summary>
+        const float Rise = 7;
+        /// <summary>The channels' lines (along): the spring's on the west of the court, the east one's.</summary>
         const float WestWater = -59, EastWater = 270;
-        /// <summary>Where the lotus pond's water leaves the town (along), through the west water gate.</summary>
-        const float OutflowWest = -265;
         /// <summary>The level strip kept outside the wall before the ground goes to the mountain's own, m.</summary>
         const float Berm = 6;
-        /// <summary>The lane round the inside of the wall: its middle's distance from the wall's line, its half width.</summary>
-        const float RingInset = 11, RingHalf = 3;
+        /// <summary>How far inside the wall the guards of a gate stand, m.</summary>
+        const float RingInset = 11;
         /// <summary>The strip inside the wall's line kept for it (its own depth, its gates', its towers'), m.</summary>
         const float WallStrip = 7.5f;
-        /// <summary>The steepest a side gate's road may ramp to the mountain, and the main gate's ramps (rise over run).</summary>
-        const float RampGrade = 0.15f, LongRamp = 0.12f;
-        /// <summary>How far a house's front stands back from its street's edge, m.</summary>
-        const float Setback = 1.5f;
+        /// <summary>The steepest a gate's road may ramp to the mountain (rise over run).</summary>
+        const float RampGrade = 0.15f;
+        /// <summary>How far a house's front stands back from its street's edge at the least, m.</summary>
+        const float Setback = 1.2f;
         /// <summary>A retaining wall's depth behind its face, and where under it the ground steps (hidden in it), m.</summary>
-        const float WallBody = 1.6f, WallTuck = 0.8f;
-        /// <summary>The main gate's forecourt on the plinth: half its width, its depth out from the plinth's face.</summary>
-        const float CourtHalf = 15, CourtDepth = 24;
-        /// <summary>The main gate's ramps: their width along the plinth's face.</summary>
-        const float RampWidth = 7;
+        const float WallBody = 2f, WallTuck = 1f;
         /// <summary>How high the parapets stand over their walls' tops, m.</summary>
         const float ParapetHeight = 0.9f;
+        /// <summary>The terraces' height field: its cell, how far it reaches round the rectangle, m.</summary>
+        const float FieldCell = 2, FieldMargin = 90;
+        /// <summary>How much of the mountain's own hollows and rises the terraces follow (the rest a plane through them).</summary>
+        const float Follow = 0.45f;
+        /// <summary>How far round a pad its level reaches out before the ground is the terraces' own again, m.</summary>
+        const float PadBlend = 30;
+        /// <summary>A terrace's lane runs where the field is this much over its level (a little uphill of its middle).</summary>
+        const float LaneAbove = 0.5f;
+        /// <summary>
+        /// The stair up a terrace's wall: the artist's grand one. Its top landing is 6.0 m up (its 9.02 m are the posts
+        /// over it; 2026-10-25: scaled by those, it stopped 1.6 m short of the wall's top), so it is raised 7/6 to the
+        /// rise, narrowed and shortened to 0.85 (6.9 by 19.8 m); where a terrace is too shallow for that run, shortened
+        /// to 0.62 (14.5 m, steeper).
+        /// </summary>
+        const string StairModel = "prop_stairs_grand";
+        const float StairLanding = 6.0f, StairAcross = 0.85f, StairRun = 0.85f, SteepRun = 0.62f;
 
-        /// <summary>The tiers' levels, lowest first, and the rise between two (one tall stair).</summary>
-        readonly float[] levels = new float[3];
-        float rise;
+        /// <summary>How far up its rise the grand stair's treads are, a share along its run (measured on the model's middle line: a landing a little past halfway, the top landing its last sixth).</summary>
+        static float StairProfile(float t) =>
+            t < 0.094f ? Mathf.Lerp(0, 0.035f, t / 0.094f) :
+            t < 0.437f ? Mathf.Lerp(0.035f, 0.5f, (t - 0.094f) / 0.343f) :
+            t < 0.523f ? Mathf.Lerp(0.5f, 0.535f, (t - 0.437f) / 0.086f) :
+            t < 0.832f ? Mathf.Lerp(0.535f, 1, (t - 0.523f) / 0.309f) : 1;
 
         /// <summary>Whether this is the terraced town (Gu Yue's): its wall is built by its rectangle (QingMaoBuilder.BuildFortRect).</summary>
         public bool LevelGround => Glb;
@@ -72,8 +88,15 @@ namespace GuWorld.Editor
         /// <summary>How far outside the boundary the town's earthworks reach: no giant tree nearer.</summary>
         public float Margin => Glb ? 160 : 22;
 
-        /// <summary>Where the fort's side walls step up a tier: the point on the wall's line, the levels below and above.</summary>
+        /// <summary>Where the fort's walls step a terrace: the point on the wall's line, the levels below and above.</summary>
         public readonly List<(Vector2 at, float low, float high)> WallSteps = new List<(Vector2, float, float)>();
+
+        // The terraces' height field over the rectangle and round it (the village's frame), and the level of terrace 0.
+        int fieldNa, fieldNu;
+        float[] field;
+        float levelBase;
+        // The stair's footprint scaled to a terrace (width, run).
+        Vector2 stairSize;
 
         /// <summary>A gate's road out to the mountain: from the gate, straight out, level over the berm, then ramping to the ground at its end.</summary>
         class GateRoad
@@ -88,8 +111,8 @@ namespace GuWorld.Editor
 
         readonly List<GateRoad> gateRoads = new List<GateRoad>();
 
-        /// <summary>The streets houses stand along, in the village's frame (from, to, half width), the main ones first.</summary>
-        readonly List<(Vector2 from, Vector2 to, float half, int order)> lotStreets = new List<(Vector2, Vector2, float, int)>();
+        /// <summary>The streets houses stand along (their points in the world), half their width, when (the main ones first), whether main.</summary>
+        readonly List<(List<Vector2> line, float half, int order, bool main)> lotStreets = new List<(List<Vector2>, float, int, bool)>();
 
         /// <summary>A channel of water in stone: its line, half its width, its water's and bed's levels, the ground's beside it.</summary>
         public class Channel
@@ -142,14 +165,59 @@ namespace GuWorld.Editor
         readonly List<(Vector2 min, Vector2 max, float bed)> pits = new List<(Vector2, Vector2, float)>();
         readonly List<(Vector2 centre, float radius, float bed)> bowls = new List<(Vector2, float, float)>();
 
-        /// <summary>The tall stairs, in the village's frame: the middle of the line up them, half their width, their foot's and top's `up`, the levels.</summary>
-        readonly List<(float along, float half, float foot, float top, float low)> flights = new List<(float, float, float, float, float)>();
+        /// <summary>The stairs up the walls, in the world: the foot's middle, uphill, half their width, their run, the levels at foot and top.</summary>
+        readonly List<(Vector2 foot, Vector2 up, float half, float run, float low, float high)> flights = new List<(Vector2, Vector2, float, float, float, float)>();
+
+        /// <summary>The terraces' retaining walls (the village's frame): the terrace below, the line where the ground steps, its face, uphill at each point.</summary>
+        readonly List<(int low, List<Vector2> line, List<Vector2> face, List<Vector2> up, Wall wall)> terraceWalls = new List<(int, List<Vector2>, List<Vector2>, List<Vector2>, Wall)>();
+
+        /// <summary>Each terrace's lanes (the village's frame).</summary>
+        readonly List<(int terrace, List<Vector2> line)> lanes = new List<(int, List<Vector2>)>();
+
+        /// <summary>Where a parapet leaves a gap (a stair's head, a fall): the point on the face (world), half the gap.</summary>
+        readonly List<(Vector2 at, float half)> parapetGaps = new List<(Vector2, float)>();
+
+        /// <summary>A level pad of the height field (the village's frame): its middle, half its size, how far its level holds past it, its terrace.</summary>
+        class PadSpec
+        {
+            public Vector2 Centre;
+            public Vector2 Half;
+            public float Margin;
+        }
+
+        readonly List<PadSpec> padSpecs = new List<PadSpec>();
+
+        /// <summary>One of the great buildings: its place's name (or none), the model, its scale, its middle (the village's frame), the way it faces.</summary>
+        class GreatSpec
+        {
+            public string Place;
+            public string Model;
+            public float Scale;
+            public Vector2 At;
+            public Vector2 Facing;
+            public BuildingKind Kind;
+            public string Label;
+
+            /// <summary>Half its footprint in the village's frame (turned when it faces along).</summary>
+            public Vector2 LocalHalf
+            {
+                get
+                {
+                    var size = QingMaoBuilder.VillageGlb[Model].Size * Scale / 2;
+
+                    return Mathf.Abs(Facing.x) > 0.5f ? new Vector2(size.y, size.x) : size;
+                }
+            }
+        }
 
         static readonly Vector2 East_ = Vector2.right, West_ = Vector2.left, North_ = Vector2.up, South_ = Vector2.down;
 
         Vector2 W(float along, float up) => World(along, up);
 
         Vector2 W(Vector2 local) => World(local.x, local.y);
+
+        /// <summary>A way given in the village's frame, in the world's (unit length).</summary>
+        Vector2 WorldDir(Vector2 local) => (Along * local.x - Down * local.y).normalized;
 
         /// <summary>The turn that faces a way given in the village's frame (x along, y uphill).</summary>
         float Facing(Vector2 local) => YawFacing(Along * local.x - Down * local.y);
@@ -162,64 +230,399 @@ namespace GuWorld.Editor
             return centre + new Vector2(v.x, v.z);
         }
 
-        /// <summary>Which tier a spot uphill `u` is on (where things stand: the retaining walls' faces divide them).</summary>
-        static int TierAt(float u) => u < TierEdge[0] ? 0 : u < TierEdge[1] ? 1 : 2;
+        // ── The terraces' field ───────────────────────────────────────
 
-        /// <summary>Which tier the ground at `u` is of: it steps up under each retaining wall, hidden in its body.</summary>
-        static int GroundTier(float u) => u < TierEdge[0] + WallTuck ? 0 : u < TierEdge[1] + WallTuck ? 1 : 2;
-
-        /// <summary>The level a thing standing at a point stands on (its tier's).</summary>
-        public float TierLevelAt(Vector2 p) => Glb ? levels[TierAt(Local(p).y)] : Level0;
-
-        void LayOutTiers()
+        /// <summary>The field's height at a point of the village's frame (bilinear).</summary>
+        float FieldAt(Vector2 local)
         {
-            rise = QingMaoBuilder.VillageGlb["prop_stairs_tall"].Height;
-            // The lowest level such that what is dug out of all three tiers fills what is banked up (the tiers 27 m apart).
-            var sum = 0f;
-            var count = 0;
+            var ga = Mathf.Clamp((local.x - (West - FieldMargin)) / FieldCell, 0, fieldNa - 1.001f);
+            var gu = Mathf.Clamp((local.y - (South - FieldMargin)) / FieldCell, 0, fieldNu - 1.001f);
+            var i = (int)ga;
+            var j = (int)gu;
+            var fa = ga - i;
+            var fu = gu - j;
+            float F(int x, int y) => field[y * fieldNa + x];
 
-            for (var a = West; a <= East; a += 10)
+            return Mathf.Lerp(Mathf.Lerp(F(i, j), F(i + 1, j), fa), Mathf.Lerp(F(i, j + 1), F(i + 1, j + 1), fa), fu);
+        }
+
+        /// <summary>Which terrace a point of the village's frame is on (0: the main gate's).</summary>
+        int TerraceAt(Vector2 local) => Mathf.RoundToInt((FieldAt(local) - levelBase) / Rise);
+
+        float TerraceLevel(int terrace) => levelBase + Rise * terrace;
+
+        /// <summary>Uphill on the field at a point (the village's frame, unit length): across the terraces' edges.</summary>
+        Vector2 FieldUphill(Vector2 local)
+        {
+            var g = new Vector2(FieldAt(local + new Vector2(1.5f, 0)) - FieldAt(local - new Vector2(1.5f, 0)), FieldAt(local + new Vector2(0, 1.5f)) - FieldAt(local - new Vector2(0, 1.5f)));
+
+            return g.sqrMagnitude > 1e-8f ? g.normalized : Vector2.up;
+        }
+
+        /// <summary>The level a thing standing at a point stands on (its terrace's).</summary>
+        public float TierLevelAt(Vector2 p) => Glb ? TerraceLevel(TerraceAt(Local(p))) : Level0;
+
+        /// <summary>Whether a turned rectangle (grown a metre) lies on one terrace.</summary>
+        bool OneTerrace(Vector2 centre, Vector2 half, float yaw)
+        {
+            var terrace = TerraceAt(Local(centre));
+
+            foreach (var (x, z) in new[] { (-1f, -1f), (1f, -1f), (-1f, 1f), (1f, 1f), (0f, -1f), (0f, 1f), (-1f, 0f), (1f, 0f) })
             {
-                for (var u = South; u <= North; u += 10)
+                if (TerraceAt(Local(Offset(centre, yaw, x * (half.x + 1), z * (half.y + 1)))) != terrace)
                 {
-                    var p = W(a, u);
-                    sum += natural(p.x, p.y) - TierAt(u) * rise;
-                    count++;
+                    return false;
                 }
             }
 
-            for (var k = 0; k < 3; k++)
+            return true;
+        }
+
+        /// <summary>A box blur over a grid, `passes` times (near a gaussian), the edges held.</summary>
+        static float[] BoxBlur(float[] source, int nx, int ny, int radius, int passes)
+        {
+            var a = (float[])source.Clone();
+            var b = new float[a.Length];
+            var width = 2 * radius + 1;
+
+            for (var pass = 0; pass < passes; pass++)
             {
-                levels[k] = sum / count + k * rise;
+                for (var j = 0; j < ny; j++)
+                {
+                    for (var i = 0; i < nx; i++)
+                    {
+                        var sum = 0f;
+
+                        for (var d = -radius; d <= radius; d++)
+                        {
+                            sum += a[j * nx + Mathf.Clamp(i + d, 0, nx - 1)];
+                        }
+
+                        b[j * nx + i] = sum / width;
+                    }
+                }
+
+                for (var j = 0; j < ny; j++)
+                {
+                    for (var i = 0; i < nx; i++)
+                    {
+                        var sum = 0f;
+
+                        for (var d = -radius; d <= radius; d++)
+                        {
+                            sum += b[Mathf.Clamp(j + d, 0, ny - 1) * nx + i];
+                        }
+
+                        a[j * nx + i] = sum / width;
+                    }
+                }
             }
 
-            Level0 = levels[0];
+            return a;
+        }
+
+        /// <summary>
+        /// The terraces' field: the mountain's ground blurred (its bumps gone), a plane fitted through it over the
+        /// rectangle, the field the plane bent by `Follow` of the blurred ground's difference from it and a slow wander;
+        /// down the main way's corridor the same across (the walls cross it square); then each pad held at its terrace's
+        /// level and blended out round it.
+        /// </summary>
+        void MakeField(List<GreatSpec> great)
+        {
+            var a0 = West - FieldMargin;
+            var u0 = South - FieldMargin;
+            fieldNa = Mathf.CeilToInt((East - West + 2 * FieldMargin) / FieldCell) + 1;
+            fieldNu = Mathf.CeilToInt((North - South + 2 * FieldMargin) / FieldCell) + 1;
+            var raw = new float[fieldNa * fieldNu];
+
+            for (var j = 0; j < fieldNu; j++)
+            {
+                for (var i = 0; i < fieldNa; i++)
+                {
+                    var p = W(a0 + i * FieldCell, u0 + j * FieldCell);
+                    raw[j * fieldNa + i] = natural(p.x, p.y);
+                }
+            }
+
+            var smooth = BoxBlur(raw, fieldNa, fieldNu, 14, 3);
+
+            // The plane through the rectangle's blurred ground (least squares, about the means).
+            double n = 0, sa = 0, su = 0, sh = 0, saa = 0, suu = 0, sau = 0, sah = 0, suh = 0;
+
+            for (var j = 0; j < fieldNu; j++)
+            {
+                for (var i = 0; i < fieldNa; i++)
+                {
+                    double a = a0 + i * FieldCell, u = u0 + j * FieldCell, h = smooth[j * fieldNa + i];
+
+                    if (a < West || a > East || u < South || u > North)
+                    {
+                        continue;
+                    }
+
+                    n++;
+                    sa += a;
+                    su += u;
+                    sh += h;
+                    saa += a * a;
+                    suu += u * u;
+                    sau += a * u;
+                    sah += a * h;
+                    suh += u * h;
+                }
+            }
+
+            double ma = sa / n, mu = su / n, mh = sh / n;
+            double caa = saa / n - ma * ma, cuu = suu / n - mu * mu, cau = sau / n - ma * mu, cah = sah / n - ma * mh, cuh = suh / n - mu * mh;
+            var det = caa * cuu - cau * cau;
+            var ka = (cah * cuu - cuh * cau) / det;
+            var ku = (cuh * caa - cah * cau) / det;
+            field = new float[raw.Length];
+
+            for (var j = 0; j < fieldNu; j++)
+            {
+                for (var i = 0; i < fieldNa; i++)
+                {
+                    var a = a0 + i * FieldCell;
+                    var u = u0 + j * FieldCell;
+                    var plane = (float)(mh + ka * (a - ma) + ku * (u - mu));
+                    var wander = MountainShape.Fbm(a * 0.006f + 3.1f, u * 0.006f + 7.7f, 3) * 7f + MountainShape.Fbm(a * 0.018f + 1.3f, u * 0.018f + 5.2f, 2) * 2.2f;
+                    field[j * fieldNa + i] = plane + Follow * (smooth[j * fieldNa + i] - plane) + wander;
+                }
+            }
+
+            BuildLog.Write($"plan of {Place.Id}: the terraces' plane rises {ku * 100:0.0} m in 100 m uphill, {ka * 100:+0.0;-0.0} m along");
+
+            // The main way's corridor: the field across it the same as on its line, blended out over 30 m each side.
+            for (var j = 0; j < fieldNu; j++)
+            {
+                var sum = 0f;
+                var count = 0;
+
+                for (var i = 0; i < fieldNa; i++)
+                {
+                    if (Mathf.Abs(a0 + i * FieldCell - AxisAlong) <= 20)
+                    {
+                        sum += field[j * fieldNa + i];
+                        count++;
+                    }
+                }
+
+                var axis = sum / count;
+
+                for (var i = 0; i < fieldNa; i++)
+                {
+                    var w = 1 - Smooth01(18, 50, Mathf.Abs(a0 + i * FieldCell - AxisAlong));
+
+                    if (w > 0)
+                    {
+                        field[j * fieldNa + i] = Mathf.Lerp(field[j * fieldNa + i], axis, w);
+                    }
+                }
+            }
+
+            // Terrace 0 is the main gate's.
+            levelBase = FieldAt(new Vector2(AxisAlong, South + 10));
+            var held = new bool[field.Length];
+
+            // The pads: the strips along the lower and the upper wall (the fort's wall level there, stepping a terrace
+            // only between two lengths, square to it), the gates' courts, the court, the families' quarters, the
+            // academy's and the healers' grounds, every great building's own, the squares and the ponds.
+            for (var a = West; a < East - 1; a += 108)
+            {
+                Hold(new Vector2(a + 54, South + 9), new Vector2(54, 9), 0);
+                Hold(new Vector2(a + 54, North - 9), new Vector2(54, 9), 0);
+            }
+
+            Hold(new Vector2(AxisAlong, -166), new Vector2(34, 16), 3);
+            Hold(new Vector2(AxisAlong, 294), new Vector2(22, 14), 3);
+            // The court in two: the square and the forecourt below, the great hall's court a terrace above them (one
+            // wall between, the main way's stair up it).
+            var court = Hold(new Vector2(AxisAlong, 24), new Vector2(80, 27), 0);
+            Hold(new Vector2(AxisAlong, 82), new Vector2(84, 31), 0, court + 1);
+            Hold(new Vector2(-320, 262), new Vector2(95, 40), 2);
+            Hold(new Vector2(400, 262), new Vector2(95, 40), 2);
+            Hold(new Vector2(-172, 92), new Vector2(70, 38), 3);
+            Hold(new Vector2(-165, 25), new Vector2(68, 10), 3);
+            Hold(new Vector2(215, 88), new Vector2(48, 30), 3);
+            Hold(new Vector2(215, 25), new Vector2(45, 10), 3);
+
+            foreach (var g in great)
+            {
+                Hold(g.At, g.LocalHalf, 5);
+            }
+
+            Hold(new Vector2(-200, -150), new Vector2(36, 18), 2);
+            Hold(new Vector2(WestWater, -166), new Vector2(15, 10), 2);
+            Hold(new Vector2(EastWater, -166), new Vector2(15, 10), 2);
+            Hold(new Vector2(EastWater, 272), new Vector2(17, 11), 2);
+            Hold(new Vector2(-330, -128), new Vector2(46, 17), 2);
+
+            // The main way's corridor once more, now the pads are down: between two stretches of its line that a pad
+            // holds, the field rising evenly from the one's level to the other's (its walls evenly spaced, each with
+            // room for the way's stair below it), blended out across as before; no pad's ground changed.
+            var line = Mathf.RoundToInt((AxisAlong - a0) / FieldCell);
+            var profile = new float[fieldNu];
+            var last = -1;
+
+            for (var j = 0; j < fieldNu; j++)
+            {
+                profile[j] = field[j * fieldNa + line];
+
+                if (!held[j * fieldNa + line])
+                {
+                    continue;
+                }
+
+                for (var k = last + 1; last >= 0 && k < j; k++)
+                {
+                    profile[k] = Mathf.Lerp(profile[last], profile[j], (float)(k - last) / (j - last));
+                }
+
+                last = j;
+            }
+
+            for (var j = 0; j < fieldNu; j++)
+            {
+                for (var i = 0; i < fieldNa; i++)
+                {
+                    var w = 1 - Smooth01(18, 50, Mathf.Abs(a0 + i * FieldCell - AxisAlong));
+
+                    if (w > 0 && !held[j * fieldNa + i])
+                    {
+                        field[j * fieldNa + i] = Mathf.Lerp(field[j * fieldNa + i], profile[j], w);
+                    }
+                }
+            }
+
+            // Each pad level to its margin (later pads over earlier ones there), blended out round it where no pad holds
+            // the ground already (the bigger the pad, the farther: its edges stand further from its level).
+            int Hold(Vector2 centre, Vector2 half, float margin, int terrace = int.MinValue)
+            {
+                var spec = new PadSpec { Centre = centre, Half = half, Margin = margin };
+                padSpecs.Add(spec);
+                terrace = terrace == int.MinValue ? TerraceAt(centre) : terrace;
+                var level = TerraceLevel(terrace);
+                var reach = margin + Mathf.Max(PadBlend, Mathf.Max(half.x, half.y) * 0.9f);
+                var i0 = Mathf.Max(0, Mathf.FloorToInt((centre.x - half.x - reach - a0) / FieldCell));
+                var i1 = Mathf.Min(fieldNa - 1, Mathf.CeilToInt((centre.x + half.x + reach - a0) / FieldCell));
+                var j0 = Mathf.Max(0, Mathf.FloorToInt((centre.y - half.y - reach - u0) / FieldCell));
+                var j1 = Mathf.Min(fieldNu - 1, Mathf.CeilToInt((centre.y + half.y + reach - u0) / FieldCell));
+
+                for (var j = j0; j <= j1; j++)
+                {
+                    for (var i = i0; i <= i1; i++)
+                    {
+                        var dx = Mathf.Max(0, Mathf.Abs(a0 + i * FieldCell - centre.x) - half.x);
+                        var du = Mathf.Max(0, Mathf.Abs(u0 + j * FieldCell - centre.y) - half.y);
+                        var d = Mathf.Sqrt(dx * dx + du * du);
+                        var k = j * fieldNa + i;
+
+                        if (d <= margin)
+                        {
+                            field[k] = level;
+                            held[k] = true;
+                        }
+                        else if (!held[k])
+                        {
+                            // Evenly (a smooth step would crowd the walls in its steep middle).
+                            field[k] = Mathf.Lerp(field[k], level, 1 - Mathf.Clamp01((d - margin) / (reach - margin)));
+                        }
+                    }
+                }
+
+                return terrace;
+            }
+        }
+
+        /// <summary>The lines where the field crosses `level` (the village's frame), in the cells `keep` keeps, joined into polylines (marching squares).</summary>
+        List<List<Vector2>> FieldContours(float level, System.Func<Vector2, bool> keep)
+        {
+            var a0 = West - FieldMargin;
+            var u0 = South - FieldMargin;
+            var segments = new List<(Vector2, Vector2)>();
+            var at = new Vector2[4];
+            var v = new float[4];
+            var crossings = new List<Vector2>(4);
+
+            for (var j = 0; j + 1 < fieldNu; j++)
+            {
+                for (var i = 0; i + 1 < fieldNa; i++)
+                {
+                    v[0] = field[j * fieldNa + i];
+                    v[1] = field[j * fieldNa + i + 1];
+                    v[2] = field[(j + 1) * fieldNa + i + 1];
+                    v[3] = field[(j + 1) * fieldNa + i];
+                    var below = (v[0] < level ? 1 : 0) + (v[1] < level ? 1 : 0) + (v[2] < level ? 1 : 0) + (v[3] < level ? 1 : 0);
+
+                    if (below == 0 || below == 4)
+                    {
+                        continue;
+                    }
+
+                    at[0] = new Vector2(a0 + i * FieldCell, u0 + j * FieldCell);
+                    at[1] = at[0] + new Vector2(FieldCell, 0);
+                    at[2] = at[0] + new Vector2(FieldCell, FieldCell);
+                    at[3] = at[0] + new Vector2(0, FieldCell);
+
+                    if (!keep(at[0] + Vector2.one * (FieldCell / 2)))
+                    {
+                        continue;
+                    }
+
+                    crossings.Clear();
+
+                    for (var e = 0; e < 4; e++)
+                    {
+                        var a = v[e];
+                        var b = v[(e + 1) % 4];
+
+                        if ((a < level) != (b < level))
+                        {
+                            crossings.Add(Vector2.Lerp(at[e], at[(e + 1) % 4], (level - a) / (b - a)));
+                        }
+                    }
+
+                    if (crossings.Count == 2)
+                    {
+                        segments.Add((crossings[0], crossings[1]));
+                    }
+                    else if (crossings.Count == 4)
+                    {
+                        segments.Add((crossings[0], crossings[1]));
+                        segments.Add((crossings[2], crossings[3]));
+                    }
+                }
+            }
+
+            return Chain(segments);
+        }
+
+        void LayOutTiers()
+        {
+            stairSize = Vector2.Scale(QingMaoBuilder.VillageGlb[StairModel].Size, new Vector2(StairAcross, StairRun));
+            var great = GreatList();
+            MakeField(great);
+            Level0 = levelBase;
             Boundary.Add(W(West, South));
             Boundary.Add(W(East, South));
             Boundary.Add(W(East, North));
             Boundary.Add(W(West, North));
-
-            foreach (var side in new[] { West, East })
-            {
-                for (var k = 0; k < 2; k++)
-                {
-                    WallSteps.Add((W(side, TierEdge[k] + WallTuck), levels[k], levels[k + 1]));
-                }
-            }
-
-            BuildLog.Write($"plan of {Place.Id}: tiers at {levels[0]:0.0}, {levels[1]:0.0}, {levels[2]:0.0} m");
             void Phase(string what) => BuildLog.Mark($"plan of {Place.Id}: {what}");
+            Phase("the terraces' field");
             Rasters();
+            TerraceWalls();
+            FortSteps();
+            TerraceLanes();
             TierGates();
-            TierWalls();
-            Phase("tiers, walls and gates");
+            Phase("terraces, walls, lanes and gates");
             TierWater();
-            TierStairs();
-            TierGreatBuildings();
+            TierGreatBuildings(great);
             TierPads();
+            TierStairs();
             TierStreets();
             TierBridges();
-            Phase("water, stairs, great buildings, squares, streets");
+            Phase("water, great buildings, stairs, squares, streets");
             TierSquares();
             TierFences();
             TierLanterns();
@@ -227,7 +630,10 @@ namespace GuWorld.Editor
             Phase("houses");
             TierDecor();
             TierGardens();
+            TierWallHeights();
             Phase("props");
+            BuildLog.Write($"plan of {Place.Id}: terraces {TerraceAt(new Vector2(AxisAlong, South + 10))}…{TerraceAt(new Vector2(AxisAlong, North - 10))} up the main way, level 0 at {levelBase:0.0} m; " +
+                $"{terraceWalls.Count} retaining walls, {lanes.Count} lanes, {flights.Count} stairs, {WallSteps.Count} steps of the fort's wall");
         }
 
         // ── The ground ────────────────────────────────────────────────
@@ -242,78 +648,44 @@ namespace GuWorld.Editor
         }
 
         /// <summary>
-        /// The ground's height: each tier level to its retaining wall (stepping up hidden in the wall's body) and over
-        /// the berm outside the fort's wall; under the front, the plinth (the mountain's own ground before its face, the
-        /// main gate's forecourt and ramps on it); round the rest, a rock cut up to the mountain's ground or an earth bank
-        /// down to it; the gates' roads; the channels, ponds, basins and gutters cut in.
+        /// The ground's height: each terrace's level (stepping up hidden in its retaining wall's body) to the fort's
+        /// wall and over the berm outside it; round that, a rock cut up to the mountain's ground or an earth bank down
+        /// to it; the gates' roads; the channels, ponds and basins cut in.
         /// </summary>
         float TierHeight(Vector2 p, float naturalHeight)
         {
             var local = Local(p);
-            var a = local.x;
-            var u = local.y;
-            var level = levels[GroundTier(u)];
-            var face = South - Berm;
-            float height;
+            var level = TerraceLevel(TerraceAt(local));
+            var outside = RectOutside(local.x, local.y);
+            var height = outside <= Berm ? level : Bank(outside - Berm, naturalHeight, level);
 
-            if (u < face + WallTuck && a > West - Berm && a < East + Berm)
+            foreach (var road in gateRoads)
             {
-                height = PlinthGround(a, u, naturalHeight);
-            }
-            else
-            {
-                var outside = RectOutside(a, u);
-                height = outside <= Berm ? level : Bank(outside - Berm, naturalHeight, level);
+                var d = p - road.At;
+                var along = Vector2.Dot(d, road.Out);
+                var across = Mathf.Abs(Vector2.Dot(d, road.Across));
+                var end = Berm + road.Length;
 
-                foreach (var road in gateRoads)
+                if (along < 0 || along > end + 14 || across > 60)
                 {
-                    var d = p - road.At;
-                    var along = Vector2.Dot(d, road.Out);
-                    var across = Mathf.Abs(Vector2.Dot(d, road.Across));
-                    var end = Berm + road.Length;
-
-                    if (along < 0 || along > end + 14 || across > 60)
-                    {
-                        continue;
-                    }
-
-                    var onRoad = along <= end ? Mathf.Lerp(road.Level, road.End, Mathf.Clamp01((along - Berm) / road.Length)) : naturalHeight;
-                    var side = 3 + 1.6f * Mathf.Abs(onRoad - height);
-                    var weight = (1 - Smooth01(5, 5 + side, across)) * (1 - Smooth01(end, end + 12, along));
-                    height = Mathf.Lerp(height, onRoad, weight);
+                    continue;
                 }
+
+                var onRoad = along <= end ? Mathf.Lerp(road.Level, road.End, Mathf.Clamp01((along - Berm) / road.Length)) : naturalHeight;
+                var side = 3 + 1.6f * Mathf.Abs(onRoad - height);
+                var weight = (1 - Smooth01(5, 5 + side, across)) * (1 - Smooth01(end, end + 12, along));
+                height = Mathf.Lerp(height, onRoad, weight);
             }
 
             return Carve(local, height);
         }
 
-        /// <summary>The ground before the plinth's face: the mountain's, but the main gate's forecourt (the lowest level) and its two ramps down along the face.</summary>
-        float PlinthGround(float a, float u, float naturalHeight)
-        {
-            var face = South - Berm;
-
-            if (a > AxisAlong - CourtHalf + WallTuck && a < AxisAlong + CourtHalf - WallTuck && u > face - CourtDepth + WallTuck)
-            {
-                return levels[0];
-            }
-
-            if (u > face - RampWidth + WallTuck)
-            {
-                var off = a < AxisAlong ? AxisAlong - CourtHalf - a : a - AxisAlong - CourtHalf;
-                var ramp = levels[0] - LongRamp * Mathf.Max(0, off);
-
-                return Mathf.Max(ramp, naturalHeight);
-            }
-
-            return naturalHeight;
-        }
-
-        /// <summary>The ground `d` m past the berm: a rock cut (2 up for 1 across) up to the mountain's ground above the level, an earth bank down to it below.</summary>
+        /// <summary>The ground `d` m past the berm: a rock cut (4 up for 3 across) up to the mountain's ground above the level, an earth bank down to it below.</summary>
         static float Bank(float d, float naturalHeight, float level)
         {
             var rise_ = naturalHeight - level;
 
-            return rise_ >= 0 ? level + Mathf.Min(rise_, d * 2) : level + rise_ * Smooth01(0, 10 + 2.2f * Mathf.Abs(rise_), d);
+            return rise_ >= 0 ? level + Mathf.Min(rise_, d * 1.3f) : level + rise_ * Smooth01(0, 10 + 2.2f * Mathf.Abs(rise_), d);
         }
 
         /// <summary>The water's beds cut into the ground (in the village's frame).</summary>
@@ -346,23 +718,19 @@ namespace GuWorld.Editor
             return height;
         }
 
-        /// <summary>The height one walks at: the ground, but up the tall stairs their treads' (the villagers' ways follow it).</summary>
+        /// <summary>The height one walks at: the ground, but up the stairs their treads' (the villagers' ways follow it).</summary>
         public float WalkHeight(Vector2 p)
         {
             if (Glb)
             {
-                var local = Local(p);
-
-                foreach (var (along, half, foot, top, low) in flights)
+                foreach (var (foot, up, half, run, low, high) in flights)
                 {
-                    if (Mathf.Abs(local.x - along) <= half && local.y >= foot - 1 && local.y <= top)
-                    {
-                        // Three flights of 21.67 m and 9.02 m each, a landing of 7.65 m between two.
-                        var t = Mathf.Max(0, local.y - foot);
-                        var k = Mathf.Min(2, Mathf.FloorToInt(t / 29.32f));
-                        var r = t - k * 29.32f;
+                    var d = p - foot;
+                    var t = Vector2.Dot(d, up);
 
-                        return low + Mathf.Min(rise, (k + Mathf.Clamp01(r / 21.67f)) * rise / 3);
+                    if (t >= -1 && t <= run + 0.6f && Mathf.Abs(d.x * up.y - d.y * up.x) <= half)
+                    {
+                        return Mathf.Lerp(low, high, StairProfile(Mathf.Clamp01(t / run)));
                     }
                 }
             }
@@ -420,8 +788,8 @@ namespace GuWorld.Editor
                     weights[QingMaoBuilder.LayerMossIndex] += noise > 0.65f ? 0.6f : 0;
                     break;
                 default:
-                    // Outside: the trodden berm and the ramps, then the banks — earth, bare rock where steep.
-                    if (outside < Berm + 1.5f || local.y < South - Berm + 1)
+                    // Outside: the trodden berm and the roads, then the banks — earth, bare rock where steep.
+                    if (outside < Berm + 1.5f)
                     {
                         weights[QingMaoBuilder.LayerDirtIndex] += 4;
                         weights[QingMaoBuilder.LayerGravelIndex] += 1.5f;
@@ -465,12 +833,10 @@ namespace GuWorld.Editor
             }
         }
 
-        /// <summary>Wild trees: not on the town, its earthworks near the wall, the plinth's ramps or the gates' roads.</summary>
+        /// <summary>Wild trees: not on the town, its earthworks near the wall or the gates' roads.</summary>
         bool WildTiers(Vector2 p)
         {
-            var local = Local(p);
-
-            if (-InsideDistance(p) < Berm + 30 || KindAt(p) != KWild || (local.y < South && local.y > South - Berm - RampWidth - 30 && local.x > West - 40 && local.x < East + 40))
+            if (-InsideDistance(p) < Berm + 30 || KindAt(p) != KWild)
             {
                 return false;
             }
@@ -489,6 +855,149 @@ namespace GuWorld.Editor
             return true;
         }
 
+        // ── The retaining walls and the fort's steps ──────────────────
+
+        /// <summary>
+        /// A retaining wall wherever two terraces meet, inside the town and out over its earthworks until their two
+        /// grounds come together: the contour halfway between their levels, where the ground steps; its face a metre
+        /// downhill of that, its body two metres deep (the step hidden in it). Its heights are filled in last
+        /// (TierWallHeights), when the gates' roads and the water have been cut. Its body is kept from houses.
+        /// </summary>
+        void TerraceWalls()
+        {
+            var low = Mathf.FloorToInt((field.Min() - levelBase) / Rise) - 1;
+            var high = Mathf.CeilToInt((field.Max() - levelBase) / Rise) + 1;
+
+            for (var k = low; k <= high; k++)
+            {
+                foreach (var raw in FieldContours(TerraceLevel(k) + Rise / 2, c => RectOutside(c.x, c.y) < Berm + 60))
+                {
+                    if (Length(raw) < 4)
+                    {
+                        continue;
+                    }
+
+                    var line = Resample(raw, 3);
+                    var face = new List<Vector2>();
+                    var up = new List<Vector2>();
+                    var wall = new Wall { Face = true, Thick = WallBody, Backs = new List<Vector2>() };
+
+                    foreach (var p in line)
+                    {
+                        var u = FieldUphill(p);
+                        face.Add(p - u * WallTuck);
+                        up.Add(u);
+                        wall.Points.Add(W(p - u * WallTuck));
+                        wall.Backs.Add(WorldDir(u));
+                    }
+
+                    terraceWalls.Add((k, line, face, up, wall));
+                    Walls.Add(wall);
+
+                    for (var i = 0; i + 1 < face.Count; i++)
+                    {
+                        var a = W(face[i]);
+                        var b = W(face[i + 1]);
+                        var back = (wall.Backs[i] + wall.Backs[i + 1]).normalized;
+                        Inside((a + b) / 2 + back * (WallBody / 2), new Vector2(WallBody / 2 + 0.7f, Vector2.Distance(a, b) / 2 + 0.3f), YawFacing(b - a), 0, cell => taken[cell] = true);
+                    }
+                }
+            }
+        }
+
+        /// <summary>The retaining walls' heights from the ground either side (and the parapets'), once all is cut.</summary>
+        void TierWallHeights()
+        {
+            foreach (var (_, line, face, up, wall) in terraceWalls)
+            {
+                for (var i = 0; i < face.Count; i++)
+                {
+                    var below = face[i] - up[i] * 0.5f;
+                    var above = line[i] + up[i] * (WallBody - WallTuck + 0.5f);
+                    wall.Low.Add(TierHeight(W(below), Natural(below)));
+                    wall.High.Add(TierHeight(W(above), Natural(above)));
+                }
+            }
+        }
+
+        /// <summary>Where the fort's walls cross from one terrace to another: a tower on a footing there (BuildFortRect).</summary>
+        void FortSteps()
+        {
+            var sides = new[] { (new Vector2(West, South), new Vector2(East, South)), (new Vector2(East, South), new Vector2(East, North)), (new Vector2(West, North), new Vector2(East, North)), (new Vector2(West, South), new Vector2(West, North)) };
+
+            foreach (var (from, to) in sides)
+            {
+                var length = Vector2.Distance(from, to);
+                var last = TerraceAt(from);
+
+                for (var s = 0.5f; s <= length; s += 0.5f)
+                {
+                    var at = Vector2.Lerp(from, to, s / length);
+                    var terrace = TerraceAt(at);
+
+                    if (terrace != last)
+                    {
+                        WallSteps.Add((W(at), TerraceLevel(Mathf.Min(terrace, last)), TerraceLevel(Mathf.Max(terrace, last))));
+                        last = terrace;
+                    }
+                }
+            }
+        }
+
+        /// <summary>The lane along each terrace: the contour a little over its level, inside the wall's strip, long enough to walk.</summary>
+        void TerraceLanes()
+        {
+            var low = Mathf.FloorToInt((field.Min() - levelBase) / Rise) - 1;
+            var high = Mathf.CeilToInt((field.Max() - levelBase) / Rise) + 1;
+
+            for (var k = low; k <= high; k++)
+            {
+                foreach (var raw in FieldContours(TerraceLevel(k) + LaneAbove, c => RectOutside(c.x, c.y) < -(WallStrip + 5)))
+                {
+                    if (Length(raw) >= 30)
+                    {
+                        lanes.Add((k, Resample(raw, 1.4f)));
+                    }
+                }
+            }
+        }
+
+        /// <summary>The nearest point of a terrace's lanes to a point (the village's frame), within `reach`; whether one is.</summary>
+        bool NearestLane(Vector2 local, int terrace, float reach, out Vector2 nearest)
+        {
+            nearest = local;
+            var best = reach;
+
+            foreach (var (k, line) in lanes)
+            {
+                if (k != terrace)
+                {
+                    continue;
+                }
+
+                foreach (var p in line)
+                {
+                    var d = Vector2.Distance(p, local);
+
+                    if (d < best)
+                    {
+                        best = d;
+                        nearest = p;
+                    }
+                }
+            }
+
+            return best < reach;
+        }
+
+        /// <summary>The mountain's own ground at a point of the village's frame.</summary>
+        float Natural(Vector2 local)
+        {
+            var p = W(local);
+
+            return natural(p.x, p.y);
+        }
+
         // ── The gates and their roads ─────────────────────────────────
 
         void TierGates()
@@ -496,17 +1005,30 @@ namespace GuWorld.Editor
             void AddGate(string name, float along, float up, Vector2 outward)
             {
                 var at = W(along, up);
-                var out_ = (Along * outward.x - Down * outward.y).normalized;
-                var level = levels[TierAt(up)];
+                var out_ = WorldDir(outward);
+                var level = TerraceLevel(TerraceAt(new Vector2(along, up)));
                 var road = new GateRoad { At = at, Out = out_, Across = new Vector2(-out_.y, out_.x), Level = level };
-                var length = 20f;
+                // As short as the steepest grade allowed lets it be; where the mountain itself falls or rises faster
+                // than that (straight down or up the slope), the gentlest it can be within 60 m.
+                var length = 30f;
+                var gentlest = float.MaxValue;
 
-                // As long as its rise asks at the steepest allowed; the ground it meets moves as it grows (found again).
-                for (var i = 0; i < 24; i++)
+                for (var l = 14f; l <= 60; l += 2)
                 {
-                    var end = at + out_ * (Berm + length);
-                    road.End = natural(end.x, end.y);
-                    length = Mathf.Max(14, Mathf.Abs(road.End - level) / RampGrade);
+                    var end = at + out_ * (Berm + l);
+                    var grade = Mathf.Abs(natural(end.x, end.y) - level) / l;
+
+                    if (grade <= RampGrade)
+                    {
+                        length = l;
+                        break;
+                    }
+
+                    if (grade < gentlest - 0.005f)
+                    {
+                        gentlest = grade;
+                        length = l;
+                    }
                 }
 
                 var last = at + out_ * (Berm + length);
@@ -514,50 +1036,42 @@ namespace GuWorld.Editor
                 road.End = natural(last.x, last.y);
                 gateRoads.Add(road);
                 Gates.Add(new Gate { At = at, Out = out_, Name = name, Reach = Berm + length + 4 });
-                // The guards' place: inside, on the lane round the wall, looking out.
+                // The guards' place: inside, looking out.
                 Places.Add((name, at - out_ * RingInset, YawFacing(out_)));
                 MarkRoad(at + out_ * ((Berm + length) / 2), (Berm + length) / 2 + 2, out_);
                 BuildLog.Write($"plan of {Place.Id}: {name}: its road {length:0} m to the mountain at {road.End - level:+0.0;-0.0} m");
             }
 
-            // The side gates, one each side on every tier, where that tier meets the mountain's ground (no long ramps).
-            AddGate("gate west", West, TierStreet[0], West_);
-            AddGate("gate east lower", East, TierStreet[0], East_);
-            AddGate("gate west middle", West, TierStreet[1], West_);
-            AddGate("gate east", East, TierStreet[1], East_);
-            AddGate("gate north", West, TierStreet[2], West_);
-            AddGate("gate east upper", East, TierStreet[2], East_);
-
-            // The main gate: out onto its forecourt on the plinth; the ramps down either side along the plinth's face, each
-            // as long as it takes to meet the mountain's ground (the trails begin at the east one's end, towards the Xiong).
-            var main = W(AxisAlong, South);
-            var face = South - Berm;
-            var ends = new List<Vector2>();
-
-            foreach (var side in new[] { -1, 1 })
+            // The side gates: each where the terrace it opens on runs longest round the middle of its side.
+            float SideGate(float along)
             {
-                var off = 0f;
+                var best = 60f;
+                var score = float.MaxValue;
 
-                for (; off < 600; off += 2)
+                for (var u = South + 40; u <= North - 40; u += 1)
                 {
-                    var a = AxisAlong + side * (CourtHalf + off);
-                    var at = W(a, face - RampWidth / 2);
+                    var terrace = TerraceAt(new Vector2(along, u));
+                    var clear = true;
 
-                    if (levels[0] - LongRamp * off <= natural(at.x, at.y) + 0.3f)
+                    for (var d = -16; d <= 16 && clear; d += 2)
                     {
-                        break;
+                        clear = TerraceAt(new Vector2(along, u + d)) == terrace && TerraceAt(new Vector2(along + Mathf.Sign(AxisAlong - along) * 20, u + d)) == terrace;
+                    }
+
+                    if (clear && Mathf.Abs(u - 60) < score)
+                    {
+                        score = Mathf.Abs(u - 60);
+                        best = u;
                     }
                 }
 
-                var endA = AxisAlong + side * (CourtHalf + off);
-                ends.Add(W(endA, face - RampWidth / 2));
-                MarkRoad(W((AxisAlong + side * CourtHalf + endA) / 2, face - RampWidth / 2), Mathf.Abs(endA - AxisAlong) / 2, Along);
-                BuildLog.Write($"plan of {Place.Id}: the main gate's {(side < 0 ? "west" : "east")} ramp: {off:0} m along the plinth");
+                return best;
             }
 
-            Gates.Add(new Gate { At = main, Out = Down, Name = "gate south", Reach = Berm + CourtDepth, End = ends[1] });
-            Places.Add(("gate south", main + Down * -RingInset, YawFacing(Down)));
-            MarkRoad(W(AxisAlong, face - CourtDepth / 2), CourtDepth / 2 + Berm, Down);
+            AddGate("gate south", AxisAlong, South, South_);
+            AddGate("gate north", AxisAlong, North, North_);
+            AddGate("gate west", West, SideGate(West), West_);
+            AddGate("gate east", East, SideGate(East), East_);
 
             // The strip inside the wall kept for the wall, its towers and gates: nothing stands or is laid there.
             var width = East - West;
@@ -587,140 +1101,12 @@ namespace GuWorld.Editor
             });
         }
 
-        // ── The retaining walls, the plinth, their parapets ───────────
-
-        /// <summary>A stone wall along a line in the village's frame, its face on the line, its body towards `back` (the higher side); its low and high ends worked out at each point.</summary>
-        void FaceWall(Vector2 from, Vector2 to, Vector2 back, float thick, float step, System.Func<Vector2, (float low, float high)> ends)
-        {
-            var wall = new Wall { Face = true, Back = (Along * back.x - Down * back.y).normalized, Thick = thick };
-            var length = Vector2.Distance(from, to);
-            var n = Mathf.Max(1, Mathf.CeilToInt(length / step));
-
-            for (var i = 0; i <= n; i++)
-            {
-                var local = Vector2.Lerp(from, to, (float)i / n);
-                var (low, high) = ends(local);
-                wall.Points.Add(W(local));
-                wall.Low.Add(low);
-                wall.High.Add(high);
-            }
-
-            Walls.Add(wall);
-        }
-
-        /// <summary>A parapet on a wall's top edge, with gaps (along, half width) where stairs and falls come over it.</summary>
-        void Parapet(float u, float a0, float a1, float level, Vector2 back, IEnumerable<(float along, float half)> gaps)
-        {
-            var cuts_ = gaps.OrderBy(g => g.along).ToList();
-            var from = a0;
-
-            foreach (var (along, half) in cuts_.Append((a1 + 1000, 0f)))
-            {
-                var to = Mathf.Min(a1, along - half);
-
-                if (to - from > 1)
-                {
-                    FaceWall(new Vector2(from, u), new Vector2(to, u), back, 0.55f, 8, _ => (level + 0.45f, level + ParapetHeight - 0.22f));
-                }
-
-                from = Mathf.Max(from, along + half);
-            }
-        }
-
-        void TierWalls()
-        {
-            float Ground(Vector2 local) => TierHeight(W(local), Natural(local));
-
-            // The retaining walls between the tiers: inside, from the west wall to the east one, a tier high; outside,
-            // on into the banks each side as long as the two tiers' banks still differ there.
-            for (var k = 0; k < 2; k++)
-            {
-                var u = TierEdge[k];
-                var low = levels[k];
-                var high = levels[k + 1];
-                FaceWall(new Vector2(West - 1, u), new Vector2(East + 1, u), North_, WallBody, 8, _ => (low, high));
-                Inside(W((West + East) / 2, u + WallBody / 2), new Vector2((East - West) / 2, WallBody / 2 + 0.6f), Facing(North_), 0, cell => taken[cell] = true);
-
-                foreach (var side in new[] { -1, 1 })
-                {
-                    var start = side < 0 ? West - 1 : East + 1;
-                    var reach = 0f;
-
-                    for (; reach < 160; reach += 2)
-                    {
-                        var a = start + side * reach;
-
-                        if (Ground(new Vector2(a, u + WallBody)) - Ground(new Vector2(a, u - 0.3f)) < 0.3f)
-                        {
-                            break;
-                        }
-                    }
-
-                    if (reach > 1)
-                    {
-                        FaceWall(new Vector2(start, u), new Vector2(start + side * reach, u), North_, WallBody, 3, l => (Ground(l + new Vector2(0, -0.3f)), Ground(l + new Vector2(0, WallBody))));
-                    }
-                }
-            }
-
-            // The plinth under the lowest tier's front: its face before the berm, round the main gate's forecourt; the
-            // ramps' outer walls.
-            var face = South - Berm;
-            float Front(Vector2 l) => Ground(l + new Vector2(0, -0.3f));
-            FaceWall(new Vector2(West - Berm, face), new Vector2(AxisAlong - CourtHalf, face), North_, WallBody, 4, l => (Front(l), levels[0]));
-            FaceWall(new Vector2(AxisAlong + CourtHalf, face), new Vector2(East + Berm, face), North_, WallBody, 4, l => (Front(l), levels[0]));
-            FaceWall(new Vector2(AxisAlong - CourtHalf, face - CourtDepth), new Vector2(AxisAlong + CourtHalf, face - CourtDepth), North_, WallBody, 4, l => (Front(l), levels[0]));
-
-            foreach (var side in new[] { -1, 1 })
-            {
-                var edge = AxisAlong + side * CourtHalf;
-                FaceWall(new Vector2(edge, face - CourtDepth), new Vector2(edge, face - RampWidth), new Vector2(-side, 0), WallBody, 4, l => (Ground(l + new Vector2(side * 0.3f, 0)), levels[0]));
-                var length = 0f;
-
-                for (; length < 600; length += 2)
-                {
-                    var a = edge + side * length;
-
-                    if (Ground(new Vector2(a, face - RampWidth + WallTuck + 0.3f)) - Ground(new Vector2(a, face - RampWidth - 0.3f)) < 0.3f)
-                    {
-                        break;
-                    }
-                }
-
-                FaceWall(new Vector2(edge, face - RampWidth), new Vector2(edge + side * length, face - RampWidth), North_, WallBody, 3, l => (Ground(l + new Vector2(0, -0.3f)), Ground(l + new Vector2(0, WallBody))));
-            }
-        }
-
-        /// <summary>The mountain's own ground at a point of the village's frame.</summary>
-        float Natural(Vector2 local)
-        {
-            var p = W(local);
-
-            return natural(p.x, p.y);
-        }
-
-        /// <summary>The parapets, once the stairs and the falls are known (their gaps).</summary>
-        void TierParapets()
-        {
-            for (var k = 0; k < 2; k++)
-            {
-                var gaps = flights.Where(f => Mathf.Abs(f.top - TierEdge[k]) < 1).Select(f => (f.along, f.half + 0.6f))
-                    .Concat(Falls.Where(f => Mathf.Abs(Local(f.At).y - TierEdge[k]) < 2).Select(f => (Local(f.At).x, f.Width / 2 + 0.6f)));
-                Parapet(TierEdge[k] + 0.05f, West + 1, East - 1, levels[k + 1], North_, gaps);
-            }
-
-            // Along the plinth's top, before the berm (the fort's wall stands behind it), and round the forecourt.
-            var face = South - Berm + 0.05f;
-            Parapet(face, West - Berm, East + Berm, levels[0], North_, new[] { (AxisAlong, CourtHalf - 0.5f), (OutflowWest, 3.5f), (EastWater, 3.5f) });
-            Parapet(face - CourtDepth + 0.05f, AxisAlong - CourtHalf, AxisAlong + CourtHalf, levels[0], North_, new (float, float)[0]);
-        }
-
         // ── The water ─────────────────────────────────────────────────
 
-        /// <summary>A channel along a line (the village's frame) on a tier: half its width, how deep its bed lies under the tier (the water a metre under it).</summary>
-        void Canal(int tier, float half, float depth, float waterDown, params Vector2[] line)
+        /// <summary>A channel along a line (the village's frame) on a terrace: half its width, how deep its bed lies under the terrace (the water `waterDown` under it).</summary>
+        void Canal(int terrace, float half, float depth, float waterDown, params Vector2[] line)
         {
-            var level = levels[tier];
+            var level = TerraceLevel(terrace);
             var channel = new Channel { Half = half, Water = level - waterDown, Bed = level - depth, Top = level };
 
             for (var i = 0; i < line.Length; i++)
@@ -747,15 +1133,13 @@ namespace GuWorld.Editor
             Channels.Add(channel);
         }
 
-        /// <summary>A pond (a box in the village's frame) on a tier, its water a metre under the tier.</summary>
-        void Pond(int tier, Vector2 min, Vector2 max, float depth = 2.5f)
+        /// <summary>A pond (a box in the village's frame) on its terrace, its water a metre under the terrace.</summary>
+        void Pond(Vector2 centre, Vector2 half, float depth = 2.5f)
         {
-            var level = levels[tier];
-            pits.Add((min, max, level - depth));
-            var centre = W((min + max) / 2);
-            var half = (max - min) / 2;
-            Pools.Add(new Pool { Centre = centre, Half = half, Yaw = Facing(North_), Water = level - 1, Bed = level - depth, Top = level });
-            Inside(centre, half + Vector2.one * 0.8f, Facing(North_), 0, cell =>
+            var level = TerraceLevel(TerraceAt(centre));
+            pits.Add((centre - half, centre + half, level - depth));
+            Pools.Add(new Pool { Centre = W(centre), Half = half, Yaw = Facing(North_), Water = level - 1, Bed = level - depth, Top = level });
+            Inside(W(centre), half + Vector2.one * 0.8f, Facing(North_), 0, cell =>
             {
                 taken[cell] = true;
 
@@ -767,11 +1151,11 @@ namespace GuWorld.Editor
         }
 
         /// <summary>A round stone basin a fall drops into.</summary>
-        void Basin(int tier, Vector2 centre, float radius)
+        void Basin(Vector2 centre, float radius)
         {
-            var level = levels[tier];
-            bowls.Add((centre, radius, level - 3.5f));
-            Pools.Add(new Pool { Centre = W(centre), Half = new Vector2(radius, radius), Water = level - 1, Bed = level - 3.5f, Top = level, Round = true });
+            var level = TerraceLevel(TerraceAt(centre));
+            bowls.Add((centre, radius, level - 3));
+            Pools.Add(new Pool { Centre = W(centre), Half = new Vector2(radius, radius), Water = level - 1, Bed = level - 3, Top = level, Round = true });
             Around(W(centre), radius + 0.8f, (cell, _) =>
             {
                 taken[cell] = true;
@@ -783,75 +1167,247 @@ namespace GuWorld.Editor
             });
         }
 
+        /// <summary>
+        /// Water down a straight line (the village's frame) from `from` to `to`: a channel on each terrace it runs over,
+        /// and where it comes to a terrace's edge, a fall from a spout in the wall's face into a stone basin below, the
+        /// channel going on past the basin.
+        /// </summary>
+        void Stream(Vector2 from, Vector2 to, float half)
+        {
+            var length = Vector2.Distance(from, to);
+            var dir = (to - from) / length;
+            var start = 0f;
+            var terrace = TerraceAt(from);
+
+            for (var s = 0.5f; s <= length; s += 0.5f)
+            {
+                var p = from + dir * s;
+                var next = TerraceAt(p);
+
+                if (next == terrace)
+                {
+                    continue;
+                }
+
+                var up = FieldUphill(p);
+                var end = Mathf.Max(start, s - 1.4f);
+
+                if (end - start > 2)
+                {
+                    Canal(terrace, half, 2.2f, 1, from + dir * start, from + dir * end);
+                }
+
+                if (next < terrace)
+                {
+                    var face = p - up * WallTuck;
+                    Falls.Add(new Fall { At = W(face), Out = WorldDir(-up), Top = TerraceLevel(terrace) - 1.2f, Bottom = TerraceLevel(next) - 1, Width = half * 2 - 0.6f });
+                    parapetGaps.Add((W(face), half + 0.8f));
+                    Basin(from + dir * (s + 7.5f), 4.5f);
+                    start = s + 12.6f;
+                    s = start;
+                }
+                else
+                {
+                    start = s + 1.4f;
+                }
+
+                terrace = TerraceAt(from + dir * start);
+            }
+
+            if (length - start > 2)
+            {
+                Canal(terrace, half, 2.2f, 1, from + dir * start, to);
+            }
+        }
+
         void TierWater()
         {
-            // The spring under its pavilion on the top tier: down the west channel, over the two retaining walls into
-            // basins, west along the lowest tier to the lotus pond, out of the west water gate and down the plinth.
+            // The spring under its pavilion: down the west of the court to the lower west pond; the east channel from
+            // the upper pond to the lower east one; the lotus pond among the mortals' houses.
             var spring = Local(QingMao.Spring);
-            var lotusMin = new Vector2(-310, -165);
-            var lotusMax = new Vector2(-200, -125);
-            Canal(2, 2, 2.2f, 1, new Vector2(WestWater, spring.y + 1), new Vector2(WestWater, TierEdge[1] + WallBody + 0.2f));
-            FallOver(1, WestWater, 3.4f);
-            Canal(1, 2, 2.2f, 1, new Vector2(WestWater, TierEdge[1] - 16), new Vector2(WestWater, TierEdge[0] + WallBody + 0.2f));
-            FallOver(0, WestWater, 3.4f);
-            Canal(0, 2, 2.2f, 1, new Vector2(WestWater, TierEdge[0] - 16), new Vector2(WestWater, -150), new Vector2(lotusMax.x, -150));
-            Pond(0, lotusMin, lotusMax);
-            Canal(0, 1.6f, 2.2f, 1, new Vector2(OutflowWest, lotusMin.y), new Vector2(OutflowWest, South - Berm + WallBody));
-            OutFall(OutflowWest);
-
-            // The golden channel across the head's forecourt, from the spring's channel to the east one; the upper pond
-            // above it; the east channel down the tiers the same way to the east water gate.
-            var golden = 168f;
-            var upperMin = new Vector2(150, 255);
-            var upperMax = new Vector2(215, 292);
-            Pond(2, upperMin, upperMax);
-            Canal(2, 1.6f, 2.2f, 1, new Vector2(WestWater, golden), new Vector2(EastWater, golden));
-            Canal(2, 1.6f, 2.2f, 1, new Vector2(upperMax.x, 262), new Vector2(EastWater, 262), new Vector2(EastWater, TierEdge[1] + WallBody + 0.2f));
-            FallOver(1, EastWater, 3);
-            Canal(1, 1.6f, 2.2f, 1, new Vector2(EastWater, TierEdge[1] - 16), new Vector2(EastWater, TierEdge[0] + WallBody + 0.2f));
-            FallOver(0, EastWater, 3);
-            Canal(0, 1.6f, 2.2f, 1, new Vector2(EastWater, TierEdge[0] - 16), new Vector2(EastWater, South - Berm + WallBody));
-            OutFall(EastWater);
-
-            // The gutters: at the foot of each retaining wall (from its middle to the channels each side), and at the
-            // foot of the rock cut behind the top tier, outside the wall.
-            for (var k = 0; k < 2; k++)
-            {
-                var u = TierEdge[k] - 0.9f;
-                Canal(k, 0.55f, 0.6f, 0.4f, new Vector2(West + WallStrip + 1, u), new Vector2(East - WallStrip - 1, u));
-            }
-
-            Canal(2, 0.55f, 0.6f, 0.4f, new Vector2(West - Berm + 1, North + Berm - 0.9f), new Vector2(East + Berm - 1, North + Berm - 0.9f));
+            Stream(new Vector2(WestWater, spring.y + 1), new Vector2(WestWater, -166 + 10.5f), 2);
+            Pond(new Vector2(WestWater, -166), new Vector2(14, 9));
+            Pond(new Vector2(EastWater, 272), new Vector2(16, 10));
+            Stream(new Vector2(EastWater, 261.5f), new Vector2(EastWater, -166 + 10.5f), 1.6f);
+            Pond(new Vector2(EastWater, -166), new Vector2(14, 9));
+            Pond(new Vector2(-330, -128), new Vector2(44, 15));
             // The washers' place: on the channel's bank below the spring's pavilion.
             Places.Add(("spring", W(WestWater + 5, spring.y - 14), Facing(West_)));
+        }
 
-            void FallOver(int tier, float along, float width)
+        // ── The great buildings and the pads ──────────────────────────
+
+        static GreatSpec G(string place, string model, float scale, float along, float up, Vector2 facing, BuildingKind kind, string label) =>
+            new GreatSpec { Place = place, Model = model, Scale = scale, At = new Vector2(along, up), Facing = facing, Kind = kind, Label = label };
+
+        /// <summary>The great buildings, where each stands (the village's frame) and the way it faces.</summary>
+        List<GreatSpec> GreatList()
+        {
+            var spring = Local(QingMao.Spring);
+            var list = new List<GreatSpec>
             {
-                var face = TierEdge[tier];
-                Falls.Add(new Fall { At = W(along, face), Out = Down, Top = levels[tier + 1] - 1.2f, Bottom = levels[tier] - 1, Width = width });
-                Basin(tier, new Vector2(along, face - 9), 8);
+                // The middle: the head's court — the great hall facing down the main way, the elders' and the inner
+                // affairs' halls at its sides, the ancestors' and the punishments' halls behind it.
+                G("pavilion", "prop_clan_main_hall", 1, AxisAlong, 82, South_, BuildingKind.Pavilion, "Павильон клана"),
+                G("council", "prop_council_hall", 1, -22, 84, East_, BuildingKind.Hall, "Зал старейшин"),
+                G(null, "prop_council_hall", 1, 102, 84, West_, BuildingKind.Hall, "Зал внутренних дел"),
+                G("shrine", "prop_ancestral_hall", 1, 6, 128, South_, BuildingKind.Ancestral, "Зал предков"),
+                G(null, "prop_council_hall", 1, 76, 128, South_, BuildingKind.Hall, "Зал наказаний"),
+                G(null, "prop_teahouse_octagon", 0.6f, WestWater, spring.y + 10, South_, BuildingKind.Hall, "Павильон источника"),
+                // The academy west of the court: its great hall over its yard, the hostel and the refectory at the yard's
+                // sides, the classrooms and its Gu nursery below.
+                G("academy", "prop_academy_great", 0.6f, -172, 104, South_, BuildingKind.Academy, "Академия"),
+                G("hostel", "prop_dorm_great", 0.55f, -232, 104, East_, BuildingKind.Hostel, "Общежитие академии"),
+                G("refectory", "prop_refectory", 0.55f, -116, 104, West_, BuildingKind.Hall, "Трапезная академии"),
+                G(null, "prop_academy", 0.8f, -215, 25, South_, BuildingKind.Academy, "Класс академии"),
+                G(null, "prop_academy", 0.8f, -165, 25, South_, BuildingKind.Academy, "Класс академии"),
+                G(null, "prop_gu_nursery", 0.85f, -120, 25, South_, BuildingKind.GuFarm, "Питомник Гу академии"),
+                // The healers east of it: their hall, two herbalists, their nursery and store of herbs (their beds: TierGardens).
+                G(null, "prop_academy", 0.9f, 215, 104, South_, BuildingKind.Hall, "Медицинский зал"),
+                G(null, "prop_herbalist", 0.9f, 180, 104, South_, BuildingKind.Herbalist, "Лекарня"),
+                G(null, "prop_herbalist", 0.9f, 250, 104, South_, BuildingKind.Herbalist, "Травяная лавка лекарей"),
+                G(null, "prop_gu_nursery", 0.85f, 180, 25, South_, BuildingKind.GuFarm, "Питомник лечебных Гу"),
+                G(null, "prop_granary", 0.85f, 250, 25, South_, BuildingKind.Granary, "Склад трав"),
+                G("teahouse", "prop_teahouse_octagon", 0.75f, 150, -10, West_, BuildingKind.Teahouse, "Чайный дом «Восемь ветров»"),
+                // By the main gate: the guards' barracks and the outer affairs' hall at the gate square's sides, the
+                // great tavern and the inn above it, the market rows along the lower wall, the gambling house.
+                G(null, "prop_dorm_great", 0.55f, -28, -148, East_, BuildingKind.Hostel, "Казарма стражи"),
+                G(null, "prop_council_hall", 1, 108, -150, West_, BuildingKind.Hall, "Зал внешних дел"),
+                G("tavern great", "prop_tavern_great", 0.5f, -12, -105, South_, BuildingKind.Tavern, "Таверна у площади"),
+                G(null, "prop_inn_courtyard", 0.8f, 96, -105, South_, BuildingKind.Inn, "Постоялый двор"),
+                G("market", "prop_market_row", 0.7f, -95, -150, North_, BuildingKind.Shop, "Торговый ряд"),
+                G(null, "prop_market_row", 0.7f, 175, -150, North_, BuildingKind.Shop, "Торговый ряд"),
+                G(null, "prop_gambling_tent", 0.8f, 300, -110, South_, BuildingKind.Gambling, "Игорный дом"),
+            };
+
+            // The Mo family's quarter (the upper west corner) and the Chi family's (the upper east): each its manor round
+            // a courtyard, its own hall, a pavilion by its pond, its Gu nursery and granary.
+            foreach (var (family, manor, hall, garden, granary) in new[] { ("Мо", -300f, -352f, -245f, -400f), ("Чи", 380f, 432f, 325f, 480f) })
+            {
+                list.Add(G(null, "prop_inn_courtyard", 1, manor, 252, South_, BuildingKind.Hall, $"Усадьба семьи {family}"));
+                list.Add(G(null, "prop_council_hall", 1, hall, 262, South_, BuildingKind.Hall, $"Родовой зал семьи {family}"));
+                list.Add(G(null, "prop_teahouse_octagon", 0.45f, garden, 284, South_, BuildingKind.Teahouse, $"Беседка семьи {family}"));
+                list.Add(G(null, "prop_gu_nursery", 0.9f, garden, 234, South_, BuildingKind.GuFarm, $"Питомник Гу семьи {family}"));
+                list.Add(G(null, "prop_granary", 0.9f, granary, 266, South_, BuildingKind.Granary, $"Амбар семьи {family}"));
             }
 
-            void OutFall(float along)
+            return list;
+        }
+
+        /// <summary>One of the great buildings on its pad, its place before its front.</summary>
+        void Great(GreatSpec g)
+        {
+            var size = QingMaoBuilder.VillageGlb[g.Model].Size * g.Scale;
+            var centre = W(g.At);
+            var yaw = Facing(g.Facing);
+
+            if (!Free(centre, size / 2, yaw, 0.3f) || !OneTerrace(centre, size / 2 - Vector2.one, yaw))
             {
-                var face = South - Berm;
-                var foot = Natural(new Vector2(along, face - 4));
-                Falls.Add(new Fall { At = W(along, face), Out = Down, Top = levels[0] - 1.2f, Bottom = foot - 0.5f, Width = 2.6f });
-                bowls.Add((new Vector2(along, face - 4), 3.5f, foot - 1.5f));
-                Pools.Add(new Pool { Centre = W(along, face - 4), Half = new Vector2(3.5f, 3.5f), Water = foot - 0.5f, Bed = foot - 1.5f, Top = foot, Round = true });
+                BuildLog.Write($"plan of {Place.Id}: {g.Label} overlaps what stands there before it, or a terrace's edge");
             }
+
+            var b = new Building { Kind = g.Kind, Centre = centre, Size = size, Yaw = yaw, Floor = TierLevelAt(centre), Name = g.Label, Lit = true, Model = g.Model, Scale = g.Scale, Pad = true, Seed = random.Next() };
+            Buildings.Add(b);
+            Take(centre, size / 2, yaw);
+
+            if (g.Place != null)
+            {
+                Places.Add((g.Place, Offset(centre, yaw, 0, size.y / 2 + 2.5f), yaw + 180));
+            }
+        }
+
+        void TierGreatBuildings(List<GreatSpec> great)
+        {
+            foreach (var g in great)
+            {
+                Great(g);
+            }
+
+            // The families' ponds by their pavilions.
+            Pond(new Vector2(-245, 262), new Vector2(14, 7));
+            Pond(new Vector2(325, 262), new Vector2(14, 7));
+        }
+
+        void TierPads()
+        {
+            var down = Facing(South_);
+            // The square before the great hall, the forecourt between, the gate square inside the main gate, the
+            // academy's yard (its training ground), the caravans' field.
+            AddPad("square", W(AxisAlong, 13), new Vector2(34, 14), down, true);
+            Square = Pads[Pads.Count - 1];
+            Places.Add(("square", W(AxisAlong, 13), down));
+            AddPad("forecourt", W(AxisAlong, 40), new Vector2(62, 9), down, true);
+            AddPad("gate square", W(AxisAlong, -166), new Vector2(34, 15), down, true);
+            AddPad("academy yard", W(-172, 66), new Vector2(40, 13), down, false);
+            Inside(W(-172, 66), new Vector2(40, 13), down, 0, cell =>
+            {
+                if (!taken[cell] && kind[cell] != KWild)
+                {
+                    kind[cell] = KYard;
+                }
+            });
+            Places.Add(("academy yard", W(-172, 66), down));
+            AddPad("caravans", W(-200, -150), new Vector2(34, 16), down, false);
+            Inside(W(-200, -150), new Vector2(34, 16), down, 0, cell =>
+            {
+                if (!taken[cell] && kind[cell] != KWild)
+                {
+                    kind[cell] = KYard;
+                }
+            });
         }
 
         // ── The stairs ────────────────────────────────────────────────
 
-        /// <summary>A tall stair up a retaining wall's face, its top at the face: where along, its foot's level; and the walkers' way up it.</summary>
-        void TallStair(float along, int tier, string name)
+        /// <summary>
+        /// A stair up a retaining wall: its head at the wall's face (`face`, the village's frame), climbing `up`, `across`
+        /// m to the side; on the terrace below, its whole run on it and free. Its walkers' way, its parapet gap. Whether it went in.
+        /// </summary>
+        /// <summary>Why the last stair did not go in (the build's log).</summary>
+        string stairWhy;
+
+        bool AddStair(Vector2 face, Vector2 up, float across, int low, string name, bool steep = false)
         {
-            var size = QingMaoBuilder.VillageGlb["prop_stairs_tall"].Size;
-            var top = TierEdge[tier];
-            var centre = W(along, top - size.y / 2);
-            ModelStairs.Add(("prop_stairs_tall", centre, Facing(South_), levels[tier], 1));
-            Inside(centre, size / 2 + new Vector2(0.4f, 0.4f), Facing(South_), 0, cell =>
+            var scale = new Vector3(StairAcross, Rise / StairLanding, steep ? SteepRun : StairRun);
+            var stairSize = Vector2.Scale(QingMaoBuilder.VillageGlb[StairModel].Size, new Vector2(scale.x, scale.z));
+            var side = new Vector2(up.y, -up.x);
+            var head = face + side * across;
+            var centreLocal = head - up * (stairSize.y / 2);
+            var centre = W(centreLocal);
+            var yaw = Facing(-up);
+            var half = stairSize / 2;
+
+            // Free: nothing standing, the water's cut, nor off the town (it may come down onto a pad or a street) — its
+            // run, 3.5 m before its foot to walk up to it, 4 m over its head on the terrace above to step out on.
+            var free = TerraceAt(head + up * (WallBody + 1.5f)) == low + 1 && TerraceAt(head - up * (stairSize.y + 3.5f)) == low;
+            var approach = W(head - up * (stairSize.y + 1.75f));
+            var landing = W(head + up * (WallBody + 2.9f));
+            Inside(W(head - up * (stairSize.y / 2 + 0.7f)), half - new Vector2(0.4f, 0.7f), yaw, 0, cell => free &= !taken[cell] && kind[cell] != KWild);
+            Inside(approach, new Vector2(half.x - 0.4f, 1.75f), yaw, 0, cell => free &= !taken[cell] && kind[cell] != KWild);
+            Inside(landing, new Vector2(half.x - 0.4f, 2), yaw, 0, cell => free &= !taken[cell] && kind[cell] != KWild);
+
+            if (!free)
+            {
+                stairWhy = TerraceAt(head + up * (WallBody + 1.5f)) == low + 1 ? "taken" : "no terrace above";
+
+                return false;
+            }
+
+            foreach (var (x, z) in new[] { (-1f, -0.9f), (1f, -0.9f), (-1f, 0.3f), (1f, 0.3f), (0f, -1f), (0f, 0f), (0f, 1f) })
+            {
+                if (TerraceAt(Local(Offset(centre, yaw, x * half.x, z * half.y))) != low)
+                {
+                    stairWhy = $"off its terrace at ({x}, {z})";
+
+                    return false;
+                }
+            }
+
+            ModelStairs.Add((StairModel, centre, yaw, TerraceLevel(low), scale));
+            var footWorld = W(head - up * stairSize.y);
+            var upWorld = WorldDir(up);
+            flights.Add((footWorld, upWorld, half.x - 0.5f, stairSize.y, TerraceLevel(low), TerraceLevel(low + 1)));
+            Inside(centre, half + new Vector2(0, 0.4f), yaw, 0, cell =>
             {
                 taken[cell] = true;
 
@@ -860,248 +1416,226 @@ namespace GuWorld.Editor
                     kind[cell] = KPaved;
                 }
             });
-            // The stone foot is 1.65 m in from its front (the flags stand before it).
-            var foot = top - size.y + 1.65f;
-            flights.Add((along, size.x / 2 - 0.6f, foot, top, levels[tier]));
-            Streets.Add(new Street { Name = name, Points = Resample(new List<Vector2> { W(along, foot - 4), W(along, top + WallBody + 2) }, 1.4f), Half = 3, Main = false });
+            Around(centre, half.magnitude + 5, (cell, d) => stairNear[cell] = Mathf.Min(stairNear[cell], d));
+
+            // The ground before its foot and over its head kept open (no house, no well there).
+            foreach (var (at, h) in new[] { (approach, 1.75f), (landing, 2f) })
+            {
+                Inside(at, new Vector2(half.x, h), yaw, 0, cell =>
+                {
+                    if (!taken[cell] && kind[cell] != KWild)
+                    {
+                        kind[cell] = KPaved;
+                    }
+                });
+            }
+            parapetGaps.Add((W(head), half.x + 0.5f));
+            Streets.Add(new Street { Name = name, Points = Resample(new List<Vector2> { footWorld - upWorld * 3, W(head + up * (WallBody + 2)) }, 1.4f), Half = half.x - 0.6f, Main = false });
+
+            return true;
         }
 
         void TierStairs()
         {
-            for (var k = 0; k < 2; k++)
+            // The main way: a double stair at each terrace it climbs, from the main gate to the court, and from the
+            // court to the upper gate.
+            foreach (var (from, to) in new[] { (South + 2, North - 2) })
             {
-                // On the axis two side by side; one in each wing between the quarters.
-                var width = QingMaoBuilder.VillageGlb["prop_stairs_tall"].Size.x;
-                TallStair(AxisAlong - width / 2, k, "Главная лестница");
-                TallStair(AxisAlong + width / 2, k, "Главная лестница");
-                TallStair(-300, k, "Западная лестница");
-                TallStair(400, k, "Восточная лестница");
+                var last = TerraceAt(new Vector2(AxisAlong, from));
+
+                for (var u = from; u <= to; u += 0.5f)
+                {
+                    var terrace = TerraceAt(new Vector2(AxisAlong, u));
+
+                    if (terrace == last)
+                    {
+                        continue;
+                    }
+
+                    var p = new Vector2(AxisAlong, u);
+                    var up = FieldUphill(p);
+                    var face = p - up * WallTuck;
+                    var low = Mathf.Min(last, terrace);
+                    var placed = AddStair(face, up, -stairSize.x / 2, low, "Главная лестница") & AddStair(face, up, stairSize.x / 2, low, "Главная лестница");
+
+                    // A terrace too shallow for the grand stair's run: one steep stair up the middle of the way.
+                    if (!placed && !flights.Any(f => Vector2.Distance(f.foot + f.up * f.run, W(face)) < 8))
+                    {
+                        placed = AddStair(face, up, 0, low, "Главная лестница", true);
+                    }
+
+                    if (!placed)
+                    {
+                        BuildLog.Write($"plan of {Place.Id}: no room for the main way's stair at {u:0} ({stairWhy}; {flights.Count(f => Vector2.Distance(f.foot + f.up * f.run, W(face)) < 10)} there)");
+                    }
+
+                    last = terrace;
+                }
+            }
+
+            // Up every other wall here and there: a stair every 55–130 m along it, where its run fits on the terrace
+            // below and nothing stands; none within 45 m of another.
+            foreach (var (low, _, face, up, _) in terraceWalls)
+            {
+                var length = Length(face);
+                var s = 20 + R() * 50;
+
+                while (s < length - 10)
+                {
+                    var tries = 0;
+                    var placed = false;
+
+                    for (; tries < 8 && !placed; tries++, s += 5)
+                    {
+                        var at = PointAt(face, s, out _);
+                        var i = Mathf.Clamp(Mathf.RoundToInt(s / Mathf.Max(0.1f, length) * (face.Count - 1)), 0, face.Count - 1);
+
+                        if (RectOutside(at.x, at.y) > -(WallStrip + 8) || flights.Any(f => Vector2.Distance(f.foot + f.up * f.run, W(at)) < 45))
+                        {
+                            continue;
+                        }
+
+                        placed = AddStair(at, up[i], 0, low, "Лестница") || AddStair(at, up[i], 0, low, "Лестница", true);
+                    }
+
+                    s += 55 + R() * 75;
+                }
             }
 
             TierParapets();
         }
 
-        // ── The great buildings, the squares, the streets ─────────────
-
-        /// <summary>One of the great buildings, its footprint's middle at (along, up), facing a way; its place before its front.</summary>
-        Building Great(string place, string model, float scale, float along, float up, Vector2 facing, BuildingKind kind, string label)
+        /// <summary>The parapets along every retaining wall's top inside the town, open where a stair comes up or water falls over.</summary>
+        void TierParapets()
         {
-            var size = QingMaoBuilder.VillageGlb[model].Size * scale;
-            var centre = W(along, up);
-            var yaw = Facing(facing);
-
-            if (!Free(centre, size / 2, yaw, 0.3f))
+            foreach (var (low, _, face, up, _) in terraceWalls)
             {
-                BuildLog.Write($"plan of {Place.Id}: {label} overlaps what stands there before it");
-            }
+                var top = TerraceLevel(low + 1);
+                var run = new List<int>();
 
-            var b = new Building { Kind = kind, Centre = centre, Size = size, Yaw = yaw, Floor = TierLevelAt(centre), Name = label, Lit = true, Model = model, Scale = scale, Pad = true, Seed = random.Next() };
-            Buildings.Add(b);
-            Take(centre, size / 2, yaw);
-
-            if (place != null)
-            {
-                Places.Add((place, Offset(centre, yaw, 0, size.y / 2 + 2.5f), yaw + 180));
-            }
-
-            return b;
-        }
-
-        void TierGreatBuildings()
-        {
-            // The top tier. The head's court: the great hall on the axis facing down it, the spring's pavilion over the
-            // spring, the elders' and the inner affairs' halls at the hall's sides, the ancestors' hall and the hall of
-            // punishments behind.
-            Great("pavilion", "prop_clan_main_hall", 1, AxisAlong, 228, South_, BuildingKind.Pavilion, "Павильон клана");
-            var spring = Local(QingMao.Spring);
-            Great(null, "prop_teahouse_octagon", 0.6f, WestWater, spring.y + 10, South_, BuildingKind.Hall, "Павильон источника");
-            Great("council", "prop_council_hall", 1, -32, 226, East_, BuildingKind.Hall, "Зал старейшин");
-            Great(null, "prop_council_hall", 1, 112, 226, West_, BuildingKind.Hall, "Зал внутренних дел");
-            Great("shrine", "prop_ancestral_hall", 1, AxisAlong, 280, South_, BuildingKind.Ancestral, "Зал предков");
-            Great(null, "prop_council_hall", 1, 110, 282, South_, BuildingKind.Hall, "Зал наказаний");
-
-            // The Mo family's quarter (west) and the Chi family's (east): each its manor round a courtyard, its own
-            // hall, a pavilion by its pond, its Gu nursery and granary.
-            foreach (var (family, manor, hall, garden, granary) in new[] { ("Мо", -285f, -355f, -130f, -405f), ("Чи", 415f, 485f, 298f, 535f) })
-            {
-                Great(null, "prop_inn_courtyard", 1, manor, 250, South_, BuildingKind.Hall, $"Усадьба семьи {family}");
-                Great(null, "prop_council_hall", 1, hall, 252, South_, BuildingKind.Hall, $"Родовой зал семьи {family}");
-                Great(null, "prop_teahouse_octagon", 0.45f, garden, 280, South_, BuildingKind.Teahouse, $"Беседка семьи {family}");
-                Pond(2, new Vector2(garden - 15, 255), new Vector2(garden + 15, 270));
-                Great(null, "prop_gu_nursery", 0.9f, garden, 225, South_, BuildingKind.GuFarm, $"Питомник Гу семьи {family}");
-                Great(null, "prop_granary", 0.9f, granary, 282, South_, BuildingKind.Granary, $"Амбар семьи {family}");
-            }
-
-            // The middle tier. The academy west of the square: its great hall above its yard, the hostel and the
-            // refectory at the yard's sides, the classrooms and its Gu nursery below the street.
-            Great("academy", "prop_academy_great", 0.6f, -95, 115, South_, BuildingKind.Academy, "Академия");
-            Great("hostel", "prop_dorm_great", 0.55f, -158, 112, East_, BuildingKind.Hostel, "Общежитие академии");
-            Great("refectory", "prop_refectory", 0.55f, -32, 118, West_, BuildingKind.Hall, "Трапезная академии");
-            Great(null, "prop_academy", 0.8f, -140, 17, South_, BuildingKind.Academy, "Класс академии");
-            Great(null, "prop_academy", 0.8f, -90, 17, South_, BuildingKind.Academy, "Класс академии");
-            Great(null, "prop_gu_nursery", 0.85f, -32, 17, South_, BuildingKind.GuFarm, "Питомник Гу академии");
-            // The healers east of the square: their hall, two herbalists, their nursery and store of herbs (their beds: TierGardens).
-            Great(null, "prop_academy", 0.9f, 172, 118, South_, BuildingKind.Hall, "Медицинский зал");
-            Great(null, "prop_herbalist", 0.9f, 128, 118, South_, BuildingKind.Herbalist, "Лекарня");
-            Great(null, "prop_herbalist", 0.9f, 216, 118, South_, BuildingKind.Herbalist, "Травяная лавка лекарей");
-            Great(null, "prop_gu_nursery", 0.85f, 130, 17, South_, BuildingKind.GuFarm, "Питомник лечебных Гу");
-            Great(null, "prop_granary", 0.85f, 200, 17, South_, BuildingKind.Granary, "Склад трав");
-            Great("teahouse", "prop_teahouse_octagon", 0.75f, 95, 22, West_, BuildingKind.Teahouse, "Чайный дом «Восемь ветров»");
-
-            // The lowest tier. By the gate square: the guards' barracks and the outer affairs' hall; up the axis, the
-            // great tavern and the inn either side of the stairs' foot; the market rows along the street.
-            Great(null, "prop_dorm_great", 0.55f, -45, -152, East_, BuildingKind.Hostel, "Казарма стражи");
-            Great(null, "prop_council_hall", 1, 120, -160, West_, BuildingKind.Hall, "Зал внешних дел");
-            Great("tavern great", "prop_tavern_great", 0.5f, -12, -96, South_, BuildingKind.Tavern, "Таверна у площади");
-            Great(null, "prop_inn_courtyard", 0.8f, 95, -96, South_, BuildingKind.Inn, "Постоялый двор");
-            Great("market", "prop_market_row", 0.7f, -86, -133, North_, BuildingKind.Shop, "Торговый ряд");
-            Great(null, "prop_market_row", 0.7f, 175, -133, North_, BuildingKind.Shop, "Торговый ряд");
-            Great(null, "prop_gambling_tent", 0.8f, 300, -95, South_, BuildingKind.Gambling, "Игорный дом");
-        }
-
-        void TierPads()
-        {
-            var down = Facing(South_);
-            // The middle square at the main stairs' head, the gate square inside the main gate, the forecourt of the
-            // great hall, the academy's yard (its training ground), the caravans' field.
-            AddPad("square", W(AxisAlong, 15), new Vector2(35, 23), down, true);
-            Square = Pads[Pads.Count - 1];
-            Places.Add(("square", W(AxisAlong, 15), down));
-            AddPad("gate square", W(AxisAlong, -158), new Vector2(38, 20), down, true);
-            AddPad("forecourt", W(AxisAlong, 178), new Vector2(60, 25), down, true);
-            AddPad("academy yard", W(-95, 74), new Vector2(45, 20), down, false);
-            Inside(W(-95, 74), new Vector2(45, 20), down, 0, cell =>
-            {
-                if (!taken[cell] && kind[cell] != KWild)
+                for (var i = 0; i <= face.Count; i++)
                 {
-                    kind[cell] = KYard;
-                }
-            });
-            Places.Add(("academy yard", W(-95, 74), down));
-            AddPad("caravans", W(-150, -152), new Vector2(45, 22), down, false);
-            Inside(W(-150, -152), new Vector2(45, 22), down, 0, cell =>
-            {
-                if (!taken[cell] && kind[cell] != KWild)
-                {
-                    kind[cell] = KYard;
-                }
-            });
-        }
+                    var open = i == face.Count;
 
-        /// <summary>A straight street (in the village's frame), laid in the ground (paved or trodden); `order`: when houses are set along it.</summary>
-        void Way(string name, float a0, float u0, float a1, float u1, float half, bool paved, bool main, int order)
-        {
-            var from = W(a0, u0);
-            var to = W(a1, u1);
-            Streets.Add(new Street { Name = name, Points = Resample(new List<Vector2> { from, to }, 1.4f), Half = half, Main = main });
-            Inside((from + to) / 2, new Vector2(half, Vector2.Distance(from, to) / 2), YawFacing(to - from), 0, cell =>
-            {
-                if (kind[cell] != KWild && !taken[cell])
-                {
-                    kind[cell] = paved ? KPaved : KLane;
-                }
-            });
-
-            if (order >= 0)
-            {
-                lotStreets.Add((new Vector2(a0, u0), new Vector2(a1, u1), half, order));
-            }
-        }
-
-        /// <summary>Each tier's lanes: (its lowest lane, its street, a lane between, its highest lane) uphill.</summary>
-        static readonly float[][] TierLanes =
-        {
-            new[] { South + RingInset, TierStreet[0], -73f, TierEdge[0] - 6 },
-            new[] { TierEdge[0] + 8, TierStreet[1], 92f, TierEdge[1] - 6 },
-            new[] { TierEdge[1] + 8, TierStreet[2], 245f, North - RingInset },
-        };
-
-        static readonly string[][] TierLaneNames =
-        {
-            new[] { "Улица у южной стены", "Нижняя улица", "Рыночный переулок", "Улица под стеной" },
-            new[] { "Средняя набережная", "Средняя улица", "Улица мастеров", "Улица под верхней стеной" },
-            new[] { "Верхняя набережная", "Верхняя улица", "Улица усадеб", "Улица у северной стены" },
-        };
-
-        /// <summary>The lanes across each tier, from its lowest lane to its highest, along the slope (not by the axis or a channel).</summary>
-        static readonly float[] CrossLanes = { -440, -370, -230, -160, -100, 120, 190, 320, 470, 525 };
-
-        void TierStreets()
-        {
-            var west = West + RingInset;
-            var east = East - RingInset;
-
-            // The main ways first (their lots go first): each tier's street from gate to gate, the axis.
-            for (var k = 0; k < 3; k++)
-            {
-                Way(TierLaneNames[k][1], West, TierStreet[k], East, TierStreet[k], k == 2 ? 5 : 6, true, true, 0);
-            }
-
-            Way("Главная дорога", AxisAlong, South, AxisAlong, TierEdge[0] - 82, 7, true, true, 0);
-            Way("Дорога через площадь", AxisAlong, TierEdge[0] + WallBody, AxisAlong, TierEdge[1] - 82, 6, true, true, -1);
-            Way("Дорога к павильону", AxisAlong, TierEdge[1] + WallBody, AxisAlong, 207, 6, true, true, -1);
-
-            for (var k = 0; k < 3; k++)
-            {
-                var lanes = TierLanes[k];
-                var low = lanes[0];
-                var high = lanes[3];
-                // Along: the lowest lane (the promenade over the wall below, or the lane by the south wall), the one between
-                // (not through the academy's and the healers' grounds, nor the head's court), the highest.
-                Lane(TierLaneNames[k][0], west - RingHalf, east + RingHalf, low, k == 0 ? RingHalf : 3.5f, k > 0, 1);
-                Lane(TierLaneNames[k][2], west, east, lanes[2], 3.5f, false, 1, k == 1 ? (-185f, 260f) : k == 2 ? (WestWater, EastWater) : (0f, 0f));
-                Lane(TierLaneNames[k][3], west - RingHalf, east + RingHalf, high, RingHalf, false, 2);
-                // Up the tier: the lanes by the side walls, the cross lanes.
-                Way("Улица у стены", west, low, west, high, RingHalf, false, false, 3);
-                Way("Улица у стены", east, low, east, high, RingHalf, false, false, 3);
-
-                foreach (var a in CrossLanes)
-                {
-                    // Not through the head's court, nor the academy's or the healers' grounds.
-                    if ((k == 2 && a > WestWater && a < EastWater) || (k == 1 && a > -185 && a < 260))
+                    if (!open)
                     {
+                        var world = W(face[i]);
+                        open = RectOutside(face[i].x, face[i].y) > -WallStrip || parapetGaps.Any(g => Vector2.Distance(g.at, world) < g.half);
+                    }
+
+                    if (!open)
+                    {
+                        run.Add(i);
                         continue;
                     }
 
-                    Way("Переулок", a, low, a, high, 3, false, false, 2);
-                }
-            }
+                    if (run.Count >= 2)
+                    {
+                        var parapet = new Wall { Face = true, Thick = 0.55f, Backs = new List<Vector2>() };
 
-            // Lanes by the channels (their banks walked), and round the head's court.
-            for (var k = 0; k < 3; k++)
-            {
-                var low = TierLanes[k][0];
-                var high = TierLanes[k][3];
-                Way("Улица у канала", WestWater + 5, low, WestWater + 5, high, 2.5f, false, false, 3);
-                Way("Улица у канала", EastWater - 5, low, EastWater - 5, high, 2.5f, false, false, 3);
+                        foreach (var k in run)
+                        {
+                            parapet.Points.Add(W(face[k] + up[k] * 0.02f));
+                            parapet.Backs.Add(WorldDir(up[k]));
+                            parapet.Low.Add(top + 0.45f);
+                            parapet.High.Add(top + ParapetHeight - 0.22f);
+                        }
+
+                        Walls.Add(parapet);
+                    }
+
+                    run.Clear();
+                }
             }
         }
 
-        /// <summary>A lane along the slope at `u`, in pieces round what it must not run through: the tall stairs, and the stretches given (along, from, to).</summary>
-        void Lane(string name, float a0, float a1, float u, float half, bool main, int order, params (float from, float to)[] blocked)
-        {
-            var cuts_ = blocked.Where(b => b.to > b.from).ToList();
+        // ── The streets ───────────────────────────────────────────────
 
-            foreach (var (along, halfWidth, foot, top, _) in flights)
+        /// <summary>A street along a polyline (the village's frame), laid in the ground (paved or trodden); `order`: when houses are set along it (none if below 0).</summary>
+        void PolyWay(string name, List<Vector2> local, float half, bool paved, bool main, int order)
+        {
+            var points = local.Select(p => W(p)).ToList();
+
+            if (points.Count < 2)
             {
-                if (u + half > foot - 4 && u - half < top)
+                return;
+            }
+
+            Streets.Add(new Street { Name = name, Points = points, Half = half, Main = main });
+
+            for (var i = 0; i + 1 < points.Count; i++)
+            {
+                var a = points[i];
+                var b = points[i + 1];
+                Inside((a + b) / 2, new Vector2(half, Vector2.Distance(a, b) / 2 + 0.3f), YawFacing(b - a), 0, cell =>
                 {
-                    cuts_.Add((along - halfWidth - 1.6f, along + halfWidth + 1.6f));
+                    if (kind[cell] != KWild && !taken[cell])
+                    {
+                        kind[cell] = paved ? KPaved : KLane;
+                    }
+                });
+            }
+
+            if (order >= 0)
+            {
+                lotStreets.Add((points, half, order, main));
+            }
+        }
+
+        /// <summary>A straight street from one point to another (the village's frame).</summary>
+        void Way(string name, Vector2 from, Vector2 to, float half, bool paved, bool main, int order) =>
+            PolyWay(name, Resample(new List<Vector2> { from, to }, 1.4f), half, paved, main, order);
+
+        /// <summary>The terraces' lanes' names, from the lowest up.</summary>
+        static readonly string[] LaneNames =
+        {
+            "Нижняя улица", "Рыночная улица", "Улица фонарей", "Каменная улица", "Улица мастеров", "Ясеневая улица",
+            "Средняя улица", "Улица у источника", "Сосновая улица", "Бамбуковая улица", "Лунная улица", "Верхняя улица",
+            "Улица усадеб", "Северная улица", "Улица облаков", "Улица у скал",
+        };
+
+        void TierStreets()
+        {
+            // The main way: from the main gate up the middle to the square, from the court on to the upper gate.
+            Way("Главная дорога", new Vector2(AxisAlong, South), new Vector2(AxisAlong, 0), 6, true, true, 0);
+            Way("Дорога к павильону", new Vector2(AxisAlong, 0), new Vector2(AxisAlong, 58), 6, true, true, -1);
+            Way("Северная дорога", new Vector2(AxisAlong, 106), new Vector2(AxisAlong, North), 5, true, true, 0);
+
+            // Each terrace's lane along it.
+            var lowest = lanes.Count > 0 ? lanes.Min(l => l.terrace) : 0;
+
+            foreach (var (terrace, line) in lanes)
+            {
+                PolyWay(LaneNames[Mathf.Clamp(terrace - lowest, 0, LaneNames.Length - 1)], line, 3, false, false, 1);
+            }
+
+            // The side gates' ways in to their terrace's lane.
+            foreach (var gate in Gates.Where(g => g.Name == "gate west" || g.Name == "gate east"))
+            {
+                var local = Local(gate.At - gate.Out * (WallStrip + 1));
+
+                if (NearestLane(local, TerraceAt(local), 120, out var lane))
+                {
+                    Way(gate.Name == "gate west" ? "Западная дорога" : "Восточная дорога", Local(gate.At), lane, 4, true, true, 2);
                 }
             }
 
-            var from = a0;
-
-            foreach (var (b0, b1) in cuts_.OrderBy(c => c.from).Append((a1 + 1000, a1 + 1000)))
+            // From each stair's foot and head to the lanes of the terraces below and above it.
+            foreach (var (foot, up, _, run, low, _) in flights.ToList())
             {
-                var to = Mathf.Min(a1, b0);
+                var below = Local(foot - up * 2);
+                var above = Local(foot + up * (run + WallBody + 1.5f));
+                var lowTerrace = Mathf.RoundToInt((low - levelBase) / Rise);
 
-                if (to - from > 6)
+                if (NearestLane(below, lowTerrace, 40, out var a) && Vector2.Distance(a, below) > 1.5f)
                 {
-                    Way(name, from, u, to, u, half, false, main, order);
+                    Way("Переулок", below, a, 2.5f, false, false, 3);
                 }
 
-                from = Mathf.Max(from, b1);
+                if (NearestLane(above, lowTerrace + 1, 45, out var b) && Vector2.Distance(b, above) > 1.5f)
+                {
+                    Way("Переулок", above, b, 2.5f, false, false, 3);
+                }
             }
         }
 
@@ -1110,30 +1644,33 @@ namespace GuWorld.Editor
         {
             foreach (var street in Streets)
             {
-                var a = Local(street.Points[0]);
-                var b = Local(street.Points[street.Points.Count - 1]);
-
-                foreach (var channel in Channels)
+                for (var s = 0; s + 1 < street.Points.Count; s++)
                 {
-                    for (var i = 0; i + 1 < channel.Points.Count; i++)
+                    var a = Local(street.Points[s]);
+                    var b = Local(street.Points[s + 1]);
+
+                    foreach (var channel in Channels)
                     {
-                        var c = Local(channel.Points[i]);
-                        var d = Local(channel.Points[i + 1]);
-
-                        if (!Crossing(a, b, c, d, out var at))
+                        for (var i = 0; i + 1 < channel.Points.Count; i++)
                         {
-                            continue;
+                            var c = Local(channel.Points[i]);
+                            var d = Local(channel.Points[i + 1]);
+
+                            if (!Crossing(a, b, c, d, out var at))
+                            {
+                                continue;
+                            }
+
+                            var way = (b - a).normalized;
+                            var world = W(at);
+
+                            if (Bridges.Any(x => Vector2.Distance(x.Centre, world) < 4))
+                            {
+                                continue;
+                            }
+
+                            Bridges.Add(new Bridge { Centre = world, Half = new Vector2(street.Half + 0.4f, channel.Half + 1.4f), Yaw = Facing(way), Top = channel.Top + 0.25f });
                         }
-
-                        var way = (b - a).normalized;
-                        var world = W(at);
-
-                        if (Bridges.Any(x => Vector2.Distance(x.Centre, world) < 3))
-                        {
-                            continue;
-                        }
-
-                        Bridges.Add(new Bridge { Centre = world, Half = new Vector2(street.Half + 0.4f, channel.Half + 1.4f), Yaw = Facing(way), Top = channel.Top + 0.25f });
                     }
                 }
             }
@@ -1193,7 +1730,7 @@ namespace GuWorld.Editor
             var north = Facing(North_);
             var s = Local(Square.Centre);
 
-            // The middle square: three stalls (the noodles, the rice, Baoshan's Gu) facing the way across it, their goods beside them.
+            // The square: three stalls (the noodles, the rice, Baoshan's Gu) facing the way across it, their goods beside them.
             var stalls = new[] { (W(s.x - 19, s.y - 7), east), (W(s.x - 19, s.y + 5), east), (W(s.x + 19, s.y - 7), west) };
 
             for (var i = 0; i < stalls.Length; i++)
@@ -1209,7 +1746,7 @@ namespace GuWorld.Editor
             // merit board of the tide) and the drum, stone lanterns at the corners.
             Decor("prop_village_well", W(s.x + 19, s.y + 7), west, 1, true, true);
             Places.Add(("well", W(s.x + 16.4f, s.y + 7), east));
-            var tree = W(s.x - 15, s.y + 11);
+            var tree = W(s.x - 15, s.y + 10);
             Thing("old tree", tree, R() * 360, 3.4f, true);
 
             for (var i = 0; i < 4; i++)
@@ -1218,49 +1755,50 @@ namespace GuWorld.Editor
                 Places.Add(($"bench {i}", seat, YawFacing(tree - seat) + 180));
             }
 
-            Decor("prop_bench_stone", W(s.x + 11, s.y + 16), south, 1, true, true);
-            Decor("prop_bench_stone", W(s.x + 23, s.y + 16), south, 1, true, true);
-            Thing("notice board", W(s.x - 10, s.y - 18), south, 0.8f, true);
-            Thing("drum", W(s.x + 10, s.y - 18), south, 0.9f, true);
+            Decor("prop_bench_stone", W(s.x + 11, s.y + 12), south, 1, true, true);
+            Decor("prop_bench_stone", W(s.x + 23, s.y + 12), south, 1, true, true);
+            Thing("notice board", W(s.x - 10, s.y - 12), south, 0.8f, true);
+            Thing("drum", W(s.x + 10, s.y - 12), south, 0.9f, true);
 
-            foreach (var (a, u) in new[] { (-30f, -20f), (30f, -20f), (-30f, 20f), (30f, 20f) })
+            foreach (var (a, u) in new[] { (-31f, -12f), (31f, -12f), (-31f, 12f), (31f, 12f) })
             {
                 Thing("stone lantern", W(s.x + a, s.y + u), south, 0.6f, true);
             }
 
-            // The gate square: goods, stalls, carts by the barracks; a stele of the clan facing the gate.
+            // The gate square: goods, a stele of the clan facing the gate.
             var g = Local(Pads.First(p => p.Name == "gate square").Centre);
-            Decor("prop_clan_stele", W(g.x, g.y + 12), south, 1, true, true);
+            Decor("prop_clan_stele", W(g.x, g.y + 10), south, 1, true, true);
             Places.Add(("market", W(g.x + 20, g.y), west));
 
             for (var i = 0; i < 6; i++)
             {
-                Decor("prop_market_goods", W(g.x - 30 + i * 12, g.y - 8), north, 0.8f, true, true);
+                Decor("prop_market_goods", W(g.x - 30 + i * 12, g.y - 6), north, 0.8f, true, true);
             }
 
-            // The forecourt: bronze dings and steles either side of the way up, lotus vats and pines before the hall.
+            // The forecourt before the great hall: bronze dings and steles either side of the way up, lotus vats and
+            // pines before the hall, banners.
             var f = Local(Pads.First(p => p.Name == "forecourt").Centre);
 
             foreach (var side in new[] { -1, 1 })
             {
-                Decor("prop_bronze_ding", W(AxisAlong + side * 16, f.y - 2), south, 1, true, true);
-                Decor("prop_clan_stele", W(AxisAlong + side * 16, f.y + 14), south, 1, true, true);
-                Decor("prop_lotus_vat", W(AxisAlong + side * 11, f.y + 20), south, 1, true, true);
-                Decor("prop_bonsai_pine", W(AxisAlong + side * 14, f.y + 20), south, 1, false, true);
-                Decor("prop_lotus_vat", W(AxisAlong + side * 40, f.y + 20), south, 1, true, true);
-                Thing("banner", W(AxisAlong + side * 30, f.y + 21), south, 0.5f, true);
-                Thing("banner", W(AxisAlong + side * 10, TierEdge[1] + 4), south, 0.5f, true);
-                Thing("banner", W(AxisAlong + side * 10, TierEdge[0] + 4), south, 0.5f, true);
+                Decor("prop_bronze_ding", W(AxisAlong + side * 18, f.y - 4), south, 1, true, true);
+                Decor("prop_clan_stele", W(AxisAlong + side * 30, f.y + 1), south, 1, true, true);
+                Decor("prop_lotus_vat", W(AxisAlong + side * 11, f.y + 4), south, 1, true, true);
+                Decor("prop_bonsai_pine", W(AxisAlong + side * 14, f.y + 4), south, 1, false, true);
+                Decor("prop_lotus_vat", W(AxisAlong + side * 46, f.y + 4), south, 1, true, true);
+                Thing("banner", W(AxisAlong + side * 40, f.y + 5), south, 0.5f, true);
             }
 
-            // The academy's yard: weapon racks along its lower side, go tables, straw dummies' room in the middle.
-            foreach (var a in new[] { -130f, -120f, -70f, -60f })
+            // The academy's yard: weapon racks along its lower side, go tables by the hall, room in the middle.
+            var y = Local(Pads.First(p => p.Name == "academy yard").Centre);
+
+            foreach (var a in new[] { -32f, -22f, 22f, 32f })
             {
-                Decor("prop_weapon_rack", W(a, 56), north, 1, true, true);
+                Decor("prop_weapon_rack", W(y.x + a, y.y - 10), north, 1, true, true);
             }
 
-            Decor("prop_go_table", W(-130, 90), south, 1, true, true);
-            Decor("prop_go_table", W(-60, 90), south, 1, true, true);
+            Decor("prop_go_table", W(y.x - 30, y.y + 9), south, 1, true, true);
+            Decor("prop_go_table", W(y.x + 30, y.y + 9), south, 1, true, true);
 
             // Inside each gate: a weapon rack and the spears by one side of the way, a brazier by the other.
             foreach (var gate in Gates)
@@ -1274,85 +1812,97 @@ namespace GuWorld.Editor
             }
         }
 
-        /// <summary>The families' quarters behind bamboo fences: between them and the head's court, along the channels' outer banks (gaps where the lanes go through, a moon gate on each lane).</summary>
+        /// <summary>The families' quarters behind bamboo fences (not along the fort's wall): a moon gate in the middle of the lower side and wherever a lane goes through.</summary>
         void TierFences()
         {
-            foreach (var along in new[] { WestWater - 8, EastWater + 8 })
+            var length = QingMaoBuilder.VillageGlb["prop_bamboo_fence"].Size.x;
+
+            foreach (var centre in new[] { new Vector2(-320, 262), new Vector2(400, 262) })
             {
-                var length = QingMaoBuilder.VillageGlb["prop_bamboo_fence"].Size.x;
-                var yaw = Facing(East_);
+                var min = centre - new Vector2(93, 38);
+                var max = centre + new Vector2(93, 34);
+                var sides = new[] { (new Vector2(min.x, min.y), new Vector2(max.x, min.y)), (new Vector2(min.x, min.y), new Vector2(min.x, max.y)), (new Vector2(max.x, min.y), new Vector2(max.x, max.y)) };
 
-                for (var u = TierEdge[1] + 3 + length / 2; u < North - WallStrip - length / 2; u += length)
+                foreach (var (from, to) in sides)
                 {
-                    var at = W(along, u);
-                    var k = KindAt(at);
+                    var span = Vector2.Distance(from, to);
+                    var dir = (to - from) / span;
+                    var yaw = Facing(new Vector2(dir.y, -dir.x));
 
-                    if (k == KLane || k == KPaved)
+                    for (var s = length / 2; s < span - length / 2; s += length)
                     {
-                        // A lane through the fence: a moon gate over it, or just the gap on the street itself.
-                        if (Mathf.Abs(u - TierStreet[2]) > 8)
+                        var local = from + dir * s;
+                        var at = W(local);
+                        var k = KindAt(at);
+
+                        if (k == KLane || k == KPaved || (from.y == to.y && Mathf.Abs(local.x - centre.x) < length))
                         {
                             Decor("prop_moon_gate", at, yaw, 0.9f, true, true);
+                            continue;
                         }
 
-                        continue;
+                        Decor("prop_bamboo_fence", at, yaw, 1, true);
                     }
-
-                    Decor("prop_bamboo_fence", at, yaw, 1, true);
                 }
             }
         }
 
-        /// <summary>Lanterns (the artist's posts) along the main ways and each tier's street, both sides, not at a crossing; round the forecourt, at the stairs' feet and heads.</summary>
+        /// <summary>Lanterns (the artist's posts) along the main way both sides, along the lanes now and then, by each stair's foot and head.</summary>
         void TierLanterns()
         {
-            bool Street(float a, float u)
+            void Post(Vector2 at, float yaw)
             {
-                var k = KindAt(W(a, u));
-
-                return k == KLane || k == KPaved;
-            }
-
-            void Post(float a, float u, Vector2 facing) => Decor("prop_moon_lantern_post", W(a, u), Facing(facing), 1, true, true);
-
-            for (var u = South + 22; u < TierEdge[0] - 84; u += 14)
-            {
-                foreach (var side in new[] { -1, 1 })
+                // Not on another's foot (the double stairs' inner posts fall together).
+                if (!ModelProps.Any(m => m.model == "prop_moon_lantern_post" && Vector2.Distance(m.at, at) < 2.6f))
                 {
-                    var edge = AxisAlong + side * 10;
-
-                    if (!Street(edge, u) && !Street(edge, u - 5) && !Street(edge, u + 5))
-                    {
-                        Post(AxisAlong + side * 6.2f, u, side > 0 ? West_ : East_);
-                    }
+                    Decor("prop_moon_lantern_post", at, yaw, 1, true, true);
                 }
             }
 
-            for (var k = 0; k < 3; k++)
+            foreach (var (from, to) in new[] { (South + 20f, -3f), (108f, North - 16f) })
             {
-                var half = k == 2 ? 5 : 6;
-
-                for (var a = West + 24; a < East - 20; a += 24)
+                for (var u = from; u < to; u += 14)
                 {
                     foreach (var side in new[] { -1, 1 })
                     {
-                        var edge = TierStreet[k] + side * (half + 3);
+                        var at = W(AxisAlong + side * 7.2f, u);
+                        var cell = CellOf(at);
 
-                        if (!Street(a, edge) && !Street(a - 5, edge) && !Street(a + 5, edge))
+                        if (cell >= 0 && stairNear[cell] > 4)
                         {
-                            Post(a, TierStreet[k] + side * (half - 0.8f), side > 0 ? South_ : North_);
+                            Post(at, Facing(side > 0 ? West_ : East_));
                         }
                     }
                 }
+            }
 
-                // Either side of each stair's foot and head.
-                if (k < 2)
+            foreach (var (_, line) in lanes)
+            {
+                var points = line.Select(p => W(p)).ToList();
+                var length = Length(points);
+
+                for (float s = 10 + R() * 20, side = 1; s < length - 10; s += 28 + R() * 22, side = -side)
                 {
-                    foreach (var a in new[] { AxisAlong - 12, AxisAlong + 12, -310f, -290f, 390f, 410f })
+                    var p = PointAt(points, s, out var tangent);
+                    var normal = new Vector2(-tangent.y, tangent.x) * side;
+                    var cell = CellOf(p + normal * 3.6f);
+
+                    // Not before a stair's foot or over its head.
+                    if (cell >= 0 && stairNear[cell] > 14)
                     {
-                        Post(a, TierEdge[k] - 86, North_);
-                        Post(a, TierEdge[k] + 4, South_);
+                        Post(p + normal * 3.6f, YawFacing(-normal));
                     }
+                }
+            }
+
+            foreach (var (foot, up, half, run, _, _) in flights)
+            {
+                var across = new Vector2(up.y, -up.x);
+
+                foreach (var side in new[] { -1, 1 })
+                {
+                    Post(foot - up * 1.5f + across * side * (half + 1.6f), YawFacing(-up));
+                    Post(foot + up * (run + WallBody + 1.5f) + across * side * (half + 1.6f), YawFacing(-up));
                 }
             }
         }
@@ -1361,106 +1911,189 @@ namespace GuWorld.Editor
 
         void TierWishes()
         {
-            void Want(BuildingKind kind, string name, string model, float scale, float along, float up, float radius = 40) =>
+            void Want(BuildingKind kind, string name, string model, float scale, float along, float up, float radius = 45) =>
                 wishes.Add(new Wish { Kind = kind, Name = name, Model = model, Scale = scale, Target = W(along, up), Radius = radius });
 
-            // Round the middle square and the gate square: the trades people walk to.
-            Want(BuildingKind.Tavern, "Харчевня", "prop_eatery", 0.85f, -20, 52);
-            Want(BuildingKind.Teahouse, "Чайная", "prop_teahouse", 0.85f, 100, 52);
-            Want(BuildingKind.Shop, "Лавка", "prop_shop", 0.9f, 0, -112);
-            Want(BuildingKind.Shop, "Лавка", "prop_shop", 0.9f, 80, -112);
-            Want(BuildingKind.Shop, "Лавка", "prop_shop", 0.9f, 140, 38);
-            Want(BuildingKind.Herbalist, "Лавка травника", "prop_herbalist", 0.9f, -330, -112);
+            // Round the court and the gate square: the trades people walk to.
+            Want(BuildingKind.Tavern, "Харчевня", "prop_eatery", 0.85f, -75, 5);
+            Want(BuildingKind.Teahouse, "Чайная", "prop_teahouse", 0.85f, 150, -45);
+            Want(BuildingKind.Shop, "Лавка", "prop_shop", 0.9f, -40, -128);
+            Want(BuildingKind.Shop, "Лавка", "prop_shop", 0.9f, 125, -128);
+            Want(BuildingKind.Shop, "Лавка", "prop_shop", 0.9f, -80, -50);
+            Want(BuildingKind.Herbalist, "Лавка травника", "prop_herbalist", 0.9f, -330, -90);
             // Three taverns, as the clan has (the bamboo wine is the inn's alone): one among the masters, one by the crafts.
-            Want(BuildingKind.Tavern, "Таверна «Рисовое вино»", "prop_tavern", 0.85f, 350, 52, 50);
-            Want(BuildingKind.Tavern, "Таверна «Мутное вино»", "prop_tavern", 0.85f, 380, -112, 50);
+            Want(BuildingKind.Tavern, "Таверна «Рисовое вино»", "prop_tavern", 0.85f, 330, 160, 50);
+            Want(BuildingKind.Tavern, "Таверна «Мутное вино»", "prop_tavern", 0.85f, 380, -100, 50);
             // The crafts: smithies, the clan's granaries along the east wall; the poor's eatery.
-            Want(BuildingKind.Smithy, "Кузница", "prop_smithy", 0.9f, 330, -60, 45);
-            Want(BuildingKind.Smithy, "Кузница", "prop_smithy", 0.9f, 450, -60, 45);
-            Want(BuildingKind.Smithy, "Оружейная кузница", "prop_smithy", 0.9f, 520, -112, 45);
+            Want(BuildingKind.Smithy, "Кузница", "prop_smithy", 0.9f, 340, -50, 45);
+            Want(BuildingKind.Smithy, "Кузница", "prop_smithy", 0.9f, 450, -30, 45);
+            Want(BuildingKind.Smithy, "Оружейная кузница", "prop_smithy", 0.9f, 520, -130, 45);
 
-            foreach (var u in new[] { -160f, -112f, -60f })
+            foreach (var u in new[] { -150f, -95f, -40f })
             {
-                Want(BuildingKind.Granary, "Амбар клана", "prop_granary", 0.9f, 540, u, 45);
+                Want(BuildingKind.Granary, "Амбар клана", "prop_granary", 0.9f, 545, u, 45);
             }
 
-            Want(BuildingKind.Tavern, "Харчевня для бедных", "prop_eatery", 0.8f, -420, -112, 50);
-            Want(BuildingKind.Shop, "Лавка", "prop_shop", 0.9f, -300, 52, 50);
-            Want(BuildingKind.Shop, "Лавка", "prop_shop", 0.9f, 330, 52, 50);
-            Want(BuildingKind.Teahouse, "Чайная", "prop_teahouse", 0.85f, -420, 52, 50);
+            Want(BuildingKind.Tavern, "Харчевня для бедных", "prop_eatery", 0.8f, -430, -100, 50);
+            Want(BuildingKind.Shop, "Лавка", "prop_shop", 0.9f, -320, 150, 50);
+            Want(BuildingKind.Shop, "Лавка", "prop_shop", 0.9f, 350, 60, 50);
+            Want(BuildingKind.Teahouse, "Чайная", "prop_teahouse", 0.85f, -430, 150, 50);
         }
 
-        /// <summary>The quarter a spot (the village's frame) is in.</summary>
+        /// <summary>The quarter a spot (the village's frame) is in; their edges wander.</summary>
         enum Quarter { Head, Family, Academy, Healers, Masters, Market, Mortals, Crafts }
 
         static Quarter QuarterAt(Vector2 local)
         {
-            var a = local.x;
+            var a = local.x + MountainShape.Fbm(local.x * 0.012f + 9, local.y * 0.012f + 4, 2) * 50;
+            var u = local.y + MountainShape.Fbm(local.x * 0.012f + 2, local.y * 0.012f + 13, 2) * 36;
 
-            switch (TierAt(local.y))
+            if (a > -60 && a < 140 && u > -25 && u < 140)
             {
-                case 2:
-                    return a > WestWater && a < EastWater ? Quarter.Head : Quarter.Family;
-                case 1:
-                    return a > -185 && a < 5 ? Quarter.Academy : a > 75 && a < 260 ? Quarter.Healers : Quarter.Masters;
-                default:
-                    return a < -150 ? Quarter.Mortals : a > 230 ? Quarter.Crafts : Quarter.Market;
+                return Quarter.Head;
             }
+
+            if (u > 205 && (a < -200 || a > 290))
+            {
+                return Quarter.Family;
+            }
+
+            if (a > -270 && a < -60 && u > -25 && u < 150)
+            {
+                return Quarter.Academy;
+            }
+
+            if (a > 140 && a < 300 && u > -25 && u < 150)
+            {
+                return Quarter.Healers;
+            }
+
+            if (u < -60)
+            {
+                return a < -130 ? Quarter.Mortals : a > 220 ? Quarter.Crafts : Quarter.Market;
+            }
+
+            return u < 30 && a < -280 ? Quarter.Mortals : u < 30 && a > 320 ? Quarter.Crafts : Quarter.Masters;
+        }
+
+        /// <summary>What may stand on a lot: the artist's model (none: a mortal's hut of the procedural kit), its scale and stretch, its kind, the trade it is, its footprint; plain: never turned side on or mirrored (a sign on its front).</summary>
+        class Lot
+        {
+            public string Model;
+            public float Scale = 1;
+            public Vector3 Stretch = Vector3.one;
+            public BuildingKind Kind;
+            public Wish Wish;
+            public Vector2 Size;
+            public bool Plain;
+        }
+
+        /// <summary>A model on a lot: stretched a little each way, mirrored half the time (unless plain).</summary>
+        Lot Pick(string model, float scale, BuildingKind kind, bool plain = false)
+        {
+            var stretch = plain ? Vector3.one : new Vector3((0.9f + R() * 0.22f) * (R() < 0.5f ? -1 : 1), 0.93f + R() * 0.15f, 0.9f + R() * 0.22f);
+            var size = QingMaoBuilder.VillageGlb[model].Size * scale;
+
+            return new Lot { Model = model, Scale = scale, Stretch = stretch, Kind = kind, Size = new Vector2(size.x * Mathf.Abs(stretch.x), size.y * stretch.z), Plain = plain };
+        }
+
+        /// <summary>A mortal's hut of the procedural kit (thatched, crooked, as in the hamlets).</summary>
+        Lot Hut() => new Lot { Model = null, Kind = BuildingKind.Poor, Size = new Vector2(5.6f + R() * 3, 4.8f + R() * 2.4f) };
+
+        /// <summary>One of several lots by their weights.</summary>
+        Lot OneOf(params (float weight, System.Func<Lot> make)[] options)
+        {
+            var pick = R() * options.Sum(o => o.weight);
+
+            foreach (var (weight, make) in options)
+            {
+                if ((pick -= weight) <= 0)
+                {
+                    return make();
+                }
+            }
+
+            return options[options.Length - 1].make();
         }
 
         /// <summary>
-        /// What may stand on a lot here, the first that fits: a wanted trade near its spot; else by the quarter — the
-        /// families' and the head's people in big bamboo houses, the masters in bamboo houses with a shop now and then,
-        /// the market's shops, the mortals' poor houses, the crafts' poor houses and sheds — the poor in the rows by
-        /// the wall everywhere but the top; else a smaller one.
+        /// What may stand on a lot here, the first that fits: a wanted trade near its spot; else one by the quarter's
+        /// mix (the agent's table, 2026-10-25) — the head's and the families' people in bamboo houses, long houses,
+        /// plastered shop-houses; the masters' a mix of all with their workshops; the market's shops; the mortals' and
+        /// the crafts' poor houses, huts, sheds, stores and smithies; else something smaller.
         /// </summary>
-        IEnumerable<(string model, float scale, BuildingKind kind, Wish wish)> LotChoices(Vector2 local, bool main)
+        IEnumerable<Lot> LotChoices(Vector2 local, bool main)
         {
             var world = W(local);
             var wish = wishes.Where(w => !w.Done && Vector2.Distance(w.Target, world) < w.Radius).OrderBy(w => Vector2.Distance(w.Target, world)).FirstOrDefault();
 
             if (wish != null)
             {
-                yield return (wish.Model, wish.Scale, wish.Kind, wish);
+                var size = QingMaoBuilder.VillageGlb[wish.Model].Size * wish.Scale;
+
+                yield return new Lot { Model = wish.Model, Scale = wish.Scale, Kind = wish.Kind, Wish = wish, Size = size, Plain = true };
             }
 
-            var small = (SmallShops[random.Next(SmallShops.Length)], 1f, BuildingKind.Shop, (Wish)null);
+            Lot Small() => Pick(SmallShops[random.Next(SmallShops.Length)], 1, BuildingKind.Shop, true);
             var quarter = QuarterAt(local);
 
-            if (InsideDistance(world) < 30 && TierAt(local.y) < 2)
+            // Three tries of the quarter's mix (a big one may not fit where a smaller would), then something small.
+            for (var i = 0; i < 3; i++)
             {
-                yield return ("prop_poor_house", 0.85f + R() * 0.1f, BuildingKind.Poor, null);
-                yield return ("prop_poor_house", 0.75f, BuildingKind.Poor, null);
-                yield break;
+                yield return Mix();
             }
 
-            switch (quarter)
+            yield return OneOf((40, Hut), (30, () => Pick("prop_poor_house", 0.68f + R() * 0.08f, BuildingKind.Poor)), (30, Small));
+            yield return Hut();
+
+            Lot Mix()
             {
+                switch (quarter)
+                {
                 case Quarter.Head:
                 case Quarter.Family:
-                    yield return ("guyue_bamboo_house", 0.88f + R() * 0.06f, BuildingKind.Family, null);
-                    yield return ("guyue_bamboo_house", 0.78f, BuildingKind.Family, null);
-                    break;
+                    return OneOf(
+                        (50, () => Pick("guyue_bamboo_house", 0.8f + R() * 0.15f, BuildingKind.Family)),
+                        (15, () => Pick("prop_poor_house", 0.85f + R() * 0.15f, BuildingKind.Family)),
+                        (12, () => Pick("prop_academy_dorm", 0.58f + R() * 0.08f, BuildingKind.Family)),
+                        (10, () => Pick("prop_shop_small_a", 1, BuildingKind.Family)),
+                        (8, () => Pick("prop_eatery", 0.65f, BuildingKind.Family, true)),
+                        (5, () => Pick("prop_granary", 0.65f, BuildingKind.Shed)));
                 case Quarter.Market:
-                    var pick = R();
-                    yield return main ? (pick < 0.4f ? small : pick < 0.75f ? ("prop_shop", 0.9f, BuildingKind.Shop, null) : ("guyue_bamboo_house", 0.75f, BuildingKind.Family, null))
-                        : (pick < 0.2f ? small : ("guyue_bamboo_house", 0.75f, BuildingKind.Family, null));
-                    yield return small;
-                    break;
+                    return OneOf(
+                        (main ? 35 : 20, () => Pick("prop_shop", 0.9f, BuildingKind.Shop, true)),
+                        (35, Small),
+                        (15, () => Pick("guyue_bamboo_house", 0.75f, BuildingKind.Family)),
+                        (10, () => Pick("prop_poor_house", 0.9f, BuildingKind.Poor)),
+                        (5, () => Pick("prop_herbalist", 0.85f, BuildingKind.Herbalist, true)),
+                        (5, () => Pick("prop_eatery", 0.7f, BuildingKind.Family, true)));
                 case Quarter.Mortals:
-                    yield return R() < 0.08f ? small : ("prop_poor_house", 0.85f + R() * 0.12f, BuildingKind.Poor, null);
-                    yield return ("prop_poor_house", 0.75f, BuildingKind.Poor, null);
-                    break;
+                    return OneOf(
+                        (40, () => Pick("prop_poor_house", 0.75f + R() * 0.25f, BuildingKind.Poor)),
+                        (30, Hut),
+                        (10, () => Pick("prop_shop_small_c", 1, BuildingKind.Shop, true)),
+                        (12, () => Pick("prop_poor_house", 0.5f + R() * 0.1f, BuildingKind.Shed)),
+                        (8, () => Pick("prop_academy_dorm", 0.5f, BuildingKind.Poor)));
                 case Quarter.Crafts:
-                    var c = R();
-                    yield return c < 0.12f ? small : c < 0.3f ? ("prop_poor_house", 0.75f, BuildingKind.Shed, null) : ("prop_poor_house", 0.9f, BuildingKind.Poor, null);
-                    yield return ("prop_poor_house", 0.75f, BuildingKind.Poor, null);
-                    break;
+                    return OneOf(
+                        (30, () => Pick("prop_poor_house", 0.8f + R() * 0.2f, BuildingKind.Poor)),
+                        (20, Hut),
+                        (12, () => Pick("prop_granary", 0.7f, BuildingKind.Shed)),
+                        (10, () => Pick("prop_academy_dorm", 0.6f, BuildingKind.Poor)),
+                        (10, () => Pick("prop_shop_small_c", 1, BuildingKind.Shop, true)),
+                        (8, () => Pick("prop_smithy", 0.7f, BuildingKind.Shed, true)),
+                        (10, () => Pick("prop_poor_house", 0.5f + R() * 0.1f, BuildingKind.Shed)));
                 default:
-                    yield return (main && R() < 0.12f) || R() < 0.04f ? small : ("guyue_bamboo_house", 0.8f, BuildingKind.Family, null);
-                    yield return ("guyue_bamboo_house", 0.7f, BuildingKind.Family, null);
-                    yield return ("prop_poor_house", 0.9f, BuildingKind.Poor, null);
-                    break;
+                    return OneOf(
+                        (25, () => Pick("guyue_bamboo_house", 0.75f + R() * 0.12f, BuildingKind.Family)),
+                        (main ? 25 : 18, Small),
+                        (15, () => Pick("prop_poor_house", 0.85f + R() * 0.15f, BuildingKind.Family)),
+                        (10, () => Pick("prop_shop", 0.85f, BuildingKind.Shop, true)),
+                        (10, () => Pick("prop_academy_dorm", 0.6f, BuildingKind.Family)),
+                        (5, () => Pick("prop_granary", 0.7f, BuildingKind.Shed)),
+                        (5, () => Pick("prop_eatery", 0.65f, BuildingKind.Family, true)),
+                        (5, () => Pick("prop_smithy", 0.6f, BuildingKind.Shed, true)));
+                }
             }
         }
 
@@ -1468,91 +2101,138 @@ namespace GuWorld.Editor
         {
             TierWishes();
 
-            foreach (var (from, to, half, order) in lotStreets.OrderBy(s => s.order))
+            foreach (var (line, half, _, main) in lotStreets.OrderBy(s => s.order))
             {
-                Lots(from, to, half, 1, order == 0);
-                Lots(from, to, half, -1, order == 0);
+                Lots(line, half, 1, main);
+                Lots(line, half, -1, main);
             }
 
+            FillHouses();
             AssignTrades();
+            BuildLog.Write($"plan of {Place.Id}: {Buildings.Count} buildings: " + string.Join(", ", Buildings.GroupBy(b => b.Model ?? "hut").OrderByDescending(g => g.Count()).Select(g => $"{g.Count()} {g.Key}")));
         }
 
         /// <summary>
-        /// Houses along one side of a straight street (`side`: left or right of its way): one after another, each
-        /// square to it, its front `Setback` from its edge, a gap between, an alley now and then; where one does not fit
-        /// (a crossing, what stands there) a smaller one is tried, else the next metre.
+        /// Houses along one side of a street (`side`: left or right of its way), as a village grows them: one after
+        /// another, each turned to the street give or take a few degrees, now and then side on, set back by more or
+        /// less, with gaps of a step or of a whole yard between; where one does not fit, a smaller, else on a little.
         /// </summary>
-        void Lots(Vector2 from, Vector2 to, float half, int side, bool main)
+        void Lots(List<Vector2> line, float half, int side, bool main)
         {
-            var dir = (to - from).normalized;
-            var normal = new Vector2(-dir.y, dir.x) * side;
-            var length = Vector2.Distance(from, to);
-            var yaw = Facing(-normal);
-            var s = 0f;
-            var since = 0;
+            var length = Length(line);
+            var s = R() * 4;
 
-            while (s < length - 4)
+            while (s < length - 3)
             {
                 var placed = 0f;
+                var p = PointAt(line, s, out var t);
 
-                foreach (var (model, scale, kind_, wish) in LotChoices(from + dir * s + normal * (half + 6), main))
+                foreach (var lot in LotChoices(Local(p + new Vector2(-t.y, t.x) * side * (half + 6)), main))
                 {
-                    var size = QingMaoBuilder.VillageGlb[model].Size * scale;
+                    var turned = !lot.Plain && lot.Wish == null && R() < 0.18f;
+                    var front = turned ? lot.Size.y : lot.Size.x;
+                    var deep = turned ? lot.Size.x : lot.Size.y;
 
-                    if (s + size.x > length)
+                    if (s + front > length)
                     {
                         continue;
                     }
 
-                    var local = from + dir * (s + size.x / 2) + normal * (half + Setback + size.y / 2);
-                    var centre = W(local);
+                    var mid = PointAt(line, s + front / 2, out var tangent);
+                    var normal = new Vector2(-tangent.y, tangent.x) * side;
+                    var centre = mid + normal * (half + Setback + R() * (main ? 1.5f : 3.5f) + deep / 2);
+                    var jitter = (R() - 0.5f) * (lot.Model == null || lot.Kind == BuildingKind.Poor || lot.Kind == BuildingKind.Shed ? 26 : lot.Plain ? 6 : 14);
+                    var yaw = YawFacing(-normal) + (turned ? (R() < 0.5f ? 90 : -90) : 0) + jitter;
 
-                    // Whole on one tier, clear of the retaining walls' feet and tops.
-                    if (TierAt(local.y - size.magnitude / 2) != TierAt(local.y + size.magnitude / 2) || !Free(centre, size / 2, yaw, 0.7f))
+                    if (!OneTerrace(centre, lot.Size / 2, yaw) || !Free(centre, lot.Size / 2, yaw, 0.9f))
                     {
                         continue;
                     }
 
-                    AddHouse(centre, size, yaw, kind_, model, scale, wish);
-                    placed = size.x;
+                    AddHouse(centre, lot, yaw);
+                    placed = front;
                     break;
                 }
 
                 if (placed <= 0)
                 {
-                    s += 1;
+                    s += 1.5f;
                     continue;
                 }
 
-                since++;
-                var gap = 1.6f + R() * 0.8f;
+                var gap = 1.2f + R() * 3.5f;
 
-                if (since >= 3 + random.Next(3))
+                // Now and then a plot left empty: a yard, a garden, a tree.
+                if (R() < 0.18f)
                 {
-                    gap = 4.5f;
-                    since = 0;
+                    gap += 6 + R() * 10;
                 }
 
                 s += placed + gap;
             }
         }
 
-        void AddHouse(Vector2 centre, Vector2 size, float yaw, BuildingKind kind_, string model, float scale, Wish wish)
+        /// <summary>More houses in the room the streets' rows leave, each facing the nearest lane (else down the mountain), turned as it likes.</summary>
+        void FillHouses()
         {
-            var b = new Building { Kind = kind_, Centre = centre, Size = size, Yaw = yaw, Floor = TierLevelAt(centre), Seed = random.Next(), Lit = wish != null || R() < 0.55f, Model = model, Scale = scale, Pad = true };
+            var count = 0;
 
-            if (wish != null)
+            for (var tries = 0; tries < 16000 && count < 260; tries++)
             {
-                wish.Done = true;
-                b.Name = wish.Name;
+                var local = AnyWhere(16);
+                var at = W(local);
+
+                if (KindAt(at) != KGround || taken[CellOf(at)])
+                {
+                    continue;
+                }
+
+                var nearest = float.MaxValue;
+                var towards = Vector2.zero;
+                Around(at, 26, (cell, d) =>
+                {
+                    if ((kind[cell] == KLane || kind[cell] == KPaved) && d < nearest)
+                    {
+                        nearest = d;
+                        towards = new Vector2(Area.x + cell % Resolution * spacing, Area.y + cell / Resolution * spacing) - at;
+                    }
+                });
+                var facing = nearest < float.MaxValue ? YawFacing(towards) + (R() - 0.5f) * 40 : YawFacing(Down) + (R() - 0.5f) * 60;
+
+                foreach (var lot in LotChoices(local, false).Where(l => l.Wish == null))
+                {
+                    if (OneTerrace(at, lot.Size / 2, facing) && Free(at, lot.Size / 2, facing, 1.8f))
+                    {
+                        AddHouse(at, lot, facing);
+                        count++;
+                        break;
+                    }
+                }
+            }
+
+            BuildLog.Write($"plan of {Place.Id}: {count} houses in the room behind the rows");
+        }
+
+        void AddHouse(Vector2 centre, Lot lot, float yaw)
+        {
+            var b = new Building
+            {
+                Kind = lot.Kind, Centre = centre, Size = lot.Size, Yaw = yaw, Floor = TierLevelAt(centre), Seed = random.Next(), Lit = lot.Wish != null || R() < 0.55f,
+                Model = lot.Model, Scale = lot.Scale, Stretch = lot.Stretch, Mortal = lot.Model == null, Pad = lot.Model != null,
+            };
+
+            if (lot.Wish != null)
+            {
+                lot.Wish.Done = true;
+                b.Name = lot.Wish.Name;
             }
 
             Buildings.Add(b);
-            Take(centre, size / 2, yaw);
+            Take(centre, lot.Size / 2, yaw);
 
-            if (kind_ == BuildingKind.Family || kind_ == BuildingKind.Poor)
+            if (lot.Kind == BuildingKind.Family || lot.Kind == BuildingKind.Poor)
             {
-                Doorsteps.Add((Offset(centre, yaw, 0, size.y / 2 + 1.1f), yaw));
+                Doorsteps.Add((Offset(centre, yaw, 0, lot.Size.y / 2 + 1.1f), yaw));
             }
         }
 
@@ -1563,7 +2243,7 @@ namespace GuWorld.Editor
         {
             var half = QingMaoBuilder.VillageGlb[model].Size * scale / 2;
 
-            if (!Free(at, half, yaw, margin))
+            if (!Free(at, half, yaw, margin) || !OneTerrace(at, half, yaw))
             {
                 return false;
             }
@@ -1579,7 +2259,8 @@ namespace GuWorld.Editor
 
         void TierDecor()
         {
-            // By each building's front and sides, what its trade or its household keeps there (never on the street).
+            // By each building's front and sides, what its trade or its household keeps there (never on the street);
+            // by some houses a fence, a shed, firewood or a rack.
             foreach (var b in Buildings.ToList())
             {
                 var hx = b.Size.x / 2;
@@ -1597,14 +2278,28 @@ namespace GuWorld.Editor
                             Thing(DoorThings[random.Next(DoorThings.Length)], At((R() < 0.5f ? -1 : 1) * (1.2f + R() * (hx - 1.4f)), front), b.Yaw + (R() - 0.5f) * 60, 0.4f);
                         }
 
-                        if (b.Kind != BuildingKind.Family && R() < 0.6f)
+                        var pick = R();
+
+                        if (pick < (b.Kind == BuildingKind.Family ? 0.3f : 0.6f))
                         {
                             var thing = new[] { "prop_firewood_stack", "prop_drying_rack", "prop_barrels" }[random.Next(3)];
                             var scale = thing == "prop_barrels" ? 0.55f : 1;
                             var size = QingMaoBuilder.VillageGlb[thing].Size * scale;
                             Model(thing, At(aside * (hx + size.y / 2 + 0.6f), 0), b.Yaw + 90 * aside, scale, true, 0.4f);
                         }
-                        else if (R() < 0.3f)
+                        else if (pick < 0.75f && b.Kind != BuildingKind.Shed)
+                        {
+                            // A shed beside it (the poor house small), or a fence along its side.
+                            if (R() < 0.5f)
+                            {
+                                Model("prop_poor_house", At(aside * (hx + 2.8f), -b.Size.y * 0.15f), b.Yaw + (R() - 0.5f) * 30, 0.5f, true, 0.4f);
+                            }
+                            else
+                            {
+                                Model("prop_bamboo_fence", At(aside * (hx + 0.9f), -0.5f), b.Yaw + 90, 1, true, 0.3f);
+                            }
+                        }
+                        else if (R() < 0.4f)
                         {
                             Thing(R() < 0.5f ? "firewood" : "water jar", At(aside * (hx + 0.7f), (R() - 0.5f) * b.Size.y * 0.6f), b.Yaw + 90, 0.6f);
                         }
@@ -1664,7 +2359,7 @@ namespace GuWorld.Editor
                         var half = new Vector2(b.Size.x / 2 - 1.2f, depth);
                         var at = Offset(b.Centre, b.Yaw, 0, -(back + depth));
 
-                        if (Free(at, half, b.Yaw, 0.6f))
+                        if (half.x > 1 && Free(at, half, b.Yaw, 0.6f) && OneTerrace(at, half, b.Yaw))
                         {
                             Gardens.Add((at, half, b.Yaw));
                             Take(at, half, b.Yaw, KGarden);
@@ -1718,19 +2413,22 @@ namespace GuWorld.Editor
                 }
             }
 
-            // Trees along the promenades over the walls (a view down over the town), plums in the head's court.
-            for (var k = 1; k < 3; k++)
+            // Trees along the tops of the retaining walls now and then (a view down over the town); plums round the court.
+            foreach (var (_, line, _, up, _) in terraceWalls)
             {
-                for (var a = West + 30; a < East - 30; a += 18)
-                {
-                    Thing(k == 2 && a > WestWater && a < EastWater ? "tree" : R() < 0.4f ? "pine tree" : "tree", W(a + (R() - 0.5f) * 4, TierEdge[k - 1] + 3.3f), R() * 360, 1.0f, false, 0.8f + R() * 0.3f);
-                }
-            }
+                var length = Length(line);
 
-            // Behind the great hall, a row of bamboo.
-            foreach (var a in new[] { 0f, 14f, 66f, 80f })
-            {
-                Model("prop_bamboo_grove", W(a, 258), Facing(South_), 0.7f, false, 0.3f);
+                for (var s = 8 + R() * 20; s < length - 4; s += 16 + R() * 26)
+                {
+                    var at = PointAt(line, s, out _);
+                    var i = Mathf.Clamp(Mathf.RoundToInt(s / Mathf.Max(0.1f, length) * (line.Count - 1)), 0, line.Count - 1);
+                    var spot = at + up[i] * (WallBody - WallTuck + 1.6f);
+
+                    if (RectOutside(spot.x, spot.y) < -(WallStrip + 3))
+                    {
+                        Thing(QuarterAt(spot) == Quarter.Head ? "tree" : R() < 0.4f ? "pine tree" : "tree", W(spot), R() * 360, 1.0f, false, 0.8f + R() * 0.3f);
+                    }
+                }
             }
 
             // Fallen leaves about the streets and yards.
@@ -1746,18 +2444,18 @@ namespace GuWorld.Editor
             }
         }
 
-        /// <summary>Vegetable gardens in the room the rows leave, fenced low; the healers' herb beds in rows; the mortals' plots by the lotus pond.</summary>
+        /// <summary>Vegetable gardens in the room the houses leave, fenced low; the healers' herb beds in rows.</summary>
         void TierGardens()
         {
-            // The healers' beds between their hall and the street below.
-            for (var a = 100f; a < 245; a += 12)
+            // The healers' beds between their hall and their nursery.
+            for (var a = 178f; a < 255; a += 12)
             {
-                for (var u = 62f; u < 100; u += 7)
+                for (var u = 52f; u < 88; u += 7)
                 {
                     var at = W(a, u);
                     var half = new Vector2(4.6f, 2.2f);
 
-                    if (Free(at, half, Facing(North_), 0.6f))
+                    if (Free(at, half, Facing(North_), 0.6f) && OneTerrace(at, half, Facing(North_)))
                     {
                         Gardens.Add((at, half, Facing(North_)));
                         Take(at, half, Facing(North_), KGarden);
@@ -1769,9 +2467,9 @@ namespace GuWorld.Editor
             {
                 var p = W(AnyWhere(14));
                 var half = new Vector2(2.4f + R() * 1.6f, 1.4f + R() * 0.8f);
-                var yaw = Facing(R() < 0.5f ? South_ : East_);
+                var yaw = Facing(R() < 0.5f ? South_ : East_) + (R() - 0.5f) * 30;
 
-                if (KindAt(p) != KGround || !Free(p, half, yaw, 0.8f))
+                if (KindAt(p) != KGround || !Free(p, half, yaw, 0.8f) || !OneTerrace(p, half, yaw))
                 {
                     continue;
                 }
