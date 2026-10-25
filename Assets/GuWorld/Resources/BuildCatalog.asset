@@ -661,3 +661,12 @@ MonoBehaviour:
     Middle: {x: 0, y: -0.002569899}
     Stretch: 0
     Repeat: 0
+  - Id: prop_stairs_tall
+    Label: prop_stairs_tall
+    Section: "\u041F\u0440\u043E\u0447\u0435\u0435"
+    Prefab: {fileID: 7691048504589119926, guid: 32921b71172c3f94c95d0048c7bfdd11, type: 3}
+    Size: {x: 8.080001, y: 81.96}
+    Height: 26.960007
+    Middle: {x: 0, y: 0}
+    Stretch: 0
+    Repeat: 0

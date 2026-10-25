@@ -28,6 +28,46 @@ namespace GuWorld.World
         public Vector2 TileCorner;
         public float TileSize;
         public bool Walled;
+        /// <summary>
+        /// Where it is a rectangle in its own frame (Gu Yue's terraced town, 2026-10-25): the rectangle's middle (along
+        /// the slope, uphill, from Centre) and half its size, m; zero: a circle of Radius.
+        /// </summary>
+        public Vector2 RectMiddle;
+        public Vector2 RectHalf;
+
+        /// <summary>How far outside its footprint a point is, m (negative inside).</summary>
+        public float Outside(Vector2 p)
+        {
+            if (RectHalf == Vector2.zero)
+            {
+                return Vector2.Distance(p, Centre) - Radius;
+            }
+
+            var d = p - Centre;
+            var along = new Vector2(-Downhill.y, Downhill.x);
+            var local = new Vector2(Vector2.Dot(d, along), -Vector2.Dot(d, Downhill)) - RectMiddle;
+            var q = new Vector2(Mathf.Abs(local.x) - RectHalf.x, Mathf.Abs(local.y) - RectHalf.y);
+            var outside = new Vector2(Mathf.Max(q.x, 0), Mathf.Max(q.y, 0)).magnitude;
+
+            return outside > 0 ? outside : Mathf.Max(q.x, q.y);
+        }
+
+        /// <summary>A point `beyond` m outside its footprint, out from its middle at an angle (radians, from +X).</summary>
+        public Vector2 Around(float angle, float beyond)
+        {
+            var direction = new Vector2(Mathf.Cos(angle), Mathf.Sin(angle));
+
+            if (RectHalf == Vector2.zero)
+            {
+                return Centre + direction * (Radius + beyond);
+            }
+
+            var along = new Vector2(-Downhill.y, Downhill.x);
+            var middle = Centre + along * RectMiddle.x - Downhill * RectMiddle.y;
+            var reach = Mathf.Min(RectHalf.x / Mathf.Max(1e-4f, Mathf.Abs(Vector2.Dot(direction, along))), RectHalf.y / Mathf.Max(1e-4f, Mathf.Abs(Vector2.Dot(direction, Downhill))));
+
+            return middle + direction * (reach + beyond);
+        }
     }
 
     /// <summary>
@@ -71,9 +111,9 @@ namespace GuWorld.World
         /// The Flower Wine Monk's secret cave: a crevice worn by a trickle of falling water in a boulder against a
         /// rock wall, reached from the spear bamboo grove (lore ch. 14) — uphill of the grove, outside the village.
         /// </summary>
-        public static readonly Vector2 SecretCave = new Vector2(-1738, -1770);
-        /// <summary>Qing Mao's spear bamboo, a grove east of Gu Yue.</summary>
-        public static readonly Vector2 Grove = new Vector2(-1840, -1880);
+        public static readonly Vector2 SecretCave = new Vector2(-1349, -1782);
+        /// <summary>Qing Mao's spear bamboo, a grove east of Gu Yue (outside its east wall since the town grew, 2026-10-25).</summary>
+        public static readonly Vector2 Grove = new Vector2(-1460, -1972);
         public const float GroveRadius = 170;
 
         public static readonly Vector2 Xiong = new Vector2(3150, -4750);
@@ -85,7 +125,10 @@ namespace GuWorld.World
 
         public static readonly Settlement[] Settlements =
         {
-            new Settlement { Id = "gu_yue", Name = "Деревня Гу Юэ", Clan = Clan.GuYue, Centre = GuYue, Radius = 230, Walled = true, TileSize = 1250 },
+            // A terraced town on three levels in a rectangle 1080 by 500 m (VillagePlanTiers.cs, 2026-10-25): its frame's
+            // downhill as MountainShape.DownhillAt has it there.
+            new Settlement { Id = "gu_yue", Name = "Деревня Гу Юэ", Clan = Clan.GuYue, Centre = GuYue, Radius = 300, Walled = true, TileSize = 1600,
+                Downhill = new Vector2(-0.4655f, -0.8850f), RectMiddle = new Vector2(40, 60), RectHalf = new Vector2(540, 250) },
             new Settlement { Id = "xiong", Name = "Деревня Сюн", Clan = Clan.Xiong, Centre = Xiong, Radius = 150, Walled = true, TileSize = 625 },
             new Settlement { Id = "bai", Name = "Деревня Бай", Clan = Clan.Bai, Centre = Bai, Radius = 155, Walled = true, TileSize = 625 },
             new Settlement { Id = "hamlet_willow", Name = "Хутор Ивовый", Clan = Clan.Mortal, Centre = new Vector2(-5150, -6150), Radius = 55 },

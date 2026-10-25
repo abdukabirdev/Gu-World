@@ -551,7 +551,7 @@ namespace GuWorld
                     var hour = clock.MinuteOfDay / 60;
 
                     return !Sandbox && Location.id == QingMao.Id && (hour < 5 || hour > 20.5f) &&
-                           !System.Array.Exists(QingMao.Settlements, s => Vector2.Distance(new Vector2(at.x, at.z), s.Centre) < s.Radius * 1.1f);
+                           !System.Array.Exists(QingMao.Settlements, s => s.Outside(new Vector2(at.x, at.z)) < Mathf.Min(s.Radius * 0.1f, 30));
                 default:
                     return false;
             }
@@ -646,7 +646,7 @@ namespace GuWorld
 
             foreach (var place in QingMao.Settlements)
             {
-                if (Vector2.Distance(p, place.Centre) < place.Radius * 1.35f)
+                if (place.Outside(p) < Mathf.Min(place.Radius * 0.35f, 80))
                 {
                     return LowerFirst(place.Name);
                 }
@@ -654,7 +654,7 @@ namespace GuWorld
 
             foreach (var place in QingMao.Settlements)
             {
-                if (Vector2.Distance(p, place.Centre) < place.Radius * 3 + 300)
+                if (place.Outside(p) < place.Radius * 2 + 300)
                 {
                     return $"окрестности: {LowerFirst(place.Name)}";
                 }
@@ -3386,7 +3386,8 @@ namespace GuWorld
             (Vector3, BeastKind[]) Den(float degrees, float beyond, BeastKind[] kinds)
             {
                 var angle = degrees * Mathf.Deg2Rad;
-                var at = new Vector3(village.Centre.x + Mathf.Cos(angle) * (village.Radius + beyond), 0, village.Centre.y + Mathf.Sin(angle) * (village.Radius + beyond));
+                var round = village.Around(angle, beyond);
+                var at = new Vector3(round.x, 0, round.y);
                 at.y = QingMao.GroundAt(at);
 
                 return (at, kinds);
@@ -3477,7 +3478,7 @@ namespace GuWorld
 
             var village = QingMao.Find("gu_yue");
 
-            if (hour >= 21 && tideDay != clock.Day && Vector2.Distance(new Vector2(body.transform.position.x, body.transform.position.z), village.Centre) < village.Radius + 500)
+            if (hour >= 21 && tideDay != clock.Day && village.Outside(new Vector2(body.transform.position.x, body.transform.position.z)) < 500)
             {
                 tideDay = clock.Day;
                 tide.Begin();
@@ -4063,9 +4064,10 @@ namespace GuWorld
                 {
                     var angle = (float)random.NextDouble() * Mathf.PI * 2;
                     var distance = Mathf.Lerp(rings[ring].from, rings[ring].to, (float)random.NextDouble());
-                    var flat = village.Centre + new Vector2(Mathf.Cos(angle), Mathf.Sin(angle)) * distance;
+                    // The rings' distances were from the middle of a village 230 m round: now beyond its footprint (Gu Yue's is a 1 km town).
+                    var flat = village.Around(angle, distance - 230);
 
-                    if (System.Array.Exists(QingMao.Settlements, s => Vector2.Distance(flat, s.Centre) < s.Radius + 40))
+                    if (System.Array.Exists(QingMao.Settlements, s => s.Outside(flat) < 40))
                     {
                         continue;
                     }

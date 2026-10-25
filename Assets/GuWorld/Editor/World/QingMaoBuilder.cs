@@ -77,8 +77,8 @@ namespace GuWorld.Editor
             {
                 var plan = Of(clan);
                 var gate = plan.Gates.FirstOrDefault(g => g.Name == name) ?? plan.Gates.OrderBy(g => g.Name).First();
-                // Where the gate's road meets the mountain (the level village's ramps reach far out).
-                return gate.At + gate.Out * gate.Reach;
+                // Where the gate's road meets the mountain (the town's ramps reach far out; the main gate's run along its plinth).
+                return gate.End ?? gate.At + gate.Out * gate.Reach;
             }
 
             Vector2 Hamlet(string id) => QingMao.Find(id).Centre;

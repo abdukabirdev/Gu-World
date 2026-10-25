@@ -73,6 +73,10 @@ namespace GuWorld.Editor
             public List<Vector2> Points = new List<Vector2>();
             public List<float> Low = new List<float>();
             public List<float> High = new List<float>();
+            /// <summary>Its points on its face, its body `Thick` deep towards `Back` (the high side): the terraced town's walls (else a dry-stone wall astride its line).</summary>
+            public bool Face;
+            public Vector2 Back;
+            public float Thick = 0.75f;
         }
 
         public class Building
@@ -114,6 +118,8 @@ namespace GuWorld.Editor
             public string Name;
             /// <summary>How far out from the gate its road reaches the mountain (the trails begin there), m.</summary>
             public float Reach = 8;
+            /// <summary>Where its road meets the mountain when not straight out (the main gate's ramp along the plinth).</summary>
+            public Vector2? End;
         }
 
         public readonly Settlement Place;
@@ -179,11 +185,11 @@ namespace GuWorld.Editor
             RadiusAlong = place.Radius * (place.Clan == Clan.GuYue ? 1.0f : 1.25f);
             RadiusUp = place.Radius * (place.Clan == Clan.GuYue ? 1.2f : 0.9f);
 
-            // Gu Yue (2026-10-24): one level ground in a rectangle (VillagePlanFlat.cs); its far reaches from the middle.
+            // Gu Yue (2026-10-25): a terraced town in a rectangle (VillagePlanTiers.cs); its far reaches from the middle.
             if (Glb)
             {
-                RadiusAlong = FlatEast;
-                RadiusUp = FlatNorth;
+                RadiusAlong = East;
+                RadiusUp = North;
             }
 
             void Phase(string what) => BuildLog.Mark($"plan of {place.Id}: {what}");
@@ -192,7 +198,7 @@ namespace GuWorld.Editor
 
             if (Glb)
             {
-                LayOutFlat();
+                LayOutTiers();
                 Debug.Log($"GU World: {place.Name}: level at {Level0:0.0} m, {Streets.Count} streets, {Buildings.Count} buildings, {ModelProps.Count} models, {Props.Count} things, {Gates.Count} gates");
 
                 return;
@@ -332,7 +338,7 @@ namespace GuWorld.Editor
         {
             if (Glb)
             {
-                return FlatHeight(new Vector2(x, z), naturalHeight);
+                return TierHeight(new Vector2(x, z), naturalHeight);
             }
 
             var p = new Vector2(x, z);
@@ -551,7 +557,7 @@ namespace GuWorld.Editor
 
         void AddPad(string name, Vector2 centre, Vector2 half, float yaw, bool paved)
         {
-            var pad = new Pad { Name = name, Centre = centre, Half = half, Yaw = yaw, Level = Glb ? Level0 : Terraced(Warp(centre), 0.07f), Paved = paved };
+            var pad = new Pad { Name = name, Centre = centre, Half = half, Yaw = yaw, Level = Glb ? TierLevelAt(centre) : Terraced(Warp(centre), 0.07f), Paved = paved };
             var index = (short)Pads.Count;
             Pads.Add(pad);
             Inside(centre, half, yaw, 0, cell =>
@@ -1350,7 +1356,7 @@ namespace GuWorld.Editor
         {
             if (Glb)
             {
-                PaintFlat(x, z, steep, weights);
+                PaintTiers(x, z, steep, weights);
 
                 return;
             }
@@ -1412,7 +1418,7 @@ namespace GuWorld.Editor
         {
             if (Glb)
             {
-                return GrassFlat(x, z);
+                return GrassTiers(x, z);
             }
 
             var p = new Vector2(x, z);
@@ -1437,6 +1443,6 @@ namespace GuWorld.Editor
             }
         }
 
-        public bool Wild(Vector2 p) => Glb ? WildFlat(p) : InsideDistance(p) < -14 && !Gates.Any(g => Vector2.Distance(g.At, p) < 16);
+        public bool Wild(Vector2 p) => Glb ? WildTiers(p) : InsideDistance(p) < -14 && !Gates.Any(g => Vector2.Distance(g.At, p) < 16);
     }
 }

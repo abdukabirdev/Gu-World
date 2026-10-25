@@ -214,6 +214,23 @@ namespace GuWorld.Editor
 
                     var low = Mathf.Min(wall.Low[i], wall.Low[i + 1]) - 0.45f;
                     var high = Mathf.Max(wall.High[i], wall.High[i + 1]) + 0.22f;
+
+                    // The terraced town's: its face on the line, its body behind it towards the high side, the coping over all.
+                    if (wall.Face)
+                    {
+                        if (high - low < 0.5f)
+                        {
+                            continue;
+                        }
+
+                        var body = mid + wall.Back * (wall.Thick / 2);
+                        var turn = Mathf.Atan2(along.x, along.y) * Mathf.Rad2Deg;
+                        var stone = stones.At(new Vector3(body.x, 0, body.y), turn);
+                        stone.Box(Rubble, new Vector3(0, (low + high) / 2, 0), new Vector3(wall.Thick, high - low, length + 0.06f));
+                        stone.Box(Stone, new Vector3(0, high + 0.06f, 0), new Vector3(wall.Thick + 0.2f, 0.12f, length + 0.08f));
+                        continue;
+                    }
+
                     // Its face towards the lower side.
                     var across = new Vector2(-along.y, along.x) / length;
                     var downhill = plan.Warp(mid + across * 1.5f) < plan.Warp(mid - across * 1.5f) ? across : -across;
@@ -224,6 +241,9 @@ namespace GuWorld.Editor
                     kit.Box(Stone, new Vector3(0, high + 0.06f, 0), new Vector3(0.85f, 0.12f, length + 0.08f));
                 }
             }
+
+            // The terraced town's water: its channels, ponds, falls and bridges.
+            BuildTownWater(root, plan, stones);
 
             // The stairs: the street's own width cut into treads along it, each from where the last ends.
             foreach (var street in plan.Streets.Where(s => s.Stair))
@@ -307,7 +327,160 @@ namespace GuWorld.Editor
             BuildVillageLayout(root, plan, Ground);
         }
 
-        static string MarkName(string place, Clan clan) => place switch
+        /// <summary>
+        /// The terraced town's water (VillagePlanTiers.cs): each channel's water between stone linings over a stone bed;
+        /// the ponds' and basins' water in stone rims; each fall a sheet of water from a stone spout down the wall's face
+        /// with spray where it lands; a stone bridge with low parapets wherever a street crosses a channel.
+        /// </summary>
+        static void BuildTownWater(Transform root, VillagePlan plan, Blocks stones)
+        {
+            if (plan.Channels.Count == 0 && plan.Pools.Count == 0)
+            {
+                return;
+            }
+
+            var holder = new GameObject("Town Water").transform;
+            holder.SetParent(root, false);
+            var water = Water;
+            var kit = new MeshKit();
+            Vector3 At(Vector2 p, float y) => new Vector3(p.x, y, p.y);
+
+            foreach (var channel in plan.Channels)
+            {
+                for (var i = 0; i + 1 < channel.Points.Count; i++)
+                {
+                    var a = channel.Points[i];
+                    var b = channel.Points[i + 1];
+                    var length = Vector2.Distance(a, b);
+                    var along = (b - a) / length;
+                    var across = new Vector2(-along.y, along.x);
+                    var w = channel.Half + 0.15f;
+                    kit.QuadUV(water, At(a - across * w, channel.Water), At(a + across * w, channel.Water), At(b + across * w, channel.Water), At(b - across * w, channel.Water),
+                        new Vector2(0, 0), new Vector2(1, 0), new Vector2(1, length * 0.2f), new Vector2(0, length * 0.2f));
+                    var mid = (a + b) / 2;
+                    var turn = Mathf.Atan2(along.x, along.y) * Mathf.Rad2Deg;
+                    var bottom = channel.Bed - 0.3f;
+                    var top = channel.Top + 0.18f;
+
+                    foreach (var side in new[] { -1, 1 })
+                    {
+                        var lining = mid + across * side * (channel.Half + 0.25f);
+                        stones.At(At(lining, 0), turn).Box(Stone, new Vector3(0, (bottom + top) / 2, 0), new Vector3(0.5f, top - bottom, length + 0.5f));
+                    }
+
+                    stones.At(At(mid, 0), turn).Box(Rubble, new Vector3(0, channel.Bed - 0.15f, 0), new Vector3(channel.Half * 2 + 0.1f, 0.3f, length + 0.2f));
+                }
+            }
+
+            foreach (var pool in plan.Pools)
+            {
+                var top = pool.Top + 0.25f;
+                var bottom = pool.Bed - 0.3f;
+
+                if (pool.Round)
+                {
+                    var r = pool.Half.x;
+
+                    for (var i = 0; i < 24; i++)
+                    {
+                        var a0 = 2 * Mathf.PI * i / 24;
+                        var a1 = 2 * Mathf.PI * (i + 1) / 24;
+                        kit.Triangle(water, At(pool.Centre, pool.Water), At(pool.Centre + new Vector2(Mathf.Cos(a0), Mathf.Sin(a0)) * (r + 0.1f), pool.Water), At(pool.Centre + new Vector2(Mathf.Cos(a1), Mathf.Sin(a1)) * (r + 0.1f), pool.Water), Vector3.up);
+                        var mid = (a0 + a1) / 2;
+                        var rim = pool.Centre + new Vector2(Mathf.Cos(mid), Mathf.Sin(mid)) * (r + 0.3f);
+                        stones.At(At(rim, 0), -mid * Mathf.Rad2Deg).Box(Stone, new Vector3(0, (bottom + top) / 2, 0), new Vector3(0.6f, top - bottom, 2 * Mathf.PI * (r + 0.3f) / 24 + 0.25f));
+                    }
+
+                    stones.At(At(pool.Centre, 0), 0).Box(Rubble, new Vector3(0, pool.Bed - 0.15f, 0), new Vector3(r * 1.8f, 0.3f, r * 1.8f));
+                    continue;
+                }
+
+                var turn = Quaternion.Euler(0, pool.Yaw, 0);
+                Vector2 P(float x, float z)
+                {
+                    var v = turn * new Vector3(x, 0, z);
+
+                    return pool.Centre + new Vector2(v.x, v.z);
+                }
+
+                var h = pool.Half + Vector2.one * 0.1f;
+                kit.QuadUV(water, At(P(-h.x, -h.y), pool.Water), At(P(h.x, -h.y), pool.Water), At(P(h.x, h.y), pool.Water), At(P(-h.x, h.y), pool.Water),
+                    new Vector2(0, 0), new Vector2(h.x * 0.2f, 0), new Vector2(h.x * 0.2f, h.y * 0.2f), new Vector2(0, h.y * 0.2f));
+
+                foreach (var (x, z, w, d) in new[] { (0f, -pool.Half.y - 0.3f, pool.Half.x * 2 + 1.2f, 0.6f), (0f, pool.Half.y + 0.3f, pool.Half.x * 2 + 1.2f, 0.6f), (-pool.Half.x - 0.3f, 0f, 0.6f, pool.Half.y * 2), (pool.Half.x + 0.3f, 0f, 0.6f, pool.Half.y * 2) })
+                {
+                    var c = P(x, z);
+                    stones.At(At(c, 0), pool.Yaw).Box(Stone, new Vector3(0, (bottom + top) / 2, 0), new Vector3(w, top - bottom, d));
+                }
+
+                stones.At(At(pool.Centre, 0), pool.Yaw).Box(Rubble, new Vector3(0, pool.Bed - 0.15f, 0), new Vector3(pool.Half.x * 2, 0.3f, pool.Half.y * 2));
+            }
+
+            var sheet = FallMaterial();
+
+            foreach (var fall in plan.Falls)
+            {
+                var side = new Vector2(-fall.Out.y, fall.Out.x);
+                const int rows = 10;
+                var half = fall.Width / 2;
+
+                for (var r = 0; r < rows; r++)
+                {
+                    Vector3 P(int row, float x)
+                    {
+                        var t = (float)row / rows;
+                        var at = fall.At + fall.Out * (0.9f + Mathf.Sqrt(t) * 1.8f) + side * x * (1 + t * 0.25f);
+
+                        return At(at, Mathf.Lerp(fall.Top, fall.Bottom, t * t * 0.4f + t * 0.6f));
+                    }
+
+                    kit.QuadUV(sheet, P(r, -half), P(r, half), P(r + 1, half), P(r + 1, -half),
+                        new Vector2(0, r / 3f), new Vector2(1, r / 3f), new Vector2(1, (r + 1) / 3f), new Vector2(0, (r + 1) / 3f), new Vector3(fall.Out.x, 0, fall.Out.y));
+                }
+
+                // The spout the water leaves the wall by; the spray where it lands (small: a channel's fall).
+                var spout = fall.At + fall.Out * 0.5f;
+                stones.At(At(spout, 0), Mathf.Atan2(fall.Out.x, fall.Out.y) * Mathf.Rad2Deg).Box(Stone, new Vector3(0, fall.Top - 0.35f, 0), new Vector3(fall.Width + 0.8f, 0.5f, 1.2f));
+                var spray = Spray(At(fall.At + fall.Out * 3, fall.Bottom + 0.6f));
+                spray.transform.SetParent(holder, true);
+                var system = spray.GetComponent<ParticleSystem>();
+                var main = system.main;
+                main.startSize = new ParticleSystem.MinMaxCurve(1.2f, 3f);
+                main.maxParticles = 70;
+                var emission = system.emission;
+                emission.rateOverTime = 16;
+                var shape = system.shape;
+                shape.scale = new Vector3(fall.Width + 2, 1, 3);
+            }
+
+            var waterGo = Place(holder, "Water", Save(kit, $"{plan.Place.Id} town water"), Vector3.zero, 0, false);
+            waterGo.GetComponent<MeshRenderer>().shadowCastingMode = UnityEngine.Rendering.ShadowCastingMode.Off;
+
+            foreach (var bridge in plan.Bridges)
+            {
+                var deck = stones.At(At(bridge.Centre, 0), bridge.Yaw);
+                deck.Box(Stone, new Vector3(0, bridge.Top - 0.25f, 0), new Vector3(bridge.Half.x * 2, 0.5f, bridge.Half.y * 2));
+
+                foreach (var x in new[] { -1, 1 })
+                {
+                    deck.Box(Stone, new Vector3(x * (bridge.Half.x - 0.18f), bridge.Top + 0.3f, 0), new Vector3(0.36f, 0.6f, bridge.Half.y * 2 - 0.4f));
+                }
+            }
+
+            BuildLog.Write($"town water of {plan.Place.Id}: {plan.Channels.Count} channels, {plan.Pools.Count} ponds and basins, {plan.Falls.Count} falls, {plan.Bridges.Count} bridges");
+        }
+
+        static string MarkName(string place, Clan clan) => clan == Clan.GuYue && place.StartsWith("gate") ? place switch
+        {
+            "gate south" => "Главные ворота",
+            "gate west" => "Нижние западные ворота",
+            "gate east lower" => "Нижние восточные ворота",
+            "gate west middle" => "Средние западные ворота",
+            "gate east" => "Средние восточные ворота",
+            "gate north" => "Верхние западные ворота",
+            "gate east upper" => "Верхние восточные ворота",
+            _ => place,
+        } : place switch
         {
             "square" => "Площадь",
             "pavilion" => clan == Clan.GuYue ? "Павильон клана (под ним — духовный источник)" : "Зал клана",
@@ -647,7 +820,7 @@ namespace GuWorld.Editor
             walls.SetParent(root, false);
 
             // Gu Yue's wall from the artist's fort models (VillageModels.cs), where they are: on its rectangle round the level ground.
-            if (clan == Clan.GuYue && (plan.LevelGround ? BuildFortRect(walls, plan) : BuildFortWall(walls, plan, ground, stones)))
+            if (clan == Clan.GuYue && (plan.LevelGround ? BuildFortRect(walls, plan, stones) : BuildFortWall(walls, plan, ground, stones)))
             {
                 return;
             }
@@ -907,7 +1080,7 @@ namespace GuWorld.Editor
 
                         foreach (var j in list)
                         {
-                            if (j > i && (nodes[i] - nodes[j]).sqrMagnitude < 4.5f * 4.5f && Mathf.Abs(ground(nodes[i]) - ground(nodes[j])) < 1.2f)
+                            if (j > i && (nodes[i] - nodes[j]).sqrMagnitude < 4.5f * 4.5f && Mathf.Abs(plan.WalkHeight(nodes[i]) - plan.WalkHeight(nodes[j])) < 1.2f)
                             {
                                 Link(i, j);
                             }
@@ -939,8 +1112,8 @@ namespace GuWorld.Editor
                 Link(Node(at), Nearest(at));
             }
 
-            // The places outside the walls the villagers go to: the spring cave and the grove (Gu Yue's).
-            if (plan.Place.Clan == Clan.GuYue)
+            // The places outside the walls the villagers go to: the spring cave and the grove (Gu Yue's; the town has its spring inside).
+            if (plan.Place.Clan == Clan.GuYue && !plan.Places.Any(p => p.name == "spring"))
             {
                 var spring = QingMao.Spring + plan.Down * 9;
                 spots.Add(new VillageLayout.Spot { name = "spring", at = new Vector3(spring.x, ground(spring), spring.y), yaw = Mathf.Atan2(-plan.Down.x, -plan.Down.y) * Mathf.Rad2Deg });
@@ -959,7 +1132,7 @@ namespace GuWorld.Editor
             layout.Settlement = plan.Place.Id;
             layout.Houses = homes.ToArray();
             layout.Places = spots.ToArray();
-            layout.Nodes = nodes.Select(n => new Vector3(n.x, ground(n), n.y)).ToArray();
+            layout.Nodes = nodes.Select(n => new Vector3(n.x, plan.WalkHeight(n), n.y)).ToArray();
             layout.Edges = edges.Select(e => new Vector2Int(e.Item1, e.Item2)).ToArray();
         }
 

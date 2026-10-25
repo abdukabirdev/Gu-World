@@ -397,7 +397,7 @@ namespace GuWorld.Editor
 
             foreach (var place in QingMao.Settlements)
             {
-                if (Vector2.Distance(p, place.Centre) < place.Radius * 1.2f + clearance)
+                if (place.Outside(p) < place.Radius * 0.2f + clearance)
                 {
                     return true;
                 }

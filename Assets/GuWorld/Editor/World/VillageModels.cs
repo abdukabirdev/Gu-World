@@ -73,6 +73,8 @@ namespace GuWorld.Editor
             ["fort_watchtower"] = new GlbModel(9.32f, 9.31f, 18.19f, -0.00f, 1.09f),
             // Stairs: their foot at the front (+Z), climbing to the back; the height is the rise.
             ["prop_stairs_grand"] = new GlbModel(8.08f, 23.32f, 9.02f, 0f, -1.46f),
+            // The grand stair three flights high with landings and a stone base (Claude/tools/blender/tall_stairs.py): a terrace of the town, 27.06 m.
+            ["prop_stairs_tall"] = new GlbModel(8.08f, 81.96f, 27.06f, 0f, 0f),
             ["prop_stairs_medium"] = new GlbModel(5.38f, 7.77f, 4.33f, 0f, -0.09f),
             ["prop_steps_small"] = new GlbModel(2.5f, 2.94f, 0.74f, 0f, 0.15f),
             // Props.
@@ -222,7 +224,7 @@ namespace GuWorld.Editor
         /// end exactly (no overlap to flicker, no gap to see through), their ends tucked 0.2 m into the towers and gates.
         /// All on the level ground: no footing.
         /// </summary>
-        static bool BuildFortRect(Transform walls, VillagePlan plan)
+        static bool BuildFortRect(Transform walls, VillagePlan plan, Blocks stones)
         {
             if (!HasVillageModel("fort_wall_segment") || !HasVillageModel("fort_battle_gate") || !HasVillageModel("fort_watchtower"))
             {
@@ -234,7 +236,8 @@ namespace GuWorld.Editor
             var segment = VillageGlb["fort_wall_segment"].Size.x * wallScale;
             var towerHalf = VillageGlb["fort_watchtower"].Size.x * wallScale / 2;
             var gateHalf = VillageGlb["fort_battle_gate"].Size.x * gateScale / 2;
-            var level = plan.Level0;
+            // Each piece on its tier's level (the terraced town): the side walls step up a tier at a tower on a stone footing.
+            float Level(Vector2 p) => plan.TierLevelAt(p);
             var corners = plan.Boundary;
             var lengths = 0;
             var towers = 0;
@@ -254,8 +257,21 @@ namespace GuWorld.Editor
 
                 var yaw = Mathf.Atan2(outward.x, outward.y) * Mathf.Rad2Deg;
                 var used = new List<(float from, float to)> { (-towerHalf, towerHalf), (length - towerHalf, length + towerHalf) };
-                PlaceVillageModel(walls, "fort_watchtower", "Corner Tower", a, yaw, level, wallScale);
+                PlaceVillageModel(walls, "fort_watchtower", "Corner Tower", a, yaw, Level(a), wallScale);
                 towers++;
+
+                foreach (var (at, low, high) in plan.WallSteps)
+                {
+                    var along = Vector2.Dot(at - a, tangent);
+
+                    if (Mathf.Abs(Vector2.Dot(at - a, outward)) < 1 && along > 0 && along < length)
+                    {
+                        used.Add((along - towerHalf, along + towerHalf));
+                        PlaceVillageModel(walls, "fort_watchtower", "Step Tower", at, yaw, high, wallScale);
+                        Footing(stones, at, yaw, new Vector3(towerHalf * 2 + 0.4f, 0, towerHalf * 2 + 0.4f), Vector2.zero, low - 0.5f, high);
+                        towers++;
+                    }
+                }
 
                 foreach (var gate in plan.Gates)
                 {
@@ -276,7 +292,7 @@ namespace GuWorld.Editor
                     if (used.All(t => along + towerHalf + 8 < t.from || along - towerHalf - 8 > t.to))
                     {
                         used.Add((along - towerHalf, along + towerHalf));
-                        PlaceVillageModelAt(walls, "fort_watchtower", "Tower", a + tangent * along, yaw, level, wallScale);
+                        PlaceVillageModelAt(walls, "fort_watchtower", "Tower", a + tangent * along, yaw, Level(a + tangent * along), wallScale);
                         towers++;
                     }
                 }
@@ -299,7 +315,7 @@ namespace GuWorld.Editor
 
                     for (var k = 0; k < count; k++)
                     {
-                        PlaceVillageModelAt(walls, "fort_wall_segment", "Wall", a + tangent * (from + (k + 0.5f) * width), yaw, level, stretch);
+                        PlaceVillageModelAt(walls, "fort_wall_segment", "Wall", a + tangent * (from + (k + 0.5f) * width), yaw, Level(a + tangent * (from + (k + 0.5f) * width)), stretch);
                         lengths++;
                     }
                 }
@@ -307,10 +323,10 @@ namespace GuWorld.Editor
 
             foreach (var gate in plan.Gates)
             {
-                PlaceVillageModelAt(walls, "fort_battle_gate", gate.Name, gate.At, Mathf.Atan2(gate.Out.x, gate.Out.y) * Mathf.Rad2Deg, level, gateScale);
+                PlaceVillageModelAt(walls, "fort_battle_gate", gate.Name, gate.At, Mathf.Atan2(gate.Out.x, gate.Out.y) * Mathf.Rad2Deg, Level(gate.At), gateScale);
             }
 
-            BuildLog.Write($"wall of {plan.Place.Id}: {lengths} lengths of the fort's wall, {towers} towers, {plan.Gates.Count} gates, on the level at {level:0.0} m");
+            BuildLog.Write($"wall of {plan.Place.Id}: {lengths} lengths of the fort's wall, {towers} towers, {plan.Gates.Count} gates, {plan.WallSteps.Count} steps");
 
             return true;
         }

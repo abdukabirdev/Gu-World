@@ -286,9 +286,9 @@ namespace GuWorld.Editor
                     foreach (var place in avoid)
                     {
                         var own = Array.IndexOf(allowed, place.Id) >= 0;
-                        var keep = own ? place.Radius * 1.3f + 6 : place.Radius * 1.35f + 30;
+                        var keep = own ? place.Radius * 0.3f + 6 : place.Radius * 0.35f + 30;
 
-                        if (!(own && nearEnd) && Vector2.Distance(at, place.Centre) < keep)
+                        if (!(own && nearEnd) && place.Outside(at) < keep)
                         {
                             step += 5000;
                         }

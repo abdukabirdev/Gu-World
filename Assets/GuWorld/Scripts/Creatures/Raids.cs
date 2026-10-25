@@ -77,7 +77,7 @@ namespace GuWorld.Creatures
             var at = new Vector2(hero.position.x, hero.position.z);
 
             // In a settlement (or just outside its walls) no one comes.
-            if (Array.Exists(QingMao.Settlements, s => Vector2.Distance(at, s.Centre) < s.Radius + 60))
+            if (Array.Exists(QingMao.Settlements, s => s.Outside(at) < 60))
             {
                 return;
             }

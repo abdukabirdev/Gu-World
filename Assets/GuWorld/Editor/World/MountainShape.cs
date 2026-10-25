@@ -53,11 +53,18 @@ namespace GuWorld.Editor
 
         public static readonly Stream[] Streams =
         {
-            // From the Gu Yue's spirit spring past the village's west side, down to the willow hamlet and off the map.
+            // The Gu Yue's spring water out of the town (2026-10-25: it runs through the town in the clan's own stone
+            // channels, VillagePlanTiers.cs): from below the west water gate, down to the willow hamlet and off the map.
             new Stream
             {
-                Name = "Ручей источника", HalfFrom = 1.6f, HalfTo = 6, Valley = 34, ValleyWidth = 230,
-                Points = new[] { QingMao.Spring, V(-2410, -1520), V(-2560, -1700), V(-2650, -1980), V(-2780, -2400), V(-3050, -3000), V(-3420, -3700), V(-3820, -4500), V(-4380, -5400), V(-5000, -6050), V(-5550, -6900), V(-6200, -8200), V(-6700, -10100) },
+                Name = "Ручей источника", HalfFrom = 1.8f, HalfTo = 6, Valley = 34, ValleyWidth = 230,
+                Points = new[] { V(-2670, -1878), V(-2650, -1980), V(-2780, -2400), V(-3050, -3000), V(-3420, -3700), V(-3820, -4500), V(-4380, -5400), V(-5000, -6050), V(-5550, -6900), V(-6200, -8200), V(-6700, -10100) },
+            },
+            // The town's east channel out of its east water gate, down into the spring's stream.
+            new Stream
+            {
+                Name = "Восточный рукав", HalfFrom = 1.0f, HalfTo = 1.8f, Valley = 8, ValleyWidth = 60,
+                Points = new[] { V(-2188, -2132), V(-2386, -2186), V(-2578, -2186), V(-2700, -2150) },
             },
             // The Bai river above the cliff: from the back mountain's high gullies to the lip of the fall.
             new Stream
@@ -499,8 +506,38 @@ namespace GuWorld.Editor
         {
             foreach (var place in QingMao.Settlements)
             {
+                var room = place.Radius * 0.25f + 25;
+
+                if (place.RectHalf != Vector2.zero)
+                {
+                    // A town in a rectangle: out across its nearest side.
+                    var along = new Vector2(-place.Downhill.y, place.Downhill.x);
+                    var middle = place.Centre + along * place.RectMiddle.x - place.Downhill * place.RectMiddle.y;
+                    var d = at - middle;
+                    var x = Vector2.Dot(d, along);
+                    var y = -Vector2.Dot(d, place.Downhill);
+                    var qx = Mathf.Abs(x) - place.RectHalf.x - room;
+                    var qy = Mathf.Abs(y) - place.RectHalf.y - room;
+
+                    if (qx < 0 && qy < 0)
+                    {
+                        if (qx > qy)
+                        {
+                            x = Mathf.Sign(x) * (place.RectHalf.x + room);
+                        }
+                        else
+                        {
+                            y = Mathf.Sign(y) * (place.RectHalf.y + room);
+                        }
+
+                        at = middle + along * x - place.Downhill * y;
+                    }
+
+                    continue;
+                }
+
                 var away = at - place.Centre;
-                var room = place.Radius * 1.25f + 25;
+                room += place.Radius;
 
                 if (away.magnitude < room)
                 {

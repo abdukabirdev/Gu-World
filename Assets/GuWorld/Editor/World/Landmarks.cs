@@ -64,8 +64,9 @@ namespace GuWorld.Editor
             var bai = QingMao.Bai;
             var xiong = QingMao.Xiong;
 
-            Add("moon_pavilion", "Лунный павильон", "pavilion", home, 380, 760, 30, 12);
-            Add("ancestor_shrine", "Святилище предков", "shrine", home, 300, 560, 14, 14);
+            // Gu Yue grew to a town 1080 by 500 m (2026-10-25): the places near it moved out with its wall.
+            Add("moon_pavilion", "Лунный павильон", "pavilion", home, 850, 1200, 30, 12);
+            Add("ancestor_shrine", "Святилище предков", "shrine", home, 800, 1100, 14, 14);
             Add("bamboo_manor", "Бамбуковая усадьба", "manor", QingMao.Grove, 200, 420, 24, 14);
             Add("stone_forest", "Каменный лес", "stone_forest", home, 1300, 2300, 85, 22);
             Add("demon_camp", "Лагерь демонического пути", "camp", home, 2400, 3400, 24, 16);
@@ -87,7 +88,8 @@ namespace GuWorld.Editor
                 return false;
             }
 
-            if (QingMao.Settlements.Any(s => Vector2.Distance(p, s.Centre) < s.Radius + radius + 90))
+            // Off a settlement's footprint (Gu Yue's terraced town: off its earthworks, 150 m round its wall).
+            if (QingMao.Settlements.Any(s => s.Outside(p) < radius + (s.RectHalf != Vector2.zero ? 150 : 90)))
             {
                 return false;
             }
