@@ -41,6 +41,16 @@ namespace GuWorld.World
 
         public static ChunkStreamer Current { get; private set; }
 
+        /// <summary>Where the squares are loaded round instead of the camera (the builder: the point it looks at); null — the camera.</summary>
+        public static Vector3? Watch;
+
+        /// <summary>
+        /// Squares kept in the world while one is near where the builder moved their things (a square's index → those
+        /// places on the ground, X and Z): a house carried out of its square does not vanish with it.
+        /// </summary>
+        [NonSerialized]
+        public Dictionary<int, List<Vector2>> Held = new Dictionary<int, List<Vector2>>();
+
         /// <summary>A square's things came into the world (the builder moves or takes away what was changed there).</summary>
         public static event Action<GameObject> SquareArrived;
 
@@ -110,6 +120,11 @@ namespace GuWorld.World
 
         static Vector3 Watcher()
         {
+            if (Watch.HasValue)
+            {
+                return Watch.Value;
+            }
+
             var camera = Camera.main;
 
             return camera != null ? camera.transform.position : Vector3.zero;
@@ -120,8 +135,55 @@ namespace GuWorld.World
             var c = Chunks[i];
             var dx = Mathf.Max(c.Corner.x - at.x, 0, at.x - (c.Corner.x + c.Size));
             var dz = Mathf.Max(c.Corner.y - at.z, 0, at.z - (c.Corner.y + c.Size));
+            var distance = Mathf.Sqrt(dx * dx + dz * dz);
 
-            return Mathf.Sqrt(dx * dx + dz * dz);
+            if (Held.Count > 0 && Held.TryGetValue(i, out var places))
+            {
+                foreach (var p in places)
+                {
+                    distance = Mathf.Min(distance, Vector2.Distance(p, new Vector2(at.x, at.z)));
+                }
+            }
+
+            return distance;
+        }
+
+        /// <summary>The square a thing in the world belongs to (its index), or -1.</summary>
+        public int SquareOf(Transform thing)
+        {
+            while (thing != null && thing.parent != transform)
+            {
+                thing = thing.parent;
+            }
+
+            if (thing == null)
+            {
+                return -1;
+            }
+
+            for (var i = 0; i < slots.Length; i++)
+            {
+                if (slots[i].Instance == thing.gameObject)
+                {
+                    return i;
+                }
+            }
+
+            return -1;
+        }
+
+        /// <summary>A square's index by its prefab's path under Resources, or -1.</summary>
+        public int SquareNamed(string resource)
+        {
+            for (var i = 0; i < Chunks.Length; i++)
+            {
+                if (Chunks[i].Resource == resource)
+                {
+                    return i;
+                }
+            }
+
+            return -1;
         }
 
         void Update()
@@ -129,8 +191,9 @@ namespace GuWorld.World
             var at = Watcher();
             var jumped = float.IsNaN(lastAt.x) || Vector3.Distance(at, lastAt) > 150;
 
-            // A jump (the start, a teleport, a picture from somewhere else): the squares round the new place at once.
-            if (jumped)
+            // A jump (the start, a teleport, a picture from somewhere else): the squares round the new place at once
+            // (not for the builder's view: it flies fast and far, and the squares come in the background as they can).
+            if (jumped && !Watch.HasValue)
             {
                 lastAt = at;
                 LoadNowAround(at);

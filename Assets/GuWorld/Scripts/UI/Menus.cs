@@ -348,7 +348,15 @@ namespace GuWorld.UI
                 case Page.Creator: FadeThrough(host.BackToTitle); return true;
                 case Page.Pause: host.Resume(); return true;
                 case Page.Builder:
-                    // One step back first (a line begun, a thing chosen, a tool), then out.
+                    // One step back first (the reset's panel, a line begun, a thing chosen, a tool), then out.
+                    if (builderReset)
+                    {
+                        builderReset = false;
+                        Show(Page.Builder);
+
+                        return true;
+                    }
+
                     if (GuWorld.World.WorldBuilder.Current != null && GuWorld.World.WorldBuilder.Current.Cancel())
                     {
                         Show(Page.Builder);

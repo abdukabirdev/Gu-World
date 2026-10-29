@@ -116,3 +116,6 @@ InitTestScene*.unity*
 # Claude's own knowledge base (kept local, the repository is public)
 /Claude/
 /CLAUDE.md
+
+# The artist's original models (heavy; the game uses optimized copies under Assets/GuWorld/Models)
+/GLB/

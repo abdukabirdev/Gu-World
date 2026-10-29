@@ -1,25 +1,36 @@
 using System;
 using System.Collections.Generic;
+using System.Globalization;
 using System.IO;
 using System.Linq;
 using GuWorld.Render;
 using UnityEngine;
 using UnityEngine.EventSystems;
 using UnityEngine.InputSystem;
+using UnityEngine.UI;
 
 namespace GuWorld.World
 {
     /// <summary>
-    /// The builder (F9, the page Menus.BuilderPage): the world edited in the game, as a level editor does it. A free
-    /// camera (right mouse to look, WASD, Space/C up and down, Shift faster, the wheel forward); the artist's models put
-    /// down from the catalog (BuildCatalog), picked up, moved, turned, scaled, removed — the built village's own things
-    /// too; stairs stretched from foot to top, walls, fences and paths laid along a line; the ground raised, lowered,
-    /// levelled and smoothed with a brush. What is done is kept (persistentDataPath/builder: world.json, terrain.bin)
-    /// and made again at every start: the things put down always stand; the built village's things are found by their
-    /// name and place as their squares stream in (ChunkStreamer.SquareArrived) and moved or taken away again.
+    /// The builder (F9, the page Menus.BuilderPage): the world edited in the game, as the old strategy games' world
+    /// builders do it. Three modes, each with its own tools: the things (houses, walls, props — chosen by a click or a
+    /// frame, dragged, turned, scaled, raised, copied, put down from the catalog, stretched along a line), the ground
+    /// (raised, lowered, levelled, smoothed, painted, given back as it was built) and the woods (felled, planted); and
+    /// two views, from above and in 3D (WorldBuilderView.cs). Every change can be taken back (Ctrl+Z) and done again
+    /// (Ctrl+Y), and the whole of it reset. What is done is kept (persistentDataPath/builder: world.json, terrain.bin,
+    /// paint.bin) and made again at every start: the things put down always stand; the built village's things are found
+    /// by their name and place as their squares stream in (ChunkStreamer.SquareArrived) and moved or taken away again,
+    /// and a square whose things were carried away stays loaded while one is near them (ChunkStreamer.Held).
     /// </summary>
-    public class WorldBuilder : MonoBehaviour
+    public partial class WorldBuilder : MonoBehaviour
     {
+        public enum Mode
+        {
+            Things,
+            Ground,
+            Woods,
+        }
+
         public enum Tool
         {
             Select,
@@ -29,6 +40,10 @@ namespace GuWorld.World
             Lower,
             Flatten,
             Smooth,
+            Restore,
+            Paint,
+            Fell,
+            Plant,
         }
 
         [Serializable]
@@ -49,20 +64,70 @@ namespace GuWorld.World
             public Vector3 At;
             public Vector3 Euler;
             public Vector3 Scale = Vector3.one;
+            /// <summary>Its square's prefab under Resources (it stays loaded while one is near where the thing now stands).</summary>
+            public string Square = "";
+        }
+
+        /// <summary>A piece of work on the woods, kept in the order done: the trees felled in a circle, or one planted.</summary>
+        [Serializable]
+        class WoodsWork
+        {
+            public bool Plant;
+            public float X;
+            public float Z;
+            public float Radius;
+            /// <summary>A planted tree's kind (its prefab's name, a terrain's tree prototype), size and turn.</summary>
+            public string Kind;
+            public float Width = 1;
+            public float Height = 1;
+            public float Turn;
         }
 
         [Serializable]
         class Saved
         {
-            public int Version = 1;
+            public int Version = 2;
             public List<Placed> Placed = new List<Placed>();
             public List<Changed> Changed = new List<Changed>();
+            public List<WoodsWork> Woods = new List<WoodsWork>();
         }
 
         /// <summary>On a thing put down by the builder: what it is (its record).</summary>
         class PlacedMark : MonoBehaviour
         {
             public Placed Data;
+        }
+
+        /// <summary>Where a thing stands, as one change takes it from and to: there or not (put down, removed), as built (no change kept), its place, turn and size.</summary>
+        struct ThingState
+        {
+            public bool Here;
+            public bool AsBuilt;
+            public Vector3 At;
+            public Vector3 Euler;
+            public Vector3 Scale;
+        }
+
+        /// <summary>One thing's change in a step: a thing put down (its record) or a built one (its key).</summary>
+        class ThingEdit
+        {
+            public Placed Placed;
+            public string Key;
+            public string Square;
+            public ThingState Before;
+            public ThingState After;
+        }
+
+        /// <summary>One step that can be taken back: what it did to the things, the ground, the woods.</summary>
+        class Step
+        {
+            public string Name;
+            public float When;
+            public readonly List<ThingEdit> Things = new List<ThingEdit>();
+            public readonly List<Patch> Ground = new List<Patch>();
+            public WoodsEdit Woods;
+
+            public bool Empty => Things.Count == 0 && Ground.Count == 0 && (Woods == null || Woods.Empty);
         }
 
         public static WorldBuilder Current { get; private set; }
@@ -72,41 +137,39 @@ namespace GuWorld.World
         /// <summary>The game's camera (moved by the builder while it is open).</summary>
         public ThirdPersonCamera Rig;
 
-        public Tool CurrentTool = Tool.Select;
+        public Tool CurrentTool { get; private set; } = Tool.Select;
+        public Mode CurrentMode => ModeOf(CurrentTool);
+        /// <summary>The catalog's model taken up to put down or stretch.</summary>
         public BuildCatalog.Entry Chosen;
-        public float Radius = 6;
-        public float Strength = 0.5f;
-        public float ScaleChoice = 1;
-        public bool Snap;
-        /// <summary>What the page shows under the tools: what is chosen, what was done.</summary>
+        /// <summary>What was last done or went wrong (the page's status line).</summary>
         public string Status = "";
+        /// <summary>Where the mouse points on the ground (the page's corner).</summary>
+        public string Under = "";
+        /// <summary>Grows when the page must be made again (the mode, the tool, the chosen things changed).</summary>
+        public int PageVersion { get; private set; }
 
         Saved saved = new Saved();
         /// <summary>The screenshot test's run: nothing is saved.</summary>
         bool demo;
-        readonly Dictionary<string, Changed> changes = new Dictionary<string, Changed>();
-        Transform placedRoot;
         bool loaded;
+        bool unsaved;
+        float nextAutosave;
+        readonly Dictionary<string, Changed> changes = new Dictionary<string, Changed>();
+        /// <summary>The built things the builder has keyed, as they stand now (while their squares are in the world).</summary>
+        readonly Dictionary<string, GameObject> live = new Dictionary<string, GameObject>();
+        readonly Dictionary<Placed, GameObject> placedLive = new Dictionary<Placed, GameObject>();
+        Transform placedRoot;
+        Tool groundTool = Tool.Raise;
+        Tool woodsTool = Tool.Fell;
+        readonly List<Step> undo = new List<Step>();
+        readonly List<Step> redo = new List<Step>();
+        const int UndoDepth = 300;
+        Camera eye;
+        Material lineMaterial;
+
         string Folder => Path.Combine(Application.persistentDataPath, "builder");
 
-        // The open builder's state.
-        Camera eye;
-        float yaw, pitch;
-        GameObject ghost;
-        string ghostId;
-        float ghostYaw;
-        float heightOffset;
-        GameObject selected;
-        Vector3 grabOffset;
-        bool dragging;
-        Vector3? stretchFrom;
-        readonly List<GameObject> stretchGhosts = new List<GameObject>();
-        LineRenderer ring;
-        LineRenderer box;
-        float flattenTo = float.NaN;
-        readonly HashSet<TerrainData> stroke = new HashSet<TerrainData>();
-        /// <summary>The ground's heights changed, per terrain: the square of its heightmap they lie in.</summary>
-        readonly Dictionary<TerrainData, RectInt> dirty = new Dictionary<TerrainData, RectInt>();
+        public static Mode ModeOf(Tool tool) => tool <= Tool.Stretch ? Mode.Things : tool <= Tool.Paint ? Mode.Ground : Mode.Woods;
 
         void Awake()
         {
@@ -119,10 +182,13 @@ namespace GuWorld.World
             {
                 Current = null;
                 Active = false;
+                ChunkStreamer.Watch = null;
             }
 
             ChunkStreamer.SquareArrived -= Apply;
         }
+
+        void Touch() => PageVersion++;
 
         // ── Kept and made again ─────────────────────────────────────────
 
@@ -138,6 +204,12 @@ namespace GuWorld.World
             if (Active)
             {
                 Tick();
+
+                // Kept now and then while working, not only on the way out.
+                if (unsaved && Time.unscaledTime > nextAutosave)
+                {
+                    Save(false);
+                }
             }
         }
 
@@ -162,6 +234,10 @@ namespace GuWorld.World
                 saved = new Saved();
             }
 
+            saved.Placed ??= new List<Placed>();
+            saved.Changed ??= new List<Changed>();
+            saved.Woods ??= new List<WoodsWork>();
+
             foreach (var change in saved.Changed)
             {
                 changes[change.Key] = change;
@@ -173,14 +249,33 @@ namespace GuWorld.World
             }
 
             LoadGround();
+            LoadWoods();
             ChunkStreamer.SquareArrived += Apply;
 
-            foreach (var square in ChunkStreamer.Current.Instances)
+            foreach (var square in ChunkStreamer.Current.Instances.ToList())
             {
                 Apply(square);
             }
 
+            UpdateHeld();
             UnityEngine.Physics.SyncTransforms();
+        }
+
+        /// <summary>The things of a square that the builder can take: each thing streamed on its own, and each model (its level of detail) inside one.</summary>
+        static IEnumerable<GameObject> Takeable(GameObject square)
+        {
+            foreach (Transform unit in square.transform)
+            {
+                yield return unit.gameObject;
+            }
+
+            foreach (var group in square.GetComponentsInChildren<LODGroup>(true))
+            {
+                if (group.transform.parent != square.transform)
+                {
+                    yield return group.gameObject;
+                }
+            }
         }
 
         /// <summary>A square of the built world streamed in: its things moved or taken away as the builder left them.</summary>
@@ -191,21 +286,31 @@ namespace GuWorld.World
                 return;
             }
 
-            foreach (var group in square.GetComponentsInChildren<LODGroup>(true))
-            {
-                var thing = group.gameObject;
+            var index = ChunkStreamer.Current != null ? ChunkStreamer.Current.SquareOf(square.transform) : -1;
 
-                if (changes.TryGetValue(BuilderKey.Of(thing), out var change))
+            foreach (var thing in Takeable(square).ToList())
+            {
+                var key = BuilderKey.Of(thing);
+
+                if (!changes.TryGetValue(key, out var change))
                 {
-                    Change(thing, change);
+                    continue;
                 }
+
+                BuilderKey.Keep(thing, key);
+                live[key] = thing;
+
+                if (string.IsNullOrEmpty(change.Square) && index >= 0)
+                {
+                    change.Square = ChunkStreamer.Current.Chunks[index].Resource;
+                }
+
+                Show(thing, change);
             }
         }
 
-        static void Change(GameObject thing, Changed change)
+        static void Show(GameObject thing, Changed change)
         {
-            BuilderKey.Keep(thing, change.Key);
-
             if (change.Gone)
             {
                 thing.SetActive(false);
@@ -213,8 +318,39 @@ namespace GuWorld.World
                 return;
             }
 
+            thing.SetActive(true);
             thing.transform.SetPositionAndRotation(change.At, Quaternion.Euler(change.Euler));
             thing.transform.localScale = change.Scale;
+        }
+
+        /// <summary>The squares whose things were carried away are kept while one is near the things (not only near the square).</summary>
+        void UpdateHeld()
+        {
+            var streamer = ChunkStreamer.Current;
+
+            if (streamer == null)
+            {
+                return;
+            }
+
+            streamer.Held.Clear();
+
+            foreach (var change in changes.Values)
+            {
+                var index = change.Gone || string.IsNullOrEmpty(change.Square) ? -1 : streamer.SquareNamed(change.Square);
+
+                if (index < 0)
+                {
+                    continue;
+                }
+
+                if (!streamer.Held.TryGetValue(index, out var places))
+                {
+                    streamer.Held[index] = places = new List<Vector2>();
+                }
+
+                places.Add(new Vector2(change.At.x, change.At.z));
+            }
         }
 
         GameObject Make(Placed placed)
@@ -229,12 +365,19 @@ namespace GuWorld.World
             var thing = Instantiate(entry.Prefab, placed.At, Quaternion.Euler(placed.Euler), placedRoot);
             thing.transform.localScale = placed.Scale;
             thing.AddComponent<PlacedMark>().Data = placed;
+            placedLive[placed] = thing;
 
             return thing;
         }
 
-        public void Save()
+        /// <summary>Everything kept: the things, the ground, the paint, the woods.</summary>
+        public void Save() => Save(true);
+
+        void Save(bool say)
         {
+            unsaved = false;
+            nextAutosave = Time.unscaledTime + 60;
+
             if (demo)
             {
                 return;
@@ -246,7 +389,11 @@ namespace GuWorld.World
                 saved.Changed = changes.Values.ToList();
                 File.WriteAllText(Path.Combine(Folder, "world.json"), JsonUtility.ToJson(saved, true));
                 SaveGround();
-                Status = $"Сохранено: поставлено {saved.Placed.Count}, изменено построенного {saved.Changed.Count}";
+
+                if (say)
+                {
+                    Status = $"Сохранено: поставлено {saved.Placed.Count}, изменено построенного {saved.Changed.Count}, работ в лесу {saved.Woods.Count}";
+                }
             }
             catch (Exception e)
             {
@@ -254,170 +401,314 @@ namespace GuWorld.World
             }
         }
 
-        // ── The ground ─────────────────────────────────────────────────
+        // ── Steps taken back and done again ─────────────────────────────
 
-        static Terrain TerrainNamed(string name) => Terrain.activeTerrains.FirstOrDefault(t => t.terrainData != null && t.terrainData.name == name);
+        public bool CanUndo => undo.Count > 0;
+        public bool CanRedo => redo.Count > 0;
 
-        /// <summary>terrain.bin: for every terrain changed, the square of its heights that changed (name, x, z, width, depth, heights as 16 bits).</summary>
-        void SaveGround()
+        /// <summary>A step done: kept to be taken back (the steps undone before it are forgotten).</summary>
+        void Push(Step step)
         {
-            using var writer = new BinaryWriter(File.Create(Path.Combine(Folder, "terrain.bin")));
-            writer.Write(1);
-            writer.Write(dirty.Count);
-
-            foreach (var pair in dirty)
-            {
-                var r = pair.Value;
-                var heights = pair.Key.GetHeights(r.x, r.y, r.width, r.height);
-                writer.Write(pair.Key.name);
-                writer.Write(r.x);
-                writer.Write(r.y);
-                writer.Write(r.width);
-                writer.Write(r.height);
-
-                for (var z = 0; z < r.height; z++)
-                {
-                    for (var x = 0; x < r.width; x++)
-                    {
-                        writer.Write((ushort)Mathf.RoundToInt(Mathf.Clamp01(heights[z, x]) * 65535));
-                    }
-                }
-            }
-        }
-
-        void LoadGround()
-        {
-            var path = Path.Combine(Folder, "terrain.bin");
-            var defaults = Path.Combine(Application.streamingAssetsPath, "builder", "terrain.bin");
-            var file = File.Exists(path) ? path : File.Exists(defaults) ? defaults : null;
-
-            if (file == null)
+            if (step == null || step.Empty)
             {
                 return;
             }
 
-            try
+            step.When = Time.unscaledTime;
+            undo.Add(step);
+
+            if (undo.Count > UndoDepth)
             {
-                using var reader = new BinaryReader(File.OpenRead(file));
-                reader.ReadInt32();
-                var count = reader.ReadInt32();
-
-                for (var i = 0; i < count; i++)
-                {
-                    var name = reader.ReadString();
-                    var r = new RectInt(reader.ReadInt32(), reader.ReadInt32(), reader.ReadInt32(), reader.ReadInt32());
-                    var heights = new float[r.height, r.width];
-
-                    for (var z = 0; z < r.height; z++)
-                    {
-                        for (var x = 0; x < r.width; x++)
-                        {
-                            heights[z, x] = reader.ReadUInt16() / 65535f;
-                        }
-                    }
-
-                    if (TerrainNamed(name) is Terrain terrain)
-                    {
-                        terrain.terrainData.SetHeights(r.x, r.y, heights);
-                        Dirty(terrain.terrainData, r);
-                    }
-                }
+                undo.RemoveAt(0);
             }
-            catch (Exception e)
+
+            redo.Clear();
+            unsaved = true;
+        }
+
+        /// <summary>
+        /// A small change by a key (a turn, a nudge, a size): joined to the last step when it was the same change to
+        /// the same things a moment ago, so that holding a key is taken back at once, not press by press.
+        /// </summary>
+        void PushOrJoin(Step step)
+        {
+            var last = undo.Count > 0 ? undo[undo.Count - 1] : null;
+
+            if (last != null && redo.Count == 0 && last.Name == step.Name && Time.unscaledTime - last.When < 1.5f && last.Ground.Count == 0 &&
+                last.Woods == null && last.Things.Count == step.Things.Count &&
+                last.Things.Zip(step.Things, (a, b) => a.Placed == b.Placed && a.Key == b.Key).All(same => same))
             {
-                Debug.LogWarning($"Gu World builder: the saved ground could not be read: {e.Message}");
+                for (var i = 0; i < step.Things.Count; i++)
+                {
+                    last.Things[i].After = step.Things[i].After;
+                }
+
+                last.When = Time.unscaledTime;
+                unsaved = true;
+
+                return;
+            }
+
+            Push(step);
+        }
+
+        public void Undo()
+        {
+            if (undo.Count == 0)
+            {
+                Status = "Отменять нечего";
+
+                return;
+            }
+
+            CancelWork();
+            var step = undo[undo.Count - 1];
+            undo.RemoveAt(undo.Count - 1);
+            Replay(step, true);
+            redo.Add(step);
+            Status = $"Отменено: {step.Name} (вернуть — Ctrl+Y)";
+        }
+
+        public void Redo()
+        {
+            if (redo.Count == 0)
+            {
+                Status = "Возвращать нечего";
+
+                return;
+            }
+
+            CancelWork();
+            var step = redo[redo.Count - 1];
+            redo.RemoveAt(redo.Count - 1);
+            Replay(step, false);
+            undo.Add(step);
+            Status = $"Сделано снова: {step.Name}";
+        }
+
+        /// <summary>A step taken back (`back`) or done again.</summary>
+        void Replay(Step step, bool back)
+        {
+            var things = back ? Enumerable.Reverse(step.Things) : step.Things;
+
+            foreach (var edit in things)
+            {
+                SetState(edit, back ? edit.Before : edit.After);
+            }
+
+            var patches = back ? Enumerable.Reverse(step.Ground) : step.Ground;
+
+            foreach (var patch in patches)
+            {
+                PutPatch(patch, back);
+            }
+
+            FlushRefit();
+
+            if (step.Woods != null)
+            {
+                ReplayWoods(step.Woods, back);
+            }
+
+            selection.RemoveAll(t => t == null || !t.activeInHierarchy);
+            UpdateHeld();
+            UnityEngine.Physics.SyncTransforms();
+            unsaved = true;
+            Touch();
+        }
+
+        ThingState StateOf(Placed placed) => new ThingState
+        {
+            Here = saved.Placed.Contains(placed), At = placed.At, Euler = placed.Euler, Scale = placed.Scale,
+        };
+
+        ThingState StateOf(string key) => changes.TryGetValue(key, out var change)
+            ? new ThingState { Here = !change.Gone, At = change.At, Euler = change.Euler, Scale = change.Scale }
+            : new ThingState { Here = true, AsBuilt = true };
+
+        /// <summary>A thing's change from its state as kept now: begun before the change (`Before`), finished after it (Finish).</summary>
+        ThingEdit StartEdit(GameObject thing)
+        {
+            if (thing.GetComponent<PlacedMark>() is PlacedMark mark)
+            {
+                return new ThingEdit { Placed = mark.Data, Before = StateOf(mark.Data) };
+            }
+
+            var key = BuilderKey.Keep(thing).Key;
+            live[key] = thing;
+
+            return new ThingEdit { Key = key, Square = SquareName(thing), Before = StateOf(key) };
+        }
+
+        void Finish(ThingEdit edit) => edit.After = edit.Placed != null ? StateOf(edit.Placed) : StateOf(edit.Key);
+
+        static string SquareName(GameObject thing)
+        {
+            var streamer = ChunkStreamer.Current;
+            var index = streamer != null ? streamer.SquareOf(thing.transform) : -1;
+
+            return index >= 0 ? streamer.Chunks[index].Resource : "";
+        }
+
+        /// <summary>A thing set as a step left it: its record and, when it is in the world, the thing itself.</summary>
+        void SetState(ThingEdit edit, ThingState state)
+        {
+            if (edit.Placed != null)
+            {
+                var placed = edit.Placed;
+                placedLive.TryGetValue(placed, out var thing);
+
+                if (!state.Here)
+                {
+                    saved.Placed.Remove(placed);
+                    placedLive.Remove(placed);
+
+                    if (thing != null)
+                    {
+                        selection.Remove(thing);
+                        Destroy(thing);
+                    }
+
+                    return;
+                }
+
+                if (!saved.Placed.Contains(placed))
+                {
+                    saved.Placed.Add(placed);
+                }
+
+                placed.At = state.At;
+                placed.Euler = state.Euler;
+                placed.Scale = state.Scale;
+
+                if (thing == null)
+                {
+                    Make(placed);
+                }
+                else
+                {
+                    thing.transform.SetPositionAndRotation(state.At, Quaternion.Euler(state.Euler));
+                    thing.transform.localScale = state.Scale;
+                }
+
+                return;
+            }
+
+            if (state.AsBuilt)
+            {
+                changes.Remove(edit.Key);
+            }
+            else
+            {
+                changes[edit.Key] = new Changed { Key = edit.Key, Gone = !state.Here, At = state.At, Euler = state.Euler, Scale = state.Scale, Square = edit.Square ?? "" };
+            }
+
+            if (live.TryGetValue(edit.Key, out var built) && built != null)
+            {
+                if (state.AsBuilt)
+                {
+                    var key = built.GetComponent<BuilderKey>();
+                    built.SetActive(true);
+                    built.transform.SetPositionAndRotation(key.At, key.Turn);
+                    built.transform.localScale = key.Scale;
+                }
+                else
+                {
+                    Show(built, changes[edit.Key]);
+                }
             }
         }
 
-        void Dirty(TerrainData data, RectInt r)
+        /// <summary>The record of a thing as it stands now (after it was moved, turned, scaled).</summary>
+        void Record(GameObject thing)
         {
-            if (dirty.TryGetValue(data, out var was))
+            var t = thing.transform;
+
+            if (thing.GetComponent<PlacedMark>() is PlacedMark mark)
             {
-                var xMin = Mathf.Min(was.xMin, r.xMin);
-                var yMin = Mathf.Min(was.yMin, r.yMin);
-                r = new RectInt(xMin, yMin, Mathf.Max(was.xMax, r.xMax) - xMin, Mathf.Max(was.yMax, r.yMax) - yMin);
+                mark.Data.At = t.position;
+                mark.Data.Euler = t.eulerAngles;
+                mark.Data.Scale = t.localScale;
+
+                return;
             }
 
-            dirty[data] = r;
+            var key = BuilderKey.Keep(thing).Key;
+            live[key] = thing;
+
+            if (!changes.TryGetValue(key, out var change))
+            {
+                changes[key] = change = new Changed { Key = key, Square = SquareName(thing) };
+            }
+
+            change.Gone = !thing.activeSelf;
+            change.At = t.position;
+            change.Euler = t.eulerAngles;
+            change.Scale = t.localScale;
         }
 
-        /// <summary>The brush on every terrain under it (where a village's own ground lies over the mountain's, both: their edges stay together).</summary>
-        void Brush(Vector3 centre, float dt)
+        // ── Resets ──────────────────────────────────────────────────────
+
+        /// <summary>The built village's things all back where they were built (one step: Ctrl+Z brings the changes back).</summary>
+        public void ResetVillage() => ResetAll(true, false, false, false, "Постройки деревни — на свои места");
+
+        public void ResetPlaced() => ResetAll(false, true, false, false, "Всё поставленное — убрано");
+
+        public void ResetGroundAll() => ResetAll(false, false, true, false, "Земля — как была построена");
+
+        public void ResetWoods() => ResetAll(false, false, false, true, "Лес — как был");
+
+        public void ResetEverything() => ResetAll(true, true, true, true, "Всё — как было");
+
+        void ResetAll(bool village, bool placed, bool ground, bool woods, string name)
         {
-            foreach (var terrain in Terrain.activeTerrains)
+            CancelWork();
+            Select(null);
+            var step = new Step { Name = name };
+
+            if (village)
             {
-                var data = terrain.terrainData;
-                var origin = terrain.GetPosition();
-                var size = data.size;
-                var res = data.heightmapResolution;
-                var x0 = Mathf.Clamp(Mathf.FloorToInt((centre.x - Radius - origin.x) / size.x * (res - 1)) - 1, 0, res - 1);
-                var z0 = Mathf.Clamp(Mathf.FloorToInt((centre.z - Radius - origin.z) / size.z * (res - 1)) - 1, 0, res - 1);
-                var x1 = Mathf.Clamp(Mathf.CeilToInt((centre.x + Radius - origin.x) / size.x * (res - 1)) + 1, 0, res - 1);
-                var z1 = Mathf.Clamp(Mathf.CeilToInt((centre.z + Radius - origin.z) / size.z * (res - 1)) + 1, 0, res - 1);
-
-                if (x1 <= x0 || z1 <= z0)
+                foreach (var change in changes.Values.ToList())
                 {
-                    continue;
+                    var edit = new ThingEdit { Key = change.Key, Square = change.Square, Before = StateOf(change.Key), After = new ThingState { Here = true, AsBuilt = true } };
+                    step.Things.Add(edit);
+                    SetState(edit, edit.After);
                 }
-
-                var w = x1 - x0 + 1;
-                var h = z1 - z0 + 1;
-                var heights = data.GetHeights(x0, z0, w, h);
-                var before = CurrentTool == Tool.Smooth ? (float[,])heights.Clone() : null;
-                var step = Strength * dt;
-                var target = (flattenTo - origin.y) / size.y;
-
-                for (var z = 0; z < h; z++)
-                {
-                    for (var x = 0; x < w; x++)
-                    {
-                        var px = origin.x + (x0 + x) * size.x / (res - 1);
-                        var pz = origin.z + (z0 + z) * size.z / (res - 1);
-                        var d = Mathf.Sqrt((px - centre.x) * (px - centre.x) + (pz - centre.z) * (pz - centre.z));
-
-                        if (d > Radius)
-                        {
-                            continue;
-                        }
-
-                        // Full in the middle, nothing at the edge, smoothly between.
-                        var f = 1 - d / Radius;
-                        f = f * f * (3 - 2 * f);
-
-                        switch (CurrentTool)
-                        {
-                            case Tool.Raise: heights[z, x] += step * 6 / size.y * f; break;
-                            case Tool.Lower: heights[z, x] -= step * 6 / size.y * f; break;
-                            case Tool.Flatten: heights[z, x] = Mathf.Lerp(heights[z, x], target, Mathf.Clamp01(step * 8 * f)); break;
-                            case Tool.Smooth:
-                                if (x > 0 && z > 0 && x < w - 1 && z < h - 1)
-                                {
-                                    var mean = (before[z - 1, x] + before[z + 1, x] + before[z, x - 1] + before[z, x + 1] + before[z, x]) / 5;
-                                    heights[z, x] = Mathf.Lerp(heights[z, x], mean, Mathf.Clamp01(step * 8 * f));
-                                }
-
-                                break;
-                        }
-
-                        heights[z, x] = Mathf.Clamp01(heights[z, x]);
-                    }
-                }
-
-                data.SetHeightsDelayLOD(x0, z0, heights);
-                stroke.Add(data);
-                Dirty(data, new RectInt(x0, z0, w, h));
-            }
-        }
-
-        void EndStroke()
-        {
-            foreach (var data in stroke)
-            {
-                data.SyncHeightmap();
             }
 
-            stroke.Clear();
-            flattenTo = float.NaN;
+            if (placed)
+            {
+                foreach (var thing in saved.Placed.ToList())
+                {
+                    var edit = new ThingEdit { Placed = thing, Before = StateOf(thing), After = new ThingState { Here = false } };
+                    step.Things.Add(edit);
+                    SetState(edit, edit.After);
+                }
+            }
+
+            if (ground)
+            {
+                step.Ground.AddRange(RestoreAllGround());
+            }
+
+            if (woods)
+            {
+                step.Woods = UndoAllWoods();
+            }
+
+            UpdateHeld();
+            UnityEngine.Physics.SyncTransforms();
+
+            if (step.Empty)
+            {
+                Status = "Сбрасывать нечего: здесь ничего не менялось";
+
+                return;
+            }
+
+            Push(step);
+            Save(false);
+            Status = $"{name}. Передумали — Ctrl+Z";
         }
 
         // ── The open builder ───────────────────────────────────────────
@@ -439,12 +730,10 @@ namespace GuWorld.World
             {
                 eye = Camera.main;
             }
-            var euler = Rig.transform.eulerAngles;
-            yaw = euler.y;
-            pitch = euler.x > 180 ? euler.x - 360 : euler.x;
-            ring = Line("Brush", 49, new Color(0.95f, 0.8f, 0.4f));
-            box = Line("Chosen", 16, new Color(0.55f, 0.85f, 1f));
-            Status = "F9 или Esc — выйти (всё сохраняется само)";
+
+            BeginView();
+            Status = "Строитель: F9 — выйти (всё сохраняется само), Ctrl+Z — отменить";
+            Touch();
         }
 
         public void End()
@@ -454,20 +743,34 @@ namespace GuWorld.World
                 return;
             }
 
-            EndStroke();
-            ClearGhosts();
+            CancelWork();
             Select(null);
-
-            if (ring != null) Destroy(ring.gameObject);
-            if (box != null) Destroy(box.gameObject);
-
-            Save();
+            HideLines();
+            EndView();
+            Save(false);
             Active = false;
         }
 
-        /// <summary>Esc: one step back — a line begun, a thing chosen, a tool taken up. False when there was nothing to undo (the page closes then).</summary>
+        /// <summary>Whatever the mouse was doing dropped: a stroke ended, a drag or a frame let go, a line begun forgotten, the ghost gone.</summary>
+        void CancelWork()
+        {
+            EndStroke();
+            EndWoodsStroke();
+            CancelDrag();
+            stretchFrom = null;
+            ClearGhosts();
+        }
+
+        /// <summary>Esc: one step back — a line begun, a model taken up, the things chosen. False when there was nothing to drop (the page closes then).</summary>
         public bool Cancel()
         {
+            if (dragging || framing)
+            {
+                CancelDrag();
+
+                return true;
+            }
+
             if (stretchFrom != null)
             {
                 stretchFrom = null;
@@ -476,16 +779,16 @@ namespace GuWorld.World
                 return true;
             }
 
-            if (selected != null)
+            if (CurrentTool == Tool.Place || CurrentTool == Tool.Stretch)
             {
-                Select(null);
+                Choose(Tool.Select);
 
                 return true;
             }
 
-            if (CurrentTool != Tool.Select)
+            if (selection.Count > 0)
             {
-                Choose(Tool.Select);
+                Select(null);
 
                 return true;
             }
@@ -493,71 +796,100 @@ namespace GuWorld.World
             return false;
         }
 
+        public void SetMode(Mode mode)
+        {
+            Choose(mode == Mode.Things ? Tool.Select : mode == Mode.Ground ? groundTool : woodsTool);
+        }
+
         public void Choose(Tool tool, BuildCatalog.Entry entry = null)
         {
+            CancelWork();
             CurrentTool = tool;
             Chosen = entry ?? Chosen;
-            ClearGhosts();
-            stretchFrom = null;
+
+            if (ModeOf(tool) == Mode.Ground)
+            {
+                groundTool = tool;
+            }
+            else if (ModeOf(tool) == Mode.Woods)
+            {
+                woodsTool = tool;
+            }
 
             if (tool != Tool.Select)
             {
                 Select(null);
             }
-        }
 
-        LineRenderer Line(string name, int points, Color colour)
-        {
-            var line = new GameObject(name).AddComponent<LineRenderer>();
-            line.positionCount = points;
-            line.widthMultiplier = 0.12f;
-            line.material = new Material(Shader.Find("Sprites/Default"));
-            line.startColor = line.endColor = colour;
-            line.enabled = false;
-
-            return line;
-        }
-
-        void ClearGhosts()
-        {
-            if (ghost != null) Destroy(ghost);
-            ghost = null;
-            ghostId = null;
-
-            foreach (var g in stretchGhosts)
-            {
-                if (g != null) Destroy(g);
-            }
-
-            stretchGhosts.Clear();
-        }
-
-        static GameObject Ghost(BuildCatalog.Entry entry)
-        {
-            var g = Instantiate(entry.Prefab);
-            g.name = "Ghost";
-
-            foreach (var c in g.GetComponentsInChildren<Collider>())
-            {
-                c.enabled = false;
-            }
-
-            foreach (var b in g.GetComponentsInChildren<MonoBehaviour>())
-            {
-                b.enabled = false;
-            }
-
-            return g;
+            Touch();
         }
 
         bool PointerOnPage => EventSystem.current != null && EventSystem.current.IsPointerOverGameObject();
 
+        /// <summary>A text field (the catalog's search) has the keys: the builder's own keys wait.</summary>
+        static bool Typing
+        {
+            get
+            {
+                var chosen = EventSystem.current != null ? EventSystem.current.currentSelectedGameObject : null;
+
+                return chosen != null && chosen.TryGetComponent<InputField>(out var field) && field.isFocused;
+            }
+        }
+
+        Ray MouseRay => eye.ScreenPointToRay(Mouse.current.position.ReadValue());
+
+        /// <summary>What the mouse points at, the nearest: anything solid.</summary>
         bool Pick(out RaycastHit hit)
         {
-            var mouse = Mouse.current;
             hit = default;
 
-            return mouse != null && eye != null && UnityEngine.Physics.Raycast(eye.ScreenPointToRay(mouse.position.ReadValue()), out hit, 4000, ~0, QueryTriggerInteraction.Ignore);
+            return Mouse.current != null && eye != null && UnityEngine.Physics.Raycast(MouseRay, out hit, 8000, ~0, QueryTriggerInteraction.Ignore);
+        }
+
+        /// <summary>Where the mouse points on the ground itself (the terrains, through whatever stands on them).</summary>
+        bool PickGround(out Vector3 point) => GroundHit(MouseRay, out point);
+
+        static bool GroundHit(Ray ray, out Vector3 point)
+        {
+            point = default;
+            var best = float.PositiveInfinity;
+
+            foreach (var terrain in Terrain.activeTerrains)
+            {
+                if (terrain.TryGetComponent<TerrainCollider>(out var collider) && collider.enabled && collider.Raycast(ray, out var hit, 12000) && hit.distance < best)
+                {
+                    best = hit.distance;
+                    point = hit.point;
+                }
+            }
+
+            return best < float.PositiveInfinity;
+        }
+
+        /// <summary>The ground's height at a point (the terrains, not what stands on them; a village's own ground where it lies over the mountain's), or `otherwise`.</summary>
+        static float GroundY(Vector2 p, float otherwise = float.NaN)
+        {
+            var ray = new Ray(new Vector3(p.x, 9000, p.y), Vector3.down);
+            var best = float.NegativeInfinity;
+
+            foreach (var terrain in Terrain.activeTerrains)
+            {
+                var o = terrain.GetPosition();
+                var size = terrain.terrainData.size;
+
+                if (p.x < o.x || p.y < o.z || p.x > o.x + size.x || p.y > o.z + size.z)
+                {
+                    continue;
+                }
+
+                if (terrain.TryGetComponent<TerrainCollider>(out var collider) && collider.enabled && collider.Raycast(ray, out var hit, 12000) && hit.point.y > best)
+                {
+                    best = hit.point.y;
+                }
+            }
+
+            return float.IsNegativeInfinity(best) ? otherwise : best;
         }
 
         void Tick()
@@ -571,513 +903,117 @@ namespace GuWorld.World
             }
 
             var dt = Mathf.Min(Time.unscaledDeltaTime, 0.1f);
+            var typing = Typing;
             var ctrl = keyboard.ctrlKey.isPressed;
-            var shift = keyboard.shiftKey.isPressed;
             UnityEngine.Physics.SyncTransforms();
 
-            // The camera: look with the right mouse, fly with the keys, the wheel forward (with Ctrl/Alt the wheel is the tools').
-            if (mouse.rightButton.isPressed)
+            ViewTick(keyboard, mouse, dt, typing);
+
+            if (!typing)
             {
-                var delta = mouse.delta.ReadValue();
-                yaw += delta.x * 0.15f;
-                pitch = Mathf.Clamp(pitch - delta.y * 0.15f, -89, 89);
-            }
-
-            var turn = Quaternion.Euler(pitch, yaw, 0);
-            var move = Vector3.zero;
-
-            if (!ctrl)
-            {
-                if (keyboard.wKey.isPressed) move += turn * Vector3.forward;
-                if (keyboard.sKey.isPressed) move -= turn * Vector3.forward;
-                if (keyboard.dKey.isPressed) move += turn * Vector3.right;
-                if (keyboard.aKey.isPressed) move -= turn * Vector3.right;
-                if (keyboard.spaceKey.isPressed) move += Vector3.up;
-                if (keyboard.cKey.isPressed) move -= Vector3.up;
-            }
-
-            var wheel = mouse.scroll.ReadValue().y / 120f;
-            var toolWheel = ctrl || keyboard.altKey.isPressed;
-
-            if (!toolWheel && !PointerOnPage)
-            {
-                move += turn * Vector3.forward * wheel * 6;
-            }
-
-            var speed = shift ? 90 : 22;
-            Rig.transform.SetPositionAndRotation(Rig.transform.position + move * speed * dt, turn);
-
-            switch (CurrentTool)
-            {
-                case Tool.Place: PlaceTick(keyboard, mouse, wheel, toolWheel); break;
-                case Tool.Stretch: StretchTick(keyboard, mouse); break;
-                case Tool.Select: SelectTick(keyboard, mouse, wheel, toolWheel); break;
-                default: BrushTick(mouse, dt, wheel, toolWheel); break;
-            }
-
-            if (ring != null) ring.enabled = CurrentTool >= Tool.Raise;
-        }
-
-        Vector3 Snapped(Vector3 p) => Snap ? new Vector3(Mathf.Round(p.x), p.y, Mathf.Round(p.z)) : p;
-
-        void Turning(Keyboard keyboard, float wheel, bool toolWheel, ref float turnYaw)
-        {
-            var by = keyboard.shiftKey.isPressed ? 90 : 15;
-            if (keyboard.rKey.wasPressedThisFrame) turnYaw += by;
-            if (keyboard.tKey.wasPressedThisFrame) turnYaw -= by;
-            if (keyboard.altKey.isPressed && wheel != 0) turnYaw += wheel * 5;
-        }
-
-        void Scaling(Keyboard keyboard, float wheel)
-        {
-            if (keyboard.equalsKey.wasPressedThisFrame || keyboard.numpadPlusKey.wasPressedThisFrame) ScaleChoice = Mathf.Min(4, ScaleChoice * 1.1f);
-            if (keyboard.minusKey.wasPressedThisFrame || keyboard.numpadMinusKey.wasPressedThisFrame) ScaleChoice = Mathf.Max(0.2f, ScaleChoice / 1.1f);
-            if (keyboard.ctrlKey.isPressed && wheel != 0) ScaleChoice = Mathf.Clamp(ScaleChoice * Mathf.Pow(1.05f, wheel), 0.2f, 4);
-        }
-
-        void Raising(Keyboard keyboard, ref float offset)
-        {
-            var by = keyboard.shiftKey.isPressed ? 1f : 0.1f;
-            if (keyboard.pageUpKey.wasPressedThisFrame) offset += by;
-            if (keyboard.pageDownKey.wasPressedThisFrame) offset -= by;
-        }
-
-        // Putting a model down: it follows the mouse on whatever is under it; the left button puts it there.
-        void PlaceTick(Keyboard keyboard, Mouse mouse, float wheel, bool toolWheel)
-        {
-            if (Chosen == null)
-            {
-                return;
-            }
-
-            if (ghost == null || ghostId != Chosen.Id)
-            {
-                ClearGhosts();
-                ghost = Ghost(Chosen);
-                ghostId = Chosen.Id;
-            }
-
-            Turning(keyboard, wheel, toolWheel, ref ghostYaw);
-            Scaling(keyboard, wheel);
-            Raising(keyboard, ref heightOffset);
-
-            if (PointerOnPage || !Pick(out var hit))
-            {
-                ghost.SetActive(false);
-
-                return;
-            }
-
-            ghost.SetActive(true);
-            var turn = Quaternion.Euler(0, ghostYaw, 0);
-            var middle = turn * new Vector3(Chosen.Middle.x, 0, Chosen.Middle.y) * ScaleChoice;
-            var at = Snapped(hit.point - middle);
-            at.y = hit.point.y + heightOffset;
-            ghost.transform.SetPositionAndRotation(at, turn);
-            ghost.transform.localScale = Vector3.one * ScaleChoice;
-            Status = $"{Chosen.Label}: левая — поставить, R/T — повернуть, +/- или Ctrl+колесо — размер ({ScaleChoice:0.00}), PgUp/PgDn — выше/ниже ({heightOffset:0.0} м), Esc — отмена";
-
-            if (mouse.leftButton.wasPressedThisFrame)
-            {
-                var placed = new Placed { Id = Chosen.Id, At = at, Euler = new Vector3(0, ghostYaw, 0), Scale = Vector3.one * ScaleChoice };
-                saved.Placed.Add(placed);
-                Make(placed);
-            }
-        }
-
-        // Stretching: a stair from its foot to its top, a wall, a fence or a path laid along the line between two clicks.
-        void StretchTick(Keyboard keyboard, Mouse mouse)
-        {
-            if (Chosen == null || !(Chosen.Stretch || Chosen.Repeat))
-            {
-                Status = "Протянуть можно лестницы, стену, забор, тропинку и мощение: выберите их слева";
-
-                return;
-            }
-
-            Scaling(keyboard, mouse.scroll.ReadValue().y / 120f);
-
-            if (PointerOnPage || !Pick(out var hit))
-            {
-                return;
-            }
-
-            if (stretchFrom == null)
-            {
-                Status = Chosen.Stretch ? $"{Chosen.Label}: щёлкните, где её низ (или верх), потом другой конец; ширина +/- ({ScaleChoice:0.00})"
-                    : $"{Chosen.Label}: щёлкните начало, потом конец; ширина +/- ({ScaleChoice:0.00})";
-
-                if (mouse.leftButton.wasPressedThisFrame)
+                if (ctrl && keyboard.zKey.wasPressedThisFrame)
                 {
-                    stretchFrom = hit.point;
+                    if (keyboard.shiftKey.isPressed) Redo();
+                    else Undo();
+                }
+                else if (ctrl && keyboard.yKey.wasPressedThisFrame)
+                {
+                    Redo();
+                }
+                else if (ctrl && keyboard.sKey.wasPressedThisFrame)
+                {
+                    Save();
                 }
 
-                return;
-            }
-
-            var pieces = Stretched(stretchFrom.Value, hit.point);
-            ClearGhosts();
-
-            foreach (var p in pieces)
-            {
-                var g = Ghost(Chosen);
-                g.transform.SetPositionAndRotation(p.At, Quaternion.Euler(p.Euler));
-                g.transform.localScale = p.Scale;
-                stretchGhosts.Add(g);
-            }
-
-            Status = $"{Chosen.Label}: {pieces.Count} шт., {Vector3.Distance(stretchFrom.Value, hit.point):0.0} м — левая кнопка закончить, Esc — отмена";
-
-            if (mouse.leftButton.wasPressedThisFrame)
-            {
-                foreach (var p in pieces)
+                if (!ctrl && !keyboard.altKey.isPressed)
                 {
-                    saved.Placed.Add(p);
-                    Make(p);
-                }
-
-                stretchFrom = null;
-                ClearGhosts();
-            }
-        }
-
-        /// <summary>The pieces between two points: one stair scaled to the run and the rise, or copies along the line, each on the ground under it.</summary>
-        List<Placed> Stretched(Vector3 a, Vector3 b)
-        {
-            var pieces = new List<Placed>();
-
-            if (Chosen.Stretch)
-            {
-                var foot = a.y <= b.y ? a : b;
-                var top = a.y <= b.y ? b : a;
-                var flat = new Vector3(foot.x - top.x, 0, foot.z - top.z);
-                var run = Mathf.Max(0.3f, flat.magnitude);
-                var rise = Mathf.Max(0.2f, top.y - foot.y);
-                var stairYaw = Mathf.Atan2(flat.x, flat.z) * Mathf.Rad2Deg;
-                var scale = new Vector3(ScaleChoice, rise / Mathf.Max(0.1f, Chosen.Height), run / Mathf.Max(0.1f, Chosen.Size.y));
-                // Its foot (the front edge's middle) on the lower point: the origin back from there.
-                var frontEdge = new Vector3(Chosen.Middle.x * scale.x, 0, (Chosen.Middle.y + Chosen.Size.y / 2) * scale.z);
-                var at = foot - Quaternion.Euler(0, stairYaw, 0) * frontEdge;
-                at.y = foot.y;
-                pieces.Add(new Placed { Id = Chosen.Id, At = at, Euler = new Vector3(0, stairYaw, 0), Scale = scale });
-
-                return pieces;
-            }
-
-            var line = new Vector3(b.x - a.x, 0, b.z - a.z);
-            var length = line.magnitude;
-            var piece = Mathf.Max(0.5f, Chosen.Size.x * ScaleChoice);
-            var count = Mathf.Max(1, Mathf.RoundToInt(length / piece));
-            var each = Mathf.Max(0.5f, length / count);
-            var dir = length > 0.01f ? line / length : Vector3.right;
-            // The model's own X along the line.
-            var lineYaw = Mathf.Atan2(dir.x, dir.z) * Mathf.Rad2Deg - 90;
-            var turnLine = Quaternion.Euler(0, lineYaw, 0);
-
-            for (var i = 0; i < count && i < 200; i++)
-            {
-                var centre = a + dir * each * (i + 0.5f);
-                var ground = UnityEngine.Physics.Raycast(centre + Vector3.up * 200, Vector3.down, out var down, 400, ~0, QueryTriggerInteraction.Ignore) ? down.point.y : centre.y;
-                var scale = new Vector3(each / Mathf.Max(0.1f, Chosen.Size.x), ScaleChoice, ScaleChoice);
-                var at = centre - turnLine * new Vector3(Chosen.Middle.x * scale.x, 0, Chosen.Middle.y * scale.z);
-                at.y = ground;
-                pieces.Add(new Placed { Id = Chosen.Id, At = at, Euler = new Vector3(0, lineYaw, 0), Scale = scale });
-            }
-
-            return pieces;
-        }
-
-        // Choosing what stands: a click picks it (the left button held drags it over the ground), keys change it.
-        void SelectTick(Keyboard keyboard, Mouse mouse, float wheel, bool toolWheel)
-        {
-            if (mouse.leftButton.wasPressedThisFrame && !PointerOnPage)
-            {
-                var picked = Pick(out var hit) ? Thing(hit.collider) : null;
-
-                if (picked != selected)
-                {
-                    Select(picked);
-                }
-
-                dragging = picked != null;
-                grabOffset = picked != null ? picked.transform.position - hit.point : Vector3.zero;
-            }
-
-            if (mouse.leftButton.wasReleasedThisFrame)
-            {
-                dragging = false;
-            }
-
-            if (selected == null)
-            {
-                Status = "Выбор: щёлкните дом или вещь. Слева — поставить новое; вверху — протянуть и земля";
-                box.enabled = false;
-
-                return;
-            }
-
-            var t = selected.transform;
-            var changed = false;
-
-            if (dragging && mouse.leftButton.isPressed && PickPast(selected, out var under))
-            {
-                var to = Snapped(under.point + new Vector3(grabOffset.x, 0, grabOffset.z));
-                to.y = under.point.y;
-
-                if ((to - t.position).sqrMagnitude > 0.0001f)
-                {
-                    t.position = to;
-                    changed = true;
+                    ToolKeys(keyboard);
                 }
             }
 
-            var y = t.eulerAngles.y;
-            var before = y;
-            Turning(keyboard, wheel, toolWheel, ref y);
-
-            if (!Mathf.Approximately(y, before))
+            // The chosen whose squares went away (the view flew off) are no longer chosen.
+            if (selection.RemoveAll(t => t == null || !t.activeInHierarchy) > 0)
             {
-                t.rotation = Quaternion.Euler(0, y, 0);
-                changed = true;
+                Touch();
             }
 
-            var by = keyboard.shiftKey.isPressed ? 1f : 0.1f;
-            if (keyboard.pageUpKey.wasPressedThisFrame) { t.position += Vector3.up * by; changed = true; }
-            if (keyboard.pageDownKey.wasPressedThisFrame) { t.position -= Vector3.up * by; changed = true; }
+            Under = PickGround(out var under) ? string.Format(CultureInfo.InvariantCulture, "X {0:0.0} · Z {1:0.0} · высота {2:0.0} м", under.x, under.z, under.y) : "";
 
-            var grow = keyboard.equalsKey.wasPressedThisFrame || keyboard.numpadPlusKey.wasPressedThisFrame ? 1.1f
-                : keyboard.minusKey.wasPressedThisFrame || keyboard.numpadMinusKey.wasPressedThisFrame ? 1 / 1.1f
-                : keyboard.ctrlKey.isPressed && wheel != 0 ? Mathf.Pow(1.05f, wheel) : 1;
-
-            if (!Mathf.Approximately(grow, 1))
+            if (!panning)
             {
-                t.localScale *= grow;
-                changed = true;
-            }
-
-            if (keyboard.deleteKey.wasPressedThisFrame || keyboard.backspaceKey.wasPressedThisFrame)
-            {
-                Remove(selected);
-
-                return;
-            }
-
-            if (keyboard.ctrlKey.isPressed && keyboard.dKey.wasPressedThisFrame && selected.GetComponent<PlacedMark>() is PlacedMark mark)
-            {
-                var copy = new Placed { Id = mark.Data.Id, At = t.position + t.right * 2, Euler = t.eulerAngles, Scale = t.localScale };
-                saved.Placed.Add(copy);
-                Select(Make(copy));
-
-                return;
-            }
-
-            if (changed)
-            {
-                Record(selected);
-            }
-
-            Outline(selected);
-            Status = $"{Describe(selected)}: перетащить — левой, R/T — повернуть, +/- — размер, PgUp/PgDn — выше/ниже, Delete — убрать, Ctrl+D — копия";
-        }
-
-        /// <summary>What is under the mouse past a thing (dragging it: the ground under it, not itself).</summary>
-        bool PickPast(GameObject thing, out RaycastHit hit)
-        {
-            hit = default;
-            var mouse = Mouse.current;
-
-            if (mouse == null || eye == null)
-            {
-                return false;
-            }
-
-            var hits = UnityEngine.Physics.RaycastAll(eye.ScreenPointToRay(mouse.position.ReadValue()), 4000, ~0, QueryTriggerInteraction.Ignore);
-            var best = float.PositiveInfinity;
-            var found = false;
-
-            foreach (var h in hits)
-            {
-                if (h.distance < best && !h.collider.transform.IsChildOf(thing.transform))
+                switch (CurrentMode)
                 {
-                    best = h.distance;
-                    hit = h;
-                    found = true;
+                    case Mode.Things: ThingsTick(keyboard, mouse, typing); break;
+                    case Mode.Ground: GroundTick(keyboard, mouse, dt, typing); break;
+                    case Mode.Woods: WoodsTick(keyboard, mouse, dt, typing); break;
                 }
             }
 
-            return found;
+            DrawLines();
         }
 
-        /// <summary>What a collider belongs to that the builder can take: a thing put down, else the nearest built thing (a house, a wall, a prop: what has its level of detail).</summary>
-        static GameObject Thing(Collider collider)
+        /// <summary>The number keys: the mode's tools in the order the page shows them.</summary>
+        void ToolKeys(Keyboard keyboard)
         {
-            if (collider == null || collider is TerrainCollider)
+            var tools = ToolsOf(CurrentMode);
+            var digits = new[] { keyboard.digit1Key, keyboard.digit2Key, keyboard.digit3Key, keyboard.digit4Key, keyboard.digit5Key, keyboard.digit6Key };
+
+            for (var i = 0; i < tools.Length && i < digits.Length; i++)
             {
-                return null;
-            }
-
-            var mark = collider.GetComponentInParent<PlacedMark>();
-
-            if (mark != null)
-            {
-                return mark.gameObject;
-            }
-
-            var group = collider.GetComponentInParent<LODGroup>();
-
-            return group != null ? group.gameObject : null;
-        }
-
-        static string Describe(GameObject thing) => thing.GetComponent<PlacedMark>() is PlacedMark mark ? (BuildCatalog.Load().Find(mark.Data.Id)?.Label ?? mark.Data.Id) : thing.name;
-
-        void Select(GameObject thing)
-        {
-            selected = thing;
-            heightOffset = 0;
-
-            if (box != null)
-            {
-                box.enabled = thing != null;
-            }
-        }
-
-        /// <summary>A change kept: a thing put down keeps its record; a built thing gets one by its first name and place.</summary>
-        void Record(GameObject thing)
-        {
-            var t = thing.transform;
-
-            if (thing.GetComponent<PlacedMark>() is PlacedMark mark)
-            {
-                mark.Data.At = t.position;
-                mark.Data.Euler = t.eulerAngles;
-                mark.Data.Scale = t.localScale;
-
-                return;
-            }
-
-            var key = BuilderKey.Of(thing);
-            BuilderKey.Keep(thing, key);
-
-            if (!changes.TryGetValue(key, out var change))
-            {
-                changes[key] = change = new Changed { Key = key };
-            }
-
-            change.Gone = false;
-            change.At = t.position;
-            change.Euler = t.eulerAngles;
-            change.Scale = t.localScale;
-        }
-
-        void Remove(GameObject thing)
-        {
-            if (thing.GetComponent<PlacedMark>() is PlacedMark mark)
-            {
-                saved.Placed.Remove(mark.Data);
-                Destroy(thing);
-            }
-            else
-            {
-                var key = BuilderKey.Of(thing);
-                BuilderKey.Keep(thing, key);
-                changes[key] = new Changed { Key = key, Gone = true };
-                thing.SetActive(false);
-            }
-
-            Select(null);
-            Status = "Убрано";
-        }
-
-        /// <summary>The chosen thing's box drawn round it.</summary>
-        void Outline(GameObject thing)
-        {
-            var renderers = thing.GetComponentsInChildren<Renderer>().Where(r => r.enabled && !(r is LineRenderer)).ToArray();
-
-            if (renderers.Length == 0)
-            {
-                box.enabled = false;
-
-                return;
-            }
-
-            var b = renderers[0].bounds;
-
-            foreach (var r in renderers)
-            {
-                b.Encapsulate(r.bounds);
-            }
-
-            var lo = b.min;
-            var hi = b.max;
-            var c = new[]
-            {
-                new Vector3(lo.x, lo.y, lo.z), new Vector3(hi.x, lo.y, lo.z), new Vector3(hi.x, lo.y, hi.z), new Vector3(lo.x, lo.y, hi.z),
-                new Vector3(lo.x, hi.y, lo.z), new Vector3(hi.x, hi.y, lo.z), new Vector3(hi.x, hi.y, hi.z), new Vector3(lo.x, hi.y, hi.z),
-            };
-            var order = new[] { 0, 1, 2, 3, 0, 4, 5, 1, 5, 6, 2, 6, 7, 3, 7, 4 };
-            box.enabled = true;
-            box.positionCount = order.Length;
-
-            for (var i = 0; i < order.Length; i++)
-            {
-                box.SetPosition(i, c[order[i]]);
-            }
-        }
-
-        // The ground's brush: held down, it works where the mouse is; the wheel with Ctrl is its size, with Alt its strength.
-        void BrushTick(Mouse mouse, float dt, float wheel, bool toolWheel)
-        {
-            if (Keyboard.current.ctrlKey.isPressed && wheel != 0) Radius = Mathf.Clamp(Radius * Mathf.Pow(1.08f, wheel), 1, 60);
-            if (Keyboard.current.altKey.isPressed && wheel != 0) Strength = Mathf.Clamp(Strength * Mathf.Pow(1.1f, wheel), 0.05f, 3);
-
-            var names = new Dictionary<Tool, string> { [Tool.Raise] = "Поднять", [Tool.Lower] = "Опустить", [Tool.Flatten] = "Выровнять", [Tool.Smooth] = "Сгладить" };
-            Status = $"Земля · {names[CurrentTool]}: держите левую кнопку. Ctrl+колесо — размер ({Radius:0} м), Alt+колесо — сила ({Strength:0.00})";
-
-            if (PointerOnPage || !Pick(out var hit))
-            {
-                ring.enabled = false;
-
-                return;
-            }
-
-            // The ring on the ground.
-            ring.enabled = true;
-
-            for (var i = 0; i < ring.positionCount; i++)
-            {
-                var a = i * Mathf.PI * 2 / (ring.positionCount - 1);
-                var p = hit.point + new Vector3(Mathf.Cos(a), 0, Mathf.Sin(a)) * Radius;
-                p.y = UnityEngine.Physics.Raycast(p + Vector3.up * 100, Vector3.down, out var down, 300, ~0, QueryTriggerInteraction.Ignore) ? down.point.y + 0.15f : hit.point.y;
-                ring.SetPosition(i, p);
-            }
-
-            if (mouse.leftButton.wasPressedThisFrame && !(hit.collider is TerrainCollider))
-            {
-                Status = "Кисть работает по земле: наведите на землю, не на дом";
-            }
-
-            if (mouse.leftButton.isPressed && hit.collider is TerrainCollider)
-            {
-                if (float.IsNaN(flattenTo))
+                if (digits[i].wasPressedThisFrame && CurrentTool != tools[i])
                 {
-                    flattenTo = hit.point.y;
+                    Choose(tools[i]);
                 }
-
-                Brush(hit.point, dt);
-            }
-
-            if (mouse.leftButton.wasReleasedThisFrame)
-            {
-                EndStroke();
             }
         }
+
+        /// <summary>A mode's tools chosen on the page (the things' placing and stretching come from the catalog).</summary>
+        public static Tool[] ToolsOf(Mode mode) => mode switch
+        {
+            Mode.Things => new[] { Tool.Select },
+            Mode.Ground => new[] { Tool.Raise, Tool.Lower, Tool.Flatten, Tool.Smooth, Tool.Restore, Tool.Paint },
+            _ => new[] { Tool.Fell, Tool.Plant },
+        };
+
+        public static string NameOf(Tool tool) => tool switch
+        {
+            Tool.Select => "Выбор и сдвиг",
+            Tool.Place => "Поставить",
+            Tool.Stretch => "Протянуть",
+            Tool.Raise => "Поднять",
+            Tool.Lower => "Опустить",
+            Tool.Flatten => "Выровнять",
+            Tool.Smooth => "Сгладить",
+            Tool.Restore => "Как было",
+            Tool.Paint => "Покрасить",
+            Tool.Fell => "Вырубить",
+            _ => "Посадить",
+        };
+
+        /// <summary>What the keys and the mouse do now (the page's help line).</summary>
+        public string Help => CurrentTool switch
+        {
+            Tool.Select => "Щелчок — выбрать · Shift — добавить · тянуть по пустому — рамка · тянуть выбранное — сдвиг · R/T — поворот · +/− — размер · PgUp/PgDn — высота · Del — убрать · Ctrl+D — копия · Ctrl+C/V",
+            Tool.Place => "Щелчок — поставить (можно много раз) · R/T — повернуть · +/− — размер · PgUp/PgDn — выше/ниже · правая кнопка или Esc — хватит",
+            Tool.Stretch => "Щелчок — начало, щелчок — конец · +/− — ширина · правая кнопка или Esc — отмена",
+            Tool.Flatten => "Держите левую — выровнять к высоте · Shift+щелчок — взять высоту · [ ] — кисть · Alt+колесо — сила",
+            Tool.Fell => "Держите левую — вырубить деревья и камни под кистью · [ ] — кисть",
+            Tool.Plant => "Держите левую — сажать выбранное справа · [ ] — кисть · густота — слева",
+            _ => "Держите левую кнопку — работать кистью · [ ] или Ctrl+колесо — размер кисти · Alt+колесо — сила",
+        };
+
+        /// <summary>The camera's keys (the page's second help line).</summary>
+        public string ViewHelp => CurrentView == View.Above
+            ? "Камера: WASD/стрелки — двигать · колесо — ближе/дальше · средняя кнопка или Пробел+левая — тащить карту · правая — повернуть · Q/E — повернуть · Tab — 3D · F — к выбранному"
+            : "Камера: WASD/стрелки — двигать · колесо — ближе/дальше · правая кнопка — вращать и наклонять · средняя или Пробел+левая — тащить · Q/E — повернуть · Tab — сверху · F — к выбранному";
 
         /// <summary>Puts the hero on the ground under the middle of the view (and closes nothing: the page does).</summary>
         public Vector3 GroundAhead()
         {
-            var ray = eye != null ? eye.ViewportPointToRay(new Vector3(0.5f, 0.5f)) : new Ray(Rig.transform.position, Rig.transform.forward);
+            var at = focus;
+            var y = GroundY(new Vector2(at.x, at.z));
 
-            return UnityEngine.Physics.Raycast(ray, out var hit, 4000, ~0, QueryTriggerInteraction.Ignore) ? hit.point : Rig.transform.position;
+            return float.IsNaN(y) ? at : new Vector3(at.x, y, at.z);
         }
 
         /// <summary>
@@ -1094,7 +1030,9 @@ namespace GuWorld.World
             {
                 if (catalog.Find(id) != null)
                 {
-                    Make(new Placed { Id = id, At = at, Euler = new Vector3(0, turn, 0), Scale = Vector3.one * scale });
+                    var placed = new Placed { Id = id, At = at, Euler = new Vector3(0, turn, 0), Scale = Vector3.one * scale };
+                    saved.Placed.Add(placed);
+                    Make(placed);
                 }
             }
 
@@ -1108,6 +1046,7 @@ namespace GuWorld.World
             {
                 foreach (var p in Stretched(ground + new Vector3(0, 0, -6), ground + new Vector3(0, 3, -16)))
                 {
+                    saved.Placed.Add(p);
                     Make(p);
                 }
             }
@@ -1118,6 +1057,7 @@ namespace GuWorld.World
             {
                 foreach (var p in Stretched(ground + new Vector3(-20, 0, -24), ground + new Vector3(20, 0, -24)))
                 {
+                    saved.Placed.Add(p);
                     Make(p);
                 }
             }
@@ -1134,21 +1074,22 @@ namespace GuWorld.World
             EndStroke();
             CurrentTool = Tool.Select;
             Chosen = null;
-        }
-
-        /// <summary>Takes back everything done to the built village (its things stand where they were built) — the next start shows it.</summary>
-        public void ForgetChanges()
-        {
-            changes.Clear();
-            Save();
-            Status = "Изменения построенного забыты — они вернутся на места после перезапуска игры";
+            focus = ground;
+            viewReady = true;
+            viewYaw = Rig != null ? Rig.transform.eulerAngles.y : 0;
         }
     }
 
-    /// <summary>A built thing's key for the builder: its name and where it was built (kept once it is moved).</summary>
+    /// <summary>
+    /// A built thing's key for the builder — its name and where it was built (kept once it is moved) — and where it
+    /// stood as built (to put it back without waiting for its square to come again).
+    /// </summary>
     public class BuilderKey : MonoBehaviour
     {
         public string Key;
+        public Vector3 At;
+        public Quaternion Turn;
+        public Vector3 Scale;
 
         public static string Of(GameObject thing)
         {
@@ -1159,15 +1100,25 @@ namespace GuWorld.World
 
             var p = thing.transform.position;
 
-            return $"{thing.name}@{Mathf.Round(p.x * 2) / 2:0.0},{Mathf.Round(p.y * 2) / 2:0.0},{Mathf.Round(p.z * 2) / 2:0.0}";
+            return string.Format(CultureInfo.InvariantCulture, "{0}@{1:0.0},{2:0.0},{3:0.0}", thing.name, Mathf.Round(p.x * 2) / 2, Mathf.Round(p.y * 2) / 2, Mathf.Round(p.z * 2) / 2);
         }
 
-        public static void Keep(GameObject thing, string key)
+        /// <summary>The thing keyed (as it stands now, before the builder changes it), or its key as it was.</summary>
+        public static BuilderKey Keep(GameObject thing, string key = null)
         {
-            if (thing.GetComponent<BuilderKey>() == null)
+            if (thing.GetComponent<BuilderKey>() is BuilderKey kept)
             {
-                thing.AddComponent<BuilderKey>().Key = key;
+                return kept;
             }
+
+            key ??= Of(thing);
+            var made = thing.AddComponent<BuilderKey>();
+            made.Key = key;
+            made.At = thing.transform.position;
+            made.Turn = thing.transform.rotation;
+            made.Scale = thing.transform.localScale;
+
+            return made;
         }
     }
 }

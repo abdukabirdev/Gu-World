@@ -2193,6 +2193,12 @@ namespace GuWorld
                                 }
 
                                 OpenPage(Menus.Page.Builder);
+
+                                // `-buildtest`: the builder's own check, written to the log (never saved).
+                                if (System.Array.IndexOf(System.Environment.GetCommandLineArgs(), "-buildtest") >= 0)
+                                {
+                                    WorldBuilder.Current.SelfTest();
+                                }
                             }
 
                             break;
