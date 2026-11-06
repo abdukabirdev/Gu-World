@@ -66,6 +66,8 @@ namespace GuWorld
         /// <summary>The bodies: human-male.glb and human-female.glb as glTFast imports them.</summary>
         public GameObject HeroModel;
         public GameObject HeroModelFemale;
+        /// <summary>The male hero wears his own model (Resources/Models/gu-hero.glb) instead of the made body; `-madebody` turns it off.</summary>
+        public bool GuHeroModel = true;
         /// <summary>Opaque two-sided URP Lit (hair, clothes) and see-through URP Lit (stubble), copied per use.</summary>
         public Material ClothMaterial;
         public Material FaintMaterial;
@@ -1320,6 +1322,7 @@ namespace GuWorld
                 faint = FaintMaterial,
             };
             HeroView.TeenBodies = picture.Parts.teenMale != null && picture.Parts.teenFemale != null;
+            HeroView.GuModel = GuHeroModel && !Has(System.Environment.GetCommandLineArgs(), "-madebody");
             picture.Camera = view;
             health = hero.AddComponent<Health>();
             physique = hero.AddComponent<Physique>();

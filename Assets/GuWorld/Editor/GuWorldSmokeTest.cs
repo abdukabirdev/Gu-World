@@ -824,8 +824,42 @@ namespace GuWorld.Editor
                 Teleport(body, new Vector3(0, 0, 12));
             }
 
-            // The body: the model worn, its feet on the ground, its head up top.
             var picture = Object.FindAnyObjectByType<HeroView>();
+
+            // The GU hero's own model (when it is in the build): worn, upright, the feet on the ground, the left hand on the left.
+            if (picture != null && HeroView.GuModel && Resources.Load<GameObject>(GuHeroBody.ResourcePath) != null)
+            {
+                Teleport(body, new Vector3(0, 0, 12));
+                picture.Wear(Look.Default(Gender.Male));
+
+                for (var i = 0; i < 60; i++)
+                {
+                    picture.Pose(Dt);
+                }
+
+                Check(picture.Figure?.GuHero != null, "the hero wears the GU hero model");
+
+                if (picture.Figure?.GuHero != null)
+                {
+                    var feet = body.transform.position;
+                    var guHead = FindDeep(picture.transform, "head");
+                    var guFootL = FindDeep(picture.transform, "foot_L");
+                    var guFootR = FindDeep(picture.transform, "foot_R");
+                    var guHand = FindDeep(picture.transform, "hand_L");
+                    Check(guHead != null && guHead.position.y - feet.y > 1.4f && guHead.position.y - feet.y < 1.9f,
+                        $"the GU hero stands upright, the head up top ({(guHead ? guHead.position.y - feet.y : -1):0.00} m)");
+                    Check(guFootL != null && guFootR != null && Mathf.Abs(guFootL.position.y - feet.y) < 0.25f && Mathf.Abs(guFootR.position.y - feet.y) < 0.25f,
+                        $"the GU hero's feet are on the ground ({(guFootL ? guFootL.position.y - feet.y : -1):0.00}, {(guFootR ? guFootR.position.y - feet.y : -1):0.00})");
+                    Check(guHand != null && body.transform.InverseTransformPoint(guHand.position).x < 0,
+                        $"the GU hero's left hand is on the hero's left ({(guHand ? body.transform.InverseTransformPoint(guHand.position).x : 0):0.00})");
+                }
+
+                // The checks below are of the made body (its bones and clothes by name).
+                HeroView.GuModel = false;
+                picture.Wear(picture.Look);
+            }
+
+            // The body: the model worn, its feet on the ground, its head up top.
             Check(picture != null && picture.HasBody, "the hero wears the realistic body");
 
             if (picture != null && picture.HasBody)
