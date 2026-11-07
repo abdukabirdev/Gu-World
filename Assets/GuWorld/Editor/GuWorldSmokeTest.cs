@@ -1,4 +1,5 @@
 using System.Collections.Generic;
+using System.Linq;
 using GuWorld.Body;
 using GuWorld.Cultivation;
 using GuWorld.Items;
@@ -826,41 +827,8 @@ namespace GuWorld.Editor
 
             var picture = Object.FindAnyObjectByType<HeroView>();
 
-            // The GU hero's own model (when it is in the build): worn, upright, the feet on the ground, the left hand on the left.
-            if (picture != null && HeroView.GuModel && Resources.Load<GameObject>(GuHeroBody.ResourcePath) != null)
-            {
-                Teleport(body, new Vector3(0, 0, 12));
-                picture.Wear(Look.Default(Gender.Male));
-
-                for (var i = 0; i < 60; i++)
-                {
-                    picture.Pose(Dt);
-                }
-
-                Check(picture.Figure?.GuHero != null, "the hero wears the GU hero model");
-
-                if (picture.Figure?.GuHero != null)
-                {
-                    var feet = body.transform.position;
-                    var guHead = FindDeep(picture.transform, "head");
-                    var guFootL = FindDeep(picture.transform, "foot_L");
-                    var guFootR = FindDeep(picture.transform, "foot_R");
-                    var guHand = FindDeep(picture.transform, "hand_L");
-                    Check(guHead != null && guHead.position.y - feet.y > 1.4f && guHead.position.y - feet.y < 1.9f,
-                        $"the GU hero stands upright, the head up top ({(guHead ? guHead.position.y - feet.y : -1):0.00} m)");
-                    Check(guFootL != null && guFootR != null && Mathf.Abs(guFootL.position.y - feet.y) < 0.25f && Mathf.Abs(guFootR.position.y - feet.y) < 0.25f,
-                        $"the GU hero's feet are on the ground ({(guFootL ? guFootL.position.y - feet.y : -1):0.00}, {(guFootR ? guFootR.position.y - feet.y : -1):0.00})");
-                    Check(guHand != null && body.transform.InverseTransformPoint(guHand.position).x < 0,
-                        $"the GU hero's left hand is on the hero's left ({(guHand ? body.transform.InverseTransformPoint(guHand.position).x : 0):0.00})");
-                }
-
-                // The checks below are of the made body (its bones and clothes by name).
-                HeroView.GuModel = false;
-                picture.Wear(picture.Look);
-            }
-
             // The body: the model worn, its feet on the ground, its head up top.
-            Check(picture != null && picture.HasBody, "the hero wears the realistic body");
+            Check(picture != null && picture.HasBody, "the hero wears the body (Resources/People)");
 
             if (picture != null && picture.HasBody)
             {
@@ -872,12 +840,12 @@ namespace GuWorld.Editor
                 }
 
                 var renderers = picture.GetComponentsInChildren<SkinnedMeshRenderer>();
-                var head = FindDeep(picture.transform, "Head");
+                var head = FindDeep(picture.transform, "head");
                 var footL = FindDeep(picture.transform, "foot_l");
                 var footR = FindDeep(picture.transform, "foot_r");
                 var feet = body.transform.position;
                 Check(renderers.Length > 0, $"the body has skinned meshes ({renderers.Length})");
-                Check(head != null && head.position.y - feet.y > 1.45f && head.position.y - feet.y < 1.75f,
+                Check(head != null && head.position.y - feet.y > 1.3f && head.position.y - feet.y < 1.75f,
                     $"the head is at a fifteen-year-old's height ({(head ? head.position.y - feet.y : -1):0.00} m)");
                 Check(footL != null && footR != null && Mathf.Abs(footL.position.y - feet.y) < 0.2f && Mathf.Abs(footR.position.y - feet.y) < 0.2f,
                     $"the feet are on the ground ({(footL ? footL.position.y - feet.y : -1):0.00}, {(footR ? footR.position.y - feet.y : -1):0.00})");
@@ -916,19 +884,11 @@ namespace GuWorld.Editor
                 }
             }
 
-            var hair = look.Hair == HairStyle.Bald || names.Contains("Hair_cap") || names.Contains(Hair.ModelHair(look.Hair) ?? "-");
-            var tailOrCurtain = look.Hair switch
-            {
-                HairStyle.Ponytail => names.Contains("Hair_tail"),
-                HairStyle.Bob or HairStyle.Long => names.Contains("Hair_curtain"),
-                _ => true,
-            };
-            var beard = look.BeardStyle == Beard.None || names.Contains("Beard");
-            var clothes = names.Contains("Cloth_trousers") && names.Contains("Cloth_tunic") && names.Contains("Cloth_skirt") &&
-                          names.Contains("Cloth_sash") && names.Contains("Cloth_shoes") &&
-                          names.Contains("Cloth_wraps") && names.Contains("Cloth_sash_ends");
-            Check(picture.HasBody && hair && tailOrCurtain && beard && clothes,
-                $"the look {look.Key} is built (hair {hair}, {tailOrCurtain}, beard {beard}, clothes {clothes}: {string.Join(" ", names)})");
+            var wanted = HumanBody.Pieces(look, HumanBody.Build.ForHero(look));
+            var missing = wanted.Where(piece => !names.Contains(piece)).ToList();
+            var extra = names.Where(piece => !wanted.Contains(piece)).ToList();
+            Check(picture.HasBody && missing.Count == 0 && extra.Count == 0,
+                $"the look {look.Key} is built (missing: {string.Join(" ", missing)}; not asked for: {string.Join(" ", extra)})");
         }
 
         static Transform FindDeep(Transform parent, string name)

@@ -28,7 +28,7 @@ namespace GuWorld.Body
         /// <summary>The skin's shadow tint.</summary>
         static readonly Color SkinShade = new Color(0.84f, 0.7f, 0.7f);
 
-        static bool Outlined(string part) => part != "Eyes" && part != "Eyebrows";
+        static bool Outlined(string part) => part != "Eyes" && part != "Eyebrows" && part != "Eyelashes";
 
         /// <summary>Turns every renderer under a body to toon materials.</summary>
         public static void Apply(GameObject body)
@@ -109,7 +109,7 @@ namespace GuWorld.Body
             }
 
             // The shadows are cold, but for the skin's: warm, rosy (the art direction's).
-            if (source.name.StartsWith("MI_Superhero"))
+            if (source.name.StartsWith("Skin"))
             {
                 toon.SetColor("_ShadeColor", SkinShade);
             }

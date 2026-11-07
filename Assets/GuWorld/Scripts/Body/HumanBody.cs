@@ -5,21 +5,26 @@ using UnityEngine;
 namespace GuWorld.Body
 {
     /// <summary>
-    /// The realistic body: a skinned, textured human — Quaternius' Universal
-    /// Base Characters (CC0) — worn over the Mannequin's joints (ported from
-    /// client/body/human.ts). The hero's look tints the hair.
+    /// A person's body: one of GU World's own people (Resources/People — a young man, a young
+    /// woman and their grown-up selves, made in Blender from MakeHuman's base mesh by
+    /// Tools/GuPeople/make_people.py) worn over the Mannequin's joints.
     ///
-    /// The Mannequin keeps doing all the moving on its own (invisible) joints;
-    /// every frame each bone copies the turn of the joint that drives it.
-    /// Rotations are compared in the figure's own space, so the bones' local
-    /// axes don't matter: at load the model is brought into the Mannequin's
-    /// rest pose (arms and legs hanging straight down), and from then on a
-    /// bone's orientation is its joint's orientation times that rest one.
+    /// Everything a person wears is a separate skinned mesh on the same skeleton: the clothes
+    /// (Cloth_Under, Cloth_Trousers, Cloth_Wraps, Cloth_Shoes, Cloth_Robe or Cloth_Tunic,
+    /// Cloth_Belt, Cloth_Mark), the hair (Hair_Short … Hair_Long) and the beards (Beard_…). A
+    /// look is a choice of these pieces — the hairstyle, the beard, the long robe of a hanfu or
+    /// a village tunic, the clan's crescent — the cloth dyed by the build's dye (Dyes) and the
+    /// hair and beard by its hair colour. Each look is put together once, on a hidden shelf,
+    /// and copied for everyone who has it.
     ///
-    /// Some bones take only a share of their joint's turn, which the real body
-    /// spreads out: the bend of the back over three vertebrae, a turn of the
-    /// head partly in the neck, a raised arm partly in the collarbone. The
-    /// fingers rest loosely curled.
+    /// The Mannequin keeps doing all the moving on its own (invisible) joints; every frame each
+    /// bone copies the turn of the joint that drives it. Rotations are compared in the figure's
+    /// own space, so the bones' local axes don't matter: at load the model is brought into the
+    /// Mannequin's rest pose (arms and legs hanging down), and from then on a bone's orientation
+    /// is its joint's orientation times that rest one. Some bones take only a share of their
+    /// joint's turn, which the real body spreads out: the bend of the back over its vertebrae,
+    /// a turn of the head partly in the neck, a raised arm partly in the collarbone. The
+    /// fingers rest loosely curled and close into a fist with the grip.
     /// </summary>
     public class HumanBody
     {
@@ -32,7 +37,7 @@ namespace GuWorld.Body
             ["spine_02"] = ("spine", 1),
             ["spine_03"] = ("chest", 1),
             ["neck_01"] = ("head", 0.45f),
-            ["Head"] = ("head", 1),
+            ["head"] = ("head", 1),
             ["clavicle_l"] = ("shoulderL", 0.2f),
             ["upperarm_l"] = ("shoulderL", 1),
             ["lowerarm_l"] = ("elbowL", 1),
@@ -49,8 +54,8 @@ namespace GuWorld.Body
             ["foot_r"] = ("ankleR", 1),
         };
 
-        /// <summary>Arms hang this far out from straight down (radians) at rest.</summary>
-        const float ArmOut = 0.1f;
+        /// <summary>Arms hang this far out from straight down (radians) at rest: the robes' wide sleeves are between.</summary>
+        const float ArmOut = 0.12f;
         /// <summary>Finger curl per joint (radians), relaxed, and how much more a fist adds.</summary>
         const float CurlRest = 0.3f;
         const float FistCurl = 1.25f;
@@ -58,14 +63,18 @@ namespace GuWorld.Body
         /// <summary>How much of the curl each knuckle takes, from the palm out.</summary>
         static readonly float[] Knuckles = { 0.8f, 1, 0.75f };
 
+        /// <summary>Where the people are (Resources), one folder per kit: People/&lt;kit&gt;/&lt;kit&gt;.gltf.</summary>
+        public const string Folder = "People";
+
         class Driven
         {
             public Transform bone;
             public Transform joint;
             public float share;
-            /// <summary>Orientation at rest, in figure space.</summary>
+            /// <summary>The bone's orientation in figure space at the Mannequin's rest pose.</summary>
             public Quaternion rest;
             public Driven parent;
+            /// <summary>This frame's orientation in figure space (for the children).</summary>
             public Quaternion target;
         }
 
@@ -73,66 +82,79 @@ namespace GuWorld.Body
         {
             public Transform bone;
             public Quaternion rest;
-            /// <summary>The curl axis in the bone's own space, and its share of the curl.</summary>
+            /// <summary>The curl's axis, in the bone's own space.</summary>
             public Vector3 axis;
             public float amount;
-            /// <summary>The thumb's: the axis it swings in over the palm on (in its own space), and how far it goes in a fist, radians.</summary>
+            /// <summary>The thumb's swing over the palm: its axis (bone space) and how far a full fist takes it.</summary>
             public Vector3 across;
             public float over;
         }
 
-        /// <summary>Holds the model: scaled to the Mannequin and turned to face +Z.</summary>
         public readonly Transform Holder;
 
         readonly Transform root;
         readonly Mannequin rig;
+        readonly Transform model;
         readonly Dictionary<string, Transform> bones = new Dictionary<string, Transform>();
         readonly List<Driven> driven = new List<Driven>();
         readonly List<Finger> fingers = new List<Finger>();
         readonly Vector3 hipsDriverRest;
         /// <summary>The pelvis' parent in figure space (it never moves).</summary>
-        Quaternion pelvisParent;
-        Vector3 pelvisRest;
-        Transform pelvis;
+        readonly Quaternion pelvisParent;
+        readonly Vector3 pelvisRest;
+        readonly Transform pelvis;
 
-        /// <summary>What a body is made from: the two models (as glTFast imports them) and the materials to copy.</summary>
+        /// <summary>What bodies are made from: the four kits as glTFast imports them.</summary>
         public struct Parts
         {
-            public GameObject male;
-            public GameObject female;
-            /// <summary>Opaque, two-sided URP Lit: the generated hair and the clothes are copies of it.</summary>
-            public Material cloth;
-            /// <summary>See-through URP Lit, for stubble.</summary>
-            public Material faint;
-            /// <summary>
-            /// The teenagers' bodies (MakeHuman, Tools/Character): slim sixteen-year-olds, for the hero and the
-            /// young (youth from TeenFrom up); the grown-ups' bodies are the models above.
-            /// </summary>
-            public GameObject teenMale;
-            public GameObject teenFemale;
+            public GameObject maleTeen;
+            public GameObject maleAdult;
+            public GameObject femaleTeen;
+            public GameObject femaleAdult;
 
-            public GameObject Model(Gender gender) => gender == Gender.Female ? female : male;
+            /// <summary>The kits from Resources/People (any that is missing stays null).</summary>
+            public static Parts Load() => new Parts
+            {
+                maleTeen = Kit("male_teen"),
+                maleAdult = Kit("male_adult"),
+                femaleTeen = Kit("female_teen"),
+                femaleAdult = Kit("female_adult"),
+            };
 
-            /// <summary>The body a figure of an age is made from: a teenager's when there is one and the age is young.</summary>
-            public GameObject ModelFor(Gender gender, float youth) => IsTeen(gender, youth) ? (gender == Gender.Female ? teenFemale : teenMale) : Model(gender);
+            static GameObject Kit(string name) => Resources.Load<GameObject>($"{Folder}/{name}/{name}");
 
-            public bool IsTeen(Gender gender, float youth) => youth >= TeenFrom && (gender == Gender.Female ? teenFemale : teenMale) != null;
+            /// <summary>Both teenagers' kits are there (the hero, the children and the students are drawn on them).</summary>
+            public bool HasTeens => maleTeen != null && femaleTeen != null;
+
+            /// <summary>A gender's kit, the grown-up's first; null when there is none.</summary>
+            public GameObject Model(Gender gender) => gender == Gender.Female
+                ? (femaleAdult != null ? femaleAdult : femaleTeen)
+                : (maleAdult != null ? maleAdult : maleTeen);
+
+            /// <summary>The kit for a gender at an age: the teenager's from TeenFrom up, the grown-up's below.</summary>
+            public GameObject ModelFor(Gender gender, float youth)
+            {
+                var teen = gender == Gender.Female ? femaleTeen : maleTeen;
+                var adult = gender == Gender.Female ? femaleAdult : maleAdult;
+
+                return youth >= TeenFrom ? (teen != null ? teen : adult) : (adult != null ? adult : teen);
+            }
         }
 
-        /// <summary>From this youth up a figure is made from the teenager's body (the hero, children, students).</summary>
+        /// <summary>From this youth up a figure is made from the teenager's kit (the hero, children, students).</summary>
         public const float TeenFrom = 0.8f;
 
         /// <summary>How a body is grown beyond its look: its age, its hair's colour, its clothes' dye.</summary>
         public struct Build
         {
-            /// <summary>1 fifteen (a younger face, a slighter build, a bigger head), 0 a grown-up as the model comes.</summary>
+            /// <summary>1 fifteen (the teenager's kit), 0 a grown-up.</summary>
             public float youth;
             public Color hair;
-            /// <summary>Which dye the clothes are (Clothes.For).</summary>
+            /// <summary>Which dye the clothes are (Dyes.For).</summary>
             public int dye;
             /// <summary>The clan's mark on the clothes.</summary>
             public Emblem emblem;
-            /// <summary>The skin's evened brightness (0: the game's own fair, Paint.SkinTone).</summary>
+            /// <summary>The skin's brightness (Look.SkinBrightness, 146 tanned … 204 fair; 0: fair).</summary>
             public float skin;
 
             /// <summary>The hero: fifteen, black-haired, a Gu Yue in a dark hanfu.</summary>
@@ -141,45 +163,26 @@ namespace GuWorld.Body
             /// <summary>The hero in their look's hanfu, with the clan's crescent.</summary>
             public static Build ForHero(Look look) => new Build { youth = 1, hair = Look.HairBlack, dye = look.Dye, emblem = Emblem.Crescent, skin = look.SkinBrightness };
 
-            public string Key => $"{youth:0.00}|{ColorUtility.ToHtmlStringRGB(hair)}|{dye}|{emblem}{(skin > 0 ? $"|{skin:0}" : "")}";
+            public string Key => $"{(youth >= TeenFrom ? "teen" : "adult")}|{ColorUtility.ToHtmlStringRGB(hair)}|{dye}|{emblem}{(skin > 0 ? $"|{skin:0}" : "")}";
         }
 
-        /// <summary>A teenager's head is a little bigger for the body than a grown-up's.</summary>
-        const float TeenHead = 0.06f;
-
-        /// <summary>Bodies built once per look and kept (hidden), copied for each who wears them.</summary>
+        /// <summary>Bodies put together once per look and kept (hidden), copied for each who wears them.</summary>
         static readonly Dictionary<string, GameObject> templates = new Dictionary<string, GameObject>();
+        /// <summary>The kits' materials dyed a colour, shared by every look that dyes them so.</summary>
+        static readonly Dictionary<(Material, Color), Material> dyed = new Dictionary<(Material, Color), Material>();
         static Transform shelf;
 
-        /// <summary>
-        /// The model's meshes for a shape — a gender at an age — made younger and smoothed once
-        /// (the costliest part of a body after the tunic's paint) and shared by every look of that
-        /// shape, in the order of the model's skinned renderers (null: the model's own mesh).
-        /// </summary>
-        static readonly Dictionary<(Gender, float), Mesh[]> shapes = new Dictionary<(Gender, float), Mesh[]>();
-
-        /// <summary>The cloth's weave, one texture for every body.</summary>
-        static Texture2D weave;
-
-        /// <summary>
-        /// Ages are built in steps of a fifth (0, 0.2 … 1): a few shapes shared by a whole village
-        /// instead of a shape for every villager, and the difference of less than a step is not seen.
-        /// </summary>
+        /// <summary>Ages in steps of a fifth (0, 0.2 … 1): kept for the callers that group people by age.</summary>
         public static float YouthStep(float youth) => Mathf.Round(Mathf.Clamp01(youth) * 5) / 5;
 
         public HumanBody(Parts parts, Look look, Mannequin rig) : this(parts, look, Build.Hero, rig)
         {
         }
 
-        /// <summary>
-        /// Dresses the Mannequin's joints in the body for a look: a copy of its template
-        /// (made the first time it is asked for, see Template), fitted to the joints.
-        /// </summary>
         public HumanBody(Parts parts, Look look, Build build, Mannequin rig)
         {
             this.rig = rig;
             root = rig.Root;
-            build.youth = YouthStep(build.youth);
 
             // Measured in the rest pose, with the figure upright.
             rig.ApplyRest();
@@ -191,6 +194,7 @@ namespace GuWorld.Body
             var instance = Object.Instantiate(template, Holder, false);
             instance.name = template.name;
             instance.SetActive(true);
+            model = instance.transform;
 
             foreach (var t in instance.GetComponentsInChildren<Transform>(true))
             {
@@ -199,12 +203,6 @@ namespace GuWorld.Body
 
             Fit(Mannequin.Hips - Mannequin.HipJoint);
             Calibrate();
-
-            // A teenager on a grown-up's body: the head a little bigger for it (the teenager's own body has its own).
-            if (!parts.IsTeen(look.Gender, build.youth) && bones.TryGetValue("Head", out var headBone))
-            {
-                headBone.localScale = Vector3.one * (1 + TeenHead * build.youth);
-            }
 
             var joints = new Dictionary<string, Transform>
             {
@@ -218,7 +216,7 @@ namespace GuWorld.Body
             };
             var byBone = new Dictionary<Transform, Driven>();
 
-            // Parents before children, so each bone's parent target is ready first.
+            // Parents before children (GetComponentsInChildren goes depth first), so each bone's parent target is ready first.
             foreach (var t in instance.GetComponentsInChildren<Transform>(true))
             {
                 if (!Drivers.TryGetValue(t.name, out var drive))
@@ -245,109 +243,52 @@ namespace GuWorld.Body
             FindFingers();
         }
 
-        /// <summary>The other model's own hair, fitted to this head.</summary>
-        static void BorrowHair(GameObject donor, string name, SkinData skin, HeadFrame frame, Material material, Color colour)
+        /// <summary>The pieces a look wears (the skinned meshes' names in the kit); the rest are taken off.</summary>
+        public static HashSet<string> Pieces(Look look, Build build)
         {
-            SkinData theirSkin = null;
-            Mesh theirEyes = null, theirBrows = null, hair = null;
-
-            foreach (var renderer in donor.GetComponentsInChildren<SkinnedMeshRenderer>(true))
+            var pieces = new HashSet<string>
             {
-                if (renderer.name.StartsWith("Superhero") || renderer.name.StartsWith("SuperHero")) theirSkin = new SkinData(renderer);
-                else if (renderer.name == "Eyes") theirEyes = renderer.sharedMesh;
-                else if (renderer.name == "Eyebrows") theirBrows = renderer.sharedMesh;
-                else if (renderer.name == name)
-                {
-                    hair = renderer.sharedMesh;
+                "Body", "Eyes", "Eyebrows", "Eyelashes",
+                "Cloth_Trousers", "Cloth_Wraps", "Cloth_Shoes", "Cloth_Belt",
+                Dyes.Long(build.dye) ? "Cloth_Robe" : "Cloth_Tunic",
+            };
 
-                    // Its own textured material (its UVs are for that texture), tinted black.
-                    if (renderer.sharedMaterial != null)
-                    {
-                        material = new Material(renderer.sharedMaterial);
-                        Tint(material, colour);
-                        Paint.Sharpen(material);
-                    }
-                }
+            if (look.Hair != HairStyle.Bald)
+            {
+                pieces.Add("Hair_" + look.Hair);
             }
 
-            if (theirSkin == null || hair == null)
+            if (look.Gender == Gender.Male && look.BeardStyle != Beard.None)
             {
-                return;
+                pieces.Add("Beard_" + look.BeardStyle);
             }
 
-            Hair.Borrow(skin, frame, HeadFrame.Measure(theirSkin, theirEyes, theirBrows), hair, material, name);
+            if (build.emblem == Emblem.Crescent)
+            {
+                pieces.Add("Cloth_Mark");
+            }
+
+            return pieces;
         }
 
-        /// <summary>The grown-ups' model that has a hairstyle of its own (this gender's first), or null.</summary>
-        static GameObject HairDonor(Parts parts, Gender gender, string hair)
+        /// <summary>The skin's colour for its brightness: fair (204) as the texture is, warmer and darker to tanned (146).</summary>
+        public static Color SkinColour(float brightness)
         {
-            if (hair == null)
-            {
-                return null;
-            }
+            var fair = brightness > 0 ? Mathf.InverseLerp(146, 204, brightness) : 1;
 
-            foreach (var model in new[] { parts.Model(gender), parts.Model(gender == Gender.Male ? Gender.Female : Gender.Male) })
-            {
-                if (model == null)
-                {
-                    continue;
-                }
-
-                foreach (var renderer in model.GetComponentsInChildren<SkinnedMeshRenderer>(true))
-                {
-                    if (renderer.name == hair)
-                    {
-                        return model;
-                    }
-                }
-            }
-
-            return null;
-        }
-
-        /// <summary>The mesh of the renderer of that name (the model's eyes, its brows), or null.</summary>
-        static Mesh Find(SkinnedMeshRenderer[] renderers, string name)
-        {
-            foreach (var renderer in renderers)
-            {
-                if (renderer.name == name)
-                {
-                    return renderer.sharedMesh;
-                }
-            }
-
-            return null;
-        }
-
-        static void SetSmoothness(Material material, float smoothness)
-        {
-            if (material.HasProperty("_Smoothness"))
-            {
-                material.SetFloat("_Smoothness", smoothness);
-            }
-        }
-
-        static void Tint(Material material, Color color)
-        {
-            // glTFast's shader takes the colour as baseColorFactor; others as _BaseColor.
-            foreach (var name in new[] { "baseColorFactor", "_BaseColor" })
-            {
-                if (material.HasProperty(name))
-                {
-                    material.SetColor(name, color);
-                }
-            }
+            return Color.Lerp(new Color(0.8f, 0.66f, 0.55f), new Color(1, 0.98f, 0.96f), fair);
         }
 
         /// <summary>
-        /// The body for a look, built once and kept on a hidden shelf, in order: the bare
-        /// body (younger by `youth`, the skin's colours richer, every texture sharpened),
-        /// then the hair (the model's own, the other model's, or grown) and the beard, then
-        /// the clothes, layer by layer. Its meshes and materials are shared by every copy.
+        /// The body for a look, put together once and kept on a hidden shelf: the kit for the gender
+        /// and age, only the pieces the look wears left on, the cloth dyed, the hair coloured, then
+        /// drawn as the art direction asks (cel-shaded, outlined). Its meshes and materials are shared by every copy.
         /// </summary>
         static GameObject Template(Parts parts, Look look, Build build)
         {
-            var key = look.Key + "|" + build.Key;
+            var hairColour = build.hair.a > 0 ? build.hair : Look.HairBlack;
+            build.hair = hairColour;
+            var key = $"{look.Gender}/{look.Hair}/{look.BeardStyle}|{build.Key}";
 
             if (templates.TryGetValue(key, out var done) && done != null)
             {
@@ -355,7 +296,6 @@ namespace GuWorld.Body
             }
 
             using var cost = Costs.Time("look built");
-            var step = Costs.Time("model");
 
             if (shelf == null)
             {
@@ -366,233 +306,96 @@ namespace GuWorld.Body
             }
 
             var model = parts.ModelFor(look.Gender, build.youth);
-            // The teenager's body is young and slim as it is: not made younger, nor its muscles smoothed.
-            var teen = parts.IsTeen(look.Gender, build.youth);
-            var keepHair = Hair.ModelHair(look.Hair);
             var instance = Object.Instantiate(model, shelf, false);
             instance.name = model.name;
-            var hairColour = build.hair;
+            var wear = Pieces(look, build);
+            var palette = Dyes.For(look.Gender, build.dye);
+            var skin = SkinColour(build.skin);
 
-            SkinData skin = null;
-            Mesh eyes = null;
-            Mesh brows = null;
-            Material hairTexture = null;
-            var ownHairThere = false;
+            Color? ColourOf(string piece, string material)
+            {
+                if (piece.StartsWith("Hair_"))
+                {
+                    return material.StartsWith("Pin") ? (Color?)null : hairColour;
+                }
 
-            // 1. The bare body.
+                if (piece.StartsWith("Beard_"))
+                {
+                    return material.StartsWith("Stubble") ? Color.Lerp(skin * 0.8f, hairColour, 0.55f) : hairColour;
+                }
+
+                if (material.StartsWith("Skin")) return skin;
+                if (material.StartsWith("Robe")) return palette.tunic;
+                if (material.StartsWith("Trim")) return palette.trim;
+                if (material.StartsWith("Belt")) return palette.sash;
+                if (material.StartsWith("Trousers")) return palette.trousers;
+                if (material.StartsWith("Wraps")) return palette.wraps;
+                if (material.StartsWith("Shoes")) return palette.shoes;
+                if (material.StartsWith("Mark")) return Dyes.MarkColour(build.dye);
+
+                return null;
+            }
+
             foreach (var renderer in instance.GetComponentsInChildren<SkinnedMeshRenderer>(true))
             {
-                renderer.shadowCastingMode = UnityEngine.Rendering.ShadowCastingMode.On;
+                if (!wear.Contains(renderer.name))
+                {
+                    Object.DestroyImmediate(renderer.gameObject);
+                    continue;
+                }
+
+                var face = renderer.name == "Eyes" || renderer.name == "Eyebrows" || renderer.name == "Eyelashes";
+                renderer.shadowCastingMode = face ? UnityEngine.Rendering.ShadowCastingMode.Off : UnityEngine.Rendering.ShadowCastingMode.On;
                 renderer.receiveShadows = true;
                 // Skinned meshes move away from their bounds.
                 renderer.updateWhenOffscreen = true;
 
-                if (renderer.name.StartsWith("Hair"))
-                {
-                    if (renderer.name == keepHair)
-                    {
-                        ownHairThere = true;
-                    }
-                    else
-                    {
-                        renderer.gameObject.SetActive(false);
+                var materials = renderer.sharedMaterials;
 
-                        continue;
+                for (var i = 0; i < materials.Length; i++)
+                {
+                    if (materials[i] != null && ColourOf(renderer.name, materials[i].name) is Color colour)
+                    {
+                        materials[i] = Dyed(materials[i], colour);
                     }
                 }
 
-                var materials = renderer.materials;
-
-                foreach (var material in materials)
-                {
-                    Paint.Sharpen(material);
-
-                    if (material.name.StartsWith("MI_Hair"))
-                    {
-                        // The hair and brows are grey, to be tinted.
-                        Tint(material, hairColour);
-
-                        if (hairTexture == null)
-                        {
-                            hairTexture = material;
-                        }
-                    }
-
-                    if (material.name.StartsWith("MI_Superhero"))
-                    {
-                        // The muscles painted into the skin's relief: gone.
-                        foreach (var name in new[] { "normalTexture_scale", "_BumpScale", "normalScale" })
-                        {
-                            if (material.HasProperty(name))
-                            {
-                                material.SetFloat(name, 0);
-                            }
-                        }
-
-                        // …and into its colour, as light and shade: evened, fair.
-                        foreach (var name in new[] { "baseColorTexture", "_BaseMap", "_MainTex" })
-                        {
-                            if (material.HasProperty(name) && material.GetTexture(name) != null)
-                            {
-                                material.SetTexture(name, Paint.Saturate(material.GetTexture(name), Paint.SkinSaturation, Paint.SkinEvenness, build.skin > 0 ? build.skin : Paint.SkinTone));
-                            }
-                        }
-                    }
-                }
-
-                renderer.materials = materials;
+                renderer.sharedMaterials = materials;
             }
 
-            step.Dispose();
-            var renderers = instance.GetComponentsInChildren<SkinnedMeshRenderer>(true);
-            var skinRenderer = System.Array.Find(renderers, r => r.name.StartsWith("Superhero") || r.name.StartsWith("SuperHero"));
-
-            if (skinRenderer != null)
-            {
-                if (shapes.TryGetValue((look.Gender, build.youth), out var shaped))
-                {
-                    // The shape made before: its younger, smoothed meshes as they are.
-                    for (var i = 0; i < renderers.Length && i < shaped.Length; i++)
-                    {
-                        if (shaped[i] != null)
-                        {
-                            renderers[i].sharedMesh = shaped[i];
-                        }
-                    }
-
-                    skin = new SkinData(skinRenderer);
-                }
-                else
-                {
-                    step = Costs.Time("shape");
-                    skin = new SkinData(skinRenderer);
-
-                    // Younger: the face and the build (every mesh of the model together).
-                    if (build.youth > 0.01f && !teen)
-                    {
-                        Youth.Reshape(skin, HeadFrame.Measure(skin, Find(renderers, "Eyes"), Find(renderers, "Eyebrows")), look.Gender, renderers, build.youth);
-                        skin = new SkinData(skinRenderer);
-                    }
-
-                    // No bodybuilder's muscles, young or old: the skin smoothed (the clothes are cut from it next).
-                    if (!teen)
-                    {
-                        Muscles.Smooth(skinRenderer);
-                        skin = new SkinData(skinRenderer);
-                    }
-
-                    // Kept for every look of this shape (the meshes reshaped here are this body's own copies).
-                    shaped = new Mesh[renderers.Length];
-
-                    for (var i = 0; i < renderers.Length; i++)
-                    {
-                        if (renderers[i].GetComponent<GuWorld.World.OwnedMesh>() != null)
-                        {
-                            shaped[i] = renderers[i].sharedMesh;
-                        }
-                    }
-
-                    shapes[(look.Gender, build.youth)] = shaped;
-                    step.Dispose();
-                }
-
-                eyes = Find(renderers, "Eyes");
-                brows = Find(renderers, "Eyebrows");
-            }
-
-            if (skin != null)
-            {
-                step = Costs.Time("hair");
-                var frame = HeadFrame.Measure(skin, eyes, brows);
-                var hair = new Material(parts.cloth) { name = "Hair" };
-                Clothes.SetColour(hair, hairColour);
-                SetSmoothness(hair, 0.12f);
-                var stubble = new Material(parts.faint) { name = "Stubble" };
-                Clothes.SetColour(stubble, new Color(hairColour.r * 0.7f, hairColour.g * 0.7f, hairColour.b * 0.7f, 0.5f));
-
-                // 2. The hair: a model's own cut, when it is that one (the grown-ups' models have them; fitted to this head)…
-                var donor = HairDonor(parts, look.Gender, keepHair);
-
-                if (keepHair != null && !ownHairThere && donor != null && !teen)
-                {
-                    BorrowHair(donor, keepHair, skin, frame, hairTexture != null ? hairTexture : hair, hairColour);
-                }
-
-                // …or grown, with the beard. Hanging hair takes a model's strand texture (this one's, or the donor's).
-                Material strands = null;
-
-                foreach (var renderer in renderers)
-                {
-                    if (renderer.name.StartsWith("Hair") && renderer.sharedMaterial != null)
-                    {
-                        strands = new Material(renderer.sharedMaterial) { name = "Hair strands" };
-
-                        break;
-                    }
-                }
-
-                if (strands == null && (donor ?? parts.Model(look.Gender)) is GameObject source)
-                {
-                    foreach (var renderer in source.GetComponentsInChildren<SkinnedMeshRenderer>(true))
-                    {
-                        if (renderer.name.StartsWith("Hair") && renderer.sharedMaterial != null)
-                        {
-                            strands = new Material(renderer.sharedMaterial) { name = "Hair strands" };
-
-                            break;
-                        }
-                    }
-                }
-
-                if (strands != null)
-                {
-                    Tint(strands, hairColour);
-                    Paint.Sharpen(strands);
-                }
-
-                Hair.Grow(skin, frame, look, hair, stubble, strands, teen);
-                step.Dispose();
-
-                // 3. The clothes, from the skin out.
-                step = Costs.Time("clothes");
-                var cloth = new Material(parts.cloth) { name = "Cloth" };
-
-                if (weave == null)
-                {
-                    weave = Paint.Weave();
-                }
-
-                foreach (var name in new[] { "_BaseMap", "_MainTex" })
-                {
-                    if (cloth.HasProperty(name))
-                    {
-                        cloth.SetTexture(name, weave);
-                        cloth.SetTextureScale(name, new Vector2(24, 24));
-                    }
-                }
-
-                SetSmoothness(cloth, 0.12f);
-                Clothes.Dress(skin, frame, look.Gender, cloth, build.dye, build.emblem);
-                step.Dispose();
-            }
-
-            // 4. Drawn as the art direction asks: cel-shaded, outlined.
-            step = Costs.Time("materials");
+            // Drawn as the art direction asks: cel-shaded, outlined.
             Toon.Apply(instance);
-
-            // Its meshes are shared by every copy and outlive any one of them.
-            foreach (var owned in instance.GetComponentsInChildren<GuWorld.World.OwnedMesh>(true))
-            {
-                Object.DestroyImmediate(owned);
-            }
-
-            // 4. The look: cel shading and an ink outline (Anime), once everything is on.
             Anime.Apply(instance);
-            step.Dispose();
 
             templates[key] = instance;
 
             return instance;
+        }
+
+        /// <summary>A kit's material in a colour (multiplied into its texture, when it has one), made once.</summary>
+        static Material Dyed(Material source, Color colour)
+        {
+            colour.a = 1;
+
+            if (dyed.TryGetValue((source, colour), out var done) && done != null)
+            {
+                return done;
+            }
+
+            var copy = new Material(source) { name = source.name };
+
+            // glTFast's shader takes the colour as baseColorFactor; others as _BaseColor or _Color.
+            foreach (var name in new[] { "baseColorFactor", "_BaseColor", "_Color" })
+            {
+                if (copy.HasProperty(name))
+                {
+                    copy.SetColor(name, colour);
+                }
+            }
+
+            dyed[(source, colour)] = copy;
+
+            return copy;
         }
 
         /// <summary>Copies the joints' turns onto the bones. Call after the joints move.</summary>
@@ -652,18 +455,18 @@ namespace GuWorld.Body
 
         Vector3 PositionInFigure(Transform t) => root.InverseTransformPoint(t.position);
 
-        /// <summary>Scales the model so its hip joints are the Mannequin's, feet on the ground, facing +Z.</summary>
+        /// <summary>Scales the model so its hip joints are the Mannequin's, feet on the ground (the kit's origin), facing +Z.</summary>
         void Fit(float hipJoint)
         {
             Vector3 At(string name) => PositionInFigure(Bone(name));
 
-            // The figure's left is -X here (the web's +X, mirrored).
+            // The figure's left is -X here.
             if (At("upperarm_l").x > At("upperarm_r").x)
             {
                 Holder.localRotation = Quaternion.Euler(0, 180, 0);
             }
 
-            float Sole() => Mathf.Min(At("ball_leaf_l").y, At("ball_leaf_r").y);
+            float Sole() => PositionInFigure(model).y;
             var hips = (At("thigh_l").y + At("thigh_r").y) / 2;
             var scale = hipJoint / Mathf.Max(0.1f, hips - Sole());
 
@@ -760,8 +563,9 @@ namespace GuWorld.Body
         }
 
         /// <summary>
-        /// For the checks: the finger joints found, the curl now, and for each hand how far its index and middle tips have
-        /// come round toward the palm (1 straight out from the wrist, -1 folded back to it) and to which side of the palm's plane.
+        /// For the checks: the finger joints found, the curl now, and for each hand how far its index and middle
+        /// fingers have come round toward the palm (1 straight out from the wrist, -1 folded back to it) and to
+        /// which side of the palm's plane; and where the thumb's last joint lies.
         /// </summary>
         public string HandReport()
         {
@@ -785,10 +589,9 @@ namespace GuWorld.Body
                     text += $"; {finger}_{s}: along {Vector3.Dot(tip, along):0.00}, palm side {Vector3.Dot(tip, palm):0.00}";
                 }
 
-                // The thumb's tip: how far it lies over toward the little finger, and in front of the palm.
-                var across = (At($"pinky_01_{s}") - At($"index_01_{s}")).normalized;
-                var thumbTip = At($"thumb_04_leaf_{s}") - At($"index_01_{s}");
-                text += $"; thumb_{s}: toward the little finger {Vector3.Dot(thumbTip, across) * 100:0.0} cm, before the palm {Vector3.Dot(thumbTip, palm) * 100:0.0} cm";
+                var acrossPalm = (At($"pinky_01_{s}") - At($"index_01_{s}")).normalized;
+                var thumbTip = At($"thumb_03_{s}") - At($"index_01_{s}");
+                text += $"; thumb_{s}: toward the little finger {Vector3.Dot(thumbTip, acrossPalm) * 100:0.0} cm, before the palm {Vector3.Dot(thumbTip, palm) * 100:0.0} cm";
             }
 
             return text;

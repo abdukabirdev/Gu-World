@@ -618,7 +618,6 @@ namespace GuWorld.Editor
 
             var root = new GameObject("GU World");
             var game = root.AddComponent<GuWorldGame>();
-            GuWorldSetup.Configure(game);
             var square = guYue.Square.Centre + guYue.Down * -6;
             var spawn = new Vector3(square.x, guYue.GroundAt(square) + 0.4f, square.y);
             var facing = Mathf.Atan2(guYue.Down.x, guYue.Down.y);

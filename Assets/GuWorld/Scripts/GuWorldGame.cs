@@ -63,14 +63,6 @@ namespace GuWorld
         public Material BlockMaterial;
         public Material StoneMaterial;
         public Material HeroMaterial;
-        /// <summary>The bodies: human-male.glb and human-female.glb as glTFast imports them.</summary>
-        public GameObject HeroModel;
-        public GameObject HeroModelFemale;
-        /// <summary>The male hero wears his own model (Resources/Models/gu-hero.glb) instead of the made body; `-madebody` turns it off.</summary>
-        public bool GuHeroModel = true;
-        /// <summary>Opaque two-sided URP Lit (hair, clothes) and see-through URP Lit (stubble), copied per use.</summary>
-        public Material ClothMaterial;
-        public Material FaintMaterial;
         /// <summary>The proving ground loads its ground and things chunk by chunk; a built location (Qing Mao) has its own terrain.</summary>
         public bool UseChunks = true;
         /// <summary>The haze (m) and how far the camera sees.</summary>
@@ -688,8 +680,6 @@ namespace GuWorld
             if (BlockMaterial == null) BlockMaterial = Lit("Block", 0xb9b4aa);
             if (StoneMaterial == null) StoneMaterial = Lit("Stone", 0x8f8c84);
             if (HeroMaterial == null) HeroMaterial = Lit("Hero", 0x4a6b8a);
-            if (ClothMaterial == null) ClothMaterial = Lit("Cloth", 0xffffff);
-            if (FaintMaterial == null) FaintMaterial = ClothMaterial;
 
             // The proving ground's grid, as on the web.
             if (UseChunks)
@@ -1311,18 +1301,10 @@ namespace GuWorld
             player.SpawnYaw = pose.yaw;
             view.Ignore = hero.GetComponent<CharacterController>();
             picture = hero.AddComponent<HeroView>();
-            picture.Parts = new HumanBody.Parts
-            {
-                male = HeroModel,
-                female = HeroModelFemale,
-                // Sixteen-year-olds' bodies (MakeHuman, Tools/Character): the hero's and the young villagers'.
-                teenMale = Resources.Load<GameObject>("Models/human-teen-male"),
-                teenFemale = Resources.Load<GameObject>("Models/human-teen-female"),
-                cloth = ClothMaterial,
-                faint = FaintMaterial,
-            };
-            HeroView.TeenBodies = picture.Parts.teenMale != null && picture.Parts.teenFemale != null;
-            HeroView.GuModel = GuHeroModel && !Has(System.Environment.GetCommandLineArgs(), "-madebody");
+            // The people's kits (Resources/People, Tools/GuPeople): a young man and woman and their grown-up selves,
+            // their clothes, hair and beards separate meshes on one skeleton.
+            picture.Parts = HumanBody.Parts.Load();
+            HeroView.TeenBodies = picture.Parts.HasTeens;
             picture.Camera = view;
             health = hero.AddComponent<Health>();
             physique = hero.AddComponent<Physique>();

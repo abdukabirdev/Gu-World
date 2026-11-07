@@ -149,12 +149,11 @@ namespace GuWorld.Body
             var name = renderer.name;
 
             if (name == "Eyes") return Role.Eyes;
-            if (name == "Eyebrows") return Role.Brows;
+            if (name == "Eyebrows" || name == "Eyelashes") return Role.Brows;
             if (name.StartsWith("Hair")) return Role.Hair;
             if (name.StartsWith("Beard")) return Role.Beard;
             if (name.StartsWith("Cloth")) return Role.Cloth;
-            if (material.name.StartsWith("MI_Superhero") || name.StartsWith("Superhero") || name.StartsWith("SuperHero")) return Role.Skin;
-            if (material.name.StartsWith("MI_Hair")) return Role.Hair;
+            if (name == "Body" || material.name.StartsWith("Skin")) return Role.Skin;
 
             return Role.Cloth;
         }

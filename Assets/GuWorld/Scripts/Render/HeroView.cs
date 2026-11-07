@@ -30,32 +30,8 @@ namespace GuWorld.Render
         /// <summary>The hero's height for a look: the gender's, made a little shorter or taller.</summary>
         public static float HeightOf(Look look) => HeightOf(look.Gender) * look.HeightFactor;
 
-        /// <summary>The hero is drawn on a teenager's body (HumanBody.Parts' teen models are there).</summary>
-        public static bool TeenBodies;
-
-        /// <summary>
-        /// A male hero wears the GU hero's own model (Resources/Models/gu-hero.glb: the long-haired Gu Yue
-        /// youth in his dark hanfu) instead of the body made for the look, when it is there. Off: the made body.
-        /// </summary>
-        public static bool GuModel = true;
-
-        static GameObject guModel;
-        static bool guModelLooked;
-
-        /// <summary>The GU hero's model, loaded the first time (null when it isn't in the build).</summary>
-        static GameObject GuHeroModel
-        {
-            get
-            {
-                if (!guModelLooked)
-                {
-                    guModelLooked = true;
-                    guModel = GuHeroBody.Load();
-                }
-
-                return guModel;
-            }
-        }
+        /// <summary>The hero is drawn on a teenager's body (HumanBody.Parts' teen kits are there).</summary>
+        public static bool TeenBodies = true;
 
         public HumanBody.Parts Parts;
         public ThirdPersonCamera Camera;
@@ -126,8 +102,7 @@ namespace GuWorld.Render
         {
             Look = look;
             figure?.Destroy();
-            var own = GuModel && look.Gender == Gender.Male ? GuHeroModel : null;
-            figure = new PersonFigure(transform, Parts, look, HumanBody.Build.ForHero(look), HeightOf(look), own);
+            figure = new PersonFigure(transform, Parts, look, HumanBody.Build.ForHero(look), HeightOf(look));
             HitZones.Build(figure.Rig, GetComponent<IStrikable>());
             MakeTrails();
             ShowBody();

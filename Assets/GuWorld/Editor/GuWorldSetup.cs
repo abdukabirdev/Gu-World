@@ -20,8 +20,6 @@ namespace GuWorld.Editor
         const string Root = "Assets/GuWorld";
         const string ScenePath = Root + "/Scenes/TestGrounds.unity";
         const string MaterialsPath = Root + "/Materials";
-        const string MaleModelPath = Root + "/Models/human-male.glb";
-        const string FemaleModelPath = Root + "/Models/human-female.glb";
 
         static GuWorldSetup()
         {
@@ -84,7 +82,6 @@ namespace GuWorld.Editor
             component.BlockMaterial = game["Block"];
             component.StoneMaterial = game["Stone"];
             component.HeroMaterial = game["Hero"];
-            Configure(component);
             SceneManagerMove(root, scene);
 
             EditorSceneManager.SaveScene(scene, ScenePath);
@@ -103,15 +100,6 @@ namespace GuWorld.Editor
             Debug.Log($"GU World: the proving ground's scene is ready at {ScenePath} (menu Gu World → Open Test Grounds).");
         }
 
-        /// <summary>Gives a game its bodies and the materials the hero is dressed from (any location).</summary>
-        public static void Configure(GuWorldGame component)
-        {
-            component.HeroModel = AssetDatabase.LoadAssetAtPath<GameObject>(MaleModelPath);
-            component.HeroModelFemale = AssetDatabase.LoadAssetAtPath<GameObject>(FemaleModelPath);
-            component.ClothMaterial = ClothAsset("Cloth", transparent: false);
-            component.FaintMaterial = ClothAsset("Faint", transparent: true);
-        }
-
         [MenuItem("Gu World/Delete Save (New Game)", priority = 20)]
         public static void DeleteSave()
         {
@@ -128,54 +116,6 @@ namespace GuWorld.Editor
         static void SceneManagerMove(GameObject gameObject, UnityEngine.SceneManagement.Scene scene)
         {
             UnityEngine.SceneManagement.SceneManager.MoveGameObjectToScene(gameObject, scene);
-        }
-
-        /// <summary>
-        /// A white URP Lit material drawn on both sides — the template for the hair and
-        /// clothes (copied and coloured at runtime) — or a see-through one for stubble.
-        /// Kept as assets so the build keeps the shader variants they need.
-        /// </summary>
-        static Material ClothAsset(string name, bool transparent)
-        {
-            Directory.CreateDirectory(MaterialsPath);
-            var path = $"{MaterialsPath}/{name}.mat";
-            var material = AssetDatabase.LoadAssetAtPath<Material>(path);
-            var create = material == null;
-
-            if (create)
-            {
-                material = new Material(Shader.Find("Universal Render Pipeline/Lit"));
-            }
-
-            material.color = Color.white;
-            material.SetFloat("_Cull", 0);
-            material.SetFloat("_Smoothness", 0.15f);
-            material.doubleSidedGI = true;
-
-            if (transparent)
-            {
-                material.SetFloat("_Surface", 1);
-                material.SetFloat("_Blend", 0);
-                material.SetFloat("_SrcBlend", (float)UnityEngine.Rendering.BlendMode.SrcAlpha);
-                material.SetFloat("_DstBlend", (float)UnityEngine.Rendering.BlendMode.OneMinusSrcAlpha);
-                material.SetFloat("_ZWrite", 0);
-                material.EnableKeyword("_SURFACE_TYPE_TRANSPARENT");
-                material.renderQueue = (int)UnityEngine.Rendering.RenderQueue.Transparent;
-                material.SetOverrideTag("RenderType", "Transparent");
-            }
-
-            if (create)
-            {
-                AssetDatabase.CreateAsset(material, path);
-            }
-            else
-            {
-                EditorUtility.SetDirty(material);
-            }
-
-            AssetDatabase.SaveAssets();
-
-            return material;
         }
 
         static Material MaterialAsset(string name, int rgb)
