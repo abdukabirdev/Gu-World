@@ -16,19 +16,46 @@ namespace GuWorld.Render
         public readonly Transform Root;
         public readonly Mannequin Rig;
         public readonly HumanBody Body;
+        /// <summary>The hero's own model (Resources/Models/gu-hero.glb), worn instead of the made body; or null.</summary>
+        public readonly GuHeroBody GuHero;
 
         /// <summary>The figure's size against the models' (1 = 1.8 m).</summary>
         public readonly float Scale;
 
-        public bool HasBody => Body != null;
+        public bool HasBody => Body != null || GuHero != null;
 
-        public PersonFigure(Transform parent, HumanBody.Parts parts, Look look, HumanBody.Build build, float height)
+        /// <param name="heroModel">The GU hero's model to wear instead of the body made for the look (null: the made one).</param>
+        public PersonFigure(Transform parent, HumanBody.Parts parts, Look look, HumanBody.Build build, float height, GameObject heroModel = null)
         {
             Root = new GameObject("Figure").transform;
             Root.SetParent(parent, false);
             Scale = height / ModelHeight;
             Root.localScale = Vector3.one * Scale;
             Rig = new Mannequin(Root);
+
+            if (heroModel != null)
+            {
+                try
+                {
+                    GuHero = new GuHeroBody(heroModel, Rig);
+                    Pose(0.5f, Standing);
+
+                    return;
+                }
+                catch (System.Exception error)
+                {
+                    // The made body stands in.
+                    Debug.LogError($"GU World: the GU hero model could not be worn: {error}");
+                    var left = Root.Find("GU Hero");
+
+                    if (left != null)
+                    {
+                        Object.Destroy(left.gameObject);
+                    }
+
+                    GuHero = null;
+                }
+            }
 
             if (parts.Model(look.Gender) == null)
             {
@@ -71,6 +98,7 @@ namespace GuWorld.Render
 
             Rig.Update(dt, motion, landingSpeed);
             Body?.Update();
+            GuHero?.Update();
         }
 
         Renderer[] drawn;
