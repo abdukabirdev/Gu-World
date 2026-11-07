@@ -1,4 +1,4 @@
-using System.Collections.Generic;
+﻿using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 using GuWorld.Render;
@@ -100,7 +100,8 @@ namespace GuWorld.Editor
             ["prop_spring_autumn_cicada"] = ("Нефритовая цикада", "Гу"),
         };
 
-        static readonly string[] SectionOrder = { "Дома", "Клан", "Крепость", "Лестницы и тропы", "Декор", "Деревья", "Внутри", "Гу", "Прочее" };
+        static readonly string[] SectionOrder = { WorldBuilder.KitSection, "Набор · клан", "Набор · лавки", "Набор · крепость", "Набор · лестницы и тропы", "Набор · деревья", "Набор · утварь",
+            "Набор · Бай", "Набор · Сюн", "Набор · хутора", "Дома", "Клан", "Крепость", "Лестницы и тропы", "Декор", "Деревья", "Внутри", "Гу", "Прочее" };
         static readonly HashSet<string> Stretched = new HashSet<string> { "prop_stairs_grand", "prop_stairs_medium", "prop_steps_small", "prop_wooden_ladder" };
         static readonly HashSet<string> Repeated = new HashSet<string> { "fort_wall_segment", "prop_bamboo_fence", "prop_paths", "prop_paving_tiles" };
 
@@ -142,7 +143,9 @@ namespace GuWorld.Editor
                 var root = new GameObject(id);
                 var model = (GameObject)PrefabUtility.InstantiatePrefab(source);
                 model.transform.SetParent(root.transform, false);
-                var (label, section) = Names.TryGetValue(id, out var named) ? named : (id, "Прочее");
+                // The kit's houses are named by the export (kit_models.json); the artist's models by the table above.
+                var kitModel = System.Array.Find(QingMaoBuilder.KitModels, m => m.id == id);
+                var (label, section) = kitModel != null ? (kitModel.label, string.IsNullOrEmpty(kitModel.section) ? WorldBuilder.KitSection : kitModel.section) : Names.TryGetValue(id, out var named) ? named : (id, "Прочее");
 
                 if (climb != null)
                 {
@@ -150,7 +153,7 @@ namespace GuWorld.Editor
                 }
                 else
                 {
-                    Dress(root, model, section == "Гу" || section == "Внутри" || section == "Декор");
+                    Dress(root, model, section == "Гу" || section == "Внутри" || section == "Декор" || section == "Набор · утварь");
                 }
 
                 // The footprint, from the near shape (in the model's own frame: the prefab stands unturned at the origin).
@@ -162,6 +165,14 @@ namespace GuWorld.Editor
                     if (first) bounds = renderer.bounds;
                     else bounds.Encapsulate(renderer.bounds);
                     first = false;
+                }
+
+                // A kit house's patterns come from ../kit_textures beside it: written down whether they were found.
+                if (kitModel != null)
+                {
+                    var materials = root.GetComponentsInChildren<Renderer>().SelectMany(r => r.sharedMaterials).Where(m => m != null && m.name != "Far").Distinct().ToList();
+                    var patterned = materials.Count(m => m.GetTexturePropertyNameIDs().Any(t => m.GetTexture(t) != null));
+                    BuildLog.Write($"kit house {id}: {materials.Count} materials, {patterned} with their pattern, {bounds.size.x:0.0}×{bounds.size.z:0.0}×{bounds.max.y:0.0} m");
                 }
 
                 var prefab = PrefabUtility.SaveAsPrefabAsset(root, $"{Prefabs}/{id}.prefab");
@@ -197,7 +208,7 @@ namespace GuWorld.Editor
             foreach (var renderer in model.GetComponentsInChildren<Renderer>())
             {
                 (renderer.name.StartsWith("Far") ? far : near).Add(renderer);
-                renderer.shadowCastingMode = renderer.name.StartsWith("Far") ? ShadowCastingMode.Off : ShadowCastingMode.On;
+                renderer.shadowCastingMode = renderer.name.StartsWith("Far") || renderer.name.StartsWith("Detail") ? ShadowCastingMode.Off : ShadowCastingMode.On;
             }
 
             var group = root.AddComponent<LODGroup>();
@@ -205,7 +216,7 @@ namespace GuWorld.Editor
             group.SetLODs(far.Count > 0 ? new[] { new LOD(nearSize, near.ToArray()), new LOD(farSize, far.ToArray()) } : new[] { new LOD(farSize, near.ToArray()) });
             group.RecalculateBounds();
 
-            if (near.Count > 0 && near[0].GetComponent<MeshFilter>() is MeshFilter filter && filter.sharedMesh != null)
+            if (near.Count > 0 && (near.Find(r => r.name.StartsWith("Near")) ?? near[0]).GetComponent<MeshFilter>() is MeshFilter filter && filter.sharedMesh != null)
             {
                 filter.gameObject.AddComponent<MeshCollider>().sharedMesh = filter.sharedMesh;
             }

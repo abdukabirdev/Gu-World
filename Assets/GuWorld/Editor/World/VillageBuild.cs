@@ -260,11 +260,15 @@ namespace GuWorld.Editor
                 BuildVillageWall(root, plan, clan, Ground, stones);
             }
 
-            // The things lying about.
+            // The things lying about: the kit's trees, lamps, carts and haystacks as models of their own, the rest drawn.
             foreach (var prop in plan.Props)
             {
                 var at = new Vector3(prop.At.x, Ground(new Vector2(prop.At.x, prop.At.z)), prop.At.z);
-                DrawProp(things.At(at, prop.Yaw, prop.Scale), prop.Kind, prop.Seed);
+
+                if (!KitProp(decor, prop.Kind, at, prop.Yaw, prop.Scale, prop.Seed))
+                {
+                    DrawProp(things.At(at, prop.Yaw, prop.Scale), prop.Kind, prop.Seed);
+                }
 
                 // The lamps on the main ways and round the square light the lanes at night (a few: lights are dear).
                 if (!plan.LevelGround && (prop.Kind == "lamp" || prop.Kind == "brazier" || prop.Kind == "stone lantern") && lamps < (clan == Clan.GuYue ? 40 : 12) && Vector2.Distance(new Vector2(at.x, at.z), plan.Square.Centre) < (clan == Clan.GuYue ? 120 : 70))
@@ -506,6 +510,44 @@ namespace GuWorld.Editor
             _ => kind == BuildingKind.Poor || kind == BuildingKind.Shed ? new Color(0.4f, 0.36f, 0.26f) : new Color(0.26f, 0.3f, 0.36f),
         };
 
+        /// <summary>The scattered props' kinds the kit has as models of their own (the rest are drawn into the blocks: there are thousands).</summary>
+        static readonly Dictionary<string, string> KitPropKinds = new Dictionary<string, string>
+        {
+            ["lamp"] = "prop:lamp", ["cart"] = "prop:cart", ["hay"] = "prop:haystack", ["haystack"] = "prop:haystack", ["well"] = "prop_village_well",
+            ["weapon rack"] = "prop_weapon_rack", ["drying rack"] = "prop_drying_rack", ["firewood"] = "prop_firewood_stack",
+        };
+
+        /// <summary>
+        /// A scattered prop as the kit's model (Tools/GuKit), when it has one: a tree of its kind (leafy, pine or old, by
+        /// the seed), a lamp, a cart, a haystack, a well, a rack, a woodpile — solid, small ones gone sooner. False: none.
+        /// </summary>
+        static bool KitProp(Transform parent, string kind, Vector3 at, float yaw, float scale, int seed)
+        {
+            KitModel kit;
+
+            if (kind == "tree" || kind == "pine tree" || kind == "old tree")
+            {
+                var pine = kind == "pine tree";
+                var trees = KitModels.Where(m => m.kind == "Tree" && string.IsNullOrEmpty(m.replaces) && (m.id.Contains("pine") || m.id.Contains("cypress")) == pine
+                    && (kind != "old tree" || m.height > 11) && !m.id.Contains("dead") && HasVillageModel(m.id)).ToList();
+                kit = trees.Count > 0 ? trees[Mathf.Abs(seed) % trees.Count] : null;
+            }
+            else
+            {
+                kit = KitPropKinds.TryGetValue(kind, out var replaced) ? KitFor(replaced) : null;
+                scale *= kind == "well" ? 0.7f : 1;
+            }
+
+            if (kit == null)
+            {
+                return false;
+            }
+
+            var tree = kit.kind == "Tree";
+
+            return PlaceVillageModel(parent, kit.id, kind, new Vector2(at.x, at.z), yaw, at.y, scale, true, tree ? 0.08f : 0.04f, tree ? 0.004f : 0.01f) != null;
+        }
+
         /// <summary>A building on its plot: its shape (a great one's own, or the nearest design), its footing or stilts, steps up to its door.</summary>
         static void PlaceBuilding(Transform parent, VillagePlan.Building b, Clan clan, Func<Vector2, float> ground, Blocks under, Blocks steps, int index)
         {
@@ -519,6 +561,25 @@ namespace GuWorld.Editor
                 }
 
                 return;
+            }
+
+            // The kit's house of the clan and kind nearest the plot (Tools/GuKit: the Bai's, the Xiong's, the mortals'
+            // and the hamlets' houses, Gu Yue's huts, the clans' halls): stretched a little to the plot, its footing or
+            // stilts under it as for the artist's models. The procedural ones below stand in where the kit has none.
+            if (KitDesign(b.Mortal ? Clan.Mortal : clan, b.Kind, b.Size, b.Seed) is KitModel kit)
+            {
+                var fit = new Vector3(Mathf.Clamp(b.Size.x / kit.width, 0.8f, 1.25f), 1, Mathf.Clamp(b.Size.y / kit.depth, 0.8f, 1.25f));
+                fit.y = Mathf.Sqrt(fit.x * fit.z);
+
+                if (PlaceVillageModel(parent, kit.id, string.IsNullOrEmpty(b.Name) ? $"{b.Kind} {index}" : b.Name, b.Centre, b.Yaw, b.Floor, fit) != null)
+                {
+                    if (!b.Pad && b.Kind != BuildingKind.Pavilion)
+                    {
+                        PlaceFooting(b, new Vector2(kit.width * fit.x, kit.depth * fit.z), clan, ground, under, steps);
+                    }
+
+                    return;
+                }
             }
 
             (Mesh, Material[]) near;
@@ -852,6 +913,10 @@ namespace GuWorld.Editor
             });
             var sinceTower = 30f;
             var sinceLadder = 12f;
+            // The clan's gates and towers from the kit (Tools/GuKit, fort_ways.mjs: the Bai's whitewashed, the Xiong's of
+            // logs), where it has them; the lengths of wall between stay drawn, following the ground.
+            var kitGate = KitOf(clan.ToString(), "Gate").FirstOrDefault();
+            var kitTower = KitOf(clan.ToString(), "Tower").FirstOrDefault();
 
             Vector2 At(float d, out Vector2 tangent)
             {
@@ -895,8 +960,12 @@ namespace GuWorld.Editor
                     {
                         var gateYaw = Mathf.Atan2(nearGate.Out.x, nearGate.Out.y) * Mathf.Rad2Deg;
                         var low = Mathf.Min(ground(nearGate.At + nearGate.Out * 2), ground(nearGate.At - nearGate.Out * 2));
-                        var go = Place(walls, nearGate.Name, gate, new Vector3(nearGate.At.x, low - 0.4f, nearGate.At.y), gateYaw);
-                        go.AddComponent<HitboxTag>().Kind = HitboxKind.Building;
+
+                        if (kitGate == null || PlaceVillageModel(walls, kitGate.id, nearGate.Name, nearGate.At, gateYaw, low - 0.15f, 1) == null)
+                        {
+                            var go = Place(walls, nearGate.Name, gate, new Vector3(nearGate.At.x, low - 0.4f, nearGate.At.y), gateYaw);
+                            go.AddComponent<HitboxTag>().Kind = HitboxKind.Building;
+                        }
                     }
 
                     continue;
@@ -944,8 +1013,12 @@ namespace GuWorld.Editor
                 if (sinceTower > 58)
                 {
                     var outer = p + outward * 0.8f;
-                    var go = Place(walls, "Tower", tower, new Vector3(outer.x, Mathf.Min(gl, ground(outer)) - 0.8f, outer.y), yaw);
-                    go.AddComponent<HitboxTag>().Kind = HitboxKind.Building;
+
+                    if (kitTower == null || PlaceVillageModel(walls, kitTower.id, "Tower", outer, yaw, Mathf.Min(gl, ground(outer)) - 0.3f, 1) == null)
+                    {
+                        var go = Place(walls, "Tower", tower, new Vector3(outer.x, Mathf.Min(gl, ground(outer)) - 0.8f, outer.y), yaw);
+                        go.AddComponent<HitboxTag>().Kind = HitboxKind.Building;
+                    }
                     sinceTower = 0;
                 }
 
@@ -1152,12 +1225,34 @@ namespace GuWorld.Editor
             var steps = new Blocks(root, $"{place.Id} steps") { SolidThickness = 0 };
             var houses = new List<(Vector2 at, float r)>();
             var count = 8 + random.Next(10);
+            var c = place.Centre;
 
-            for (var tries = 0; tries < 400 && houses.Count < count; tries++)
+            // Its lane: through the middle along the slope's level (so the houses stand evener), its houses on both sides
+            // facing it, the nearest the middle first; the first of them the headman's (2026-10-31: a cluster of yards
+            // along a way, not a ring).
+            var slope = new Vector2(Ground(c + Vector2.right * 6) - Ground(c - Vector2.right * 6), Ground(c + Vector2.up * 6) - Ground(c - Vector2.up * 6));
+            var spin = R() * Mathf.PI;
+            var along = slope.sqrMagnitude > 0.01f ? new Vector2(-slope.y, slope.x).normalized : new Vector2(Mathf.Cos(spin), Mathf.Sin(spin));
+            var across = new Vector2(-along.y, along.x);
+            var spots = new List<(Vector2 at, float side)>();
+
+            for (var k = -9; k <= 9; k++)
             {
-                var a = R() * Mathf.PI * 2;
-                var d = 6 + R() * place.Radius;
-                var at = place.Centre + new Vector2(Mathf.Cos(a), Mathf.Sin(a)) * d;
+                foreach (var side in new[] { -1f, 1f })
+                {
+                    var s0 = k * (9 + R() * 4) + (R() - 0.5f) * 3;
+                    spots.Add((c + along * s0 + across * side * (6.5f + R() * 4), side));
+                }
+            }
+
+            foreach (var (spot, side) in spots.OrderBy(sp => Vector2.Distance(sp.at, c)))
+            {
+                if (houses.Count >= count)
+                {
+                    break;
+                }
+
+                var at = spot;
                 var size = new Vector2(3.8f + R() * 3, 3.4f + R() * 2.4f);
 
                 if (houses.Any(h => Vector2.Distance(h.at, at) < h.r + size.magnitude / 2 + 1.5f) || MountainShape.NearStream(at, 12, out _, out _, out _, out _) || TrailNear(at, size.magnitude / 2 + 3))
@@ -1165,7 +1260,8 @@ namespace GuWorld.Editor
                     continue;
                 }
 
-                var yaw = Mathf.Atan2(place.Centre.x - at.x, place.Centre.y - at.y) * Mathf.Rad2Deg + (R() - 0.5f) * 30;
+                var facing = -across * side;
+                var yaw = Mathf.Atan2(facing.x, facing.y) * Mathf.Rad2Deg + (R() - 0.5f) * 24;
                 var high = float.NegativeInfinity;
                 var turn = Quaternion.Euler(0, yaw, 0);
 
@@ -1175,7 +1271,8 @@ namespace GuWorld.Editor
                     high = Mathf.Max(high, Ground(at + new Vector2(v.x, v.z)));
                 }
 
-                var b = new VillagePlan.Building { Kind = R() < 0.2f ? BuildingKind.Shed : BuildingKind.Poor, Centre = at, Size = size, Yaw = yaw, Floor = high + 0.15f, Seed = random.Next(), Lit = R() < 0.6f };
+                var kind = houses.Count == 0 ? BuildingKind.Family : R() < 0.2f ? BuildingKind.Shed : BuildingKind.Poor;
+                var b = new VillagePlan.Building { Kind = kind, Centre = at, Size = size, Yaw = yaw, Floor = high + 0.15f, Seed = random.Next(), Lit = R() < 0.6f };
                 PlaceBuilding(root, b, Clan.Mortal, Ground, under, steps, houses.Count);
                 houses.Add((at, size.magnitude / 2));
                 footprints.Add(new WorldPlan.Footprint { Centre = at, Half = size / 2, Yaw = yaw, Tint = RoofTint(Clan.Mortal, b.Kind) });
@@ -1187,9 +1284,69 @@ namespace GuWorld.Editor
                         var v = turn * new Vector3((R() - 0.5f) * size.x, 0, size.y / 2 + 0.6f + R());
                         var p = at + new Vector2(v.x, v.z);
                         var where = new Vector3(p.x, Ground(p), p.y);
-                        DrawProp(things.At(where, yaw + (R() - 0.5f) * 40), thing, random.Next());
+                        var seed = random.Next();
+
+                        if (!KitProp(root, thing, where, yaw + (R() - 0.5f) * 40, 1, seed))
+                        {
+                            DrawProp(things.At(where, yaw + (R() - 0.5f) * 40), thing, seed);
+                        }
                     }
                 }
+
+                // Behind the house, now and then: its vegetable plot, or a coop.
+                if (kind != BuildingKind.Shed && R() < 0.55f)
+                {
+                    var behind = at - facing * (size.y / 2 + 4.2f);
+
+                    if (!MountainShape.NearStream(behind, 8, out _, out _, out _, out _) && !TrailNear(behind, 4) && !houses.Any(h => Vector2.Distance(h.at, behind) < h.r + 3))
+                    {
+                        Thing(R() < 0.7f ? "kit_prop_garden" : "kit_prop_coop", behind, yaw);
+                    }
+                }
+            }
+
+            // Its middle: a well, the earth god's shrine, a threshing floor — and what its name says it lives by.
+            Thing("kit_mortal_well", c + along * 1.5f, R() * 360);
+            Thing("kit_mortal_shrine", c - along * 3 + across * 2.5f, Mathf.Atan2(-across.x, -across.y) * Mathf.Rad2Deg);
+            Thing("kit_mortal_threshing", c + along * (houses.Count > 10 ? 14 : 10) - across * 1, R() * 360);
+
+            var theme = place.Id switch
+            {
+                "hamlet_honey" => ("kit_mortal_apiary", 3, (string)null),
+                "hamlet_mill" => ("kit_mortal_watermill", 1, null),
+                "hamlet_willow" => (null, 0, "willow"),
+                "hamlet_bamboo" => (null, 0, "bamboo"),
+                "hamlet_pine" => (null, 0, "pine"),
+                "hamlet_stone" => ("kit_prop_stones", 6, (string)null),
+                _ => ("kit_prop_garden", 2, null),
+            };
+
+            for (var i = 0; i < theme.Item2; i++)
+            {
+                var a = R() * Mathf.PI * 2;
+                Thing(theme.Item1, c + new Vector2(Mathf.Cos(a), Mathf.Sin(a)) * (place.Radius * 0.6f + R() * 14), R() * 360);
+            }
+
+            // Trees about it (of its name, where it has one).
+            var trees = KitModels.Where(m => m.kind == "Tree" && (theme.Item3 != null ? m.id.Contains(theme.Item3) : !m.id.Contains("dead") && !m.id.Contains("bamboo")) && HasVillageModel(m.id)).ToList();
+
+            for (var i = 0; i < (theme.Item3 != null ? 14 : 7) && trees.Count > 0; i++)
+            {
+                var a = R() * Mathf.PI * 2;
+                Thing(trees[random.Next(trees.Count)].id, c + new Vector2(Mathf.Cos(a), Mathf.Sin(a)) * (place.Radius * 0.5f + R() * place.Radius), R() * 360);
+            }
+
+            // A kit model standing on the ground at a point, when it is there and the point is free (no house, stream or trail).
+            void Thing(string id, Vector2 at, float yaw)
+            {
+                if (id == null || !HasVillageModel(id) || MountainShape.NearStream(at, id.Contains("watermill") ? 2 : 6, out _, out _, out _, out _) || TrailNear(at, 3)
+                    || houses.Any(h => Vector2.Distance(h.at, at) < h.r + 2))
+                {
+                    return;
+                }
+
+                PlaceVillageModel(root, id, id.Replace("kit_", ""), at, yaw, Ground(at) - 0.05f, 1, true, 0.05f, 0.006f);
+                houses.Add((at, 2.5f));
             }
 
             // Fields round it: rows of crops on the gentle ground, and haystacks.

@@ -3377,6 +3377,10 @@ namespace GuWorld
 
         public int SpawnWolves(int count) => wolves != null ? wolves.CallNear(count) : 0;
 
+        public string Showcase(string section) => WorldBuilder.Current != null && WorldBuilder.Current.Ready
+            ? WorldBuilder.Current.Showcase(body.transform.position, view.transform.forward, section)
+            : "!Строитель ещё не готов: мир не загрузился";
+
         WolfPacks wolves;
 
         /// <summary>The wolves' dens: in the forest round the hero's village, well outside its walls (none on the proving ground).</summary>

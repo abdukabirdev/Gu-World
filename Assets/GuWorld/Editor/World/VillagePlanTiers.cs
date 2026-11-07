@@ -82,6 +82,19 @@ namespace GuWorld.Editor
             t < 0.523f ? Mathf.Lerp(0.5f, 0.535f, (t - 0.437f) / 0.086f) :
             t < 0.832f ? Mathf.Lerp(0.535f, 1, (t - 0.523f) / 0.309f) : 1;
 
+        /// <summary>
+        /// The kit's terrace stairs (Tools/GuKit, fort_ways.mjs: a stone stair that rises exactly a terrace, and a steeper
+        /// one for shallow terraces), when imported — they take the artist's grand one's place; their treads' heights by
+        /// their own profiles.
+        /// </summary>
+        static readonly QingMaoBuilder.KitModel KitStair = QingMaoBuilder.KitById("kit_way_stair_terrace");
+        static readonly QingMaoBuilder.KitModel KitSteepStair = QingMaoBuilder.KitById("kit_way_stair_steep");
+        static readonly System.Func<float, float> KitStairTreads = QingMaoBuilder.KitStairProfile(KitStair);
+        static readonly System.Func<float, float> KitSteepTreads = QingMaoBuilder.KitStairProfile(KitSteepStair) ?? KitStairTreads;
+
+        /// <summary>Each flight's tread profile (as `flights`, one for one): the kit stair's own, or the grand one's.</summary>
+        readonly List<System.Func<float, float>> flightTreads = new List<System.Func<float, float>>();
+
         /// <summary>Whether this is the terraced town (Gu Yue's): its wall is built by its rectangle (QingMaoBuilder.BuildFortRect).</summary>
         public bool LevelGround => Glb;
 
@@ -600,7 +613,7 @@ namespace GuWorld.Editor
 
         void LayOutTiers()
         {
-            stairSize = Vector2.Scale(QingMaoBuilder.VillageGlb[StairModel].Size, new Vector2(StairAcross, StairRun));
+            stairSize = KitStair != null ? new Vector2(KitStair.width, KitStair.depth) : Vector2.Scale(QingMaoBuilder.VillageGlb[StairModel].Size, new Vector2(StairAcross, StairRun));
             var great = GreatList();
             MakeField(great);
             Level0 = levelBase;
@@ -723,14 +736,17 @@ namespace GuWorld.Editor
         {
             if (Glb)
             {
-                foreach (var (foot, up, half, run, low, high) in flights)
+                for (var i = 0; i < flights.Count; i++)
                 {
+                    var (foot, up, half, run, low, high) = flights[i];
                     var d = p - foot;
                     var t = Vector2.Dot(d, up);
 
                     if (t >= -1 && t <= run + 0.6f && Mathf.Abs(d.x * up.y - d.y * up.x) <= half)
                     {
-                        return Mathf.Lerp(low, high, StairProfile(Mathf.Clamp01(t / run)));
+                        var treads = i < flightTreads.Count && flightTreads[i] != null ? flightTreads[i] : StairProfile;
+
+                        return Mathf.Lerp(low, high, treads(Mathf.Clamp01(t / run)));
                     }
                 }
             }
@@ -1368,8 +1384,14 @@ namespace GuWorld.Editor
 
         bool AddStair(Vector2 face, Vector2 up, float across, int low, string name, bool steep = false)
         {
-            var scale = new Vector3(StairAcross, Rise / StairLanding, steep ? SteepRun : StairRun);
-            var stairSize = Vector2.Scale(QingMaoBuilder.VillageGlb[StairModel].Size, new Vector2(scale.x, scale.z));
+            // The kit's stair at its own size (risen to the terrace exactly; the steep one, or the terrace one shortened),
+            // else the artist's grand one narrowed, shortened and raised to the rise.
+            var kit = steep ? KitSteepStair ?? KitStair : KitStair;
+            var model = kit != null ? kit.id : StairModel;
+            var scale = kit != null
+                ? new Vector3(1, Rise / Mathf.Max(0.1f, kit.rise > 0 ? kit.rise : kit.height), steep && KitSteepStair == null ? SteepRun / StairRun : 1)
+                : new Vector3(StairAcross, Rise / StairLanding, steep ? SteepRun : StairRun);
+            var stairSize = kit != null ? new Vector2(kit.width * scale.x, kit.depth * scale.z) : Vector2.Scale(QingMaoBuilder.VillageGlb[StairModel].Size, new Vector2(scale.x, scale.z));
             var side = new Vector2(up.y, -up.x);
             var head = face + side * across;
             var centreLocal = head - up * (stairSize.y / 2);
@@ -1403,10 +1425,11 @@ namespace GuWorld.Editor
                 }
             }
 
-            ModelStairs.Add((StairModel, centre, yaw, TerraceLevel(low), scale));
+            ModelStairs.Add((model, centre, yaw, TerraceLevel(low), scale));
             var footWorld = W(head - up * stairSize.y);
             var upWorld = WorldDir(up);
             flights.Add((footWorld, upWorld, half.x - 0.5f, stairSize.y, TerraceLevel(low), TerraceLevel(low + 1)));
+            flightTreads.Add(kit == null ? null : steep ? KitSteepTreads : KitStairTreads);
             Inside(centre, half + new Vector2(0, 0.4f), yaw, 0, cell =>
             {
                 taken[cell] = true;
@@ -1997,7 +2020,31 @@ namespace GuWorld.Editor
             return new Lot { Model = model, Scale = scale, Stretch = stretch, Kind = kind, Size = new Vector2(size.x * Mathf.Abs(stretch.x), size.y * stretch.z), Plain = plain };
         }
 
-        /// <summary>A mortal's hut of the procedural kit (thatched, crooked, as in the hamlets).</summary>
+        /// <summary>
+        /// One of the kit's Gu Yue houses of a kind (Tools/GuKit, the artist's parts at their own size — a family's house
+        /// 5 to 10 m, a hut 4 m): the Chi's red ones or the Mo's blue ones mostly in their quarters (`palette` "chi" or
+        /// "mo"), never elsewhere. A hut when the kit has none of the kind.
+        /// </summary>
+        Lot Kit(BuildingKind kind, string palette = null)
+        {
+            bool Of(QingMaoBuilder.KitModel m, string name) => m.id.Split('_').Contains(name);
+            var all = QingMaoBuilder.KitOf("GuYue", kind.ToString()).Where(m => string.IsNullOrEmpty(m.section) || m.section == "Дома из набора").ToList();
+            var list = all.Where(m => !Of(m, "chi") && !Of(m, "mo")).ToList();
+
+            if (palette != null && all.Any(m => Of(m, palette)) && R() < 0.65f)
+            {
+                list = all.Where(m => Of(m, palette)).ToList();
+            }
+
+            if (list.Count == 0)
+            {
+                return Hut();
+            }
+
+            return Pick(list[random.Next(list.Count)].id, 1, kind, kind == BuildingKind.Shop);
+        }
+
+        /// <summary>A mortal's hut (the kit's mortal houses, PlaceBuilding; procedural where it has none).</summary>
         Lot Hut() => new Lot { Model = null, Kind = BuildingKind.Poor, Size = new Vector2(5.6f + R() * 3, 4.8f + R() * 2.4f) };
 
         /// <summary>One of several lots by their weights.</summary>
@@ -2043,56 +2090,34 @@ namespace GuWorld.Editor
                 yield return Mix();
             }
 
-            yield return OneOf((40, Hut), (30, () => Pick("prop_poor_house", 0.68f + R() * 0.08f, BuildingKind.Poor)), (30, Small));
+            yield return OneOf((40, Hut), (30, () => Kit(BuildingKind.Poor)), (30, () => Kit(BuildingKind.Shed)));
             yield return Hut();
 
             Lot Mix()
             {
+                // The kit's houses (2026-10-31): the clan's people in two-storey houses and houses on stilts, the families'
+                // in their colours, shop-houses along the market's ways, the mortals' and the crafts' poor houses and huts,
+                // sheds and stores among them; the artist's whole trade buildings where the quarter has its trades.
+                var family = local.x < AxisAlong ? "mo" : "chi";
+
                 switch (quarter)
                 {
                 case Quarter.Head:
+                    return OneOf((70, () => Kit(BuildingKind.Family)), (10, () => Kit(BuildingKind.Shop)), (12, () => Kit(BuildingKind.Shed)), (8, () => Kit(BuildingKind.Poor)));
                 case Quarter.Family:
-                    return OneOf(
-                        (50, () => Pick("guyue_bamboo_house", 0.8f + R() * 0.15f, BuildingKind.Family)),
-                        (15, () => Pick("prop_poor_house", 0.85f + R() * 0.15f, BuildingKind.Family)),
-                        (12, () => Pick("prop_academy_dorm", 0.58f + R() * 0.08f, BuildingKind.Family)),
-                        (10, () => Pick("prop_shop_small_a", 1, BuildingKind.Family)),
-                        (8, () => Pick("prop_eatery", 0.65f, BuildingKind.Family, true)),
+                    return OneOf((72, () => Kit(BuildingKind.Family, family)), (6, () => Kit(BuildingKind.Shop)), (14, () => Kit(BuildingKind.Shed)), (8, () => Kit(BuildingKind.Poor)),
                         (5, () => Pick("prop_granary", 0.65f, BuildingKind.Shed)));
                 case Quarter.Market:
-                    return OneOf(
-                        (main ? 35 : 20, () => Pick("prop_shop", 0.9f, BuildingKind.Shop, true)),
-                        (35, Small),
-                        (15, () => Pick("guyue_bamboo_house", 0.75f, BuildingKind.Family)),
-                        (10, () => Pick("prop_poor_house", 0.9f, BuildingKind.Poor)),
-                        (5, () => Pick("prop_herbalist", 0.85f, BuildingKind.Herbalist, true)),
-                        (5, () => Pick("prop_eatery", 0.7f, BuildingKind.Family, true)));
+                    return OneOf((main ? 45 : 30, () => Kit(BuildingKind.Shop)), (25, Small), (20, () => Kit(BuildingKind.Family)), (8, () => Kit(BuildingKind.Poor)),
+                        (5, () => Pick("prop_herbalist", 0.85f, BuildingKind.Herbalist, true)), (5, () => Pick("prop_eatery", 0.7f, BuildingKind.Tavern, true)));
                 case Quarter.Mortals:
-                    return OneOf(
-                        (40, () => Pick("prop_poor_house", 0.75f + R() * 0.25f, BuildingKind.Poor)),
-                        (30, Hut),
-                        (10, () => Pick("prop_shop_small_c", 1, BuildingKind.Shop, true)),
-                        (12, () => Pick("prop_poor_house", 0.5f + R() * 0.1f, BuildingKind.Shed)),
-                        (8, () => Pick("prop_academy_dorm", 0.5f, BuildingKind.Poor)));
+                    return OneOf((45, () => Kit(BuildingKind.Poor)), (25, Hut), (18, () => Kit(BuildingKind.Shed)), (7, () => Kit(BuildingKind.Family)), (5, Small));
                 case Quarter.Crafts:
-                    return OneOf(
-                        (30, () => Pick("prop_poor_house", 0.8f + R() * 0.2f, BuildingKind.Poor)),
-                        (20, Hut),
-                        (12, () => Pick("prop_granary", 0.7f, BuildingKind.Shed)),
-                        (10, () => Pick("prop_academy_dorm", 0.6f, BuildingKind.Poor)),
-                        (10, () => Pick("prop_shop_small_c", 1, BuildingKind.Shop, true)),
-                        (8, () => Pick("prop_smithy", 0.7f, BuildingKind.Shed, true)),
-                        (10, () => Pick("prop_poor_house", 0.5f + R() * 0.1f, BuildingKind.Shed)));
+                    return OneOf((32, () => Kit(BuildingKind.Poor)), (15, Hut), (18, () => Kit(BuildingKind.Shed)), (18, () => Kit(BuildingKind.Family)),
+                        (8, () => Pick("prop_smithy", 0.8f, BuildingKind.Smithy, true)), (6, () => Pick("prop_granary", 0.7f, BuildingKind.Granary)), (5, Small));
                 default:
-                    return OneOf(
-                        (25, () => Pick("guyue_bamboo_house", 0.75f + R() * 0.12f, BuildingKind.Family)),
-                        (main ? 25 : 18, Small),
-                        (15, () => Pick("prop_poor_house", 0.85f + R() * 0.15f, BuildingKind.Family)),
-                        (10, () => Pick("prop_shop", 0.85f, BuildingKind.Shop, true)),
-                        (10, () => Pick("prop_academy_dorm", 0.6f, BuildingKind.Family)),
-                        (5, () => Pick("prop_granary", 0.7f, BuildingKind.Shed)),
-                        (5, () => Pick("prop_eatery", 0.65f, BuildingKind.Family, true)),
-                        (5, () => Pick("prop_smithy", 0.6f, BuildingKind.Shed, true)));
+                    return OneOf((50, () => Kit(BuildingKind.Family)), (main ? 18 : 10, () => Kit(BuildingKind.Shop)), (main ? 12 : 8, Small), (14, () => Kit(BuildingKind.Poor)),
+                        (10, () => Kit(BuildingKind.Shed)), (4, () => Pick("prop_smithy", 0.75f, BuildingKind.Smithy, true)), (4, () => Pick("prop_eatery", 0.7f, BuildingKind.Tavern, true)));
                 }
             }
         }

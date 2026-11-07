@@ -13,6 +13,141 @@ MonoBehaviour:
   m_Name: BuildCatalog
   m_EditorClassIdentifier: GuWorld::GuWorld.World.BuildCatalog
   Entries:
+  - Id: kit_stilt_bamboo
+    Label: "\u0411\u0430\u043C\u0431\u0443\u043A\u043E\u0432\u044B\u0439 \u0434\u043E\u043C \u043D\u0430 \u0441\u0432\u0430\u044F\u0445"
+    Section: "\u0414\u043E\u043C\u0430 \u0438\u0437 \u043D\u0430\u0431\u043E\u0440\u0430"
+    Prefab: {fileID: 6284976579912281767, guid: 76b4106aa72286948853d5c57423ea01, type: 3}
+    Size: {x: 7.49, y: 8.025492}
+    Height: 6.3643007
+    Middle: {x: 0, y: 1.3672547}
+    Stretch: 0
+    Repeat: 0
+  - Id: kit_hut_mud
+    Label: "\u0413\u043B\u0438\u043D\u043E\u0431\u0438\u0442\u043D\u0430\u044F \u0445\u0438\u0436\u0438\u043D\u0430"
+    Section: "\u0414\u043E\u043C\u0430 \u0438\u0437 \u043D\u0430\u0431\u043E\u0440\u0430"
+    Prefab: {fileID: 4979498756032466613, guid: 7460ee5596888824584a11babd0fdcb5, type: 3}
+    Size: {x: 5.1644874, y: 4.5937877}
+    Height: 4.3168807
+    Middle: {x: 0.107756376, y: 0}
+    Stretch: 0
+    Repeat: 0
+  - Id: kit_l_kitchen
+    Label: "\u0413-\u043E\u0431\u0440\u0430\u0437\u043D\u044B\u0439 \u0434\u043E\u043C \u0441 \u043A\u0443\u0445\u043D\u0435\u0439"
+    Section: "\u0414\u043E\u043C\u0430 \u0438\u0437 \u043D\u0430\u0431\u043E\u0440\u0430"
+    Prefab: {fileID: 7969394542601486883, guid: e4741586914941b41beb2e3467267163, type: 3}
+    Size: {x: 12.440001, y: 6.6163487}
+    Height: 5.700001
+    Middle: {x: -1.625, y: 0.66268325}
+    Stretch: 0
+    Repeat: 0
+  - Id: kit_l_kitchen_grey
+    Label: "\u0413-\u043E\u0431\u0440\u0430\u0437\u043D\u044B\u0439 \u0434\u043E\u043C, \u0441\u0435\u0440\u044B\u0439"
+    Section: "\u0414\u043E\u043C\u0430 \u0438\u0437 \u043D\u0430\u0431\u043E\u0440\u0430"
+    Prefab: {fileID: 9092275191158376281, guid: 3b14509c4a654144baa8801b04273c94, type: 3}
+    Size: {x: 12.440001, y: 6.616349}
+    Height: 5.700001
+    Middle: {x: -1.625, y: 0.6626835}
+    Stretch: 0
+    Repeat: 0
+  - Id: kit_two_storey
+    Label: "\u0414\u0432\u0443\u0445\u044D\u0442\u0430\u0436\u043D\u044B\u0439 \u0434\u043E\u043C"
+    Section: "\u0414\u043E\u043C\u0430 \u0438\u0437 \u043D\u0430\u0431\u043E\u0440\u0430"
+    Prefab: {fileID: 5959863451036468390, guid: 45cfaff7c671197489d31df2f18c9c08, type: 3}
+    Size: {x: 8.49, y: 7.2909822}
+    Height: 8.8101
+    Middle: {x: 0, y: 0.5}
+    Stretch: 0
+    Repeat: 0
+  - Id: kit_two_storey_stone
+    Label: "\u0414\u0432\u0443\u0445\u044D\u0442\u0430\u0436\u043D\u044B\u0439 \u0434\u043E\u043C \u043D\u0430 \u043A\u0430\u043C\u043D\u0435"
+    Section: "\u0414\u043E\u043C\u0430 \u0438\u0437 \u043D\u0430\u0431\u043E\u0440\u0430"
+    Prefab: {fileID: 7183165640904114686, guid: 9fcb8a5e7f8709048a336cc688e8a7fd, type: 3}
+    Size: {x: 8.49, y: 7.2909822}
+    Height: 8.8101
+    Middle: {x: 0, y: 0.5}
+    Stretch: 0
+    Repeat: 0
+  - Id: kit_slope_terrace
+    Label: "\u0414\u043E\u043C \u043D\u0430 \u043A\u0440\u0430\u044E \u0442\u0435\u0440\u0440\u0430\u0441\u044B"
+    Section: "\u0414\u043E\u043C\u0430 \u0438\u0437 \u043D\u0430\u0431\u043E\u0440\u0430"
+    Prefab: {fileID: 1676177863413167474, guid: f7774aeb4e330c74391d0443e8f0b769, type: 3}
+    Size: {x: 10.02, y: 8.982473}
+    Height: 6.7643
+    Middle: {x: 0, y: -0.51876354}
+    Stretch: 0
+    Repeat: 0
+  - Id: kit_artisan
+    Label: "\u0414\u043E\u043C \u0440\u0435\u043C\u0435\u0441\u043B\u0435\u043D\u043D\u0438\u043A\u0430"
+    Section: "\u0414\u043E\u043C\u0430 \u0438\u0437 \u043D\u0430\u0431\u043E\u0440\u0430"
+    Prefab: {fileID: 7603193247251008597, guid: 5eabbed91b147c247b330403181b15c0, type: 3}
+    Size: {x: 8.594999, y: 6.7661457}
+    Height: 5.1541004
+    Middle: {x: -0.052500248, y: 0.5888078}
+    Stretch: 0
+    Repeat: 0
+  - Id: kit_artisan_ochre
+    Label: "\u0414\u043E\u043C \u0440\u0435\u043C\u0435\u0441\u043B\u0435\u043D\u043D\u0438\u043A\u0430 \u0432 \u043E\u0445\u0440\u0435"
+    Section: "\u0414\u043E\u043C\u0430 \u0438\u0437 \u043D\u0430\u0431\u043E\u0440\u0430"
+    Prefab: {fileID: 4397616397512633023, guid: fc53d21a7e333cb4782dcf89ad0ba855, type: 3}
+    Size: {x: 8.594999, y: 6.7661457}
+    Height: 5.1541004
+    Middle: {x: -0.052500248, y: 0.5888078}
+    Stretch: 0
+    Repeat: 0
+  - Id: kit_courtyard
+    Label: "\u0414\u043E\u043C \u0441 \u0434\u0432\u043E\u0440\u043E\u043C"
+    Section: "\u0414\u043E\u043C\u0430 \u0438\u0437 \u043D\u0430\u0431\u043E\u0440\u0430"
+    Prefab: {fileID: 9215271217613458647, guid: 8dbeae62cdaf55149ba0b5be2a1393e2, type: 3}
+    Size: {x: 12.290982, y: 12.453264}
+    Height: 5.6384
+    Middle: {x: 0, y: -1.5676327}
+    Stretch: 0
+    Repeat: 0
+  - Id: kit_courtyard_blue
+    Label: "\u0414\u043E\u043C \u0441 \u0434\u0432\u043E\u0440\u043E\u043C, \u0441\u0438\u043D\u0438\u0439 \u043B\u0430\u043A"
+    Section: "\u0414\u043E\u043C\u0430 \u0438\u0437 \u043D\u0430\u0431\u043E\u0440\u0430"
+    Prefab: {fileID: 3484848741581735892, guid: 45d825976c7f0584099889cfada75d86, type: 3}
+    Size: {x: 12.290982, y: 12.453264}
+    Height: 5.6384
+    Middle: {x: 0, y: -1.5676327}
+    Stretch: 0
+    Repeat: 0
+  - Id: kit_shop_house
+    Label: "\u0414\u043E\u043C \u0441 \u043B\u0430\u0432\u043A\u043E\u0439"
+    Section: "\u0414\u043E\u043C\u0430 \u0438\u0437 \u043D\u0430\u0431\u043E\u0440\u0430"
+    Prefab: {fileID: 7908058209926942408, guid: 35c87e6ae93a7144f80cb0ad4be66226, type: 3}
+    Size: {x: 7.49, y: 8.924264}
+    Height: 8.871
+    Middle: {x: 0, y: 0.8178668}
+    Stretch: 0
+    Repeat: 0
+  - Id: kit_shop_house_plaster
+    Label: "\u0414\u043E\u043C \u0441 \u043B\u0430\u0432\u043A\u043E\u0439, \u0431\u0435\u043B\u0451\u043D\u044B\u0439"
+    Section: "\u0414\u043E\u043C\u0430 \u0438\u0437 \u043D\u0430\u0431\u043E\u0440\u0430"
+    Prefab: {fileID: 644396004181983739, guid: 873badde736e8c4469352d3c70139b44, type: 3}
+    Size: {x: 7.49, y: 8.924264}
+    Height: 8.871
+    Middle: {x: 0, y: 0.8178668}
+    Stretch: 0
+    Repeat: 0
+  - Id: kit_stilt_plank
+    Label: "\u0414\u043E\u0449\u0430\u0442\u044B\u0439 \u0434\u043E\u043C \u043D\u0430 \u0441\u0432\u0430\u044F\u0445"
+    Section: "\u0414\u043E\u043C\u0430 \u0438\u0437 \u043D\u0430\u0431\u043E\u0440\u0430"
+    Prefab: {fileID: 6130899894691984401, guid: 130de927789236f4894cde4b2bf85f22, type: 3}
+    Size: {x: 7.49, y: 8.025492}
+    Height: 6.3643007
+    Middle: {x: 0, y: 1.3672547}
+    Stretch: 0
+    Repeat: 0
+  - Id: kit_hut_mud_ochre
+    Label: "\u0425\u0438\u0436\u0438\u043D\u0430 \u0432 \u043E\u0445\u0440\u0435"
+    Section: "\u0414\u043E\u043C\u0430 \u0438\u0437 \u043D\u0430\u0431\u043E\u0440\u0430"
+    Prefab: {fileID: 7036957903210434890, guid: 7b93da47644ad124685013e48071aaf5, type: 3}
+    Size: {x: 5.1644874, y: 4.5937877}
+    Height: 4.3168807
+    Middle: {x: 0.107756376, y: 0}
+    Stretch: 0
+    Repeat: 0
   - Id: prop_granary
     Label: "\u0410\u043C\u0431\u0430\u0440"
     Section: "\u0414\u043E\u043C\u0430"

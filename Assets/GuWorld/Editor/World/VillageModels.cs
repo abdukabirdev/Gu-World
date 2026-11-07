@@ -2,6 +2,7 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using GuWorld.Render;
+using GuWorld.World;
 using UnityEditor;
 using UnityEngine;
 using UnityEngine.Rendering;
@@ -98,6 +99,162 @@ namespace GuWorld.Editor
             ["prop_wooden_ladder"] = new GlbModel(0.59f, 0.95f, 3.32f, -0.01f, -0.39f),
         };
 
+        /// <summary>One house made from the artist's kit, as Tools/GuKit/export.mjs measured it (kit_models.json, the game's axes).</summary>
+        [Serializable]
+        internal class KitModel
+        {
+            public string id;
+            public string label;
+            public string kind;
+            public string clan;
+            /// <summary>The builder's catalog section; the model it stands in for ("" for none, "prop:<kind>" for a scattered prop's kind).</summary>
+            public string section;
+            public string replaces;
+            public float width;
+            public float depth;
+            public float height;
+            public float middleX;
+            public float middleZ;
+            /// <summary>A stair's rise and run, and its walkable height along its middle: pairs (z from the front, height), m.</summary>
+            public float rise;
+            public float run;
+            public float[] profile;
+        }
+
+        [Serializable]
+        class KitModelList
+        {
+            public KitModel[] models = new KitModel[0];
+        }
+
+        /// <summary>
+        /// The houses made from the artist's kit (Models/Village/kit_*, written with kit_models.json by
+        /// Tools/GuKit/export.mjs from the workshop's own code): in the table above like the artist's whole models.
+        /// </summary>
+        internal static readonly KitModel[] KitModels = LoadKitModels();
+
+        static KitModel[] LoadKitModels()
+        {
+            var path = $"{VillageModelsPath}/kit_models.json";
+
+            if (!System.IO.File.Exists(path))
+            {
+                return new KitModel[0];
+            }
+
+            var list = JsonUtility.FromJson<KitModelList>(System.IO.File.ReadAllText(path)).models ?? new KitModel[0];
+
+            foreach (var m in list)
+            {
+                VillageGlb[m.id] = new GlbModel(m.width, m.depth, m.height, m.middleX, m.middleZ);
+            }
+
+            return list;
+        }
+
+        /// <summary>The kit's model standing in for an older one (the artist's whole model, or a prop's kind as "prop:<kind>"), or null.</summary>
+        internal static KitModel KitFor(string replaced)
+        {
+            if (string.IsNullOrEmpty(replaced))
+            {
+                return null;
+            }
+
+            kitFor ??= KitModels.Where(m => !string.IsNullOrEmpty(m.replaces)).GroupBy(m => m.replaces).ToDictionary(g => g.Key, g => g.First());
+
+            return kitFor.TryGetValue(replaced, out var kit) && AssetDatabase.LoadAssetAtPath<GameObject>(VillageModelPath(kit.id)) != null ? kit : null;
+        }
+
+        static Dictionary<string, KitModel> kitFor;
+
+        /// <summary>A kit model by its id, when it is imported; else null.</summary>
+        internal static KitModel KitById(string id) => KitModels.FirstOrDefault(m => m.id == id && AssetDatabase.LoadAssetAtPath<GameObject>(VillageModelPath(m.id)) != null);
+
+        /// <summary>
+        /// A kit stair's tread height along its run, as a share of its rise for a share of its run from its foot (its
+        /// profile: pairs z, height from the export, the foot at the greatest z); null when it has no profile.
+        /// </summary>
+        internal static System.Func<float, float> KitStairProfile(KitModel stair)
+        {
+            if (stair == null || stair.profile == null || stair.profile.Length < 4 || stair.rise <= 0)
+            {
+                return null;
+            }
+
+            var points = new List<Vector2>();
+            var front = float.NegativeInfinity;
+            var back = float.PositiveInfinity;
+
+            for (var i = 0; i + 1 < stair.profile.Length; i += 2)
+            {
+                front = Mathf.Max(front, stair.profile[i]);
+                back = Mathf.Min(back, stair.profile[i]);
+            }
+
+            for (var i = 0; i + 1 < stair.profile.Length; i += 2)
+            {
+                points.Add(new Vector2((front - stair.profile[i]) / Mathf.Max(0.01f, front - back), stair.profile[i + 1] / stair.rise));
+            }
+
+            points.Sort((p, q) => p.x.CompareTo(q.x));
+
+            return t =>
+            {
+                if (t <= points[0].x) return points[0].y;
+
+                for (var i = 1; i < points.Count; i++)
+                {
+                    if (t <= points[i].x)
+                    {
+                        return Mathf.Lerp(points[i - 1].y, points[i].y, Mathf.InverseLerp(points[i - 1].x, points[i].x, t));
+                    }
+                }
+
+                return points[points.Count - 1].y;
+            };
+        }
+
+        /// <summary>The kit's models of a clan and a kind (BuildingKind's name, "Poor", "Family"…), those imported.</summary>
+        internal static List<KitModel> KitOf(string clan, string kind)
+        {
+            var key = clan + "/" + kind;
+
+            if (!kitOf.TryGetValue(key, out var list))
+            {
+                kitOf[key] = list = KitModels.Where(m => m.clan == clan && m.kind == kind && AssetDatabase.LoadAssetAtPath<GameObject>(VillageModelPath(m.id)) != null).ToList();
+            }
+
+            return list;
+        }
+
+        static readonly Dictionary<string, List<KitModel>> kitOf = new Dictionary<string, List<KitModel>>();
+
+        /// <summary>
+        /// The kit's model nearest a plot of a clan's kind (or of its families' houses, when the clan has none of that
+        /// kind): among the three nearest in size, the one the seed picks; null when the clan has no kit houses at all.
+        /// </summary>
+        internal static KitModel KitDesign(Clan clan, BuildingKind kind, Vector2 size, int seed)
+        {
+            var name = clan.ToString();
+            var list = KitOf(name, kind.ToString());
+
+            // A house's kind the clan's kit lacks: its families' houses (a shed: its poor ones). The halls, pavilions,
+            // academies and towers only as themselves.
+            if (list.Count == 0 && kind <= BuildingKind.Shed)
+            {
+                list = KitOf(name, kind == BuildingKind.Shed ? BuildingKind.Poor.ToString() : BuildingKind.Family.ToString());
+            }
+
+            if (list.Count == 0)
+            {
+                return null;
+            }
+
+            var near = list.OrderBy(m => Mathf.Abs(Mathf.Log(m.width / Mathf.Max(1, size.x))) + Mathf.Abs(Mathf.Log(m.depth / Mathf.Max(1, size.y)))).Take(3).ToList();
+
+            return near[Mathf.Abs(seed) % near.Count];
+        }
+
         /// <summary>Whether a village model's game-ready copy is there (else the procedural building stands in).</summary>
         static bool HasVillageModel(string name) =>
             name != null && VillageGlb.ContainsKey(name) && AssetDatabase.LoadAssetAtPath<GameObject>(VillageModelPath(name)) != null;
@@ -116,6 +273,16 @@ namespace GuWorld.Editor
         /// <summary>As above, scaled unevenly (a length of wall stretched along to fill its gap exactly).</summary>
         static GameObject PlaceVillageModel(Transform parent, string name, string label, Vector2 centre, float yaw, float floor, Vector3 scale, bool solid = true, float nearSize = 0.1f, float farSize = 0.006f)
         {
+            // The kit's model in the place of the artist's whole one it stands in for (Tools/GuKit): sized to the same
+            // footprint — the plans keep measuring by the old model — its height in the same proportion.
+            if (KitFor(name) is KitModel kit && kit.id != name && VillageGlb.TryGetValue(name, out var old))
+            {
+                var across = old.Size.x / Mathf.Max(0.1f, kit.width);
+                var deep = old.Size.y / Mathf.Max(0.1f, kit.depth);
+
+                return PlaceVillageModel(parent, kit.id, label, centre, yaw, floor, Vector3.Scale(scale, new Vector3(across, Mathf.Sqrt(across * deep), deep)), solid, nearSize, farSize);
+            }
+
             var asset = AssetDatabase.LoadAssetAtPath<GameObject>(VillageModelPath(name));
 
             if (asset == null || !VillageGlb.TryGetValue(name, out var model))
@@ -147,8 +314,9 @@ namespace GuWorld.Editor
                 }
                 else
                 {
+                    // A kit house's Detail (what stands about it: jars, pots, lanterns) casts no shadow.
                     near.Add(renderer);
-                    renderer.shadowCastingMode = ShadowCastingMode.On;
+                    renderer.shadowCastingMode = renderer.name.StartsWith("Detail") ? ShadowCastingMode.Off : ShadowCastingMode.On;
                 }
             }
 
@@ -162,7 +330,7 @@ namespace GuWorld.Editor
             // cooked for collisions once however many houses share it.
             if (solid)
             {
-                var shape = near.Count > 0 ? near[0].GetComponent<MeshFilter>() : farFilter;
+                var shape = near.Count > 0 ? (near.Find(r => r.name.StartsWith("Near")) ?? near[0]).GetComponent<MeshFilter>() : farFilter;
 
                 if (shape != null && shape.sharedMesh != null)
                 {

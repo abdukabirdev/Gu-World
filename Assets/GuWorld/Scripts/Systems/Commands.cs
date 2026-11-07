@@ -32,6 +32,8 @@ namespace GuWorld.Systems
         int SpawnPack(GuWorld.Creatures.BeastKind kind, int count);
         int SpawnMasters(string clan, int rank, int count);
         void StartTide(bool great);
+        /// <summary>The kit's models of a section put down ahead of the hero (the builder's showcase; null: the houses); what to tell.</summary>
+        string Showcase(string section);
         /// <summary>Whether the admin mode is on: the commands that change the game (cheats) work only then.</summary>
         bool Admin { get; }
     }
@@ -704,6 +706,16 @@ namespace GuWorld.Systems
 
                     return host.Hitboxes ? "Хитбоксы показаны" : "Хитбоксы скрыты";
                 },
+            });
+
+            Add(new Command
+            {
+                Name = "showcase",
+                Aliases = new[] { "витрина" },
+                Usage = "/showcase [клан|лавки|крепость|лестницы|деревья|утварь|бай|сюн|хутора|все]",
+                About = "модели из набора художника рядами впереди: дома или раздел (убрать — F9 → «Сбросить…» → поставленное)",
+                Suggest = (_, i) => i == 0 ? new[] { "клан", "лавки", "крепость", "лестницы", "деревья", "утварь", "бай", "сюн", "хутора", "все" } : Enumerable.Empty<string>(),
+                Run = a => host.Showcase(a.Length > 0 ? a[0] : null),
             });
 
             Add(new Command

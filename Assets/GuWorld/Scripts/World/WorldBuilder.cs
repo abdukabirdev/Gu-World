@@ -1016,6 +1016,62 @@ namespace GuWorld.World
             return float.IsNaN(y) ? at : new Vector3(at.x, y, at.z);
         }
 
+        /// <summary>The catalog's section of the houses made from the artist's kit (Tools/GuKit, BuildCatalogMaker).</summary>
+        public const string KitSection = "Дома из набора";
+
+        /// <summary>The catalog's sections of things made from the artist's kit (KitSection and "Набор · …").</summary>
+        public static IEnumerable<string> KitSections => BuildCatalog.Load().Entries.Select(e => e.Section).Where(s => s == KitSection || s.StartsWith("Набор")).Distinct();
+
+        /// <summary>
+        /// `/витрина [раздел]`: every model of a kit section (the houses unless a word of another section's name is
+        /// given: "клан", "бай", "деревья"…; "все" — every kit section) put down in rows of five ahead of `at` (14 m on,
+        /// rows as deep as their biggest plus 8 m), their fronts towards it, as one step — Ctrl+Z in the builder takes them
+        /// back, as does "Сбросить → поставленное"; kept like anything put down. What to tell.
+        /// </summary>
+        public string Showcase(Vector3 at, Vector3 forward, string section = null)
+        {
+            var word = string.IsNullOrWhiteSpace(section) ? null : section.Trim().ToLowerInvariant();
+            bool Wanted(string s) => word == null ? s == KitSection : word == "все" || word == "all" ? s == KitSection || s.StartsWith("Набор") : (s == KitSection || s.StartsWith("Набор")) && s.ToLowerInvariant().Contains(word);
+            var houses = BuildCatalog.Load().Entries.Where(e => e.Prefab != null && Wanted(e.Section)).ToList();
+
+            if (houses.Count == 0)
+            {
+                return $"!Нет такого раздела набора. Есть: {string.Join(", ", KitSections)}";
+            }
+
+            forward.y = 0;
+            forward = forward.sqrMagnitude > 0.01f ? forward.normalized : Vector3.forward;
+            var right = new Vector3(forward.z, 0, -forward.x);
+            var turn = Quaternion.LookRotation(-forward);
+            const int PerRow = 5;
+            const float Gap = 4;
+            var pieces = new List<Placed>();
+
+            var ahead = 14f;
+
+            for (var row = 0; row * PerRow < houses.Count; row++)
+            {
+                var line = houses.Skip(row * PerRow).Take(PerRow).ToList();
+                var across = -(line.Sum(e => e.Size.x + Gap) - Gap) / 2;
+                var deep = line.Max(e => e.Size.y);
+
+                foreach (var e in line)
+                {
+                    var middle = at + forward * (ahead + deep / 2) + right * (across + e.Size.x / 2);
+                    across += e.Size.x + Gap;
+                    var origin = middle - turn * new Vector3(e.Middle.x, 0, e.Middle.y);
+                    origin.y = GroundY(new Vector2(middle.x, middle.z), at.y);
+                    pieces.Add(new Placed { Id = e.Id, At = origin, Euler = turn.eulerAngles, Scale = Vector3.one });
+                }
+
+                ahead += deep + 8;
+            }
+
+            PutDown("Витрина", pieces, false);
+
+            return $"Витрина: {pieces.Count} моделей из набора впереди. Убрать — F9 → «Сбросить…» → поставленное";
+        }
+
         /// <summary>
         /// For the screenshot test (`-page builder -builddemo`): a house, a stair stretched up a slope, a wall laid along
         /// a line and a mound raised near a point — what the tools do, done once, never saved.
