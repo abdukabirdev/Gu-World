@@ -2167,7 +2167,6 @@ namespace GuWorld
                         case "sandbox": OpenPage(Menus.Page.Sandbox); break;
                         case "fusion": OpenPage(Menus.Page.Fusion); break;
                         case "status": OpenPage(Menus.Page.Status); break;
-                        case "journal": OpenPage(Menus.Page.Journal); break;
                         case "admin": OpenPage(Menus.Page.Admin); break;
                         case "builder":
                             if (WorldBuilder.Current != null && WorldBuilder.Current.Ready)
