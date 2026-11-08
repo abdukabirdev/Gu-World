@@ -8,25 +8,29 @@ using UnityEngine.UI;
 namespace GuWorld.UI
 {
     /// <summary>
-    /// The HUD (the design's "HUD — ПК"): at the top left the hero — their rank
-    /// inside a ring of essence, their name, health, the place and the hour,
-    /// their stones; at the top right a diamond-shaped minimap with the north and
-    /// where they stand, and the task under it; at the foot the Gu's keys 1–4 and,
-    /// apart, the stone's key V; the crosshair in the middle (where blows go), and
-    /// under it, while a stone is drawn in, a ring filling for three seconds; the
-    /// log of what happened at the bottom left; the keys of the hero's pages at
-    /// the bottom right; and over the bar what one can do here.
+    /// The HUD (UI-HUD.dc.html): at the top left the hero — the rank inside a ring of
+    /// essence, the name and the share of essence, thin bars of health and stamina, the
+    /// place, the hour, the stones, chips for what their Gu keep up; at the top right a
+    /// diamond-shaped minimap with the north, where they stand and where the task leads,
+    /// and the task's card under it; at the foot the fists' slot (F, with Q and R), the
+    /// Gu's slots 1–4 and the stone's (V); the crosshair in the middle, and round it while a
+    /// stone is drawn in an arc and the count down; the log of what happened and the advice
+    /// at the bottom left; the keys of the hero's pages at the bottom right; and over the bar
+    /// what one can do here. Built on a stage in the design's units.
     /// </summary>
     public partial class Menus
     {
         /// <summary>Metres across the minimap, at each of its zooms (+ and − while playing); the first three on the finer map round the hero.</summary>
         static readonly float[] MinimapSpans = { 130, 260, 400, 1500, 4000 };
         int minimapZoom = 1;
-        const float MinimapSize = 236;
-        const int LogLines = 7;
+        /// <summary>The minimap's diamond, corner to corner (a square of 140 turned on its point).</summary>
+        const float MinimapSize = 198;
+        const int LogLines = 6;
         const float LogFor = 14;
 
         RectTransform hud;
+        /// <summary>The HUD's stage (the design's units); the plates and the beacon stay on `hud`, in the canvas's.</summary>
+        RectTransform hudStage;
         Image essenceRing;
         Image capRing;
         Text rankMark;
@@ -35,7 +39,6 @@ namespace GuWorld.UI
         RectTransform lifeFill;
         Text lifeLine;
         RectTransform staminaFill;
-        Image staminaBack;
         Image staminaImage;
         Text placeLine;
         Text timeLine;
@@ -51,22 +54,19 @@ namespace GuWorld.UI
         Text questTitle;
         Text questGoal;
         Text questProgress;
-        /// <summary>The Gu's cards (keys 1–4; on the immortal's aperture the eight cells at hand, 1–8).</summary>
+        Text questMore;
+        /// <summary>The Gu's slots (keys 1–4; on the immortal's aperture the eight cells at hand, 1–8).</summary>
         GuSlot[] slots = new GuSlot[0];
         /// <summary>The Gu at hand (or the fists' blows), in words, over the bar.</summary>
         Text handLine;
         Cell stoneCell;
-        /// <summary>The fists' card, the dots of their chain, and the special blows' cells (Q, R).</summary>
+        /// <summary>The fists' slot, the dots of their chain, and the special blows' cells (Q, R).</summary>
         GuSlot fistSlot;
         Image[] chainDots;
         Cell heavyCell;
         Cell spinCell;
-        Text skinLine;
-        /// <summary>The sea of essence over the bar: how full, and what the chosen Gu would take of it.</summary>
-        RectTransform essenceFill;
-        RectTransform essenceCost;
-        Image essenceCostImage;
-        Text essenceLabel;
+        /// <summary>The chips under the hero for what their Gu keep up now (held Gu, timed powers, a sense).</summary>
+        readonly List<(GameObject chip, Text words, Image edge)> chips = new List<(GameObject, Text, Image)>();
         RectTransform crosshair;
         RectTransform absorbing;
         Image absorbFill;
@@ -80,44 +80,79 @@ namespace GuWorld.UI
         void BuildHud()
         {
             hud = UiKit.Rect("HUD", canvas.transform).Fill();
+            hudStage = UiKit.Stage(hud);
 
-            // The hero: a ring of essence round a rank seal.
-            var portrait = UiKit.Rect("Portrait", hud).At(new Vector2(0, 1), new Vector2(104, -112), new Vector2(150, 150));
-            var back = UiKit.Image("Back", portrait, UiKit.Hex(0x0E0D0C, 0.85f), UiKit.Disc);
-            back.rectTransform.Fill();
-            capRing = UiKit.Image("Cap", portrait, new Color(UiKit.Essence.r, UiKit.Essence.g, UiKit.Essence.b, 0.22f), UiKit.Ring);
+            // The hero: the rank in a ring of essence.
+            var portrait = UiKit.Rect("Portrait", hudStage);
+            portrait.TopLeft(32, 28, 84, 84);
+            var back = UiKit.Image("Back", portrait, new Color(3 / 255f, 4 / 255f, 10 / 255f, 0.75f), UiKit.Disc);
+            back.rectTransform.Fill(4);
+            var track = UiKit.Image("Track", portrait, UiKit.Essence.A(0.15f), UiKit.ArcRing(80, 4));
+            track.rectTransform.Fill(2);
+            capRing = UiKit.Image("Cap", portrait, UiKit.Essence.A(0.3f), UiKit.ArcRing(80, 4));
             Radial(capRing);
-            essenceRing = UiKit.Image("Essence", portrait, UiKit.Essence, UiKit.Ring);
+            capRing.rectTransform.Fill(2);
+            essenceRing = UiKit.Image("Essence", portrait, UiKit.Essence, UiKit.ArcRing(80, 4));
             Radial(essenceRing);
-            var inner = UiKit.Image("Inner", portrait, UiKit.Hex(0x17130F), UiKit.Disc);
-            inner.rectTransform.Fill(19);
-            rankMark = UiKit.Mark("I", inner.transform, 46, UiKit.Gold);
-            rankMark.rectTransform.Fill();
+            essenceRing.rectTransform.Fill(2);
+            var dots = UiKit.Image("Dots", portrait, UiKit.Gold.A(0.35f), UiKit.RingLine(60, 4));
+            dots.rectTransform.At(new Vector2(0.5f, 0.5f), Vector2.zero, new Vector2(60, 60));
+            rankMark = UiKit.Disp("I", portrait, 30, UiKit.GoldLit, TextAnchor.MiddleCenter);
+            rankMark.rectTransform.Place(Vector2.zero, Vector2.one, 0, 12, 0, 0);
+            var rankWord = UiKit.Lbl("Ранг", portrait, 8, UiKit.Hex(0xA8B6B8), 0.24f, TextAnchor.MiddleCenter);
+            rankWord.rectTransform.At(new Vector2(0.5f, 0.5f), new Vector2(0, -15), new Vector2(60, 12));
 
-            heroName = UiKit.Label("", hud, 24, UiKit.Text, TextAnchor.MiddleLeft, FontStyle.Bold).Shadowed();
-            heroName.rectTransform.Place(new Vector2(0, 1), new Vector2(0, 1), 192, -74, -760, 44);
-            essenceLine = UiKit.Label("", hud, 15, UiKit.EssenceLit, TextAnchor.MiddleLeft, FontStyle.Bold).Shadowed();
-            essenceLine.rectTransform.Place(new Vector2(0, 1), new Vector2(0, 1), 192, -100, -760, 76);
-            var life = UiKit.Image("Life", hud, UiKit.Hex(0x1A1110, 0.9f), UiKit.Chamfer);
-            life.rectTransform.Place(new Vector2(0, 1), new Vector2(0, 1), 192, -124, -500, 108);
-            lifeFill = UiKit.Image("Fill", life.transform, UiKit.Life).rectTransform;
-            lifeFill.Place(Vector2.zero, Vector2.one, 2, 2, 2, 2);
-            lifeLine = UiKit.Label("", hud, 15, UiKit.Text, TextAnchor.MiddleLeft).Shadowed();
-            lifeLine.rectTransform.Place(new Vector2(0, 1), new Vector2(0, 1), 512, -126, -720, 106);
-            // Stamina: a thin bar under the life bar.
-            staminaBack = UiKit.Image("Stamina", hud, UiKit.Hex(0x14110D, 0.9f));
-            staminaBack.rectTransform.Place(new Vector2(0, 1), new Vector2(0, 1), 192, -132, -500, 127);
-            staminaImage = UiKit.Image("Fill", staminaBack.transform, UiKit.GoldLit);
+            var column = UiKit.Rect("Hero", hudStage);
+            column.TopLeft(130, 34, 300, 120);
+            column.Stack<VerticalLayoutGroup>(6);
+            var names = UiKit.Rect("Name", column);
+            var nameRow = names.Stack<HorizontalLayoutGroup>(10, null, TextAnchor.LowerLeft);
+            nameRow.childForceExpandWidth = false;
+            names.Size(24);
+            heroName = UiKit.Disp("", names, 22).Shadowed();
+            heroName.horizontalOverflow = HorizontalWrapMode.Overflow;
+            essenceLine = UiKit.Label("", names, 11, UiKit.EssenceLit, TextAnchor.LowerLeft).Shadowed();
+            essenceLine.horizontalOverflow = HorizontalWrapMode.Overflow;
+            var life = UiKit.Bar(column, UiKit.BarKind.Health, 1, 5);
+            lifeFill = life.rectTransform;
+            var lifeTrack = life.transform.parent;
+            lifeTrack.GetComponent<Image>().color = new Color(3 / 255f, 4 / 255f, 10 / 255f, 0.65f);
+            UiKit.Frame(lifeTrack, new Color(234 / 255f, 240 / 255f, 242 / 255f, 0.1f));
+            lifeLine = UiKit.Label("", lifeTrack, 10, UiKit.Text2, TextAnchor.MiddleLeft).Shadowed();
+            lifeLine.rectTransform.Place(new Vector2(1, 0.5f), new Vector2(1, 0.5f), 8, -8, -90, -8);
+            staminaImage = UiKit.Bar(column, UiKit.BarKind.Stamina, 1, 3);
             staminaFill = staminaImage.rectTransform;
-            staminaFill.Place(Vector2.zero, Vector2.one, 1, 1, 1, 1);
-            placeLine = UiKit.Label("", hud, 16, UiKit.Text).Shadowed();
-            placeLine.rectTransform.Place(new Vector2(0, 1), new Vector2(0, 1), 192, -156, -900, 134);
-            timeLine = UiKit.Label("", hud, 15, UiKit.Muted).Shadowed();
-            timeLine.rectTransform.Place(new Vector2(0, 1), new Vector2(0, 1), 192, -180, -900, 158);
-            var coin = UiKit.Icon("stone", hud, 22, UiKit.Gold).Shadowed();
-            coin.rectTransform.At(new Vector2(0, 1), new Vector2(203, -198), new Vector2(22, 22));
-            stonesLine = UiKit.Label("", hud, 17, UiKit.Text, TextAnchor.MiddleLeft, FontStyle.Bold).Shadowed();
-            stonesLine.rectTransform.Place(new Vector2(0, 1), new Vector2(0, 1), 218, -210, -600, 186);
+            staminaImage.transform.parent.GetComponent<Image>().color = new Color(3 / 255f, 4 / 255f, 10 / 255f, 0.65f);
+            var where = UiKit.Rect("Where", column);
+            var whereRow = where.Stack<HorizontalLayoutGroup>(12, null, TextAnchor.MiddleLeft);
+            whereRow.childForceExpandWidth = false;
+            where.Size(16);
+            placeLine = UiKit.Label("", where, 11, UiKit.Text2).Shadowed();
+            placeLine.horizontalOverflow = HorizontalWrapMode.Overflow;
+            timeLine = UiKit.Label("", where, 11, UiKit.Muted).Shadowed();
+            timeLine.horizontalOverflow = HorizontalWrapMode.Overflow;
+            var coin = UiKit.Icon("stone", where, 12, UiKit.EssenceLit);
+            coin.Size(12, 12, 0);
+            stonesLine = UiKit.Label("", where, 11, UiKit.Text2).Shadowed();
+            stonesLine.horizontalOverflow = HorizontalWrapMode.Overflow;
+            var chipRow = UiKit.Rect("Chips", column);
+            var chipGroup = chipRow.Stack<HorizontalLayoutGroup>(6, new RectOffset(0, 0, 4, 0), TextAnchor.MiddleLeft);
+            chipGroup.childForceExpandWidth = false;
+            chipRow.Size(26);
+
+            for (var i = 0; i < 5; i++)
+            {
+                var chip = UiKit.Image("Chip", chipRow, new Color(3 / 255f, 4 / 255f, 10 / 255f, 0.6f), UiKit.Plain);
+                var edge = UiKit.Frame(chip.transform, new Color(234 / 255f, 240 / 255f, 242 / 255f, 0.2f));
+                var pad = chip.rectTransform.Stack<HorizontalLayoutGroup>(0, new RectOffset(8, 8, 0, 0), TextAnchor.MiddleCenter);
+                pad.childForceExpandWidth = false;
+                chip.Size(22);
+                var words = UiKit.Label("", chip.transform, 10, UiKit.Text2, TextAnchor.MiddleCenter);
+                words.Track(0.18f);
+                words.Size(22);
+                chip.gameObject.SetActive(false);
+                chips.Add((chip.gameObject, words, edge));
+            }
 
             BuildMinimap();
             BuildQuest();
@@ -126,28 +161,40 @@ namespace GuWorld.UI
             BuildLegend();
             BuildCrosshair();
 
-            promptLine = UiKit.Label("", hud, 22, UiKit.Text, TextAnchor.MiddleCenter, FontStyle.Bold).Shadowed();
-            promptLine.rectTransform.Place(new Vector2(0.5f, 0), new Vector2(0.5f, 0), -500, 150, -500, -190);
-            promptBar = UiKit.Image("Hold", hud, UiKit.Hex(0x0E0D0C, 0.8f), UiKit.Chamfer).rectTransform;
-            promptBar.Place(new Vector2(0.5f, 0), new Vector2(0.5f, 0), -130, 136, -130, -144);
-            promptFill = UiKit.Image("Fill", promptBar, UiKit.GoldLit).rectTransform;
-            promptFill.Place(Vector2.zero, new Vector2(0, 1), 1, 1, 1, 1);
+            promptLine = UiKit.Label("", hudStage, 16, UiKit.Text, TextAnchor.MiddleCenter, FontStyle.Bold).Shadowed();
+            promptLine.rectTransform.Place(new Vector2(0.5f, 0), new Vector2(0.5f, 0), -400, 176, -400, -206);
+            promptBar = UiKit.Image("Hold", hudStage, new Color(3 / 255f, 4 / 255f, 10 / 255f, 0.7f), UiKit.Plain).rectTransform;
+            promptBar.Place(new Vector2(0.5f, 0), new Vector2(0.5f, 0), -110, 166, -110, -170);
+            UiKit.Frame(promptBar, new Color(234 / 255f, 240 / 255f, 242 / 255f, 0.12f));
+            var hold = UiKit.Image("Fill", promptBar, Color.white, UiKit.Plain);
+            hold.Gradient(UiKit.GoldDeep, UiKit.GoldLit, true);
+            promptFill = hold.rectTransform;
+            promptFill.Place(Vector2.zero, new Vector2(0, 1));
             promptBar.gameObject.SetActive(false);
 
-            // The hero's pages, in a column at the bottom right (clear of the bar).
-            var keys = UiKit.Rect("Keys", hud).Place(new Vector2(1, 0), new Vector2(1, 0), -160, 26, 28, -360);
-            keys.Stack<VerticalLayoutGroup>(5, null, TextAnchor.LowerRight).childForceExpandHeight = false;
+            // The hero's pages: a row of keys, each with its page's name under it.
+            var keys = UiKit.Rect("Keys", hudStage);
+            keys.Place(new Vector2(1, 0), new Vector2(1, 0), -700, 122, 32, -164);
+            var keyRow = keys.Stack<HorizontalLayoutGroup>(10, null, TextAnchor.LowerRight);
+            keyRow.childForceExpandWidth = false;
 
             var hints = host.Sandbox
                 ? new[] { ("Tab", "Все Гу"), ("M", "Карта"), ("T", "Чат"), ("Esc", "Меню") }
-                : new[] { ("K", "Апертура"), ("I", "Сумка"), ("O", "Статус"), ("J", "Журнал"), ("U", "Слияние"), ("M", "Карта"), ("B", "Тело"), ("T", "Чат"), ("Esc", "Меню") };
+                : new[] { ("I", "Сумка"), ("K", "Апертура"), ("U", "Слияние"), ("M", "Карта"), ("J", "Журнал"), ("O", "Статус"), ("B", "Тело"), ("T", "Чат") };
 
             foreach (var (key, name) in hints)
             {
-                var plate = UiKit.Panel(name, keys, UiKit.Hex(0x0E0D0C, 0.78f));
-                plate.Size(34, 132, 0);
-                var text = UiKit.Label($"<color=#F0D08A><b>{key}</b></color>  {name}", plate.transform, 15, UiKit.Text, TextAnchor.MiddleCenter);
-                text.rectTransform.Fill();
+                var item = UiKit.Rect(name, keys);
+                var stack = item.Stack<VerticalLayoutGroup>(4, null, TextAnchor.LowerCenter);
+                stack.childForceExpandWidth = false;
+                var cap = UiKit.Key(key, item, new Color(234 / 255f, 240 / 255f, 242 / 255f, 0.4f), UiKit.Text2);
+                var under = UiKit.Image("Under", cap, new Color(3 / 255f, 4 / 255f, 10 / 255f, 0.7f), UiKit.Plain);
+                under.rectTransform.Fill(1.5f);
+                under.transform.SetAsFirstSibling();
+                under.gameObject.AddComponent<LayoutElement>().ignoreLayout = true;
+                var label = UiKit.Label(name.ToUpperInvariant(), item, 9, UiKit.Muted, TextAnchor.MiddleCenter).Shadowed();
+                label.Track(0.14f);
+                label.Size(12);
             }
 
             BuildGuide();
@@ -165,151 +212,155 @@ namespace GuWorld.UI
 
         void BuildMinimap()
         {
-            var centre = new Vector2(-40 - MinimapSize * 0.5f, -40 - MinimapSize * 0.5f);
-            var frame = UiKit.Image("Minimap Frame", hud, UiKit.Gold, UiKit.Diamond);
-            frame.rectTransform.At(new Vector2(1, 1), centre, Vector2.one * (MinimapSize + 8));
-            var under = UiKit.Image("Minimap Under", hud, UiKit.Hex(0x0E0D0C), UiKit.Diamond);
-            under.rectTransform.At(new Vector2(1, 1), centre, Vector2.one * (MinimapSize + 3));
-            var mask = UiKit.Image("Minimap", hud, Color.white, UiKit.Diamond);
+            // The diamond, 200 across, 62 in from the right and 24 down: its gold edge, a dark band and a faint outer edge.
+            var centre = new Vector2(-62 - 100, -24 - 100);
+            var outer = UiKit.Image("Minimap Outer", hudStage, UiKit.Gold.A(0.18f), UiKit.Diamond);
+            outer.rectTransform.At(new Vector2(1, 1), centre, Vector2.one * (MinimapSize + 16));
+            var band = UiKit.Image("Minimap Band", hudStage, new Color(3 / 255f, 4 / 255f, 10 / 255f, 0.85f), UiKit.Diamond);
+            band.rectTransform.At(new Vector2(1, 1), centre, Vector2.one * (MinimapSize + 14));
+            var frame = UiKit.Image("Minimap Frame", hudStage, UiKit.Gold.A(0.6f), UiKit.Diamond);
+            frame.rectTransform.At(new Vector2(1, 1), centre, Vector2.one * (MinimapSize + 3));
+            var under = UiKit.Image("Minimap Under", hudStage, new Color(3 / 255f, 4 / 255f, 10 / 255f, 1), UiKit.Diamond);
+            under.rectTransform.At(new Vector2(1, 1), centre, Vector2.one * (MinimapSize + 1));
+            var mask = UiKit.Image("Minimap", hudStage, Color.white, UiKit.Diamond);
             mask.rectTransform.At(new Vector2(1, 1), centre, Vector2.one * MinimapSize);
             mask.gameObject.AddComponent<Mask>().showMaskGraphic = false;
             minimap = UiKit.Rect("Map", mask.transform).gameObject.AddComponent<RawImage>();
             minimap.rectTransform.Fill();
             minimap.raycastTarget = false;
+            minimap.color = new Color(0.82f, 0.86f, 0.9f, 1);
 
             for (var i = 0; i < 6; i++)
             {
                 var dot = UiKit.Image("Mark", mask.transform, UiKit.GoldLit, UiKit.Disc).rectTransform;
-                dot.sizeDelta = new Vector2(8, 8);
-                var label = UiKit.Label("", mask.transform, 13, UiKit.Text, TextAnchor.MiddleCenter, FontStyle.Bold).Shadowed();
-                label.rectTransform.sizeDelta = new Vector2(160, 20);
+                dot.sizeDelta = new Vector2(6, 6);
+                var label = UiKit.Label("", mask.transform, 10, UiKit.Text, TextAnchor.MiddleCenter).Shadowed();
+                label.rectTransform.sizeDelta = new Vector2(140, 16);
                 minimapMarks.Add((dot, label));
             }
 
             // The map's mark (MenusMap): where it is, or at the edge toward it when it lies farther.
-            minimapPin = UiKit.Icon("pin", mask.transform, 22, UiKit.Seal).rectTransform;
+            minimapPin = UiKit.Icon("pin", mask.transform, 18, UiKit.Danger).rectTransform;
             minimapPin.pivot = new Vector2(0.5f, 0.04f);
-            UiKit.Image("Hole", minimapPin, UiKit.OnGold, UiKit.Disc).rectTransform.At(new Vector2(0.5f, 0.5f), new Vector2(0, 3), new Vector2(6, 6));
-            // Where the task leads (MenusGuide): a gold diamond, at the edge toward it when farther.
-            minimapQuest = UiKit.Image("Quest", mask.transform, UiKit.GoldLit, UiKit.Diamond).rectTransform;
-            minimapQuest.sizeDelta = new Vector2(14, 14);
-            UiKit.Image("Heart", minimapQuest, UiKit.Seal, UiKit.Diamond).rectTransform.Fill(4);
+            UiKit.Image("Hole", minimapPin, UiKit.Void, UiKit.Disc).rectTransform.At(new Vector2(0.5f, 0.5f), new Vector2(0, 2), new Vector2(5, 5));
+            // Where the task leads (MenusGuide): a gold diamond, breathing; at the edge toward it when farther.
+            minimapQuest = UiKit.Image("Quest", mask.transform, UiKit.Gold, UiKit.Diamond).rectTransform;
+            minimapQuest.sizeDelta = new Vector2(12, 12);
+            UiKit.HaloAt(minimapQuest, UiKit.Gold.A(0.5f), Vector2.zero, 30);
+            var breathe = minimapQuest.gameObject.AddComponent<Pulse>();
+            breathe.Period = 2;
+            breathe.Low = 0.6f;
+            breathe.High = 1;
+            breathe.Grow = 0.08f;
             minimapArrow = UiKit.Image("Hero", mask.transform, UiKit.GoldLit, UiKit.Arrow).rectTransform;
-            minimapArrow.sizeDelta = new Vector2(20, 20);
-            var north = UiKit.Mark("С", hud, 18, UiKit.GoldLit).Shadowed();
-            north.rectTransform.At(new Vector2(1, 1), centre + new Vector2(0, MinimapSize * 0.5f + 14), new Vector2(30, 24));
-            coordsLine = UiKit.Label("", hud, 14, UiKit.Muted, TextAnchor.MiddleCenter).Shadowed();
-            coordsLine.rectTransform.At(new Vector2(1, 1), centre - new Vector2(0, MinimapSize * 0.5f + 16), new Vector2(300, 22));
+            minimapArrow.sizeDelta = new Vector2(16, 16);
+            var north = UiKit.Disp("С", hudStage, 13, UiKit.Gold, TextAnchor.MiddleCenter).Shadowed();
+            north.rectTransform.At(new Vector2(1, 1), centre + new Vector2(0, 100 - 12), new Vector2(20, 16));
+            coordsLine = UiKit.Label("", hudStage, 10, UiKit.Muted, TextAnchor.MiddleRight).Shadowed();
+            coordsLine.rectTransform.At(new Vector2(1, 1), centre + new Vector2(-82, -100 + 6), new Vector2(300, 16));
+            var plus = UiKit.Key("+", hudStage, new Color(234 / 255f, 240 / 255f, 242 / 255f, 0.4f));
+            plus.anchorMin = plus.anchorMax = new Vector2(1, 1);
+            plus.anchoredPosition = centre + new Vector2(84, -100 + 6);
+            var minus = UiKit.Key("−", hudStage, new Color(234 / 255f, 240 / 255f, 242 / 255f, 0.4f));
+            minus.anchorMin = minus.anchorMax = new Vector2(1, 1);
+            minus.anchoredPosition = centre + new Vector2(112, -100 + 6);
         }
 
         void BuildQuest()
         {
-            questCard = UiKit.Rect("Quest", hud).Place(new Vector2(1, 1), new Vector2(1, 1), -420, -504, 36, 330);
-            var back = UiKit.Image("Back", questCard, UiKit.Hex(0x0E0D0C, 0.62f), UiKit.Chamfer);
+            // Under the minimap, against the right edge: dark fading in from the left, a gold line at the right.
+            questCard = UiKit.Rect("Quest", hudStage);
+            questCard.TopRight(32, 24 + 200 + 16, 260, 120);
+            var back = UiKit.Image("Back", questCard, new Color(3 / 255f, 4 / 255f, 10 / 255f, 0.75f), UiKit.Plain);
             back.rectTransform.Fill();
-            var bar = UiKit.Image("Bar", questCard, UiKit.Gold);
-            bar.rectTransform.Place(Vector2.zero, new Vector2(0, 1), 0, 10, -3, 10);
-            var column = UiKit.Rect("Column", questCard).Fill();
-            column.Stack<VerticalLayoutGroup>(3, new RectOffset(18, 16, 12, 10));
-            questCaps = UiKit.Caps("Задание", column, 13);
-            questCaps.Size(20);
-            questTitle = UiKit.Label("", column, 19, UiKit.Text, TextAnchor.MiddleLeft, FontStyle.Bold).Shadowed();
-            questTitle.Size(28);
-            questGoal = UiKit.Label("", column, 15, UiKit.Muted).Shadowed();
-            questGoal.Size(40);
-            // Who or what, how far and which way (MenusGuide); how far along, on the right of the same line.
-            var line = UiKit.Rect("Where", column);
-            line.Stack<HorizontalLayoutGroup>(8, null, TextAnchor.MiddleLeft).childForceExpandWidth = false;
-            line.Size(22);
-            UiKit.Image("Mark", line, UiKit.GoldLit, UiKit.Diamond).Size(12, 12, 0);
-            questWhere = UiKit.Label("", line, 15, UiKit.Text).Shadowed();
-            questWhere.Size(-1, -1, 1);
-            questWhere.horizontalOverflow = HorizontalWrapMode.Overflow;
-            questProgress = UiKit.Label("", line, 16, UiKit.GoldLit, TextAnchor.MiddleRight, FontStyle.Bold).Shadowed();
-            questProgress.Size(-1, 70, 0);
+            back.Gradient(new Color(1, 1, 1, 0), Color.white, true, Color.white, 0.2f);
+            back.gameObject.AddComponent<LayoutElement>().ignoreLayout = true;
+            var line = UiKit.Image("Line", questCard, UiKit.Gold, UiKit.Plain);
+            line.rectTransform.Place(new Vector2(1, 0), Vector2.one, -1, 0, 0, 0);
+            line.gameObject.AddComponent<LayoutElement>().ignoreLayout = true;
+            questCard.Stack<VerticalLayoutGroup>(4, new RectOffset(14, 14, 12, 12), TextAnchor.UpperRight);
+            questCard.gameObject.AddComponent<ContentSizeFitter>().verticalFit = ContentSizeFitter.FitMode.PreferredSize;
+            questCaps = UiKit.Lbl("Задание", questCard, 10, UiKit.Gold, 0.34f, TextAnchor.MiddleRight);
+            questCaps.Size(14);
+            questTitle = UiKit.Disp("", questCard, 19, UiKit.Text, TextAnchor.MiddleRight).Shadowed();
+            questTitle.Size(22);
+            questGoal = UiKit.Label("", questCard, 12, UiKit.Text2, TextAnchor.UpperRight).Shadowed();
+            questGoal.gameObject.AddComponent<ContentSizeFitter>();
+            // Who or what, how far and which way (MenusGuide), and how far along.
+            questWhere = UiKit.Label("", questCard, 11, UiKit.Muted, TextAnchor.MiddleRight).Shadowed();
+            questWhere.Size(16);
+            questProgress = questGoal;
+            questMore = UiKit.Label("", questCard, 11, UiKit.Muted, TextAnchor.MiddleRight).Shadowed();
+            questMore.Size(16);
         }
 
         /// <summary>
-        /// The bar at the foot of the screen: the fists' card (F) with their special blows beside it (Q, R) and the dots
-        /// of their chain; the Gu's cards (1–4, or the immortal's aperture's eight); the stone (V); and over the cards
-        /// the sea of essence as a bar, with what the chosen Gu would take of it marked.
+        /// The bar at the foot of the screen: the fists' slot (F) with their special blows beside it (Q, R) and the dots
+        /// of their chain; the Gu's slots (1–4, or the immortal's aperture's eight); the stone (V).
         /// </summary>
         void BuildBar()
         {
-            const float gap = 8;
-            // The fists' card and the Gu's, set apart; the stone's after them.
-            const float apart = 26;
-            const float mini = 46;
+            const float gap = 10;
+            const float small = 52;
+            const float mini = 34;
             var keys = host.Sandbox ? GuWorldGame.SandboxCells : Cultivator.BarSize;
             var span = keys * GuSlot.Width + (keys - 1) * gap;
-            var width = mini + 6 + GuSlot.Width + apart + span + (host.Sandbox ? 0 : apart + 70);
-            var bar = UiKit.Rect("Bar", hud).Place(new Vector2(0.5f, 0), new Vector2(0.5f, 0), -width / 2, 22, -width / 2, -(22 + GuSlot.Height));
+            var width = mini + 8 + small + 16 + span + (host.Sandbox ? 0 : 24 + small);
+            var bar = UiKit.Rect("Bar", hudStage).Place(new Vector2(0.5f, 0), new Vector2(0.5f, 0), -width / 2, 52, -width / 2, -(52 + GuSlot.Height));
             var x = 0f;
 
-            // Q and R, stacked.
-            heavyCell = MiniCell(bar, "Q", "bolt", x + mini / 2, GuSlot.Height / 2 - mini / 2 - 3);
-            spinCell = MiniCell(bar, "R", "wing", x + mini / 2, -GuSlot.Height / 2 + mini / 2 + 3);
-            x += mini + 6;
+            // Q and R, stacked, the fists after them.
+            heavyCell = MiniCell(bar, "Q", "bolt", x + mini / 2, mini / 2 + 1, mini);
+            spinCell = MiniCell(bar, "R", "wing", x + mini / 2, -mini / 2 - 1, mini);
+            x += mini + 8;
 
-            fistSlot = GuSlot.Build(bar, "F");
-            Put(fistSlot.Root, x + GuSlot.Width / 2);
+            fistSlot = GuSlot.Build(bar, "F", small);
+            Put(fistSlot.Root, x + small / 2, -(GuSlot.Height - small) / 2);
             chainDots = new Image[GuWorld.Combat.Melee.Chain.Length];
 
             for (var i = 0; i < chainDots.Length; i++)
             {
-                chainDots[i] = UiKit.Image("Chain", fistSlot.Root, UiKit.Muted, UiKit.Disc);
-                chainDots[i].rectTransform.At(new Vector2(0.5f, 0), new Vector2((i - (chainDots.Length - 1) * 0.5f) * 13, 9), new Vector2(7, 7));
+                chainDots[i] = UiKit.Image("Chain", fistSlot.Root, UiKit.Muted, UiKit.Diamond);
+                chainDots[i].rectTransform.At(new Vector2(0.5f, 1), new Vector2((i - (chainDots.Length - 1) * 0.5f) * 10, 7), new Vector2(6, 6));
             }
 
-            x += GuSlot.Width + apart;
-            var slotsFrom = x;
+            x += small + 16;
             slots = new GuSlot[keys];
 
             for (var i = 0; i < keys; i++)
             {
                 slots[i] = GuSlot.Build(bar, $"{i + 1}");
-                Put(slots[i].Root, x + GuSlot.Width / 2);
+                Put(slots[i].Root, x + GuSlot.Width / 2, 0);
                 x += GuSlot.Width + gap;
             }
 
-            stoneCell = UiKit.Cell(bar, 70);
+            stoneCell = UiKit.Cell(bar, small);
             stoneCell.gameObject.SetActive(!host.Sandbox);
             stoneCell.Back.rectTransform.anchorMin = stoneCell.Back.rectTransform.anchorMax = new Vector2(1, 0.5f);
-            stoneCell.Back.rectTransform.anchoredPosition = new Vector2(-35, 0);
+            stoneCell.Back.rectTransform.anchoredPosition = new Vector2(-small / 2, -(GuSlot.Height - small) / 2);
             stoneCell.Key.text = "V";
+            stoneCell.Key.color = UiKit.Text2;
             stoneCell.SetIcon("stone");
-            stoneCell.SetRim(UiKit.GoldDeep);
+            stoneCell.Mark.color = UiKit.EssenceLit;
+            var stoneWord = UiKit.Lbl("Камень", stoneCell.transform, 9, UiKit.Muted, 0.2f, TextAnchor.UpperCenter);
+            stoneWord.rectTransform.Place(new Vector2(0.5f, 0), new Vector2(0.5f, 0), -40, -16, -40, 4);
 
-            // The sea of essence, over the Gu's cards.
-            var sea = UiKit.Rect("Essence", bar).Place(new Vector2(0, 1), new Vector2(0, 1), slotsFrom, 8, -(slotsFrom + span), -20);
-            UiKit.Image("Back", sea, UiKit.Hex(0x000000, 0.55f)).rectTransform.Fill();
-            var fill = UiKit.Image("Fill", sea, UiKit.Essence);
-            fill.rectTransform.Place(Vector2.zero, new Vector2(0, 1));
-            essenceFill = fill.rectTransform;
-            essenceCostImage = UiKit.Image("Cost", sea, new Color(1, 1, 1, 0.55f));
-            essenceCost = essenceCostImage.rectTransform;
-            essenceCost.Place(Vector2.zero, new Vector2(0, 1));
-            essenceLabel = UiKit.Label("", sea, 12, UiKit.EssenceLit, TextAnchor.MiddleLeft, FontStyle.Bold).Shadowed();
-            essenceLabel.rectTransform.Place(new Vector2(0, 1), Vector2.one, 0, 2, 0, -18);
-
-            handLine = UiKit.Label("", hud, 16, UiKit.Text, TextAnchor.MiddleCenter).Shadowed();
-            handLine.rectTransform.Place(new Vector2(0.5f, 0), new Vector2(0.5f, 0), -760, 174, -760, -226);
-            skinLine = UiKit.Label("", hud, 15, UiKit.EssenceLit, TextAnchor.MiddleCenter, FontStyle.Bold).Shadowed();
-            skinLine.rectTransform.Place(new Vector2(0.5f, 0), new Vector2(0.5f, 0), -700, 228, -700, -252);
+            handLine = UiKit.Label("", hudStage, 12, UiKit.Text2, TextAnchor.LowerCenter).Shadowed();
+            handLine.rectTransform.Place(new Vector2(0.5f, 0), new Vector2(0.5f, 0), -560, 138, -560, -170);
         }
 
-        /// <summary>A card's middle `x` along the bar (from its left), in its height's middle.</summary>
-        static void Put(RectTransform card, float x)
+        /// <summary>A slot's middle `x` along the bar (from its left), `y` from its height's middle.</summary>
+        static void Put(RectTransform card, float x, float y)
         {
             card.anchorMin = card.anchorMax = new Vector2(0, 0.5f);
             card.pivot = new Vector2(0.5f, 0.5f);
-            card.anchoredPosition = new Vector2(x, 0);
+            card.anchoredPosition = new Vector2(x, y);
         }
 
         /// <summary>A small cell for a special blow: its key, and a shade while it rests.</summary>
-        static Cell MiniCell(Transform bar, string key, string icon, float x, float y)
+        static Cell MiniCell(Transform bar, string key, string icon, float x, float y, float size)
         {
-            var cell = UiKit.Cell(bar, 46);
+            var cell = UiKit.Cell(bar, size);
             cell.Back.rectTransform.anchorMin = cell.Back.rectTransform.anchorMax = new Vector2(0, 0.5f);
             cell.Back.rectTransform.anchoredPosition = new Vector2(x, y);
             cell.Key.text = key;
@@ -320,41 +371,43 @@ namespace GuWorld.UI
             return cell;
         }
 
-        /// <summary>The crosshair, and the ring that fills while a stone is drawn in.</summary>
+        /// <summary>The crosshair (a dot and four ticks), and round it while a stone is drawn in an arc filling and the count down under it.</summary>
         void BuildCrosshair()
         {
-            crosshair = UiKit.Rect("Crosshair", hud).At(new Vector2(0.5f, 0.5f), Vector2.zero, new Vector2(30, 30));
-            var ring = UiKit.Image("Ring", crosshair, new Color(UiKit.GoldLit.r, UiKit.GoldLit.g, UiKit.GoldLit.b, 0.75f), UiKit.Ring);
-            ring.rectTransform.Fill();
+            crosshair = UiKit.Rect("Crosshair", hudStage).At(new Vector2(0.5f, 0.5f), Vector2.zero, new Vector2(60, 60));
+            UiKit.HaloAt(crosshair, new Color(0, 0, 0, 0.3f), Vector2.zero, 24);
             var dot = UiKit.Image("Dot", crosshair, UiKit.GoldLit, UiKit.Disc);
-            dot.rectTransform.At(new Vector2(0.5f, 0.5f), Vector2.zero, new Vector2(5, 5));
-            ring.gameObject.AddComponent<Shadow>().effectColor = new Color(0, 0, 0, 0.6f);
+            dot.rectTransform.At(new Vector2(0.5f, 0.5f), Vector2.zero, new Vector2(6, 6));
 
-            absorbing = UiKit.Rect("Absorbing", hud).At(new Vector2(0.5f, 0.5f), new Vector2(0, -150), new Vector2(96, 96));
-            var back = UiKit.Image("Back", absorbing, UiKit.Hex(0x0E0D0C, 0.72f), UiKit.Disc);
-            back.rectTransform.Fill();
-            var track = UiKit.Image("Track", absorbing, new Color(UiKit.Essence.r, UiKit.Essence.g, UiKit.Essence.b, 0.25f), UiKit.Ring);
-            track.rectTransform.Fill(4);
-            absorbFill = UiKit.Image("Fill", absorbing, UiKit.EssenceLit, UiKit.Ring);
+            foreach (var (at, size) in new[] { (new Vector2(0, 14), new Vector2(1.4f, 8)), (new Vector2(0, -14), new Vector2(1.4f, 8)), (new Vector2(14, 0), new Vector2(8, 1.4f)), (new Vector2(-14, 0), new Vector2(8, 1.4f)) })
+            {
+                var tick = UiKit.Image("Tick", crosshair, UiKit.GoldLit.A(0.8f), UiKit.Plain);
+                tick.rectTransform.At(new Vector2(0.5f, 0.5f), at, size);
+                tick.gameObject.AddComponent<Shadow>().effectColor = new Color(0, 0, 0, 0.6f);
+            }
+
+            absorbing = UiKit.Rect("Absorbing", hudStage).At(new Vector2(0.5f, 0.5f), Vector2.zero, new Vector2(60, 60));
+            var track = UiKit.Image("Track", absorbing, UiKit.Essence.A(0.2f), UiKit.ArcRing(47, 3));
+            track.rectTransform.At(new Vector2(0.5f, 0.5f), Vector2.zero, new Vector2(47, 47));
+            absorbFill = UiKit.Image("Fill", absorbing, UiKit.Essence, UiKit.ArcRing(47, 3));
             Radial(absorbFill);
-            absorbFill.rectTransform.Fill(4);
-            var stone = UiKit.Icon("stone", absorbing, 38, UiKit.EssenceLit);
-            stone.rectTransform.At(new Vector2(0.5f, 0.5f), Vector2.zero, new Vector2(38, 38));
-            absorbLine = UiKit.Label("", absorbing, 17, UiKit.Text, TextAnchor.MiddleCenter, FontStyle.Bold).Shadowed();
-            absorbLine.rectTransform.Place(new Vector2(0.5f, 0), new Vector2(0.5f, 0), -160, -40, -160, 8);
+            absorbFill.rectTransform.At(new Vector2(0.5f, 0.5f), Vector2.zero, new Vector2(47, 47));
+            absorbLine = UiKit.Label("", absorbing, 11, UiKit.EssenceLit, TextAnchor.MiddleCenter).Shadowed();
+            absorbLine.Track(0.18f);
+            absorbLine.rectTransform.At(new Vector2(0.5f, 0.5f), new Vector2(0, -44), new Vector2(400, 18));
             absorbing.gameObject.SetActive(false);
         }
 
         void BuildLog()
         {
-            var box = UiKit.Rect("Log", hud).Place(Vector2.zero, Vector2.zero, 28, 110, -640, -330);
-            box.Stack<VerticalLayoutGroup>(2, null, TextAnchor.LowerLeft);
+            var box = UiKit.Rect("Log", hudStage).Place(Vector2.zero, Vector2.zero, 32, 150, -432, -330);
+            box.Stack<VerticalLayoutGroup>(4, null, TextAnchor.LowerLeft);
             logTexts = new Text[LogLines];
 
             for (var i = 0; i < LogLines; i++)
             {
-                logTexts[i] = UiKit.Label("", box, 16, UiKit.Text).Shadowed();
-                logTexts[i].Size(26);
+                logTexts[i] = UiKit.Label("", box, 12, UiKit.Text2).Shadowed();
+                logTexts[i].Size(17);
             }
         }
 
@@ -395,22 +448,22 @@ namespace GuWorld.UI
         /// <summary>The hitbox view's key: what each colour is (shown while the view is on).</summary>
         void BuildLegend()
         {
-            legend = UiKit.Panel("Hitbox Legend", hud, UiKit.Hex(0x0E0D0C, 0.82f)).rectTransform;
-            legend.Place(new Vector2(0, 0.5f), new Vector2(0, 0.5f), 24, -150, -284, -150);
+            legend = UiKit.Panel("Hitbox Legend", hudStage).rectTransform;
+            legend.Place(new Vector2(0, 0.5f), new Vector2(0, 0.5f), 32, -130, -260, -150);
             var list = UiKit.Rect("List", legend).Fill();
-            list.Stack<VerticalLayoutGroup>(2, new RectOffset(14, 14, 10, 10));
-            UiKit.Caps("Хитбоксы · F7", list, 13).Size(22);
+            list.Stack<VerticalLayoutGroup>(2, new RectOffset(14, 14, 12, 10));
+            UiKit.Lbl("Хитбоксы · F7", list).Size(18);
 
             foreach (var (_, name, colour) in Render.HitboxView.Legend)
             {
                 var row = UiKit.Rect(name, list);
-                row.Size(22);
+                row.Size(18);
                 var chip = UiKit.Image("Chip", row, colour);
-                chip.rectTransform.At(new Vector2(0, 0.5f), new Vector2(8, 0), new Vector2(14, 4));
-                UiKit.Label(name, row, 14, UiKit.Text).rectTransform.Place(Vector2.zero, Vector2.one, 24, 0, 0, 0);
+                chip.rectTransform.At(new Vector2(0, 0.5f), new Vector2(7, 0), new Vector2(12, 3));
+                UiKit.Label(name, row, 12, UiKit.Text2).rectTransform.Place(Vector2.zero, Vector2.one, 20, 0, 0, 0);
             }
 
-            UiKit.Label("Части тела — цвета страницы «Тело» (B)", list, 13, UiKit.Muted).Size(34);
+            UiKit.Label("Части тела — цвета страницы «Тело» (B)", list, 11, UiKit.Muted).Size(28);
             legend.gameObject.SetActive(false);
         }
 
@@ -431,23 +484,24 @@ namespace GuWorld.UI
             var rank = Aperture.RankColour(a.Rank);
             essenceRing.color = rank;
             essenceRing.fillAmount = Mathf.Clamp01(a.Essence / 100);
-            capRing.color = new Color(rank.r, rank.g, rank.b, 0.2f);
+            capRing.color = rank.A(0.3f);
             capRing.fillAmount = Mathf.Clamp01(a.Cap / 100);
             rankMark.text = Aperture.RankNumeral(a.Rank);
             heroName.text = host.Look.FullName;
-            essenceLine.text = UiKit.Spaced("Эссенция") + $"  {a.Essence:0}%";
+            essenceLine.text = gu.EndlessEssence ? "эссенция бесконечна" : $"{a.Essence:0}% эссенции";
 
             var health = host.Health;
             lifeFill.anchorMax = new Vector2(Mathf.Clamp01(health.Current / health.Max), 1);
-            lifeLine.text = $"{Mathf.CeilToInt(health.Current)} / {health.Max:0}";
+            lifeLine.text = $"{Mathf.CeilToInt(health.Current)}";
             var body = host.Physique;
             staminaFill.anchorMax = new Vector2(Mathf.Clamp01(body.Stamina / body.MaxStamina), 1);
             // Spent: the bar goes red until a quarter is back.
-            staminaImage.color = body.Spent ? UiKit.Danger : UiKit.GoldLit;
+            staminaImage.color = body.Spent ? UiKit.Danger : Color.white;
             placeLine.text = host.PlaceName;
             timeLine.text = host.TimeLine;
             stonesLine.text = $"{gu.Stones}";
 
+            UpdateChips(gu);
             UpdateMinimap();
             UpdateQuest();
             UpdateGuide();
@@ -460,8 +514,10 @@ namespace GuWorld.UI
         public void ZoomMinimap(int step)
         {
             minimapZoom = Mathf.Clamp(minimapZoom + step, 0, MinimapSpans.Length - 1);
-            Notify($"Миникарта: {(MinimapSpans[minimapZoom] >= 1000 ? $"{MinimapSpans[minimapZoom] / 1000:0.#} км" : $"{MinimapSpans[minimapZoom]:0} м")} в поперечнике");
+            Notify($"Миникарта: {SpanName(MinimapSpans[minimapZoom])} в поперечнике");
         }
+
+        static string SpanName(float metres) => metres >= 1000 ? $"{metres / 1000:0.#} км" : $"{metres:0} м";
 
         void UpdateMinimap()
         {
@@ -486,7 +542,7 @@ namespace GuWorld.UI
             var span = new Vector2(minimapSpan / map.Area.width, minimapSpan / map.Area.height);
             minimap.uvRect = new Rect(centre - span * 0.5f, span);
             minimapArrow.localEulerAngles = new Vector3(0, 0, -host.HeroFacing * Mathf.Rad2Deg);
-            coordsLine.text = $"{at.x:0}, {at.z:0}";
+            var line = SpanName(minimapSpan).ToUpperInvariant();
             minimapPin.gameObject.SetActive(MapPin.HasValue);
             var quest = host.QuestTarget;
             minimapQuest.gameObject.SetActive(quest.HasValue);
@@ -506,7 +562,12 @@ namespace GuWorld.UI
                 var edge = MinimapSize * 0.5f - 12;
                 var round = Mathf.Abs(toPin.x) + Mathf.Abs(toPin.y);
                 minimapPin.anchoredPosition = round > edge ? toPin * (edge / round) : toPin;
-                coordsLine.text += $"   ·   метка {Distance(new Vector2(pin.x - at.x, pin.z - at.z).magnitude)}";
+                line = $"МЕТКА {Distance(new Vector2(pin.x - at.x, pin.z - at.z).magnitude).ToUpperInvariant()}  ·  " + line;
+            }
+
+            if (coordsLine.text != line)
+            {
+                coordsLine.text = line;
             }
 
             var shown = 0;
@@ -538,7 +599,7 @@ namespace GuWorld.UI
                 if (fits)
                 {
                     minimapTaken.Add(box);
-                    label.rectTransform.anchoredPosition = offset + new Vector2(0, 13);
+                    label.rectTransform.anchoredPosition = offset + new Vector2(0, 10);
                     label.text = mark.Label;
                 }
             }
@@ -552,23 +613,33 @@ namespace GuWorld.UI
 
         Text questCaps;
 
+        /// <summary>The task's card: its heading (and its colour), title, goal and how far along, and the line about more.</summary>
+        void SetQuest(string caps, Color capsColour, string title, string goal, string progress, string more)
+        {
+            questCard.gameObject.SetActive(true);
+            questCaps.text = caps.ToUpperInvariant();
+            questCaps.color = capsColour;
+            questTitle.text = title;
+            var line = string.IsNullOrEmpty(progress) ? goal : $"{goal} · <color=#FFF1CF>{progress}</color>";
+
+            if (questGoal.text != line)
+            {
+                questGoal.text = line;
+            }
+
+            questMore.text = more ?? "";
+            questMore.gameObject.SetActive(!string.IsNullOrEmpty(more));
+        }
+
         void UpdateQuest()
         {
             // Something going on (a wolf tide) takes the card over, on the proving ground too.
             if (host.Event is var (title, goal, _, progress))
             {
-                questCard.gameObject.SetActive(true);
-                questCaps.text = UiKit.Spaced("Событие");
-                questCaps.color = UiKit.Danger;
-                questTitle.text = title;
-                questGoal.text = goal;
-                questProgress.text = progress;
+                SetQuest("Событие", UiKit.Danger, title, goal, progress, null);
 
                 return;
             }
-
-            questCaps.text = UiKit.Spaced("Задание");
-            questCaps.color = UiKit.Muted;
 
             // The immortal's aperture (the proving ground) has no tasks.
             if (host.Sandbox)
@@ -580,69 +651,66 @@ namespace GuWorld.UI
 
             var quests = host.Quests;
             var current = quests.Current;
+            var more = quests.Sides.Count > 0 ? $"Поручений: {quests.Sides.Count} · J" : null;
 
             if (current != null)
             {
-                questCard.gameObject.SetActive(true);
-                questTitle.text = current.Title;
-                questGoal.text = quests.Ready ? $"Вернитесь к: {current.Giver}" : current.Goal;
-                questProgress.text = quests.Ready ? "готово" : $"{quests.Progress} / {current.Target}";
+                SetQuest("Задание академии", UiKit.Gold, current.Title, quests.Ready ? $"Вернитесь к: {current.Giver}" : current.Goal,
+                    quests.Ready ? "готово" : $"{quests.Progress} / {current.Target}", more);
 
                 return;
             }
 
             var next = quests.Next;
             var side = quests.Sides.Count > 0 ? quests.Sides[0] : null;
-            questCard.gameObject.SetActive(next != null || side != null);
 
             if (next != null)
             {
-                questTitle.text = "Новое поручение";
-                questGoal.text = $"Вас ждёт {next.GiverTitle ?? ""} {next.Giver}".Replace("  ", " ");
-                questProgress.text = "";
+                SetQuest("Задание академии", UiKit.Gold, "Новое поручение", $"Вас ждёт {next.GiverTitle ?? ""} {next.Giver}".Replace("  ", " "), null, more);
             }
             else if (side != null)
             {
                 // No task of the academy's in hand: the first side task, and how many more there are.
                 var ready = quests.IsReady(side);
-                questCaps.text = UiKit.Spaced(quests.Sides.Count > 1 ? $"Поручение · ещё {quests.Sides.Count - 1} (J)" : "Поручение");
-                questTitle.text = side.Title;
-                questGoal.text = ready ? $"Вернитесь к: {side.Giver}" : side.Goal;
-                questProgress.text = ready ? "готово" : $"{quests.ProgressOf(side)} / {side.Target}";
+                SetQuest("Поручение", UiKit.Gold, side.Title, ready ? $"Вернитесь к: {side.Giver}" : side.Goal,
+                    ready ? "готово" : $"{quests.ProgressOf(side)} / {side.Target}", quests.Sides.Count > 1 ? $"Поручение · ещё {quests.Sides.Count - 1} · J" : null);
+            }
+            else
+            {
+                questCard.gameObject.SetActive(false);
             }
         }
 
         void UpdateBar(Cultivator gu)
         {
             var fists = host.Fists;
-            GuKind chosen = null;
 
             if (host.Sandbox)
             {
-                chosen = UpdateHand(gu);
+                UpdateHand(gu);
             }
             else
             {
                 for (var i = 0; i < slots.Length; i++)
                 {
                     var kind = gu.KindOn(i);
-                    ShowSlot(slots[i], gu, kind, false);
+                    ShowSlot(slots[i], gu, kind, false, "пусто");
                 }
 
                 handLine.text = "";
             }
 
-            // The fists: lit while ready; their chain's dots (the next blow bright); the special blows resting.
+            // The fists: lit while ready; their chain's diamonds (the next blow bright); the special blows resting.
             if (fists != null)
             {
                 var ready = fists.Ready;
                 var blow = fists.Current;
-                fistSlot.Show(FistKind, 0, 0, -1, true, false, ready, blow.HasValue ? GuWorld.Combat.Melee.Name(blow.Value) : ready ? "Кулаки" : "Кулаки · F");
+                fistSlot.Show(FistKind, 0, 0, -2, true, false, ready, blow.HasValue ? GuWorld.Combat.Melee.Name(blow.Value) : "Кулаки");
 
                 for (var i = 0; i < chainDots.Length; i++)
                 {
                     var lit = ready && (fists.SinceBlow < 0.6f || blow.HasValue) && i < fists.ChainStep;
-                    chainDots[i].color = !ready ? UiKit.Hex(0x2A2622) : lit ? UiKit.GoldLit : i == fists.ChainStep ? UiKit.Gold : UiKit.Muted;
+                    chainDots[i].color = !ready ? UiKit.Muted.A(0.3f) : lit ? UiKit.GoldLit : i == fists.ChainStep ? UiKit.Gold : UiKit.Muted;
                 }
 
                 Special(heavyCell, fists, GuWorld.Combat.Blow.Heavy);
@@ -655,36 +723,24 @@ namespace GuWorld.UI
                 }
             }
 
-            // The sea: how full, and the chosen Gu's price marked at its end (red when the sea does not hold it).
-            var a = gu.Aperture;
-            var full = Mathf.Clamp01(a.Essence / 100);
-            essenceFill.anchorMax = new Vector2(full, 1);
-            var price = chosen != null && !chosen.Passive && !gu.EndlessEssence ? Mathf.Min(gu.CostOf(chosen), 100) / 100 : 0;
-            essenceCost.anchorMin = new Vector2(Mathf.Max(0, full - price), 0);
-            essenceCost.anchorMax = new Vector2(full, 1);
-            essenceCostImage.color = price <= full ? new Color(1, 1, 1, 0.5f) : new Color(UiKit.Danger.r, UiKit.Danger.g, UiKit.Danger.b, 0.8f);
-            essenceLabel.text = gu.EndlessEssence ? $"ЭССЕНЦИЯ {a.Essence:0}% · БЕСКОНЕЧНА" : $"ЭССЕНЦИЯ {a.Essence:0}% / {a.Cap:0}%" +
-                                (chosen != null && !chosen.Passive ? $"   ·   {GuSlot.Short(chosen.Name)}: {gu.CostOf(chosen):0.#}%" : "");
-
             var stones = gu.Stones;
             stoneCell.Count.text = $"{stones}";
-            stoneCell.Mark.color = stones > 0 ? (gu.Absorbing ? UiKit.EssenceLit : Icons.Tint("stone")) : UiKit.Muted;
-            stoneCell.SetRim(gu.Absorbing ? UiKit.EssenceLit : UiKit.GoldDeep);
+            stoneCell.Mark.color = stones > 0 ? UiKit.EssenceLit : UiKit.Muted;
+            stoneCell.SetRim(gu.Absorbing ? UiKit.EssenceLit : UiKit.Line);
             stoneCell.SetRest(gu.Absorbing ? 1 - gu.AbsorbProgress : 0);
-            skinLine.text = HeldLine(gu);
 
-            // The crosshair only while playing (not in a conversation); the ring while a stone is drawn in.
+            // The crosshair only while playing (not in a conversation); the arc round it while a stone is drawn in.
             crosshair.gameObject.SetActive(Current == Page.None);
             absorbing.gameObject.SetActive(gu.Absorbing);
 
             if (gu.Absorbing)
             {
                 absorbFill.fillAmount = gu.AbsorbProgress;
-                absorbLine.text = $"Поглощение камня · {(1 - gu.AbsorbProgress) * Cultivator.AbsorbTime:0.0} с";
+                absorbLine.text = $"ПОГЛОЩЕНИЕ КАМНЯ · {(1 - gu.AbsorbProgress) * Cultivator.AbsorbTime:0.0} С";
             }
         }
 
-        /// <summary>The fists' card's look (a Gu-like kind only for its mark and its colour).</summary>
+        /// <summary>The fists' slot's look (a Gu-like kind only for its mark and its colour).</summary>
         static readonly GuKind FistKind = new GuKind { Id = "fists", Name = "Кулаки", Icon = "fist", Rank = 1, Skill = SkillKind.None };
 
         /// <summary>A special blow's cell: lit while the fists are ready, shaded while it rests.</summary>
@@ -692,11 +748,11 @@ namespace GuWorld.UI
         {
             var rest = fists.RestLeft(blow) / GuWorld.Combat.Melee.RestOf(blow);
             cell.SetRest(fists.Ready ? rest : 0);
-            cell.Mark.color = !fists.Ready ? UiKit.Hex(0x4A4238) : rest > 0 ? UiKit.Muted : UiKit.GoldLit;
-            cell.SetRim(fists.Ready && rest <= 0 ? UiKit.Gold : UiKit.Hex(0x2A2622));
+            cell.Mark.color = !fists.Ready ? UiKit.Muted.A(0.4f) : rest > 0 ? UiKit.Muted : UiKit.GoldLit;
+            cell.SetRim(fists.Ready && rest <= 0 ? UiKit.Gold.A(0.7f) : UiKit.Line);
         }
 
-        /// <summary>A Gu on a card, live: its rest, its tiredness, its price for this master now.</summary>
+        /// <summary>A Gu on a slot, live: its rest, its tiredness, its price for this master now.</summary>
         static void ShowSlot(GuSlot slot, Cultivator gu, GuKind kind, bool chosen, string empty = "—")
         {
             if (kind == null)
@@ -738,19 +794,52 @@ namespace GuWorld.UI
                 var owned = gu.First(hand.Id);
                 var tired = owned?.tired ?? 0;
                 var state = hand.Passive ? "работает сам" : owned != null && gu.IsHeld(hand.Id) ? "поднят — ЛКМ снять" :
-                    tired >= 100 ? $"<color=#E0736B>устал: через силу — шанс гибели {Cultivator.StrainChance(tired) * 100:0}%</color>" :
+                    tired >= 100 ? $"<color=#F08A74>устал: через силу — шанс гибели {Cultivator.StrainChance(tired) * 100:0}%</color>" :
                     "ЛКМ — применить";
                 handLine.text = $"<b>{hand.Name}</b> <color=#{ColorUtility.ToHtmlStringRGB(Aperture.RankColour(hand.Rank))}>{Aperture.RankNumeral(hand.Rank)}</color>  ·  " +
-                                $"{hand.SkillName}  ·  {state}\n<size=13><color=#A69A86>{SkillLine(hand)}</color></size>";
+                                $"{hand.SkillName}  ·  {state}\n<size=11><color=#7E9093>{SkillLine(hand)}</color></size>";
             }
 
             return hand;
         }
 
-        /// <summary>What the hero's Gu keep up now: held Gu, timed effects, the beasts a sense hears.</summary>
-        static string HeldLine(Cultivator gu)
+        /// <summary>The chips under the hero: what their Gu keep up now — held Gu, timed powers, meditation, a sense.</summary>
+        void UpdateChips(Cultivator gu)
         {
-            var parts = new System.Collections.Generic.List<string>();
+            var parts = HeldParts(gu);
+
+            for (var i = 0; i < chips.Count; i++)
+            {
+                var (chip, words, edge) = chips[i];
+                var on = i < parts.Count;
+
+                if (chip.activeSelf != on)
+                {
+                    chip.SetActive(on);
+                }
+
+                if (!on)
+                {
+                    continue;
+                }
+
+                var (text, colour) = parts[i];
+                var upper = text.ToUpperInvariant();
+
+                if (words.text != upper)
+                {
+                    words.text = upper;
+                }
+
+                words.color = colour;
+                edge.color = colour.A(0.4f);
+            }
+        }
+
+        /// <summary>What the hero's Gu keep up now, each with its colour: held Gu, timed powers, meditation, the beasts a sense hears.</summary>
+        static List<(string, Color)> HeldParts(Cultivator gu)
+        {
+            var parts = new List<(string, Color)>();
 
             foreach (var id in gu.Held)
             {
@@ -758,7 +847,7 @@ namespace GuWorld.UI
 
                 if (kind != null)
                 {
-                    parts.Add(kind.SkillName);
+                    parts.Add((kind.SkillName, UiKit.Moon));
                 }
             }
 
@@ -772,23 +861,23 @@ namespace GuWorld.UI
 
                 if (left > 0)
                 {
-                    parts.Add($"{name} {left:0} с");
+                    parts.Add(($"{name} · {left:0} с", UiKit.Hex(0xF0C868)));
                 }
             }
 
             if (gu.Meditating)
             {
-                parts.Add($"медитация · {Aperture.Name(gu.Aperture.Stage)} {gu.Aperture.Progress * 100:0}%");
+                parts.Add(($"медитация · {gu.Aperture.Progress * 100:0}%", UiKit.EssenceLit));
             }
 
             var (count, nearest) = gu.Sensed();
 
             if (nearest >= 0)
             {
-                parts.Add(count > 0 ? $"зверей рядом: {count}, ближний в {nearest:0} м" : "зверей не слышно");
+                parts.Add((count > 0 ? $"зверей: {count} · {nearest:0} м" : "зверей не слышно", count > 0 ? UiKit.Danger : UiKit.Text2));
             }
 
-            return parts.Count > 0 ? UiKit.Spaced(string.Join(" · ", parts)) : "";
+            return parts;
         }
 
         /// <summary>" (1.2 с)" while a special blow rests, else nothing.</summary>
@@ -799,63 +888,57 @@ namespace GuWorld.UI
             return left > 0 ? $" ({left:0.0} с)" : "";
         }
 
-        /// <summary>Shows a Gu's key in a cell: the Gu's icon, its rank rim, hunger and rest.</summary>
+        /// <summary>Shows a Gu's key in a cell: the Gu's icon, its rank strip, hunger and rest.</summary>
         static void ShowEntry(Cell cell, Cultivator gu, string entry, bool live)
         {
             cell.Count.text = "";
             cell.Corner.text = "";
             cell.Dot.enabled = false;
             cell.SetRest(0);
+            cell.SetRank(0);
             cell.Mark.color = UiKit.Text;
 
             if (entry == null || !entry.StartsWith("gu:"))
             {
                 cell.SetIcon(null);
-                cell.SetRim(UiKit.Hex(0x2A2622));
+                cell.SetRim(UiKit.Line);
 
                 return;
             }
 
-            if (entry.StartsWith("gu:"))
+            var kind = GuBook.Find(entry.Substring(3));
+            var owned = gu.First(kind?.Id);
+            cell.SetIcon(kind?.Icon);
+            cell.SetRank(kind?.Rank ?? 0);
+
+            if (owned == null)
             {
-                var kind = GuBook.Find(entry.Substring(3));
-                var owned = gu.First(kind?.Id);
-                cell.SetIcon(kind?.Icon);
-                cell.Corner.text = kind != null ? Aperture.RankNumeral(kind.Rank) : "";
-                cell.Corner.color = Aperture.RankColour(kind?.Rank ?? 1);
-                var rim = Aperture.RankColour(kind?.Rank ?? 1);
-
-                if (owned == null)
-                {
-                    cell.Mark.color = UiKit.Muted;
-                    cell.SetRim(UiKit.Line);
-
-                    return;
-                }
-
-                var hunger = gu.HungerOf(owned);
-                var up = gu.IsHeld(kind.Id);
-                cell.Dot.enabled = hunger >= Hunger.Hungry;
-                cell.Dot.color = hunger >= Hunger.Starving ? UiKit.Danger : UiKit.Hunger;
-                cell.Mark.color = hunger >= Hunger.Starving ? UiKit.Muted : up ? UiKit.EssenceLit : Icons.Tint(kind.Icon);
-                // Spent (tired past its strength): the rim burns red — using it now is forcing it.
-                cell.SetRim(owned.tired >= 100 ? UiKit.Danger : up ? UiKit.GoldLit : rim);
-
-                // The shade over the cell: how tired it is (or, rested, its own short rest).
-                if (live)
-                {
-                    var rest = kind.Cooldown > 0 ? gu.CooldownLeft(kind.Id) / kind.Cooldown : 0;
-                    cell.SetRest(Mathf.Max(rest, Mathf.Clamp01(owned.tired / 100)));
-                    cell.Count.text = owned.tired >= 1 ? $"{owned.tired:0}" : "";
-                    cell.Count.color = owned.tired >= 100 ? UiKit.Danger : owned.tired >= 60 ? UiKit.Hunger : UiKit.Muted;
-                }
-
-                if (!up && !gu.Aperture.CanSpend(gu.CostOf(kind)))
-                {
-                    cell.Mark.color = UiKit.Danger;
-                }
+                cell.Mark.color = UiKit.Muted;
+                cell.SetRim(UiKit.Line);
 
                 return;
+            }
+
+            var hunger = gu.HungerOf(owned);
+            var up = gu.IsHeld(kind.Id);
+            cell.Dot.enabled = hunger >= Hunger.Hungry;
+            cell.Dot.color = hunger >= Hunger.Starving ? UiKit.Danger : UiKit.Hunger;
+            cell.Mark.color = hunger >= Hunger.Starving ? UiKit.Muted : up ? UiKit.EssenceLit : Icons.Tint(kind.Icon);
+            // Spent (tired past its strength): the edge burns red — using it now is forcing it.
+            cell.SetRim(owned.tired >= 100 ? UiKit.Danger : up ? UiKit.GoldLit : UiKit.Line);
+
+            // The shade over the cell: how tired it is (or, rested, its own short rest).
+            if (live)
+            {
+                var rest = kind.Cooldown > 0 ? gu.CooldownLeft(kind.Id) / kind.Cooldown : 0;
+                cell.SetRest(Mathf.Max(rest, Mathf.Clamp01(owned.tired / 100)));
+                cell.Count.text = owned.tired >= 1 ? $"{owned.tired:0}" : "";
+                cell.Count.color = owned.tired >= 100 ? UiKit.Danger : owned.tired >= 60 ? UiKit.Hunger : UiKit.Muted;
+            }
+
+            if (!up && !gu.Aperture.CanSpend(gu.CostOf(kind)))
+            {
+                cell.Mark.color = UiKit.Danger;
             }
         }
 
@@ -867,7 +950,7 @@ namespace GuWorld.UI
 
             for (var i = 0; i < LogLines; i++)
             {
-                // The newest at the foot.
+                // The newest at the foot, the older ones fainter.
                 var index = i - (LogLines - shown);
 
                 if (index < 0)
@@ -879,10 +962,10 @@ namespace GuWorld.UI
 
                 var (text, at) = log[first + index];
                 // The chat shows the log itself while it is open.
-                var alpha = Current == Page.Chat ? 0 : Mathf.Clamp01((LogFor - (now - at)) / 2);
+                var alpha = Current == Page.Chat ? 0 : Mathf.Clamp01((LogFor - (now - at)) / 2) * Mathf.Lerp(0.5f, 1, (index + 1f) / shown);
                 var said = text.StartsWith("> ") || text.StartsWith("!") || text.StartsWith("<color");
-                logTexts[i].text = said ? ChatLine(text) : $"<color=#C9A563{Mathf.RoundToInt(alpha * 255):X2}>Система:</color> {text}";
-                logTexts[i].color = new Color(UiKit.Text.r, UiKit.Text.g, UiKit.Text.b, alpha);
+                logTexts[i].text = said ? ChatLine(text) : text;
+                logTexts[i].color = UiKit.Text2.A(alpha);
             }
         }
     }

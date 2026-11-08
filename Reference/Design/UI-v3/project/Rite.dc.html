@@ -1,0 +1,409 @@
+<!doctype html>
+<html lang="ru">
+<head>
+<meta charset="utf-8">
+<title>Слияние Гу — обряд</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@500;600;700&amp;family=Inter+Tight:wght@400;500;600&amp;family=Zhi+Mang+Xing&amp;family=Ma+Shan+Zheng&amp;display=swap" rel="stylesheet">
+<style>
+body{margin:0;background:#04050A}
+@keyframes gwFloat{0%,100%{transform:translateY(0)}50%{transform:translateY(-12px)}}
+@keyframes gwSpin{to{transform:rotate(360deg)}}
+@keyframes gwSpinR{to{transform:rotate(-360deg)}}
+@keyframes gwPulse{0%,100%{opacity:.55;transform:scale(1)}50%{opacity:1;transform:scale(1.06)}}
+@keyframes gwDrift{0%{transform:translateY(0);opacity:0}15%{opacity:1}100%{transform:translateY(-140px);opacity:0}}
+@keyframes gwRipple{0%{transform:scale(.35);opacity:.8}100%{transform:scale(1.25);opacity:0}}
+@keyframes gwShine{0%{transform:translateX(-140%)}55%,100%{transform:translateX(320%)}}
+@keyframes gwFog{0%,100%{transform:translateX(-3%)}50%{transform:translateX(3%)}}
+@keyframes gwIn{from{opacity:0;transform:scale(.92)}to{opacity:1;transform:scale(1)}}
+</style>
+</helmet>
+<div style="width: 1440px; height: 900px; box-sizing: border-box; background: #04050A; color: #F2EADB; font-family: 'Inter Tight', sans-serif; position: relative; overflow: hidden">
+
+  <svg width="0" height="0" aria-hidden="true" style="position: absolute">
+    <defs>
+      <linearGradient id="moonW" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#E4F3FF"></stop><stop offset="0.55" stop-color="#6E9FD6"></stop><stop offset="1" stop-color="#1A2F52"></stop></linearGradient>
+      <radialGradient id="moonB" cx="0.4" cy="0.3" r="0.8"><stop offset="0" stop-color="#FFFFFF"></stop><stop offset="0.5" stop-color="#8FB6E4"></stop><stop offset="1" stop-color="#1E355E"></stop></radialGradient>
+      <linearGradient id="jadeW" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#CFF7DD"></stop><stop offset="0.55" stop-color="#3F9E72"></stop><stop offset="1" stop-color="#0F3626"></stop></linearGradient>
+      <radialGradient id="jadeB" cx="0.4" cy="0.3" r="0.8"><stop offset="0" stop-color="#F0FFF4"></stop><stop offset="0.5" stop-color="#5BBF8C"></stop><stop offset="1" stop-color="#0E3222"></stop></radialGradient>
+      <linearGradient id="frostW" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#FFFFFF" stop-opacity="0.95"></stop><stop offset="0.5" stop-color="#C6EAF8" stop-opacity="0.7"></stop><stop offset="1" stop-color="#4F8DB0" stop-opacity="0.6"></stop></linearGradient>
+      <radialGradient id="frostB" cx="0.4" cy="0.3" r="0.8"><stop offset="0" stop-color="#FFFFFF"></stop><stop offset="0.5" stop-color="#A8D6EE"></stop><stop offset="1" stop-color="#2E5D7C"></stop></radialGradient>
+      <linearGradient id="ironW" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#EFE2C2"></stop><stop offset="0.55" stop-color="#A08758"></stop><stop offset="1" stop-color="#3A2D1A"></stop></linearGradient>
+      <radialGradient id="ironB" cx="0.4" cy="0.3" r="0.8"><stop offset="0" stop-color="#FFF4DA"></stop><stop offset="0.5" stop-color="#B09260"></stop><stop offset="1" stop-color="#33261A"></stop></radialGradient>
+      <linearGradient id="bloodW" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#FFC2B6"></stop><stop offset="0.55" stop-color="#C93A2E"></stop><stop offset="1" stop-color="#420A08"></stop></linearGradient>
+      <radialGradient id="bloodB" cx="0.4" cy="0.3" r="0.8"><stop offset="0" stop-color="#FFE2DC"></stop><stop offset="0.5" stop-color="#C2392F"></stop><stop offset="1" stop-color="#380707"></stop></radialGradient>
+      <linearGradient id="orchidW" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#FFF6FF"></stop><stop offset="0.5" stop-color="#C69AE2"></stop><stop offset="1" stop-color="#4C2C68"></stop></linearGradient>
+      <radialGradient id="orchidB" cx="0.4" cy="0.3" r="0.8"><stop offset="0" stop-color="#FFF3C4"></stop><stop offset="0.6" stop-color="#E0B04C"></stop><stop offset="1" stop-color="#8A5A18"></stop></radialGradient>
+      <linearGradient id="gourdW" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#8A6440"></stop><stop offset="1" stop-color="#4A2E18"></stop></linearGradient>
+      <radialGradient id="gourdB" cx="0.35" cy="0.35" r="0.8"><stop offset="0" stop-color="#FFD79A"></stop><stop offset="0.5" stop-color="#B8702E"></stop><stop offset="1" stop-color="#3C1E0C"></stop></radialGradient>
+      <linearGradient id="meatW" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#FFF6E6"></stop><stop offset="1" stop-color="#CBB894"></stop></linearGradient>
+      <radialGradient id="meatB" cx="0.4" cy="0.3" r="0.8"><stop offset="0" stop-color="#FFC0B0"></stop><stop offset="0.55" stop-color="#B84A3C"></stop><stop offset="1" stop-color="#4A120E"></stop></radialGradient>
+      <linearGradient id="gold" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#FFF1CF"></stop><stop offset="0.45" stop-color="#E8C98A"></stop><stop offset="1" stop-color="#8C6A3A"></stop></linearGradient>
+      <filter id="soft" x="-50%" y="-50%" width="200%" height="200%"><feGaussianBlur stdDeviation="2.4" result="b"></feGaussianBlur><feMerge><feMergeNode in="b"></feMergeNode><feMergeNode in="SourceGraphic"></feMergeNode></feMerge></filter>
+    </defs>
+  </svg>
+
+  <div aria-hidden="true" style="position: absolute; inset: 0; background: radial-gradient(ellipse 700px 520px at 50% 46%, rgba(70,110,170,0.28), transparent 70%), radial-gradient(ellipse 1200px 500px at 50% 110%, rgba(30,60,90,0.35), transparent 70%), linear-gradient(180deg, #070A12, #04050A 60%, #030306)"></div>
+  <div aria-hidden="true" style="position: absolute; left: 50%; top: 40px; margin-left: -330px; width: 660px; height: 760px; display: flex; align-items: center; justify-content: center; font-family: 'Zhi Mang Xing', cursive; font-size: 640px; line-height: 1; color: rgba(232,201,138,0.045); user-select: none">煉</div>
+  <div aria-hidden="true" style="position: absolute; left: 50%; top: -120px; width: 900px; margin-left: -450px; height: 900px; background: conic-gradient(from 180deg at 50% 0%, transparent 160deg, rgba(190,215,255,0.07) 172deg, transparent 178deg, rgba(190,215,255,0.05) 184deg, transparent 192deg, rgba(190,215,255,0.06) 198deg, transparent 206deg); filter: blur(6px)"></div>
+  <div aria-hidden="true" style="position: absolute; left: -10%; right: -10%; bottom: 40px; height: 260px; background: radial-gradient(ellipse at 30% 60%, rgba(150,175,210,0.10), transparent 60%), radial-gradient(ellipse at 75% 40%, rgba(150,175,210,0.08), transparent 55%); filter: blur(20px); animation: gwFog 24s ease-in-out infinite"></div>
+  <sc-for list="{{ motes }}" as="m" hint-placeholder-count="0">
+    <span aria-hidden="true" style="position: absolute; left: {{ m.x }}px; top: {{ m.y }}px; width: {{ m.s }}px; height: {{ m.s }}px; border-radius: 50%; background: {{ m.c }}; box-shadow: 0 0 8px {{ m.c }}; animation: gwDrift {{ m.d }}s linear {{ m.dl }}s infinite"></span>
+  </sc-for>
+  <div aria-hidden="true" style="position: absolute; inset: 0; background: radial-gradient(ellipse at 50% 50%, transparent 55%, rgba(0,0,0,0.75) 100%)"></div>
+
+  <header style="position: absolute; left: 56px; right: 56px; top: 0; height: 84px; display: flex; align-items: center">
+    <div style="display: flex; align-items: center; gap: 14px; width: 340px">
+      <svg width="34" height="38" viewBox="0 0 34 38" aria-hidden="true"><path d="M17 1 L33 10 V28 L17 37 L1 28 V10Z" fill="none" stroke="url(#gold)" stroke-width="1.2"></path><path d="M17 7 L28 13 V25 L17 31 L6 25 V13Z" fill="rgba(232,201,138,0.08)" stroke="rgba(232,201,138,0.35)" stroke-width="0.8"></path><text x="17" y="24.5" text-anchor="middle" font-family="'Ma Shan Zheng', serif" font-size="15" fill="#E8C98A">融</text></svg>
+      <div style="display: flex; flex-direction: column; gap: 3px"><span style="font-family: 'Cormorant Garamond', serif; font-weight: 600; font-size: 22px; letter-spacing: 0.16em; line-height: 1">СЛИЯНИЕ ГУ</span><span style="font-size: 11px; letter-spacing: 0.34em; color: #7F7868">АПЕРТУРА</span></div>
+    </div>
+    <nav aria-label="Разделы апертуры" style="flex: 1; display: flex; align-items: center; justify-content: center; gap: 30px">
+      <span style="display: inline-flex; align-items: center; justify-content: center; min-width: 24px; height: 22px; padding: 0 6px; box-sizing: border-box; border: 1px solid rgba(242,234,219,0.35); border-bottom-width: 2px; border-radius: 4px; font-size: 11px; font-weight: 600; color: #CFC6B4">Q</span>
+      <a href="#" style="font-size: 12px; letter-spacing: 0.28em; color: #7F7868; text-decoration: none">АПЕРТУРА</a>
+      <a href="#" style="font-size: 12px; letter-spacing: 0.28em; color: #7F7868; text-decoration: none">ОЧИЩЕНИЕ</a>
+      <a href="#" aria-current="page" style="position: relative; font-size: 12px; letter-spacing: 0.28em; color: #F7E7C2; text-decoration: none; text-shadow: 0 0 14px rgba(232,201,138,0.6)">СЛИЯНИЕ<span style="position: absolute; left: -10px; right: -6px; bottom: -12px; height: 1px; background: linear-gradient(90deg, transparent, #E8C98A, transparent)"></span><span style="position: absolute; left: 50%; bottom: -15px; width: 6px; height: 6px; margin-left: -5px; transform: rotate(45deg); background: #E8C98A; box-shadow: 0 0 10px #E8C98A"></span></a>
+      <a href="#" style="font-size: 12px; letter-spacing: 0.28em; color: #7F7868; text-decoration: none">КОРМЛЕНИЕ</a>
+      <span style="display: inline-flex; align-items: center; justify-content: center; min-width: 24px; height: 22px; padding: 0 6px; box-sizing: border-box; border: 1px solid rgba(242,234,219,0.35); border-bottom-width: 2px; border-radius: 4px; font-size: 11px; font-weight: 600; color: #CFC6B4">E</span>
+    </nav>
+    <div style="width: 340px; display: flex; justify-content: flex-end; align-items: center; gap: 22px">
+      <div style="display: flex; align-items: center; gap: 10px">
+        <svg width="30" height="30" viewBox="0 0 30 30" aria-hidden="true"><circle cx="15" cy="15" r="12" fill="none" stroke="rgba(127,224,200,0.15)" stroke-width="3"></circle><circle cx="15" cy="15" r="12" fill="none" stroke="#7FE0C8" stroke-width="3" stroke-dasharray="48.3 75.4" stroke-linecap="round" transform="rotate(-90 15 15)" filter="url(#soft)"></circle><circle cx="15" cy="15" r="5" fill="#7FE0C8" opacity="0.8"></circle></svg>
+        <div style="display: flex; flex-direction: column; gap: 2px"><span style="font-size: 10px; letter-spacing: 0.3em; color: #7F7868">ЭССЕНЦИЯ</span><span style="font-size: 15px; font-weight: 600; color: #A8F0DC">64%</span></div>
+      </div>
+      <div style="display: flex; align-items: center; gap: 10px">
+        <svg width="18" height="22" viewBox="0 0 18 22" aria-hidden="true"><path d="M9 1 L17 8 L9 21 L1 8Z" fill="#1E4A42"></path><path d="M9 1 L17 8 H1Z" fill="#9FE6D2"></path><path d="M9 1 L12 8 L9 21 L6 8Z" fill="#5EB8A2" opacity="0.6"></path></svg>
+        <div style="display: flex; flex-direction: column; gap: 2px"><span style="font-size: 10px; letter-spacing: 0.3em; color: #7F7868">КАМНИ</span><span style="font-size: 15px; font-weight: 600">[1 240]</span></div>
+      </div>
+    </div>
+  </header>
+  <div aria-hidden="true" style="position: absolute; left: 56px; right: 56px; top: 84px; height: 1px; background: linear-gradient(90deg, transparent, rgba(232,201,138,0.28) 20%, rgba(232,201,138,0.28) 80%, transparent)"></div>
+
+  <section aria-label="Книга рецептов" style="position: absolute; left: 56px; top: 116px; width: 340px; bottom: 76px; display: flex; flex-direction: column">
+    <div style="display: flex; align-items: baseline; justify-content: space-between; padding-left: 4px"><span style="font-size: 11px; letter-spacing: 0.34em; color: #B8A47C">КНИГА РЕЦЕПТОВ</span><span style="font-family: 'Cormorant Garamond', serif; font-size: 20px; color: #7F7868">{{ shownCount }}<span style="font-size: 14px"> / 5</span></span></div>
+    <div role="group" aria-label="Фильтр" style="display: flex; gap: 18px; margin: 16px 0 14px; padding: 0 4px 12px; border-bottom: 1px solid rgba(242,234,219,0.08)">
+      <sc-for list="{{ filters }}" as="f" hint-placeholder-count="5">
+        <button type="button" aria-pressed="{{ f.on }}" onClick="{{ f.pick }}" style="position: relative; height: 32px; padding: 0; border: none; background: transparent; color: {{ f.fg }}; font-family: 'Inter Tight', sans-serif; font-size: 12px; font-weight: 500; letter-spacing: 0.16em; cursor: pointer; display: flex; align-items: center; gap: 6px"><span style="width: 5px; height: 5px; transform: rotate(45deg); background: {{ f.gem }}; display: {{ f.gemShow }}"></span>{{ f.label }}<span style="position: absolute; left: 0; right: 0; bottom: -13px; height: 1px; background: #E8C98A; opacity: {{ f.line }}"></span></button>
+      </sc-for>
+    </div>
+    <div style="flex: 1; min-height: 0; overflow: auto; display: flex; flex-direction: column; gap: 2px">
+      <sc-for list="{{ rows }}" as="r" hint-placeholder-count="5">
+        <button type="button" aria-pressed="{{ r.on }}" onClick="{{ r.pick }}" style="position: relative; flex: none; display: grid; grid-template-columns: 56px minmax(0, 1fr) auto; gap: 14px; align-items: center; height: 78px; padding: 0 12px 0 22px; border: none; background: {{ r.bg }}; color: #F2EADB; text-align: left; cursor: pointer; font-family: 'Inter Tight', sans-serif">
+          <span aria-hidden="true" style="position: absolute; left: 2px; top: 50%; width: 8px; height: 8px; margin-top: -4px; transform: rotate(45deg); background: #E8C98A; box-shadow: 0 0 12px #E8C98A; opacity: {{ r.mark }}"></span>
+          <span aria-hidden="true" style="position: absolute; left: 0; right: 0; top: 0; height: 1px; background: linear-gradient(90deg, rgba(232,201,138,0.5), transparent 80%); opacity: {{ r.mark }}"></span>
+          <span aria-hidden="true" style="position: absolute; left: 0; right: 0; bottom: 0; height: 1px; background: linear-gradient(90deg, rgba(232,201,138,0.5), transparent 80%); opacity: {{ r.mark }}"></span>
+          <svg width="56" height="56" viewBox="0 0 100 100" aria-hidden="true" style="filter: drop-shadow(0 0 8px {{ r.g.glow }}); opacity: {{ r.iconOp }}"><path d="{{ r.g.a }}" fill="{{ r.g.w }}" stroke="rgba(0,0,0,0.55)" stroke-width="1"></path><path d="{{ r.g.b }}" fill="{{ r.g.bf }}" stroke="rgba(0,0,0,0.55)" stroke-width="1"></path><path d="{{ r.g.c }}" fill="none" stroke="{{ r.g.l }}" stroke-width="1.2" stroke-linecap="round" opacity="0.8"></path><path d="{{ r.g.e }}" fill="#FFFFFF" opacity="0.35"></path></svg>
+          <span style="display: flex; flex-direction: column; gap: 4px; min-width: 0">
+            <span style="font-family: 'Cormorant Garamond', serif; font-weight: 600; font-size: 22px; line-height: 1.05; color: {{ r.nameC }}">{{ r.name }}</span>
+            <span style="display: flex; align-items: center; gap: 8px; font-size: 11px; letter-spacing: 0.18em; color: #7F7868"><span style="font-family: 'Ma Shan Zheng', serif; font-size: 15px; letter-spacing: 0.05em; color: #9C8A62">{{ r.zh }}</span>{{ r.kind }}</span>
+          </span>
+          <span style="display: flex; flex-direction: column; align-items: flex-end; gap: 8px">
+            <span style="font-family: 'Cormorant Garamond', serif; font-weight: 700; font-size: 16px; letter-spacing: 0.08em; color: {{ r.rim }}; text-shadow: 0 0 10px {{ r.rim }}">{{ r.rom }}</span>
+            <span style="width: 6px; height: 6px; border-radius: 50%; background: {{ r.lamp }}; box-shadow: {{ r.lampGlow }}" aria-label="{{ r.lampLabel }}"></span>
+          </span>
+        </button>
+      </sc-for>
+    </div>
+    <div style="display: flex; align-items: center; gap: 10px; padding: 14px 4px 0; border-top: 1px solid rgba(242,234,219,0.08); font-size: 12px; color: #6E6858"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" aria-hidden="true"><path d="M5 4h11l3 3v13H5z"></path><path d="M9 10h6M9 14h6"></path></svg>Новые рецепты — у наставников и в наследиях.</div>
+  </section>
+
+  <section aria-label="Алтарь" style="position: absolute; left: 460px; top: 104px; width: 520px; height: 520px">
+    <div aria-hidden="true" style="position: absolute; inset: 0; animation: gwSpin 160s linear infinite">
+      <svg width="520" height="520" viewBox="0 0 520 520" style="position: absolute; inset: 0"><circle cx="260" cy="260" r="256" fill="none" stroke="rgba(232,201,138,0.22)" stroke-width="1"></circle><path d="{{ ticks }}" stroke="rgba(232,201,138,0.45)" stroke-width="1"></path><circle cx="260" cy="260" r="236" fill="none" stroke="rgba(232,201,138,0.12)" stroke-width="1"></circle></svg>
+      <sc-for list="{{ glyphs }}" as="t" hint-placeholder-count="12">
+        <span style="position: absolute; left: {{ t.x }}px; top: {{ t.y }}px; width: 24px; height: 24px; display: flex; align-items: center; justify-content: center; font-family: 'Ma Shan Zheng', serif; font-size: 17px; color: rgba(232,201,138,0.5); transform: rotate({{ t.r }}deg)">{{ t.ch }}</span>
+      </sc-for>
+    </div>
+    <div aria-hidden="true" style="position: absolute; inset: 60px; animation: gwSpinR 90s linear infinite">
+      <svg width="400" height="400" viewBox="0 0 400 400" style="position: absolute; inset: 0"><circle cx="200" cy="200" r="198" fill="none" stroke="rgba(232,201,138,0.18)" stroke-width="1" stroke-dasharray="2 10"></circle><path d="{{ star }}" fill="none" stroke="rgba(232,201,138,0.1)" stroke-width="1"></path><path d="M200 0 L205 8 L200 16 L195 8Z M400 200 L392 205 L384 200 L392 195Z M200 400 L195 392 L200 384 L205 392Z M0 200 L8 195 L16 200 L8 205Z" fill="#E8C98A" opacity="0.7"></path></svg>
+    </div>
+    <svg width="520" height="520" viewBox="0 0 520 520" aria-hidden="true" style="position: absolute; inset: 0">
+      <circle cx="260" cy="260" r="222" fill="none" stroke="rgba(255,255,255,0.05)" stroke-width="3"></circle>
+      <circle cx="260" cy="260" r="222" fill="none" stroke="url(#gold)" stroke-width="3" stroke-linecap="round" stroke-dasharray="{{ cur.arc }}" transform="rotate(-90 260 260)" filter="url(#soft)"></circle>
+      <circle cx="{{ cur.mx }}" cy="{{ cur.my }}" r="4.5" fill="#FFF1CF" filter="url(#soft)"></circle>
+      <path d="{{ cur.okLines }}" stroke="rgba(160,220,255,0.55)" stroke-width="1.2" filter="url(#soft)"></path>
+      <path d="{{ cur.badLines }}" stroke="rgba(224,96,78,0.55)" stroke-width="1" stroke-dasharray="2 5"></path>
+    </svg>
+    <div aria-hidden="true" style="position: absolute; left: 110px; top: 110px; width: 300px; height: 300px; border-radius: 50%; border: 1px solid rgba(160,210,255,0.25); animation: gwRipple 4.5s ease-out infinite"></div>
+    <div aria-hidden="true" style="position: absolute; left: 110px; top: 110px; width: 300px; height: 300px; border-radius: 50%; border: 1px solid rgba(160,210,255,0.25); animation: gwRipple 4.5s ease-out 2.25s infinite"></div>
+    <div aria-hidden="true" style="position: absolute; left: 90px; top: 90px; width: 340px; height: 340px; border-radius: 50%; background: radial-gradient(circle, {{ cur.h.aura }}, transparent 65%); opacity: 0.45; filter: blur(18px); animation: gwPulse 5s ease-in-out infinite"></div>
+
+    <div style="position: absolute; left: 105px; top: 95px; width: 310px; height: 310px; animation: gwFloat 6s ease-in-out infinite; --c1: {{ cur.h.c1 }}; --c2: {{ cur.h.c2 }}; --c3: {{ cur.h.c3 }}; --c4: {{ cur.h.c4 }}; --rim: {{ cur.h.rim }}; --aura: {{ cur.h.aura }}">
+      <sc-if value="{{ cur.isMoth }}" hint-placeholder-val="{{ true }}">
+        <svg viewBox="0 0 400 400" width="310" height="310" role="img" aria-label="{{ cur.name }}" style="overflow: visible">
+          <defs>
+            <linearGradient id="hmFW" x1="1" y1="1" x2="0" y2="0"><stop offset="0" style="stop-color: var(--c3)"></stop><stop offset="0.35" style="stop-color: var(--c2)"></stop><stop offset="0.8" style="stop-color: var(--c1)"></stop><stop offset="1" style="stop-color: var(--c2)"></stop></linearGradient>
+            <linearGradient id="hmHW" x1="1" y1="0" x2="0" y2="1"><stop offset="0" style="stop-color: var(--c3)"></stop><stop offset="0.5" style="stop-color: var(--c2)"></stop><stop offset="1" style="stop-color: var(--c1)"></stop></linearGradient>
+            <radialGradient id="hmBody" cx="0.35" cy="0.3" r="0.8"><stop offset="0" style="stop-color: var(--c1)"></stop><stop offset="0.5" style="stop-color: var(--c2)"></stop><stop offset="1" style="stop-color: var(--c3)"></stop></radialGradient>
+            <radialGradient id="hmIri" cx="0.5" cy="0.5" r="0.5"><stop offset="0" style="stop-color: var(--c4); stop-opacity: 0.75"></stop><stop offset="1" style="stop-color: var(--c4); stop-opacity: 0"></stop></radialGradient>
+            <filter id="hmBlur" x="-50%" y="-50%" width="200%" height="200%"><feGaussianBlur stdDeviation="16"></feGaussianBlur></filter>
+            <filter id="hmGlow" x="-50%" y="-50%" width="200%" height="200%"><feGaussianBlur stdDeviation="2.5" result="b"></feGaussianBlur><feMerge><feMergeNode in="b"></feMergeNode><feMergeNode in="SourceGraphic"></feMergeNode></feMerge></filter>
+          </defs>
+          <ellipse cx="200" cy="200" rx="175" ry="120" style="fill: var(--aura)" opacity="0.35" filter="url(#hmBlur)"></ellipse>
+          <g id="hmL">
+            <path d="M104 300 C90 328 82 352 90 376 C98 362 106 340 118 312 Z" fill="url(#hmHW)" style="stroke: var(--c3)" stroke-width="1.2"></path>
+            <path d="M196 200 C162 204 116 222 88 252 C68 274 70 304 92 314 C116 324 146 300 168 270 C182 250 192 226 196 212 Z" fill="url(#hmHW)" style="stroke: var(--c3)" stroke-width="1.4"></path>
+            <path d="M196 206 C170 226 140 252 110 290 M196 210 C176 240 160 270 150 296 M190 214 C150 230 120 246 96 270" fill="none" style="stroke: var(--rim)" stroke-width="0.8" opacity="0.35"></path>
+            <circle cx="126" cy="270" r="15" style="fill: var(--c3)" opacity="0.85"></circle><circle cx="126" cy="270" r="10" style="fill: var(--c4)" opacity="0.85" filter="url(#hmGlow)"></circle><circle cx="123" cy="267" r="3" fill="#FFFFFF"></circle>
+            <path d="M196 168 C160 120 104 70 46 62 C26 60 14 74 18 92 C24 122 52 150 84 170 C116 190 160 200 196 196 Z" fill="url(#hmFW)" style="stroke: var(--c3)" stroke-width="1.4"></path>
+            <ellipse cx="104" cy="112" rx="72" ry="36" fill="url(#hmIri)" transform="rotate(-24 104 112)" style="mix-blend-mode: screen"></ellipse>
+            <path d="M196 180 C160 150 110 110 50 76 M196 184 C150 168 100 150 40 118 M196 188 C150 184 110 180 70 168 M150 150 C140 132 128 116 112 102 M120 130 C104 118 88 108 72 100 M160 176 C140 168 118 160 96 150" fill="none" style="stroke: var(--rim)" stroke-width="0.8" opacity="0.4"></path>
+            <path d="M98 104 a22 22 0 1 0 30 30 a17 17 0 1 1 -30 -30 Z" style="fill: var(--c4)" filter="url(#hmGlow)" opacity="0.95"></path>
+            <path d="M196 168 C160 120 104 70 46 62 C30 60 20 68 18 80" fill="none" style="stroke: var(--rim)" stroke-width="2" opacity="0.75" stroke-linecap="round"></path>
+            <g style="fill: var(--rim)" opacity="0.7"><circle cx="24" cy="104" r="1.8"></circle><circle cx="38" cy="128" r="1.6"></circle><circle cx="56" cy="148" r="1.6"></circle><circle cx="78" cy="166" r="1.4"></circle><circle cx="78" cy="300" r="1.6"></circle><circle cx="74" cy="282" r="1.4"></circle></g>
+          </g>
+          <use href="#hmL" transform="translate(400 0) scale(-1 1)"></use>
+          <path d="M197 142 C186 116 168 98 148 90 C166 104 180 118 193 144 Z M203 142 C214 116 232 98 252 90 C234 104 220 118 207 144 Z" style="fill: var(--c1)" opacity="0.75"></path>
+          <path d="M196 142 C186 118 170 100 150 92 M204 142 C214 118 230 100 250 92" fill="none" style="stroke: var(--c1)" stroke-width="6" stroke-dasharray="0.8 2.6" opacity="0.5"></path>
+          <ellipse cx="200" cy="178" rx="15" ry="22" fill="url(#hmBody)" style="stroke: var(--c3)" stroke-width="1"></ellipse>
+          <ellipse cx="200" cy="178" rx="15" ry="22" fill="none" style="stroke: var(--c1)" stroke-width="5" stroke-dasharray="0.6 2.2" opacity="0.45"></ellipse>
+          <g fill="url(#hmBody)" style="stroke: var(--c3)" stroke-width="0.8"><ellipse cx="200" cy="208" rx="12" ry="11"></ellipse><ellipse cx="200" cy="226" rx="11" ry="10"></ellipse><ellipse cx="200" cy="243" rx="10" ry="9"></ellipse><ellipse cx="200" cy="258" rx="8.5" ry="8"></ellipse><ellipse cx="200" cy="271" rx="6.5" ry="6.5"></ellipse><ellipse cx="200" cy="282" rx="4.5" ry="5"></ellipse></g>
+          <circle cx="200" cy="151" r="10.5" fill="url(#hmBody)" style="stroke: var(--c3)" stroke-width="1"></circle>
+          <circle cx="194" cy="149" r="3.6" style="fill: var(--c4)" filter="url(#hmGlow)"></circle><circle cx="206" cy="149" r="3.6" style="fill: var(--c4)" filter="url(#hmGlow)"></circle>
+          <path d="M194 168 C196 162 204 162 206 168 L203 200 C201 204 199 204 197 200 Z" fill="#FFFFFF" opacity="0.18"></path>
+        </svg>
+      </sc-if>
+      <sc-if value="{{ cur.isBeetle }}" hint-placeholder-val="{{ false }}">
+        <svg viewBox="0 0 400 400" width="310" height="310" role="img" aria-label="{{ cur.name }}" style="overflow: visible">
+          <defs>
+            <radialGradient id="hbShell" cx="0.3" cy="0.25" r="0.9"><stop offset="0" style="stop-color: var(--c1)"></stop><stop offset="0.4" style="stop-color: var(--c2)"></stop><stop offset="1" style="stop-color: var(--c3)"></stop></radialGradient>
+            <linearGradient id="hbPro" x1="0" y1="0" x2="0" y2="1"><stop offset="0" style="stop-color: var(--c1)"></stop><stop offset="0.6" style="stop-color: var(--c2)"></stop><stop offset="1" style="stop-color: var(--c3)"></stop></linearGradient>
+            <filter id="hbBlur" x="-50%" y="-50%" width="200%" height="200%"><feGaussianBlur stdDeviation="16"></feGaussianBlur></filter>
+            <filter id="hbGlow" x="-50%" y="-50%" width="200%" height="200%"><feGaussianBlur stdDeviation="2.5" result="b"></feGaussianBlur><feMerge><feMergeNode in="b"></feMergeNode><feMergeNode in="SourceGraphic"></feMergeNode></feMerge></filter>
+          </defs>
+          <ellipse cx="200" cy="220" rx="150" ry="140" style="fill: var(--aura)" opacity="0.35" filter="url(#hbBlur)"></ellipse>
+          <g id="hbL">
+            <path d="M176 176 L132 150 L118 108 M168 216 L112 210 L80 188 M172 252 L122 280 L102 322" fill="none" style="stroke: var(--c3)" stroke-width="8" stroke-linecap="round" stroke-linejoin="round"></path>
+            <path d="M176 176 L132 150 L118 108 M168 216 L112 210 L80 188 M172 252 L122 280 L102 322" fill="none" style="stroke: var(--c2)" stroke-width="3" stroke-linecap="round" stroke-linejoin="round" opacity="0.8"></path>
+            <path d="M118 108 L110 96 M80 188 L66 182 M102 322 L96 338" style="stroke: var(--c3)" stroke-width="4" stroke-linecap="round"></path>
+            <path d="M200 156 C168 158 140 182 136 222 C132 268 152 306 200 322 Z" fill="url(#hbShell)" style="stroke: var(--c3)" stroke-width="1.6"></path>
+            <path d="M196 176 C178 186 162 206 158 236 M196 196 C182 210 172 236 172 268 M190 290 C176 280 164 266 156 248" fill="none" style="stroke: var(--rim)" stroke-width="0.9" opacity="0.35"></path>
+            <circle cx="168" cy="230" r="3" style="fill: var(--c4)" opacity="0.7"></circle><circle cx="178" cy="262" r="2.4" style="fill: var(--c4)" opacity="0.6"></circle><circle cx="160" cy="200" r="2" style="fill: var(--c4)" opacity="0.6"></circle>
+            <path d="M150 196 C156 176 172 166 186 166 C172 176 162 190 158 214 Z" fill="#FFFFFF" opacity="0.32"></path>
+            <path d="M184 104 C176 86 164 78 152 82" fill="none" style="stroke: var(--c3)" stroke-width="5" stroke-linecap="round"></path>
+          </g>
+          <use href="#hbL" transform="translate(400 0) scale(-1 1)"></use>
+          <path d="M200 160 V320" style="stroke: var(--c3)" stroke-width="2.4"></path>
+          <path d="M200 160 V320" style="stroke: var(--rim)" stroke-width="0.6" opacity="0.4"></path>
+          <path d="M154 146 C160 118 240 118 246 146 C246 162 226 170 200 170 C174 170 154 162 154 146 Z" fill="url(#hbPro)" style="stroke: var(--c3)" stroke-width="1.6"></path>
+          <path d="M170 134 C182 126 218 126 230 134" fill="none" style="stroke: var(--rim)" stroke-width="1.2" opacity="0.5"></path>
+          <path d="M176 120 C180 98 220 98 224 120 Z" fill="url(#hbPro)" style="stroke: var(--c3)" stroke-width="1.4"></path>
+          <circle cx="186" cy="112" r="4" style="fill: var(--c4)" filter="url(#hbGlow)"></circle><circle cx="214" cy="112" r="4" style="fill: var(--c4)" filter="url(#hbGlow)"></circle>
+          <ellipse cx="200" cy="246" rx="36" ry="54" style="fill: var(--c4)" opacity="0.18" filter="url(#hbBlur)"></ellipse>
+        </svg>
+      </sc-if>
+      <sc-if value="{{ cur.isFly }}" hint-placeholder-val="{{ false }}">
+        <svg viewBox="0 0 400 400" width="310" height="310" role="img" aria-label="{{ cur.name }}" style="overflow: visible">
+          <defs>
+            <linearGradient id="hfW" x1="1" y1="0" x2="0" y2="0"><stop offset="0" style="stop-color: var(--c2); stop-opacity: 0.75"></stop><stop offset="1" style="stop-color: var(--c1); stop-opacity: 0.25"></stop></linearGradient>
+            <radialGradient id="hfBody" cx="0.35" cy="0.3" r="0.8"><stop offset="0" style="stop-color: var(--c1)"></stop><stop offset="0.5" style="stop-color: var(--c2)"></stop><stop offset="1" style="stop-color: var(--c3)"></stop></radialGradient>
+            <pattern id="hfCells" width="9" height="9" patternUnits="userSpaceOnUse"><path d="M0 4.5 L4.5 0 L9 4.5 L4.5 9Z" fill="none" stroke="#FFFFFF" stroke-width="0.4" opacity="0.4"></path></pattern>
+            <filter id="hfBlur" x="-50%" y="-50%" width="200%" height="200%"><feGaussianBlur stdDeviation="16"></feGaussianBlur></filter>
+            <filter id="hfGlow" x="-50%" y="-50%" width="200%" height="200%"><feGaussianBlur stdDeviation="2.5" result="b"></feGaussianBlur><feMerge><feMergeNode in="b"></feMergeNode><feMergeNode in="SourceGraphic"></feMergeNode></feMerge></filter>
+          </defs>
+          <ellipse cx="200" cy="190" rx="180" ry="90" style="fill: var(--aura)" opacity="0.35" filter="url(#hfBlur)"></ellipse>
+          <g id="hfL">
+            <path d="M194 150 C150 120 80 96 26 104 C12 108 14 122 30 128 C80 146 150 160 194 160 Z" fill="url(#hfW)" style="stroke: var(--rim)" stroke-width="1"></path>
+            <path d="M194 150 C150 120 80 96 26 104 C12 108 14 122 30 128 C80 146 150 160 194 160 Z" fill="url(#hfCells)"></path>
+            <path d="M194 172 C150 176 86 200 42 232 C30 242 38 254 52 250 C100 234 160 204 194 182 Z" fill="url(#hfW)" style="stroke: var(--rim)" stroke-width="1"></path>
+            <path d="M194 172 C150 176 86 200 42 232 C30 242 38 254 52 250 C100 234 160 204 194 182 Z" fill="url(#hfCells)"></path>
+            <path d="M194 150 C150 120 80 96 26 104" fill="none" style="stroke: var(--rim)" stroke-width="2" opacity="0.85"></path>
+            <path d="M194 172 C150 176 86 200 42 232" fill="none" style="stroke: var(--rim)" stroke-width="1.6" opacity="0.7"></path>
+            <ellipse cx="48" cy="106" rx="8" ry="3.4" style="fill: var(--c3)" transform="rotate(-6 48 106)"></ellipse>
+            <path d="M80 70 l3 8 l8 0 l-6 5 l2 8 l-7 -5 l-7 5 l2 -8 l-6 -5 l8 0Z" style="fill: var(--c1)" opacity="0.6" filter="url(#hfGlow)"></path>
+          </g>
+          <use href="#hfL" transform="translate(400 0) scale(-1 1)"></use>
+          <g fill="url(#hfBody)" style="stroke: var(--c3)" stroke-width="0.8"><ellipse cx="200" cy="196" rx="8" ry="11"></ellipse><ellipse cx="200" cy="214" rx="7.4" ry="10"></ellipse><ellipse cx="200" cy="232" rx="7" ry="10"></ellipse><ellipse cx="200" cy="250" rx="6.6" ry="10"></ellipse><ellipse cx="200" cy="268" rx="6.2" ry="10"></ellipse><ellipse cx="200" cy="286" rx="5.8" ry="10"></ellipse><ellipse cx="200" cy="304" rx="5.4" ry="10"></ellipse><ellipse cx="200" cy="322" rx="5" ry="10"></ellipse><ellipse cx="200" cy="340" rx="4.4" ry="10"></ellipse></g>
+          <ellipse cx="200" cy="162" rx="16" ry="24" fill="url(#hfBody)" style="stroke: var(--c3)" stroke-width="1"></ellipse>
+          <circle cx="189" cy="132" r="12" style="fill: var(--c4)" filter="url(#hfGlow)"></circle><circle cx="211" cy="132" r="12" style="fill: var(--c4)" filter="url(#hfGlow)"></circle>
+          <circle cx="186" cy="128" r="3.4" fill="#FFFFFF"></circle><circle cx="208" cy="128" r="3.4" fill="#FFFFFF"></circle>
+          <path d="M196 150 C198 146 202 146 204 150 L202 176 Z" fill="#FFFFFF" opacity="0.3"></path>
+        </svg>
+      </sc-if>
+    </div>
+
+    <sc-for list="{{ cur.slots }}" as="s" hint-placeholder-count="3">
+      <div style="position: absolute; left: {{ s.x }}px; top: {{ s.y }}px; width: 64px; height: 64px">
+        <div style="width: 64px; height: 64px; border-radius: 50%; display: flex; align-items: center; justify-content: center; background: radial-gradient(circle at 50% 40%, rgba(30,40,56,0.95), rgba(5,6,10,0.95) 70%); box-shadow: 0 0 0 1px {{ s.ring }}, 0 0 0 5px rgba(4,5,10,0.85), 0 0 0 6px rgba(232,201,138,0.18), 0 0 22px {{ s.g.glow }}">
+          <svg width="44" height="44" viewBox="0 0 100 100" aria-hidden="true" style="opacity: {{ s.op }}"><path d="{{ s.g.a }}" fill="{{ s.g.w }}" stroke="rgba(0,0,0,0.55)" stroke-width="1"></path><path d="{{ s.g.b }}" fill="{{ s.g.bf }}" stroke="rgba(0,0,0,0.55)" stroke-width="1"></path><path d="{{ s.g.c }}" fill="none" stroke="{{ s.g.l }}" stroke-width="1.2" stroke-linecap="round" opacity="0.8"></path><path d="{{ s.g.e }}" fill="#FFFFFF" opacity="0.35"></path></svg>
+        </div>
+        <span style="position: absolute; left: 50%; top: 56px; transform: translateX(-50%); height: 18px; padding: 0 7px; display: flex; align-items: center; font-size: 11px; font-weight: 600; letter-spacing: 0.06em; color: {{ s.c }}; background: rgba(4,5,10,0.95); border: 1px solid {{ s.ring }}">{{ s.have }}/{{ s.need }}</span>
+        <span style="position: absolute; top: 80px; left: 50%; width: 130px; margin-left: -65px; font-size: 12px; line-height: 1.25; text-align: center; color: #CFC6B4; text-shadow: 0 1px 8px #000, 0 0 3px #000">{{ s.n }}</span>
+      </div>
+    </sc-for>
+  </section>
+
+  <div style="position: absolute; left: 400px; width: 640px; top: 632px; display: flex; flex-direction: column; align-items: center; gap: 8px">
+    <div style="display: flex; align-items: center; gap: 14px; font-size: 11px; letter-spacing: 0.34em; color: {{ cur.rim }}"><span style="width: 40px; height: 1px; background: linear-gradient(90deg, transparent, {{ cur.rim }})"></span><span style="font-family: 'Ma Shan Zheng', serif; font-size: 17px; letter-spacing: 0.1em; color: #C9B07A">{{ cur.zh }}</span>РАНГ {{ cur.rom }} · {{ cur.rankName }}<span style="width: 40px; height: 1px; background: linear-gradient(90deg, {{ cur.rim }}, transparent)"></span></div>
+    <span style="font-family: 'Cormorant Garamond', serif; font-weight: 600; font-size: 50px; line-height: 1; letter-spacing: 0.02em; background: linear-gradient(180deg, #FFFFFF, #F2EADB 45%, #C9B590); -webkit-background-clip: text; background-clip: text; color: transparent; filter: drop-shadow(0 4px 18px rgba(0,0,0,0.9))">{{ cur.name }}</span>
+  </div>
+
+  <div style="position: absolute; left: 520px; width: 400px; top: 742px; display: flex; flex-direction: column; align-items: center; gap: 10px">
+    <button type="button" aria-label="{{ cur.holdLabel }}" aria-disabled="{{ cur.dis }}" onPointerDown="{{ down }}" onPointerUp="{{ up }}" onPointerLeave="{{ up }}" onKeyDown="{{ keyDown }}" onKeyUp="{{ keyUp }}" style="position: relative; width: 400px; height: 62px; padding: 0; border: none; background: {{ cur.btnRim }}; clip-path: polygon(22px 0, calc(100% - 22px) 0, 100% 50%, calc(100% - 22px) 100%, 22px 100%, 0 50%); cursor: pointer; filter: {{ cur.btnGlow }}; touch-action: none">
+      <span style="position: absolute; inset: 1px; background: {{ cur.btnBg }}; clip-path: polygon(21px 0, calc(100% - 21px) 0, 100% 50%, calc(100% - 21px) 100%, 21px 100%, 0 50%); overflow: hidden">
+        <span style="position: absolute; left: 0; top: 0; bottom: 0; width: {{ cur.holdPct }}; background: linear-gradient(90deg, rgba(232,201,138,0.15), rgba(255,236,190,0.55)); box-shadow: 4px 0 16px rgba(255,236,190,0.8)"></span>
+        <span style="position: absolute; top: 0; bottom: 0; width: 60px; background: linear-gradient(90deg, transparent, rgba(255,255,255,0.18), transparent); animation: gwShine 3.6s ease-in-out infinite; display: {{ cur.shine }}"></span>
+        <span style="position: absolute; left: 6px; right: 6px; top: 6px; bottom: 6px; border-top: 1px solid rgba(255,236,190,0.18); border-bottom: 1px solid rgba(0,0,0,0.3)"></span>
+      </span>
+      <span style="position: relative; display: flex; align-items: center; justify-content: center; gap: 12px; height: 100%; color: {{ cur.btnFg }}; font-family: 'Inter Tight', sans-serif; font-weight: 600; font-size: {{ cur.btnSize }}; letter-spacing: 0.3em">
+        <span style="display: {{ cur.keyShow }}; align-items: center; justify-content: center; height: 24px; padding: 0 8px; border: 1px solid rgba(255,240,210,0.55); border-bottom-width: 2px; border-radius: 4px; font-size: 10px; letter-spacing: 0.1em">ПРОБЕЛ</span>{{ cur.btnText }}
+      </span>
+    </button>
+    <span style="font-size: 12px; letter-spacing: 0.06em; color: {{ cur.subC }}">{{ cur.sub }}</span>
+  </div>
+
+  <section aria-label="Обряд" style="position: absolute; right: 56px; top: 116px; width: 332px; bottom: 76px; display: flex; flex-direction: column; gap: 22px">
+    <div style="display: flex; flex-direction: column; gap: 6px">
+      <span style="font-size: 11px; letter-spacing: 0.34em; color: #B8A47C">ШАНС УСПЕХА</span>
+      <div style="display: flex; align-items: flex-end; gap: 14px">
+        <span style="font-family: 'Cormorant Garamond', serif; font-weight: 600; font-size: 96px; line-height: 0.82; background: linear-gradient(180deg, #FFF6E2, #E8C98A 60%, #9C7A44); -webkit-background-clip: text; background-clip: text; color: transparent">{{ cur.chance }}<span style="font-size: 42px">%</span></span>
+        <span style="padding-bottom: 8px; font-size: 12px; letter-spacing: 0.2em; color: {{ cur.riskC }}">{{ cur.risk }}</span>
+      </div>
+      <div style="position: relative; height: 2px; margin-top: 8px; background: rgba(242,234,219,0.1)"><div style="position: absolute; left: 0; top: 0; bottom: 0; width: {{ cur.chanceW }}; background: linear-gradient(90deg, #8C6A3A, #FFF1CF); box-shadow: 0 0 10px rgba(255,241,207,0.7)"></div></div>
+    </div>
+
+    <div style="display: flex; flex-direction: column; gap: 10px">
+      <div style="display: flex; justify-content: space-between; align-items: baseline"><span style="font-size: 11px; letter-spacing: 0.34em; color: #B8A47C">ЭССЕНЦИЯ</span><span style="font-size: 14px; color: #CFC6B4"><span style="font-weight: 600; color: {{ cur.essC }}">−{{ cur.cost }}%</span> · останется {{ cur.left }}%</span></div>
+      <div style="display: grid; grid-template-columns: repeat(25, minmax(0, 1fr)); gap: 3px">
+        <sc-for list="{{ cur.segs }}" as="g" hint-placeholder-count="25"><span style="height: 12px; background: {{ g.c }}; box-shadow: {{ g.sh }}"></span></sc-for>
+      </div>
+    </div>
+
+    <div aria-hidden="true" style="height: 1px; background: linear-gradient(90deg, rgba(232,201,138,0.3), transparent)"></div>
+
+    <div style="display: flex; flex-direction: column; gap: 2px">
+      <span style="font-size: 11px; letter-spacing: 0.34em; color: #B8A47C; margin-bottom: 8px">СОСТАВ</span>
+      <sc-for list="{{ cur.slots }}" as="s" hint-placeholder-count="3">
+        <div style="display: grid; grid-template-columns: 34px minmax(0, 1fr) auto; gap: 12px; align-items: center; height: 44px">
+          <svg width="34" height="34" viewBox="0 0 100 100" aria-hidden="true" style="filter: drop-shadow(0 0 5px {{ s.g.glow }}); opacity: {{ s.op }}"><path d="{{ s.g.a }}" fill="{{ s.g.w }}"></path><path d="{{ s.g.b }}" fill="{{ s.g.bf }}"></path><path d="{{ s.g.c }}" fill="none" stroke="{{ s.g.l }}" stroke-width="1.4" opacity="0.8"></path></svg>
+          <span style="font-size: 14px; color: #E2D9C6">{{ s.n }} <span style="color: #7F7868">×{{ s.need }}</span></span>
+          <span style="display: flex; align-items: center; gap: 6px; font-size: 13px; font-weight: 600; color: {{ s.c }}"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" aria-hidden="true"><path d="{{ s.mark }}"></path></svg>{{ s.have }}/{{ s.need }}</span>
+        </div>
+      </sc-for>
+    </div>
+
+    <div aria-hidden="true" style="height: 1px; background: linear-gradient(90deg, rgba(232,201,138,0.3), transparent)"></div>
+
+    <div style="display: flex; flex-direction: column; gap: 8px">
+      <span style="font-size: 11px; letter-spacing: 0.34em; color: #B8A47C">О ГУ</span>
+      <p style="margin: 0; font-size: 14px; line-height: 1.6; color: #A39B89">[Описание Гу: что он делает и как себя ведёт.]</p>
+      <p style="margin: 0; font-size: 14px; line-height: 1.6; color: #E2D9C6"><span style="font-family: 'Cormorant Garamond', serif; font-weight: 600; font-size: 18px; color: #F2EADB">[Навык]</span> — <span style="color: #A39B89">[что делает]</span></p>
+    </div>
+  </section>
+
+  <footer style="position: absolute; left: 56px; right: 56px; bottom: 22px; height: 30px; display: flex; align-items: center; justify-content: flex-end; gap: 26px; font-size: 12px; letter-spacing: 0.08em; color: #8E8676">
+    <span style="display: flex; align-items: center; gap: 8px"><span style="display: inline-flex; align-items: center; justify-content: center; min-width: 24px; height: 22px; padding: 0 6px; box-sizing: border-box; border: 1px solid rgba(242,234,219,0.35); border-bottom-width: 2px; border-radius: 4px; font-size: 10px; font-weight: 600; color: #CFC6B4">ЛКМ</span>Выбрать</span>
+    <span style="display: flex; align-items: center; gap: 8px"><span style="display: inline-flex; align-items: center; justify-content: center; min-width: 24px; height: 22px; padding: 0 6px; box-sizing: border-box; border: 1px solid rgba(242,234,219,0.35); border-bottom-width: 2px; border-radius: 4px; font-size: 10px; font-weight: 600; color: #CFC6B4">F</span>Фильтр</span>
+    <span style="display: flex; align-items: center; gap: 8px"><span style="display: inline-flex; align-items: center; justify-content: center; min-width: 24px; height: 22px; padding: 0 6px; box-sizing: border-box; border: 1px solid rgba(242,234,219,0.35); border-bottom-width: 2px; border-radius: 4px; font-size: 10px; font-weight: 600; color: #CFC6B4">ПРОБЕЛ</span>Удерживать — слить</span>
+    <span style="display: flex; align-items: center; gap: 8px"><span style="display: inline-flex; align-items: center; justify-content: center; min-width: 24px; height: 22px; padding: 0 6px; box-sizing: border-box; border: 1px solid rgba(242,234,219,0.35); border-bottom-width: 2px; border-radius: 4px; font-size: 10px; font-weight: 600; color: #CFC6B4">ESC</span>Назад</span>
+  </footer>
+
+  <sc-if value="{{ showResult }}" hint-placeholder-val="{{ false }}">
+    <div role="dialog" aria-label="{{ res.title }}" style="position: absolute; inset: 0; z-index: 20; display: flex; flex-direction: column; align-items: center; justify-content: center; background: radial-gradient(circle at 50% 45%, rgba(10,14,24,0.55), rgba(2,2,5,0.95) 70%); backdrop-filter: blur(10px); animation: gwIn 0.5s ease-out">
+      <div aria-hidden="true" style="position: absolute; left: 50%; top: 45%; width: 1100px; height: 1100px; margin: -550px 0 0 -550px; border-radius: 50%; background: repeating-conic-gradient(from 0deg, {{ res.ray }} 0deg 2.5deg, transparent 2.5deg 12deg); -webkit-mask-image: radial-gradient(circle, #000 0%, transparent 60%); mask-image: radial-gradient(circle, #000 0%, transparent 60%); animation: gwSpin 60s linear infinite"></div>
+      <div aria-hidden="true" style="position: absolute; left: 50%; top: 42%; width: 520px; height: 520px; margin: -260px 0 0 -260px; border-radius: 50%; background: radial-gradient(circle, {{ res.glow }}, transparent 65%); filter: blur(24px)"></div>
+      <span style="position: relative; font-size: 12px; letter-spacing: 0.5em; color: {{ res.tagC }}">{{ res.tag }}</span>
+      <div style="position: relative; width: 300px; height: 300px; margin: 18px 0 8px; filter: {{ res.filter }}; animation: gwFloat 6s ease-in-out infinite; --c1: {{ cur.h.c1 }}; --c2: {{ cur.h.c2 }}; --c3: {{ cur.h.c3 }}; --c4: {{ cur.h.c4 }}; --rim: {{ cur.h.rim }}; --aura: {{ cur.h.aura }}">
+        <sc-if value="{{ cur.isMoth }}" hint-placeholder-val="{{ true }}"><svg viewBox="0 0 400 400" width="300" height="300" aria-hidden="true" style="overflow: visible"><use href="#hmL"></use><use href="#hmL" transform="translate(400 0) scale(-1 1)"></use><ellipse cx="200" cy="178" rx="15" ry="22" fill="url(#hmBody)"></ellipse><g fill="url(#hmBody)"><ellipse cx="200" cy="208" rx="12" ry="11"></ellipse><ellipse cx="200" cy="226" rx="11" ry="10"></ellipse><ellipse cx="200" cy="243" rx="10" ry="9"></ellipse><ellipse cx="200" cy="258" rx="8.5" ry="8"></ellipse><ellipse cx="200" cy="271" rx="6.5" ry="6.5"></ellipse></g><circle cx="200" cy="151" r="10.5" fill="url(#hmBody)"></circle></svg></sc-if>
+        <sc-if value="{{ cur.isBeetle }}" hint-placeholder-val="{{ false }}"><svg viewBox="0 0 400 400" width="300" height="300" aria-hidden="true" style="overflow: visible"><use href="#hbL"></use><use href="#hbL" transform="translate(400 0) scale(-1 1)"></use><path d="M154 146 C160 118 240 118 246 146 C246 162 226 170 200 170 C174 170 154 162 154 146 Z" fill="url(#hbPro)"></path><path d="M176 120 C180 98 220 98 224 120 Z" fill="url(#hbPro)"></path></svg></sc-if>
+        <sc-if value="{{ cur.isFly }}" hint-placeholder-val="{{ false }}"><svg viewBox="0 0 400 400" width="300" height="300" aria-hidden="true" style="overflow: visible"><use href="#hfL"></use><use href="#hfL" transform="translate(400 0) scale(-1 1)"></use><ellipse cx="200" cy="162" rx="16" ry="24" fill="url(#hfBody)"></ellipse><ellipse cx="200" cy="260" rx="7" ry="90" fill="url(#hfBody)"></ellipse></svg></sc-if>
+      </div>
+      <span style="position: relative; font-family: 'Cormorant Garamond', serif; font-weight: 600; font-size: 64px; line-height: 1; color: {{ res.nameC }}; text-shadow: 0 6px 30px rgba(0,0,0,0.9)">{{ cur.name }}</span>
+      <span style="position: relative; margin-top: 12px; font-size: 13px; letter-spacing: 0.24em; color: #A39B89">{{ res.note }}</span>
+      <button type="button" onClick="{{ close }}" style="position: relative; margin-top: 34px; height: 50px; padding: 0 44px; border: 1px solid rgba(232,201,138,0.6); background: linear-gradient(180deg, rgba(232,201,138,0.16), rgba(232,201,138,0.04)); color: #F7E7C2; font-family: 'Inter Tight', sans-serif; font-size: 13px; font-weight: 600; letter-spacing: 0.3em; cursor: pointer">{{ res.btn }}</button>
+    </div>
+  </sc-if>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"outcome":{"editor":"enum","options":["Удача","Срыв"],"default":"Удача"},"$preview":{"width":1440,"height":900}}'>
+class Component extends DCLogic {
+  constructor(props) { super(props); this.state = { chosen: 'blik', filter: 0, hold: 0, phase: 'idle' }; this.iv = null; }
+  componentWillUnmount() { clearInterval(this.iv); }
+  renderVals() {
+    var self = this;
+    var S = {
+      moth: { a: 'M50 46 C38 22 14 12 7 27 C2 40 18 52 50 54 Z M50 46 C62 22 86 12 93 27 C98 40 82 52 50 54 Z M50 54 C36 58 18 70 25 83 C31 92 44 78 50 62 Z M50 54 C64 58 82 70 75 83 C69 92 56 78 50 62 Z', b: 'M50 34 C55 34 56 44 55 56 C54 70 52 80 50 85 C48 80 46 70 45 56 C44 44 45 34 50 34 Z M50 25 a5.5 5.5 0 1 0 0.01 0 Z', c: 'M48 27 C44 17 38 12 31 12 M52 27 C56 17 62 12 69 12 M50 48 C36 36 22 30 13 30 M50 50 C38 44 26 44 17 47 M50 48 C64 36 78 30 87 30 M50 50 C62 44 74 44 83 47 M50 58 C42 66 34 74 30 80 M50 58 C58 66 66 74 70 80 M24 34 a7 7 0 1 0 9 9 M76 34 a7 7 0 1 1 -9 9', e: 'M48 38 C49 36 51 36 52 38 L51 60 C50 62 50 62 49 60 Z M14 28 C20 22 32 22 40 31 C32 29 22 29 14 33 Z M86 28 C80 22 68 22 60 31 C68 29 78 29 86 33 Z' },
+      beetle: { a: 'M50 17 C58 17 62 23 60 30 L40 30 C38 23 42 17 50 17 Z M35 31 C40 26 60 26 65 31 C67 37 60 41 50 41 C40 41 33 37 35 31 Z', b: 'M50 40 C66 40 75 50 75 64 C75 80 64 90 50 90 C36 90 25 80 25 64 C25 50 34 40 50 40 Z', c: 'M50 41 V90 M27 50 L13 42 L7 46 M26 62 L11 64 L5 60 M29 74 L15 84 L11 92 M73 50 L87 42 L93 46 M74 62 L89 64 L95 60 M71 74 L85 84 L89 92 M44 18 C40 11 35 10 32 13 M56 18 C60 11 65 10 68 13', e: 'M36 50 C38 44 44 42 47 44 L46 76 C40 72 35 62 36 50 Z M58 44 C63 44 68 50 68 56 C65 51 61 48 56 48 Z' },
+      fly: { a: 'M50 38 C40 30 18 24 5 29 C9 37 30 41 50 43 Z M50 38 C60 30 82 24 95 29 C91 37 70 41 50 43 Z M50 45 C40 47 22 53 11 62 C19 65 38 56 50 49 Z M50 45 C60 47 78 53 89 62 C81 65 62 56 50 49 Z', b: 'M50 22 C54 22 55 28 54 34 C55 40 54 46 53 50 L52 89 C52 93 48 93 48 89 L47 50 C46 46 45 40 46 34 C45 28 46 22 50 22 Z', c: 'M50 40 L9 30 M50 40 L91 30 M50 46 L15 60 M50 46 L85 60 M48 58 h4 M48 66 h4 M48 74 h4 M48 82 h4', e: 'M46 24 a3.5 3.5 0 1 0 0.01 0 Z M54 24 a3.5 3.5 0 1 0 0.01 0 Z' },
+      orchid: { a: 'M50 50 C40 30 42 13 50 8 C58 13 60 30 50 50 Z M50 50 C30 42 15 44 10 52 C17 61 34 59 50 50 Z M50 50 C70 42 85 44 90 52 C83 61 66 59 50 50 Z M50 50 C38 64 33 79 40 88 C48 86 53 69 50 50 Z M50 50 C62 64 67 79 60 88 C52 86 47 69 50 50 Z', b: 'M50 43 a7 7 0 1 0 0.01 0 Z', c: 'M50 46 V14 M50 50 L16 52 M50 50 L84 52 M50 53 L41 84 M50 53 L59 84', e: 'M46 14 C48 11 52 11 54 14 L51 36 Z' },
+      gourd: { a: 'M43 8 H57 V15 H43 Z M58 50 C70 46 74 36 67 31 C64 29 62 32 64 34', b: 'M50 14 C56 14 58 19 56 25 C54 29 64 33 64 43 C64 49 60 51 58 53 C70 57 78 67 78 77 C78 89 66 95 50 95 C34 95 22 89 22 77 C22 67 30 57 42 53 C40 51 36 49 36 43 C36 33 46 29 44 25 C42 19 44 14 50 14 Z', c: 'M41 53 C46 56 54 56 59 53 M40 27 C46 29 54 29 60 27', e: 'M31 72 C31 63 37 59 42 59 C38 65 36 71 36 80 Z' },
+      meat: { a: 'M33 63 L17 79 C13 77 8 81 10 85 C6 87 8 93 13 91 C14 95 20 95 21 90 L37 71 Z', b: 'M30 61 C24 41 44 23 66 29 C84 35 86 59 70 71 C56 81 36 81 30 61 Z', c: 'M40 47 C50 41 62 45 66 53 M38 59 C48 55 58 59 62 65', e: 'M44 37 C54 33 66 35 72 41 C62 39 52 39 44 43 Z' }
+    };
+    var CW = { moon: { l: '#E6F4FF', g: 'rgba(140,190,255,0.6)' }, jade: { l: '#D8FFE6', g: 'rgba(110,210,160,0.55)' }, frost: { l: '#FFFFFF', g: 'rgba(190,235,255,0.6)' }, iron: { l: '#FFF1D0', g: 'rgba(220,190,130,0.5)' }, blood: { l: '#FFE0DA', g: 'rgba(230,80,60,0.6)' }, orchid: { l: '#F4E8FF', g: 'rgba(190,150,230,0.45)' }, gourd: { l: '#FFE2B0', g: 'rgba(230,170,90,0.35)' }, meat: { l: '#FFD6CC', g: 'rgba(220,110,90,0.3)' } };
+    function art(shape, cw) { var s = S[shape]; return { a: s.a, b: s.b, c: s.c, e: s.e, w: 'url(#' + cw + 'W)', bf: 'url(#' + cw + 'B)', l: CW[cw].l, glow: CW[cw].g }; }
+    var HERO = {
+      moon: { c1: '#EAF6FF', c2: '#7FB0E8', c3: '#14264A', c4: '#C6EAFF', rim: '#FFFFFF', aura: '#4F86C9' },
+      blood: { c1: '#FFD6CC', c2: '#D2453A', c3: '#2E0606', c4: '#FF9478', rim: '#FFE6E0', aura: '#B0281E' },
+      jade: { c1: '#E2FFEC', c2: '#3FAF7A', c3: '#072A1C', c4: '#9CFFCB', rim: '#F0FFF6', aura: '#2E9C6A' },
+      iron: { c1: '#FFF2D6', c2: '#B08E56', c3: '#241808', c4: '#FFD27A', rim: '#FFF6E2', aura: '#A07C40' },
+      frost: { c1: '#FFFFFF', c2: '#9ED4EE', c3: '#1C4A66', c4: '#E2F7FF', rim: '#FFFFFF', aura: '#78BEE0' }
+    };
+    var RANK = { 2: '#F08A74', 3: '#DDE2EA', 4: '#F0C868' };
+    var RNAME = { 2: 'КРАСНАЯ СТАЛЬ', 3: 'БЕЛОЕ СЕРЕБРО', 4: 'ЖЁЛТОЕ ЗОЛОТО' };
+    var ROM = { 2: 'II', 3: 'III', 4: 'IV' };
+    var ESS = 64;
+    var R = [
+      { id: 'blik', name: 'Гу Лунного блика', zh: '月芒蛊', rank: 2, kind: 'Атака', shape: 'moth', cw: 'moon', cost: 18, chance: 72, ing: [['Гу Лунного света', 2, 2, 'moth', 'moon'], ['Лунная орхидея', 3, 40, 'orchid', 'orchid']] },
+      { id: 'nef', name: 'Гу Нефритового щита', zh: '玉盾蛊', rank: 2, kind: 'Защита', shape: 'beetle', cw: 'jade', cost: 14, chance: 80, ing: [['Гу Нефритовой кожи', 2, 1, 'beetle', 'jade'], ['Мясо кабана', 2, 8, 'meat', 'meat']] },
+      { id: 'inei', name: 'Гу Серебряного инея', zh: '银霜蛊', rank: 3, kind: 'Контроль', shape: 'fly', cw: 'frost', cost: 32, chance: 45, ing: [['Гу Лунного блика', 1, 0, 'moth', 'moon'], ['Гу Лунного света', 1, 2, 'moth', 'moon'], ['Рисовое вино', 2, 12, 'gourd', 'gourd']] },
+      { id: 'kost', name: 'Гу Железной кости', zh: '铁骨蛊', rank: 3, kind: 'Защита', shape: 'beetle', cw: 'iron', cost: 28, chance: 52, ing: [['Гу Нефритового щита', 1, 0, 'beetle', 'jade'], ['Гу Нефритовой кожи', 1, 1, 'beetle', 'jade'], ['Мясо кабана', 4, 8, 'meat', 'meat']] },
+      { id: 'lu', name: 'Гу Кровавого луча', zh: '血光蛊', rank: 4, kind: 'Атака', shape: 'moth', cw: 'blood', cost: 55, chance: 30, ing: [['Гу Серебряного инея', 1, 0, 'fly', 'frost'], ['Гу Лунного блика', 1, 0, 'moth', 'moon'], ['Рисовое вино', 3, 12, 'gourd', 'gourd']] }
+    ];
+    R.forEach(function (r) { r.lack = null; r.ing.forEach(function (g) { if (!r.lack && g[2] < g[1]) { r.lack = g[0]; } }); r.ready = !r.lack && ESS >= r.cost; });
+    var f = this.state.filter;
+    var shown = R.filter(function (r) { return f === 0 || (f === 1 && r.ready) || (f === 2 && r.rank === 2) || (f === 3 && r.rank === 3) || (f === 4 && r.rank >= 4); });
+    var chosen = R.filter(function (r) { return r.id === self.state.chosen; })[0] || R[0];
+    var fdefs = [['ВСЕ', null], ['ГОТОВЫ', '#8FE0B0'], ['II', RANK[2]], ['III', RANK[3]], ['IV+', RANK[4]]];
+    var filters = fdefs.map(function (d, i) { var on = i === f; return { label: d[0], on: on ? 'true' : 'false', gem: d[1] || 'transparent', gemShow: d[1] ? 'block' : 'none', fg: on ? '#F7E7C2' : '#7F7868', line: on ? '1' : '0', pick: function () { self.setState({ filter: i }); } }; });
+    var rows = shown.map(function (r) { var on = r.id === chosen.id; return { name: r.name, zh: r.zh, kind: r.kind.toUpperCase(), rim: RANK[r.rank], rom: ROM[r.rank], g: art(r.shape, r.cw), on: on ? 'true' : 'false', mark: on ? '1' : '0',
+      bg: on ? 'linear-gradient(90deg, rgba(232,201,138,0.13), rgba(232,201,138,0.0) 85%)' : 'transparent', nameC: on ? '#FFFFFF' : '#CFC6B4', iconOp: on ? '1' : '0.75',
+      lamp: r.ready ? '#8FE0B0' : 'rgba(242,234,219,0.15)', lampGlow: r.ready ? '0 0 10px #8FE0B0' : 'none', lampLabel: r.ready ? 'готов к слиянию' : 'не готов',
+      pick: function () { clearInterval(self.iv); self.setState({ chosen: r.id, hold: 0, phase: 'idle' }); } }; });
+    var C = 260, ticks = '', star = '', glyphs = [];
+    for (var i = 0; i < 120; i++) { var a = i * 3 * Math.PI / 180, big = i % 10 === 0, r1 = big ? 242 : 248, r2 = 254; ticks += 'M' + (C + r1 * Math.cos(a)).toFixed(1) + ' ' + (C + r1 * Math.sin(a)).toFixed(1) + 'L' + (C + r2 * Math.cos(a)).toFixed(1) + ' ' + (C + r2 * Math.sin(a)).toFixed(1); }
+    for (var k = 0; k <= 8; k++) { var idx = (k * 3) % 8, aa = (idx * 45 - 90) * Math.PI / 180; star += (k ? 'L' : 'M') + (200 + 196 * Math.cos(aa)).toFixed(1) + ' ' + (200 + 196 * Math.sin(aa)).toFixed(1); }
+    '月光玉皮血骨霜力金木水火'.split('').forEach(function (ch, j) { var deg = j * 30 + 15 - 90, ra = deg * Math.PI / 180; glyphs.push({ ch: ch, x: Math.round(C + 226 * Math.cos(ra) - 12), y: Math.round(C + 226 * Math.sin(ra) - 12), r: Math.round(deg + 90) }); });
+    var motes = [];
+    for (var m = 0; m < 30; m++) { var px = 380 + ((Math.sin(m * 12.9898) * 43758.5453) % 1 + 1) % 1 * 680, py = 160 + ((Math.sin(m * 78.233) * 12345.678) % 1 + 1) % 1 * 620; motes.push({ x: Math.round(px), y: Math.round(py), s: (1 + (m % 3) * 0.8).toFixed(1), d: 7 + (m % 5) * 2, dl: -(m * 0.9).toFixed(1), c: m % 4 === 0 ? 'rgba(232,201,138,0.9)' : 'rgba(170,215,255,0.85)' }); }
+    var n = chosen.ing.length, ok = '', bad = '';
+    var slots = chosen.ing.map(function (g, j) {
+      var deg = (n === 2 ? 180 : 150) + (n === 2 ? 180 : 120) * j, ra = deg * Math.PI / 180, x = C + 196 * Math.cos(ra), y = C + 196 * Math.sin(ra), good = g[2] >= g[1];
+      var seg = 'M' + x.toFixed(0) + ' ' + y.toFixed(0) + 'L' + C + ' ' + C; if (good) { ok += seg; } else { bad += seg; }
+      var right = Math.cos(ra) > 0.1;
+      return { x: Math.round(x - 32), y: Math.round(y - 32), n: g[0], have: g[2], need: g[1], g: art(g[3], g[4]), op: good ? '1' : '0.35', c: good ? '#9FEFC4' : '#F08A74', ring: good ? 'rgba(232,201,138,0.75)' : 'rgba(240,138,116,0.7)',
+        side: right ? 'left' : 'right', align: right ? 'left' : 'right', mark: good ? 'M5 12.5 L10 17 L19 7' : 'M6 6 L18 18 M18 6 L6 18' };
+    });
+    var segs = [];
+    for (var q = 0; q < 25; q++) { var pct = (q + 1) * 4, lit = pct <= ESS, eaten = lit && pct > ESS - chosen.cost; segs.push({ c: eaten ? 'linear-gradient(180deg, #FFF1CF, #C9A060)' : (lit ? 'linear-gradient(180deg, #A8F0DC, #3E9C86)' : 'rgba(242,234,219,0.07)'), sh: eaten ? '0 0 8px rgba(255,241,207,0.6)' : (lit ? '0 0 6px rgba(127,224,200,0.35)' : 'none') }); }
+    var circ = 2 * Math.PI * 222, end = (-90 + 360 * chosen.chance / 100) * Math.PI / 180;
+    var able = chosen.ready, h = this.state.hold, holding = h > 0 && h < 1;
+    var fail = (this.props.outcome ?? 'Удача') === 'Срыв';
+    var down = function () { if (!able || self.state.phase !== 'idle') { return; } clearInterval(self.iv); self.iv = setInterval(function () { var nh = self.state.hold + 0.025; if (nh >= 1) { clearInterval(self.iv); self.setState({ hold: 1, phase: 'result' }); } else { self.setState({ hold: nh }); } }, 30); };
+    var up = function () { clearInterval(self.iv); if (self.state.phase === 'idle' && self.state.hold > 0) { self.setState({ hold: 0 }); } };
+    var cur = { name: chosen.name, zh: chosen.zh, rom: ROM[chosen.rank], rankName: RNAME[chosen.rank], rim: RANK[chosen.rank], h: HERO[chosen.cw],
+      isMoth: chosen.shape === 'moth', isBeetle: chosen.shape === 'beetle', isFly: chosen.shape === 'fly',
+      chance: chosen.chance, chanceW: chosen.chance + '%', cost: chosen.cost, left: Math.max(0, ESS - chosen.cost), essC: ESS >= chosen.cost ? '#FFE6B0' : '#F08A74',
+      risk: chosen.chance >= 70 ? 'НАДЁЖНО' : (chosen.chance >= 45 ? 'РИСКОВАННО' : 'ОПАСНО'), riskC: chosen.chance >= 70 ? '#9FEFC4' : (chosen.chance >= 45 ? '#F0C868' : '#F08A74'),
+      arc: (circ * chosen.chance / 100).toFixed(1) + ' ' + circ.toFixed(1), mx: (C + 222 * Math.cos(end)).toFixed(1), my: (C + 222 * Math.sin(end)).toFixed(1),
+      okLines: ok || 'M0 0', badLines: bad || 'M0 0', slots: slots, segs: segs, dis: able ? 'false' : 'true',
+      holdPct: Math.round(h * 100) + '%', shine: able && !holding ? 'block' : 'none', keyShow: able ? 'inline-flex' : 'none',
+      holdLabel: able ? 'Удерживайте, чтобы слить' : 'Слияние недоступно',
+      btnText: able ? (holding ? 'СЛИЯНИЕ…' : 'СЛИТЬ') : (chosen.lack ? 'НЕ ХВАТАЕТ: ' + chosen.lack.toUpperCase() : 'МАЛО ЭССЕНЦИИ'), btnSize: able ? '15px' : '11px',
+      btnRim: able ? 'linear-gradient(180deg, #FFF1CF, #C9A060 50%, #6E5028)' : 'rgba(242,234,219,0.18)',
+      btnBg: able ? 'linear-gradient(180deg, #2A1A10, #120A06)' : 'linear-gradient(180deg, #0E0E12, #08080A)',
+      btnFg: able ? '#FFF1CF' : '#6E6858', btnGlow: able ? 'drop-shadow(0 0 18px rgba(232,201,138,0.35))' : 'none',
+      sub: able ? 'Удерживайте, чтобы начать обряд' : 'Соберите состав — рецепт останется в книге', subC: able ? '#8E8676' : '#6E6858' };
+    var res = fail ? { title: 'Слияние сорвалось', tag: 'СЛИЯНИЕ СОРВАЛОСЬ', tagC: '#F08A74', ray: 'rgba(240,138,116,0.06)', glow: 'rgba(120,20,10,0.5)', filter: 'grayscale(0.85) brightness(0.55)', nameC: '#8E8676', note: 'ГУ И МАТЕРИАЛЫ ПОГИБЛИ', btn: 'ПРИНЯТЬ' }
+      : { title: 'Слияние удалось', tag: 'СЛИЯНИЕ УДАЛОСЬ', tagC: '#F7E7C2', ray: 'rgba(255,236,190,0.09)', glow: cur.h.aura, filter: 'none', nameC: '#FFFFFF', note: 'РАНГ ' + cur.rom + ' · РОЖДЁННЫЙ ГУ ЛЁГ В СУМКУ', btn: 'ЗАБРАТЬ' };
+    return { shownCount: shown.length, filters: filters, rows: rows, ticks: ticks, star: star, glyphs: glyphs, motes: motes, cur: cur, res: res, showResult: this.state.phase === 'result',
+      down: down, up: up, keyDown: function (e) { if (e.key === ' ' || e.key === 'Enter') { e.preventDefault(); if (!self.iv || self.state.hold === 0) { down(); } } }, keyUp: function (e) { if (e.key === ' ' || e.key === 'Enter') { up(); } },
+      close: function () { self.setState({ phase: 'idle', hold: 0 }); } };
+  }
+}
+</script>
+</body>
+</html>

@@ -1,0 +1,124 @@
+<!doctype html>
+<html lang="ru">
+<head>
+<meta charset="utf-8">
+<title>GU World — кодекс Гу</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@500;600;700&amp;family=Inter+Tight:wght@400;500;600&amp;family=Zhi+Mang+Xing&amp;family=Ma+Shan+Zheng&amp;display=swap" rel="stylesheet">
+<style>
+body{margin:0;background:#03040A}
+.gw{--gold:#E8C98A;--gh:#FFF1CF;--tx:#EAF0F2;--t2:#C9D3D5;--mu:#7E9093;--lb:#B8A47C;width:1440px;height:900px;position:relative;overflow:hidden;background:#03040A;color:var(--tx);font-family:'Inter Tight',sans-serif}
+.gw *{box-sizing:border-box}
+.bg{position:absolute;inset:-60px;background:radial-gradient(ellipse 640px 440px at 30% 40%,rgba(46,110,140,.22),transparent 70%),radial-gradient(ellipse 600px 500px at 80% 44%,var(--au),transparent 70%)}
+.stars{position:absolute;inset:0;background-image:radial-gradient(1.2px 1.2px at 7% 12%,#fff 50%,transparent 52%),radial-gradient(1px 1px at 23% 67%,#dff 50%,transparent 52%),radial-gradient(1.4px 1.4px at 41% 31%,#fff 50%,transparent 52%),radial-gradient(1px 1px at 58% 82%,#cdf 50%,transparent 52%),radial-gradient(1.2px 1.2px at 73% 18%,#fff 50%,transparent 52%);background-size:420px 300px;opacity:.45}
+.vig{position:absolute;inset:0;background:radial-gradient(ellipse at 50% 50%,transparent 55%,rgba(0,0,0,.72) 100%);pointer-events:none}
+.hdr{position:absolute;left:56px;right:56px;top:0;height:84px;display:flex;align-items:center;gap:18px}
+.hdr::after{content:'';position:absolute;left:0;right:0;bottom:0;height:1px;background:linear-gradient(90deg,transparent,rgba(232,201,138,.28) 20%,rgba(232,201,138,.28) 80%,transparent)}
+.key{display:inline-flex;align-items:center;justify-content:center;min-width:20px;height:20px;padding:0 5px;border:1px solid rgba(234,240,242,.32);border-bottom-width:2px;border-radius:4px;font:600 10px 'Inter Tight',sans-serif;letter-spacing:.04em;color:var(--t2)}
+.lbl{font-size:11px;letter-spacing:.34em;color:var(--lb)}
+.disp{font-family:'Cormorant Garamond',serif;font-weight:600}
+.tb{height:32px;padding:0 12px;border:1px solid rgba(234,240,242,.14);background:rgba(234,240,242,.03);color:var(--t2);font:500 11px 'Inter Tight',sans-serif;letter-spacing:.16em;cursor:pointer}
+.tb.on{border-color:rgba(255,241,207,.6);background:rgba(255,241,207,.1);color:var(--gh)}
+.card{position:relative;height:150px;padding:14px 10px 12px;border:1px solid rgba(200,230,240,.1);background:linear-gradient(180deg,rgba(12,16,24,.7),rgba(5,7,12,.82));display:flex;flex-direction:column;align-items:center;gap:8px;cursor:pointer;color:var(--tx);font-family:inherit}
+.card.on{border-color:rgba(255,241,207,.6);background:linear-gradient(180deg,rgba(40,34,24,.8),rgba(10,10,14,.9));box-shadow:0 0 24px rgba(232,201,138,.15)}
+.card.on::before,.card.on::after{content:'';position:absolute;width:12px;height:12px}
+.card.on::before{left:-1px;top:-1px;border-left:1px solid var(--gold);border-top:1px solid var(--gold)}
+.card.on::after{right:-1px;bottom:-1px;border-right:1px solid var(--gold);border-bottom:1px solid var(--gold)}
+.foot{position:absolute;left:56px;right:56px;bottom:22px;height:30px;display:flex;align-items:center;justify-content:flex-end;gap:24px;font-size:12px;letter-spacing:.06em;color:var(--mu)}
+.foot span{display:flex;align-items:center;gap:8px}
+@keyframes gwFloat{0%,100%{transform:translateY(0)}50%{transform:translateY(-10px)}}
+@keyframes gwSpin{to{transform:rotate(360deg)}}
+</style>
+</helmet>
+<div class="gw" style="--au: {{ cur.au }}">
+  <svg width="0" height="0" aria-hidden="true" style="position: absolute"><defs>
+    <linearGradient id="moonW" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#E4F3FF"></stop><stop offset="0.55" stop-color="#6E9FD6"></stop><stop offset="1" stop-color="#1A2F52"></stop></linearGradient>
+    <radialGradient id="moonB" cx="0.4" cy="0.3" r="0.8"><stop offset="0" stop-color="#FFFFFF"></stop><stop offset="0.5" stop-color="#8FB6E4"></stop><stop offset="1" stop-color="#1E355E"></stop></radialGradient>
+    <linearGradient id="jadeW" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#CFF7DD"></stop><stop offset="0.55" stop-color="#3F9E72"></stop><stop offset="1" stop-color="#0F3626"></stop></linearGradient>
+    <radialGradient id="jadeB" cx="0.4" cy="0.3" r="0.8"><stop offset="0" stop-color="#F0FFF4"></stop><stop offset="0.5" stop-color="#5BBF8C"></stop><stop offset="1" stop-color="#0E3222"></stop></radialGradient>
+    <linearGradient id="ironW" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#EFE2C2"></stop><stop offset="0.55" stop-color="#A08758"></stop><stop offset="1" stop-color="#3A2D1A"></stop></linearGradient>
+    <radialGradient id="ironB" cx="0.4" cy="0.3" r="0.8"><stop offset="0" stop-color="#FFF4DA"></stop><stop offset="0.5" stop-color="#B09260"></stop><stop offset="1" stop-color="#33261A"></stop></radialGradient>
+    <linearGradient id="frostW" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#FFFFFF" stop-opacity="0.95"></stop><stop offset="0.5" stop-color="#C6EAF8" stop-opacity="0.7"></stop><stop offset="1" stop-color="#4F8DB0" stop-opacity="0.6"></stop></linearGradient>
+    <radialGradient id="frostB" cx="0.4" cy="0.3" r="0.8"><stop offset="0" stop-color="#FFFFFF"></stop><stop offset="0.5" stop-color="#A8D6EE"></stop><stop offset="1" stop-color="#2E5D7C"></stop></radialGradient>
+    <linearGradient id="bloodW" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#FFC2B6"></stop><stop offset="0.55" stop-color="#C93A2E"></stop><stop offset="1" stop-color="#420A08"></stop></linearGradient>
+    <radialGradient id="bloodB" cx="0.4" cy="0.3" r="0.8"><stop offset="0" stop-color="#FFE2DC"></stop><stop offset="0.5" stop-color="#C2392F"></stop><stop offset="1" stop-color="#380707"></stop></radialGradient>
+    <linearGradient id="thunW" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#F2E8FF"></stop><stop offset="0.55" stop-color="#8E7AE0"></stop><stop offset="1" stop-color="#241A52"></stop></linearGradient>
+    <radialGradient id="thunB" cx="0.4" cy="0.3" r="0.8"><stop offset="0" stop-color="#FFFFFF"></stop><stop offset="0.5" stop-color="#A898F0"></stop><stop offset="1" stop-color="#2A1E5E"></stop></radialGradient>
+    <linearGradient id="goldW" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#FFF4D0"></stop><stop offset="0.55" stop-color="#E0B44C"></stop><stop offset="1" stop-color="#5A3C10"></stop></linearGradient>
+    <radialGradient id="goldB" cx="0.4" cy="0.3" r="0.8"><stop offset="0" stop-color="#FFFFFF"></stop><stop offset="0.5" stop-color="#F0C868"></stop><stop offset="1" stop-color="#6A4612"></stop></radialGradient>
+  </defs></svg>
+  <div class="bg" aria-hidden="true"></div><div class="stars" aria-hidden="true"></div><div class="vig" aria-hidden="true"></div>
+  <span aria-hidden="true" style="position: absolute; right: 30px; top: 100px; writing-mode: vertical-rl; font-family: 'Zhi Mang Xing', cursive; font-size: 180px; line-height: 1; color: rgba(255,255,255,0.05)">{{ cur.zh }}</span>
+
+  <header class="hdr">
+    <div style="display: flex; align-items: center; gap: 14px; min-width: 300px"><svg width="34" height="38" viewBox="0 0 34 38" aria-hidden="true"><path d="M17 1 L33 10 V28 L17 37 L1 28 V10Z" fill="none" stroke="#E8C98A" stroke-width="1.2"></path><text x="17" y="24.5" text-anchor="middle" font-family="'Ma Shan Zheng', serif" font-size="15" fill="#E8C98A">典</text></svg><div><div class="disp" style="font-size: 22px; letter-spacing: 0.16em; line-height: 1">КОДЕКС ГУ</div><div style="font-size: 11px; letter-spacing: 0.34em; color: #7E9093; margin-top: 5px">ВСЕГО ГУ · [N] · ИЗУЧЕНО [24]</div></div></div>
+    <div style="flex: 1; display: flex; justify-content: center"><label style="display: flex; align-items: center; gap: 10px; width: 420px; height: 40px; padding: 0 14px; border: 1px solid rgba(234,240,242,0.16); background: rgba(4,6,10,0.8)"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#7E9093" stroke-width="1.6" aria-hidden="true"><path d="M11 4a7 7 0 1 0 .01 0z M16 16l5 5"></path></svg><input type="search" placeholder="Поиск по названию…" aria-label="Поиск" style="flex: 1; border: none; background: transparent; color: #EAF0F2; font: 400 14px 'Inter Tight', sans-serif; outline: none"></label></div>
+    <div style="min-width: 300px; display: flex; justify-content: flex-end"><button type="button" aria-label="Закрыть" style="width: 40px; height: 40px; padding: 0; border: 1px solid rgba(234,240,242,0.2); background: transparent; color: #C9D3D5; cursor: pointer; display: flex; align-items: center; justify-content: center"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" aria-hidden="true"><path d="M6 6l12 12M18 6L6 18"></path></svg></button></div>
+  </header>
+
+  <section aria-label="Все Гу" style="position: absolute; left: 56px; top: 108px; width: 760px; bottom: 76px; display: flex; flex-direction: column; gap: 14px">
+    <div style="display: flex; gap: 6px; flex-wrap: wrap"><span class="lbl" style="align-self: center; margin-right: 6px">РАНГ</span><button type="button" class="tb on">ВСЕ</button><button type="button" class="tb">I</button><button type="button" class="tb">II</button><button type="button" class="tb">III</button><button type="button" class="tb">IV</button><button type="button" class="tb">V</button><span class="lbl" style="align-self: center; margin: 0 6px 0 16px">ПУТЬ</span><button type="button" class="tb">СИЛА</button><button type="button" class="tb">ЛУНА</button><button type="button" class="tb">ВОДА</button><button type="button" class="tb">ГРОМ</button></div>
+    <div style="display: grid; grid-template-columns: repeat(5, minmax(0, 1fr)); gap: 10px">
+      <sc-for list="{{ cards }}" as="c" hint-placeholder-count="15">
+        <button type="button" class="{{ c.cls }}" aria-pressed="{{ c.on }}" aria-label="{{ c.n }}" onClick="{{ c.pick }}">
+          <span aria-hidden="true" style="position: absolute; left: 10px; top: 10px; width: 7px; height: 7px; transform: rotate(45deg); background: {{ c.rim }}; box-shadow: 0 0 6px {{ c.rim }}"></span>
+          <svg width="64" height="64" viewBox="0 0 100 100" aria-hidden="true" style="filter: {{ c.f }}"><path d="{{ c.g.a }}" fill="{{ c.g.w }}" stroke="rgba(0,0,0,0.55)" stroke-width="1"></path><path d="{{ c.g.b }}" fill="{{ c.g.bf }}" stroke="rgba(0,0,0,0.55)" stroke-width="1"></path><path d="{{ c.g.c }}" fill="none" stroke="{{ c.g.l }}" stroke-width="1.3" stroke-linecap="round" opacity="0.8"></path></svg>
+          <span class="disp" style="font-size: 14px; line-height: 1.12; text-align: center; color: {{ c.nc }}">{{ c.n }}</span>
+        </button>
+      </sc-for>
+    </div>
+  </section>
+
+  <section aria-label="Описание" style="position: absolute; left: 860px; right: 56px; top: 108px; bottom: 76px; display: flex; flex-direction: column; gap: 12px">
+    <div style="position: relative; height: 300px">
+      <div aria-hidden="true" style="position: absolute; left: 50%; top: 10px; width: 280px; height: 280px; margin-left: -140px; border-radius: 50%; border: 1px dashed rgba(232,201,138,0.2); animation: gwSpin 80s linear infinite"></div>
+      <div aria-hidden="true" style="position: absolute; left: 50%; top: 40px; width: 220px; height: 220px; margin-left: -110px; border-radius: 50%; background: radial-gradient(circle, {{ cur.g.glow }}, transparent 65%); filter: blur(10px)"></div>
+      <svg width="210" height="210" viewBox="0 0 100 100" aria-hidden="true" style="position: absolute; left: 50%; top: 45px; margin-left: -105px; animation: gwFloat 6s ease-in-out infinite; filter: drop-shadow(0 0 16px {{ cur.g.glow }})"><path d="{{ cur.g.a }}" fill="{{ cur.g.w }}" stroke="rgba(0,0,0,0.5)" stroke-width="0.6"></path><path d="{{ cur.g.b }}" fill="{{ cur.g.bf }}" stroke="rgba(0,0,0,0.5)" stroke-width="0.6"></path><path d="{{ cur.g.c }}" fill="none" stroke="{{ cur.g.l }}" stroke-width="0.8" stroke-linecap="round" opacity="0.85"></path></svg>
+    </div>
+    <span style="font-size: 11px; letter-spacing: 0.3em; color: {{ cur.rim }}">{{ cur.rank }} · {{ cur.path }}</span>
+    <span class="disp" style="font-size: 40px; line-height: 1">{{ cur.n }}</span>
+    <span style="font-family: 'Ma Shan Zheng', serif; font-size: 20px; color: #C9B07A">{{ cur.zh }}</span>
+    <p style="margin: 0; font-size: 14px; line-height: 1.6; color: #A8B6B8">[Описание из лор-базы: что делает, где водится, чем кормить.]</p>
+    <div style="display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 10px; margin-top: 4px">
+      <div style="padding: 10px 12px; border: 1px solid rgba(234,240,242,0.1)"><div style="font-size: 10px; letter-spacing: 0.24em; color: #7E9093">ВИД</div><div style="font-size: 14px; margin-top: 4px">{{ cur.kind }}</div></div>
+      <div style="padding: 10px 12px; border: 1px solid rgba(234,240,242,0.1)"><div style="font-size: 10px; letter-spacing: 0.24em; color: #7E9093">ЕСТ</div><div style="font-size: 14px; margin-top: 4px">[корм]</div></div>
+      <div style="padding: 10px 12px; border: 1px solid rgba(234,240,242,0.1)"><div style="font-size: 10px; letter-spacing: 0.24em; color: #7E9093">ГДЕ ВЗЯТЬ</div><div style="font-size: 14px; margin-top: 4px">[лавка]</div></div>
+    </div>
+    <span style="margin-top: auto; font-size: 12px; color: #4E5E61">Запись лор-базы: [reverend-insanity-lore/…]</span>
+  </section>
+
+  <footer class="foot"><span><span class="key">ЛКМ</span>Открыть</span><span><span class="key">CTRL</span>+<span class="key">F</span>Поиск</span><span><span class="key">ESC</span>Назад</span></footer>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"$preview":{"width":1440,"height":900}}'>
+class Component extends DCLogic {
+  constructor(props) { super(props); this.state = { pick: 0 }; }
+  renderVals() {
+    var self = this;
+    var S = {
+      moth: { a: 'M50 46 C38 22 14 12 7 27 C2 40 18 52 50 54 Z M50 46 C62 22 86 12 93 27 C98 40 82 52 50 54 Z M50 54 C36 58 18 70 25 83 C31 92 44 78 50 62 Z M50 54 C64 58 82 70 75 83 C69 92 56 78 50 62 Z', b: 'M50 34 C55 34 56 44 55 56 C54 70 52 80 50 85 C48 80 46 70 45 56 C44 44 45 34 50 34 Z M50 25 a5.5 5.5 0 1 0 0.01 0 Z', c: 'M48 27 C44 17 38 12 31 12 M52 27 C56 17 62 12 69 12 M50 48 C36 36 22 30 13 30 M50 48 C64 36 78 30 87 30 M24 34 a7 7 0 1 0 9 9 M76 34 a7 7 0 1 1 -9 9' },
+      beetle: { a: 'M50 17 C58 17 62 23 60 30 L40 30 C38 23 42 17 50 17 Z M35 31 C40 26 60 26 65 31 C67 37 60 41 50 41 C40 41 33 37 35 31 Z', b: 'M50 40 C66 40 75 50 75 64 C75 80 64 90 50 90 C36 90 25 80 25 64 C25 50 34 40 50 40 Z', c: 'M50 41 V90 M27 50 L13 42 L7 46 M26 62 L11 64 L5 60 M29 74 L15 84 L11 92 M73 50 L87 42 L93 46 M74 62 L89 64 L95 60 M71 74 L85 84 L89 92' },
+      fly: { a: 'M50 38 C40 30 18 24 5 29 C9 37 30 41 50 43 Z M50 38 C60 30 82 24 95 29 C91 37 70 41 50 43 Z M50 45 C40 47 22 53 11 62 C19 65 38 56 50 49 Z M50 45 C60 47 78 53 89 62 C81 65 62 56 50 49 Z', b: 'M50 22 C54 22 55 28 54 34 C55 40 54 46 53 50 L52 89 C52 93 48 93 48 89 L47 50 C46 46 45 40 46 34 C45 28 46 22 50 22 Z', c: 'M50 40 L9 30 M50 40 L91 30 M50 46 L15 60 M50 46 L85 60' }
+    };
+    var CW = { moon: ['#E6F4FF', 'rgba(140,190,255,0.6)', 'rgba(60,100,170,0.35)'], jade: ['#D8FFE6', 'rgba(110,210,160,0.55)', 'rgba(40,140,100,0.3)'], iron: ['#FFF1D0', 'rgba(220,190,130,0.5)', 'rgba(140,110,60,0.3)'], frost: ['#FFFFFF', 'rgba(190,235,255,0.6)', 'rgba(90,160,200,0.3)'], blood: ['#FFE0DA', 'rgba(230,80,60,0.6)', 'rgba(150,30,20,0.3)'], thun: ['#F2E8FF', 'rgba(170,150,250,0.6)', 'rgba(90,70,180,0.3)'], gold: ['#FFF4D0', 'rgba(240,200,104,0.6)', 'rgba(160,120,40,0.3)'] };
+    function art(s, cw) { return { a: S[s].a, b: S[s].b, c: S[s].c, w: 'url(#' + cw + 'W)', bf: 'url(#' + cw + 'B)', l: CW[cw][0], glow: CW[cw][1] }; }
+    var RK = { 1: '#7FE0C8', 2: '#F08A74', 3: '#DDE2EA' };
+    var G = [
+      ['Гу Лунного Света', '月光蛊', 'moth', 'moon', 1, 'ЛУНА', 'Атака', 1], ['Гу Белого Кабана', '白豕蛊', 'beetle', 'iron', 1, 'СИЛА', 'Пассивный', 1], ['Гу Белого Нефрита', '白玉蛊', 'beetle', 'jade', 2, 'ЗАЩИТА', 'Защита', 1], ['Гу Бронзовой Кожи I', '铜皮蛊', 'beetle', 'iron', 1, 'ЗАЩИТА', 'Защита', 1], ['Гу Ветряного Барьера', '风障蛊', 'fly', 'frost', 2, 'ВЕТЕР', 'Защита', 1],
+      ['Гу Водяного Следа', '水痕蛊', 'fly', 'frost', 1, 'ВОДА', 'Движение', 1], ['Гу Волчьего Воя', '狼啸蛊', 'moth', 'blood', 1, 'ЗВЕРЬ', 'Контроль', 1], ['Гу Громового Щита', '雷盾蛊', 'beetle', 'thun', 2, 'ГРОМ', 'Защита', 1], ['Гу Громовых Крыльев', '雷翼蛊', 'fly', 'thun', 2, 'ГРОМ', 'Полёт', 1], ['Гу Железной Кости', '铁骨蛊', 'beetle', 'iron', 2, 'СИЛА', 'Пассивный', 1],
+      ['Гу Звёздной Стрелы', '星箭蛊', 'fly', 'gold', 1, 'ЗВЁЗДЫ', 'Атака', 1], ['Гу Золотой Луны', '金月蛊', 'moth', 'gold', 2, 'ЛУНА', 'Атака', 1], ['Гу Берсерка', '狂蛊', 'beetle', 'blood', 2, 'СИЛА', 'Усиление', 1], ['[Не изучен]', '？', 'moth', 'moon', 3, '—', '—', 0], ['[Не изучен]', '？', 'fly', 'moon', 3, '—', '—', 0]
+    ];
+    var p = this.state.pick, c = G[p];
+    var cards = G.map(function (g, i) { var on = i === p, known = g[7] === 1; return { n: g[0], g: art(g[2], g[3]), rim: known ? RK[g[4]] : '#4A585B', on: on ? 'true' : 'false', cls: on ? 'card on' : 'card',
+      f: known ? 'drop-shadow(0 0 6px ' + CW[g[3]][1] + ')' : 'brightness(0) opacity(0.35)', nc: known ? (on ? '#FFFFFF' : '#C9D3D5') : '#4A585B', pick: function () { self.setState({ pick: i }); } }; });
+    return { cards: cards, cur: { n: c[0], zh: c[1], g: art(c[2], c[3]), rim: RK[c[4]], rank: 'РАНГ ' + ['', 'I', 'II', 'III'][c[4]], path: 'ПУТЬ: ' + c[5], kind: c[6], au: CW[c[3]][2] } };
+  }
+}
+</script>
+</body>
+</html>

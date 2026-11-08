@@ -1,0 +1,116 @@
+<!doctype html>
+<html lang="ru">
+<head>
+<meta charset="utf-8">
+<title>GU World — строитель</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@500;600;700&amp;family=Inter+Tight:wght@400;500;600&amp;display=swap" rel="stylesheet">
+<style>
+body{margin:0;background:#03040A}
+.gw{--gold:#E8C98A;--gh:#FFF1CF;--tx:#EAF0F2;--t2:#C9D3D5;--mu:#7E9093;--lb:#B8A47C;width:1440px;height:900px;position:relative;overflow:hidden;background:#141C16;color:var(--tx);font-family:'Inter Tight',sans-serif}
+.gw *{box-sizing:border-box}
+.key{display:inline-flex;align-items:center;justify-content:center;min-width:18px;height:18px;padding:0 4px;border:1px solid rgba(234,240,242,.32);border-bottom-width:2px;border-radius:3px;font:600 9px 'Inter Tight',sans-serif;color:var(--t2)}
+.lbl{font-size:10px;letter-spacing:.3em;color:var(--lb)}
+.disp{font-family:'Cormorant Garamond',serif;font-weight:600}
+.bar{position:absolute;background:rgba(5,7,12,.88);border:1px solid rgba(200,230,240,.1);backdrop-filter:blur(10px)}
+.tb{height:32px;padding:0 12px;border:1px solid rgba(234,240,242,.14);background:rgba(234,240,242,.03);color:var(--t2);font:500 11px 'Inter Tight',sans-serif;letter-spacing:.14em;cursor:pointer;display:inline-flex;align-items:center;gap:6px}
+.tb.on{border-color:rgba(255,241,207,.6);background:rgba(255,241,207,.1);color:var(--gh)}
+.fld{display:flex;justify-content:space-between;align-items:center;height:34px;font-size:12px;border-bottom:1px solid rgba(234,240,242,.06)}
+.fld span:first-child{color:var(--mu)}
+.sl{position:relative;width:120px;height:2px;background:rgba(234,240,242,.12)}
+.sl i{position:absolute;left:0;top:0;bottom:0;background:linear-gradient(90deg,#8C6A3A,#FFF1CF)}
+.sl b{position:absolute;top:-5px;width:12px;height:12px;margin-left:-6px;transform:rotate(45deg);background:#FFF1CF}
+.th{height:86px;border:1px solid rgba(200,230,240,.1);background:linear-gradient(180deg,rgba(20,28,34,.8),rgba(5,7,12,.9));display:flex;flex-direction:column;align-items:center;justify-content:flex-end;padding-bottom:6px;gap:4px;font-size:10px;color:var(--t2);cursor:pointer}
+.th.on{border-color:rgba(255,241,207,.6)}
+</style>
+</helmet>
+<div class="gw">
+  <svg width="1440" height="900" viewBox="0 0 1440 900" aria-hidden="true" style="position: absolute; inset: 0">
+    <defs>
+      <pattern id="gridB" width="40" height="40" patternUnits="userSpaceOnUse"><path d="M40 0 H0 V40" fill="none" stroke="rgba(234,240,242,0.07)"></path></pattern>
+      <pattern id="treeB" width="22" height="22" patternUnits="userSpaceOnUse"><circle cx="7" cy="7" r="5" fill="#1E3A2A"></circle><circle cx="17" cy="16" r="6" fill="#244430"></circle></pattern>
+    </defs>
+    <rect width="1440" height="900" fill="#1A2620"></rect>
+    <path d="M0 0 H420 C380 200 300 300 0 360Z" fill="url(#treeB)"></path>
+    <path d="M1100 600 C1200 560 1440 560 1440 600 V900 H980 C1000 760 1040 640 1100 600Z" fill="url(#treeB)"></path>
+    <path d="M300 900 C420 700 600 640 760 560 C920 480 1000 360 1100 0" fill="none" stroke="#5A4A34" stroke-width="26"></path>
+    <path d="M300 900 C420 700 600 640 760 560 C920 480 1000 360 1100 0" fill="none" stroke="#6E5A40" stroke-width="18"></path>
+    <rect width="1440" height="900" fill="url(#gridB)"></rect>
+    <g stroke="#05070C" stroke-width="2">
+      <rect x="560" y="300" width="160" height="110" fill="#3A2420"></rect><path d="M548 300 L640 250 L732 300Z" fill="#2A1A18"></path><path d="M560 300 H720" stroke="#E8C98A" stroke-width="1"></path>
+      <rect x="820" y="380" width="120" height="90" fill="#3A2420"></rect><path d="M810 380 L880 340 L950 380Z" fill="#2A1A18"></path>
+      <rect x="600" y="600" width="140" height="100" fill="#3A2420"></rect><path d="M590 600 L670 556 L750 600Z" fill="#2A1A18"></path>
+      <circle cx="480" cy="520" r="30" fill="#1F6E5E" stroke="#A8F0DC" stroke-opacity="0.5"></circle>
+    </g>
+    <rect x="806" y="326" width="148" height="158" fill="rgba(232,201,138,0.08)" stroke="#FFF1CF" stroke-width="1.5" stroke-dasharray="6 4"></rect>
+    <g stroke="#FFF1CF" stroke-width="2" fill="#FFF1CF"><path d="M880 405 H990"></path><path d="M990 405 l-10 -6 v12z"></path><path d="M880 405 V310"></path><path d="M880 310 l-6 10 h12z"></path></g>
+    <circle cx="880" cy="405" r="40" fill="none" stroke="#A0D2FF" stroke-width="1.5" stroke-dasharray="3 5"></circle>
+    <circle cx="380" cy="700" r="60" fill="rgba(127,224,200,0.08)" stroke="#7FE0C8" stroke-width="1.5"></circle><circle cx="380" cy="700" r="40" fill="none" stroke="#7FE0C8" stroke-opacity="0.4" stroke-dasharray="2 4"></circle>
+  </svg>
+
+  <div class="bar" style="left: 16px; right: 16px; top: 16px; height: 56px; display: flex; align-items: center; gap: 10px; padding: 0 14px">
+    <span class="disp" style="font-size: 20px; letter-spacing: 0.16em; margin-right: 10px">СТРОИТЕЛЬ</span>
+    <button type="button" class="tb on">ОБЪЕКТЫ</button><button type="button" class="tb">ЗЕМЛЯ</button><button type="button" class="tb">ЛЕС</button>
+    <span style="width: 1px; height: 26px; background: rgba(234,240,242,0.12); margin: 0 6px"></span>
+    <button type="button" class="tb on">СВЕРХУ</button><button type="button" class="tb">3D</button>
+    <span style="width: 1px; height: 26px; background: rgba(234,240,242,0.12); margin: 0 6px"></span>
+    <button type="button" class="tb">ОТМЕНИТЬ <span class="key">CTRL+Z</span></button><button type="button" class="tb">ПОВТОРИТЬ <span class="key">CTRL+Y</span></button>
+    <span style="flex: 1"></span>
+    <button type="button" class="tb" style="color: #F08A74">СБРОСИТЬ…</button><button type="button" class="tb on">СОХРАНИТЬ</button><button type="button" class="tb">ВЫЙТИ <span class="key">F9</span></button>
+  </div>
+
+  <aside class="bar" aria-label="Инструменты" style="left: 16px; top: 84px; width: 280px; bottom: 76px; padding: 16px; display: flex; flex-direction: column; gap: 14px">
+    <span class="lbl">ВЫБРАНО</span>
+    <span class="disp" style="font-size: 22px; line-height: 1">Дом клана · малый</span>
+    <div>
+      <div class="fld"><span>Место</span><span>[412,0] · [96,5]</span></div>
+      <div class="fld"><span>Поворот</span><span style="display: flex; align-items: center; gap: 10px"><span class="sl"><i style="width: 25%"></i><b style="left: 25%"></b></span>90°</span></div>
+      <div class="fld"><span>Размер</span><span style="display: flex; align-items: center; gap: 10px"><span class="sl"><i style="width: 50%"></i><b style="left: 50%"></b></span>×1,0</span></div>
+      <div class="fld"><span>Высота</span><span style="display: flex; align-items: center; gap: 10px"><span class="sl"><i style="width: 10%"></i><b style="left: 10%"></b></span>0,0 м</span></div>
+      <div class="fld"><span>Сдвиг по земле</span><span style="color: #9FEFC4">да</span></div>
+      <div class="fld"><span>Случайный поворот</span><span>нет</span></div>
+    </div>
+    <div style="display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 6px">
+      <button type="button" class="tb">КОПИЯ <span class="key">CTRL+D</span></button><button type="button" class="tb">НА ЗЕМЛЮ</button>
+      <button type="button" class="tb">НА МЕСТО</button><button type="button" class="tb" style="color: #F08A74">УБРАТЬ <span class="key">DEL</span></button>
+    </div>
+    <div style="margin-top: auto; padding-top: 12px; border-top: 1px solid rgba(234,240,242,0.08); display: flex; flex-direction: column; gap: 8px">
+      <span class="lbl">КИСТЬ ЗЕМЛИ</span>
+      <div class="fld"><span>Размер</span><span style="display: flex; align-items: center; gap: 10px"><span class="sl"><i style="width: 40%"></i><b style="left: 40%"></b></span>[12 м]</span></div>
+      <div class="fld"><span>Сила</span><span style="display: flex; align-items: center; gap: 10px"><span class="sl"><i style="width: 60%"></i><b style="left: 60%"></b></span>[0,6]</span></div>
+      <div class="fld"><span>Мягкость края</span><span style="display: flex; align-items: center; gap: 10px"><span class="sl"><i style="width: 70%"></i><b style="left: 70%"></b></span>[0,7]</span></div>
+    </div>
+  </aside>
+
+  <aside class="bar" aria-label="Каталог" style="right: 16px; top: 84px; width: 320px; bottom: 76px; padding: 16px; display: flex; flex-direction: column; gap: 12px">
+    <span class="lbl">КАТАЛОГ</span>
+    <label style="display: flex; align-items: center; gap: 8px; height: 36px; padding: 0 10px; border: 1px solid rgba(234,240,242,0.16); background: rgba(3,4,10,0.6)"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#7E9093" stroke-width="1.6" aria-hidden="true"><path d="M11 4a7 7 0 1 0 .01 0z M16 16l5 5"></path></svg><input type="search" placeholder="Поиск по названию…" aria-label="Поиск" style="flex: 1; border: none; background: transparent; color: #EAF0F2; font: 400 13px 'Inter Tight', sans-serif; outline: none"></label>
+    <div style="display: flex; flex-wrap: wrap; gap: 4px"><button type="button" class="tb on">ДОМА</button><button type="button" class="tb">КЛАН</button><button type="button" class="tb">КРЕПОСТЬ</button><button type="button" class="tb">ТРОПЫ</button><button type="button" class="tb">ДЕКОР</button><button type="button" class="tb">ДЕРЕВЬЯ</button><button type="button" class="tb">ПРОЧЕЕ</button></div>
+    <div style="display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 6px">
+      <sc-for list="{{ items }}" as="t" hint-placeholder-count="12"><div class="{{ t.cls }}"><svg width="54" height="44" viewBox="0 0 54 44" aria-hidden="true"><rect x="10" y="20" width="34" height="20" fill="#3A2420" stroke="#05070C"></rect><path d="{{ t.roof }}" fill="#2A1A18" stroke="#05070C"></path><path d="M10 20 H44" stroke="#E8C98A" stroke-width="0.8"></path></svg>{{ t.n }}</div></sc-for>
+    </div>
+  </aside>
+
+  <div class="bar" style="left: 16px; right: 16px; bottom: 16px; height: 48px; display: flex; align-items: center; gap: 22px; padding: 0 16px; font-size: 12px; color: #A8B6B8">
+    <span><span class="key">ЛКМ</span> поставить</span><span><span class="key">ПКМ</span> выбрать</span><span><span class="key">R</span> поворот</span><span><span class="key">КОЛЕСО</span> масштаб</span><span><span class="key">F</span> показать</span>
+    <span style="width: 1px; height: 22px; background: rgba(234,240,242,0.12)"></span>
+    <span style="color: #9FEFC4">Поставлено: Дом клана · малый</span>
+    <span style="margin-left: auto; font-family: 'Cormorant Garamond', serif; font-size: 16px; color: #C9D3D5">x [412,0] · z [96,5] · высота [3,2] м</span>
+  </div>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"$preview":{"width":1440,"height":900}}'>
+class Component extends DCLogic {
+  renderVals() {
+    var N = ['Дом · малый', 'Дом · большой', 'Дом клана', 'Павильон', 'Лавка', 'Амбар', 'Башня', 'Ворота', 'Беседка', 'Колодец', 'Забор', 'Мост'];
+    return { items: N.map(function (n, i) { return { n: n, cls: i === 2 ? 'th on' : 'th', roof: i % 3 === 0 ? 'M4 20 L27 6 L50 20Z' : (i % 3 === 1 ? 'M6 20 Q27 4 48 20 Q42 16 40 12 L14 12 Q12 16 6 20Z' : 'M8 20 L27 10 L46 20 Z M14 12 L27 4 L40 12Z') }; }) };
+  }
+}
+</script>
+</body>
+</html>

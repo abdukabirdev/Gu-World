@@ -172,11 +172,12 @@ namespace GuWorld.Cultivation
         /// <summary>The essence's colour at a rank (the design's rank colours).</summary>
         public static Color RankColour(int rank) => rank switch
         {
-            2 => new Color32(0xC2, 0x52, 0x4A, 0xFF),
-            3 => new Color32(0xC9, 0xCC, 0xD1, 0xFF),
-            4 => new Color32(0xD4, 0xAE, 0x52, 0xFF),
-            5 => new Color32(0x9C, 0x7A, 0xD6, 0xFF),
-            _ => new Color32(0x4E, 0x9A, 0x86, 0xFF),
+            // The interface v3's ranks: green copper, red steel, white silver, yellow gold, purple crystal.
+            2 => new Color32(0xF0, 0x8A, 0x74, 0xFF),
+            3 => new Color32(0xDD, 0xE2, 0xEA, 0xFF),
+            4 => new Color32(0xF0, 0xC8, 0x68, 0xFF),
+            5 => new Color32(0xC3, 0xA0, 0xF0, 0xFF),
+            _ => new Color32(0x7F, 0xE0, 0xC8, 0xFF),
         };
 
         /// <summary>A rank as the seals and cells show it: I … V.</summary>

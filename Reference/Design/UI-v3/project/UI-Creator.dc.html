@@ -1,0 +1,129 @@
+<!doctype html>
+<html lang="ru">
+<head>
+<meta charset="utf-8">
+<title>GU World — создание героя</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@500;600;700&amp;family=Inter+Tight:wght@400;500;600&amp;family=Zhi+Mang+Xing&amp;family=Ma+Shan+Zheng&amp;display=swap" rel="stylesheet">
+<style>
+body{margin:0;background:#03040A}
+.gw{--gold:#E8C98A;--gh:#FFF1CF;--tx:#EAF0F2;--t2:#C9D3D5;--mu:#7E9093;--lb:#B8A47C;width:1440px;height:900px;position:relative;overflow:hidden;background:#03040A;color:var(--tx);font-family:'Inter Tight',sans-serif}
+.gw *{box-sizing:border-box}
+.bg{position:absolute;inset:-60px;background:radial-gradient(ellipse 520px 600px at 50% 46%,rgba(70,110,170,.3),transparent 70%),radial-gradient(ellipse 1000px 320px at 50% 92%,rgba(40,160,130,.16),transparent 70%)}
+.stars{position:absolute;inset:0;background-image:radial-gradient(1.2px 1.2px at 7% 12%,#fff 50%,transparent 52%),radial-gradient(1px 1px at 23% 67%,#dff 50%,transparent 52%),radial-gradient(1.4px 1.4px at 41% 31%,#fff 50%,transparent 52%),radial-gradient(1px 1px at 58% 82%,#cdf 50%,transparent 52%),radial-gradient(1.2px 1.2px at 73% 18%,#fff 50%,transparent 52%),radial-gradient(1px 1px at 88% 54%,#eff 50%,transparent 52%);background-size:420px 300px;opacity:.5}
+.vig{position:absolute;inset:0;background:radial-gradient(ellipse at 50% 50%,transparent 55%,rgba(0,0,0,.72) 100%);pointer-events:none}
+.hdr{position:absolute;left:56px;right:56px;top:0;height:84px;display:flex;align-items:center;gap:18px}
+.hdr::after{content:'';position:absolute;left:0;right:0;bottom:0;height:1px;background:linear-gradient(90deg,transparent,rgba(232,201,138,.28) 20%,rgba(232,201,138,.28) 80%,transparent)}
+.key{display:inline-flex;align-items:center;justify-content:center;min-width:24px;height:22px;padding:0 6px;border:1px solid rgba(234,240,242,.32);border-bottom-width:2px;border-radius:4px;font:600 10px 'Inter Tight',sans-serif;letter-spacing:.04em;color:var(--t2)}
+.lbl{font-size:11px;letter-spacing:.34em;color:var(--lb)}
+.disp{font-family:'Cormorant Garamond',serif;font-weight:600}
+.panel{position:relative;background:linear-gradient(180deg,rgba(12,16,24,.7),rgba(5,7,12,.82));border:1px solid rgba(200,230,240,.09);box-shadow:inset 0 1px 0 rgba(255,255,255,.04),0 24px 60px rgba(0,0,0,.45);backdrop-filter:blur(10px)}
+.panel::before,.panel::after{content:'';position:absolute;width:14px;height:14px;pointer-events:none}
+.panel::before{left:-1px;top:-1px;border-left:1px solid var(--gold);border-top:1px solid var(--gold)}
+.panel::after{right:-1px;bottom:-1px;border-right:1px solid var(--gold);border-bottom:1px solid var(--gold)}
+.btn{position:relative;display:inline-flex;align-items:center;justify-content:center;height:56px;padding:0 44px;border:none;background:linear-gradient(180deg,#FFF1CF,#C9A060 50%,#6E5028);clip-path:polygon(20px 0,calc(100% - 20px) 0,100% 50%,calc(100% - 20px) 100%,20px 100%,0 50%);color:#FFF1CF;font:600 14px 'Inter Tight',sans-serif;letter-spacing:.3em;cursor:pointer;filter:drop-shadow(0 0 16px rgba(232,201,138,.3))}
+.btn::before{content:'';position:absolute;inset:1px;background:linear-gradient(180deg,#2A1A10,#120A06);clip-path:polygon(19px 0,calc(100% - 19px) 0,100% 50%,calc(100% - 19px) 100%,19px 100%,0 50%)}
+.btn span{position:relative;display:flex;align-items:center;gap:12px}
+.btn.solid{color:#1A1008}.btn.solid::before{background:linear-gradient(180deg,#FFF1CF,#E2C080 55%,#C29E5C)}
+.btn.ghost{background:rgba(234,240,242,.22);filter:none;color:var(--t2)}.btn.ghost::before{background:linear-gradient(180deg,rgba(14,18,26,.96),rgba(6,8,12,.96))}
+.tb{height:40px;padding:0 16px;border:1px solid rgba(234,240,242,.14);background:rgba(234,240,242,.03);color:var(--t2);font:500 12px 'Inter Tight',sans-serif;letter-spacing:.16em;cursor:pointer}
+.tb.on{border-color:rgba(255,241,207,.6);background:rgba(255,241,207,.1);color:var(--gh)}
+.inp{height:46px;padding:0 14px;background:rgba(4,6,10,.8);border:1px solid rgba(234,240,242,.16);color:var(--tx);font:400 15px 'Inter Tight',sans-serif}
+.foot{position:absolute;left:56px;right:56px;bottom:22px;height:30px;display:flex;align-items:center;justify-content:flex-end;gap:24px;font-size:12px;letter-spacing:.06em;color:var(--mu)}
+.foot span{display:flex;align-items:center;gap:8px}
+@keyframes gwSpin{to{transform:rotate(360deg)}}
+@keyframes gwFloat{0%,100%{transform:translateY(0)}50%{transform:translateY(-6px)}}
+</style>
+</helmet>
+<div class="gw">
+  <div class="bg" aria-hidden="true"></div><div class="stars" aria-hidden="true"></div><div class="vig" aria-hidden="true"></div>
+
+  <header class="hdr">
+    <div style="display: flex; flex-direction: column; gap: 5px"><span class="disp" style="font-size: 26px; letter-spacing: 0.16em; line-height: 1">СОЗДАНИЕ ГЕРОЯ</span><span style="font-size: 11px; letter-spacing: 0.34em; color: #7E9093">ШАГ 2 ИЗ 2 · КЛАН ГУ ЮЭ</span></div>
+    <div style="flex: 1"></div>
+    <div style="display: flex; gap: 8px; align-items: center"><span style="width: 28px; height: 2px; background: #FFF1CF; box-shadow: 0 0 8px #FFF1CF"></span><span style="width: 28px; height: 2px; background: #FFF1CF; box-shadow: 0 0 8px #FFF1CF"></span></div>
+  </header>
+
+  <section aria-label="Облик" class="panel" style="position: absolute; left: 56px; top: 116px; width: 380px; bottom: 150px; padding: 26px 26px; display: flex; flex-direction: column; gap: 22px">
+    <label style="display: flex; flex-direction: column; gap: 8px"><span class="lbl">ИМЯ</span><span style="display: flex; align-items: center; height: 46px; border: 1px solid rgba(234,240,242,0.16); background: rgba(4,6,10,0.8)"><span class="disp" style="padding: 0 4px 0 14px; font-size: 19px; color: #E8C98A">Гу Юэ</span><input class="inp" type="text" placeholder="[своё имя]" style="flex: 1; border: none; background: transparent; padding-left: 6px"></span><span style="font-size: 12px; color: #7E9093">Своё имя — после имени клана</span></label>
+    <div style="display: flex; flex-direction: column; gap: 10px"><span class="lbl">ПОЛ</span><div style="display: flex; gap: 6px"><sc-for list="{{ sexes }}" as="s" hint-placeholder-count="2"><button type="button" class="{{ s.cls }}" aria-pressed="{{ s.on }}" onClick="{{ s.pick }}" style="flex: 1">{{ s.label }}</button></sc-for></div></div>
+    <div style="display: flex; flex-direction: column; gap: 10px"><div style="display: flex; justify-content: space-between"><span class="lbl">РОСТ</span><span class="disp" style="font-size: 18px">[172] см</span></div><div style="position: relative; height: 2px; margin: 8px 0; background: rgba(234,240,242,0.12)"><div style="position: absolute; left: 0; top: 0; bottom: 0; width: 55%; background: linear-gradient(90deg, #8C6A3A, #FFF1CF)"></div><span style="position: absolute; left: 55%; top: -6px; width: 14px; height: 14px; margin-left: -7px; transform: rotate(45deg); background: #FFF1CF; box-shadow: 0 0 10px #FFF1CF"></span></div></div>
+    <div style="display: flex; flex-direction: column; gap: 10px"><span class="lbl">КОЖА</span><div style="display: flex; gap: 10px"><sc-for list="{{ skins }}" as="k" hint-placeholder-count="6"><button type="button" aria-label="{{ k.name }}" aria-pressed="{{ k.on }}" onClick="{{ k.pick }}" style="width: 40px; height: 40px; padding: 0; border-radius: 50%; border: none; background: {{ k.c }}; box-shadow: {{ k.ring }}; cursor: pointer"></button></sc-for></div></div>
+    <div style="display: flex; flex-direction: column; gap: 10px"><span class="lbl">ПРИЧЁСКА</span><div style="display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 6px"><sc-for list="{{ hairs }}" as="h" hint-placeholder-count="4"><button type="button" class="{{ h.cls }}" aria-pressed="{{ h.on }}" onClick="{{ h.pick }}">{{ h.label }}</button></sc-for></div></div>
+  </section>
+
+  <div aria-hidden="true" style="position: absolute; left: 470px; top: 110px; width: 500px; height: 640px">
+    <div style="position: absolute; left: 50px; top: 40px; width: 400px; height: 400px; border-radius: 50%; border: 1px solid rgba(232,201,138,0.15); animation: gwSpin 140s linear infinite"></div>
+    <div style="position: absolute; left: 90px; top: 80px; width: 320px; height: 320px; border-radius: 50%; border: 1px dashed rgba(232,201,138,0.12)"></div>
+    <svg width="500" height="640" viewBox="-250 -320 500 640" style="position: absolute; inset: 0; animation: gwFloat 7s ease-in-out infinite">
+      <defs>
+        <linearGradient id="robeC" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#2A3A5C"></stop><stop offset="0.5" stop-color="#142036"></stop><stop offset="1" stop-color="#070B14"></stop></linearGradient>
+        <linearGradient id="rimC" x1="1" y1="0" x2="0" y2="0"><stop offset="0" stop-color="#BFE0FF" stop-opacity="0.9"></stop><stop offset="0.3" stop-color="#BFE0FF" stop-opacity="0"></stop></linearGradient>
+        <radialGradient id="padC" cx="0.5" cy="0.5" r="0.5"><stop offset="0" stop-color="#7FE0C8" stop-opacity="0.45"></stop><stop offset="1" stop-color="#7FE0C8" stop-opacity="0"></stop></radialGradient>
+      </defs>
+      <ellipse cx="0" cy="250" rx="190" ry="34" fill="url(#padC)"></ellipse>
+      <ellipse cx="0" cy="250" rx="150" ry="24" fill="none" stroke="rgba(160,240,220,0.4)" stroke-width="1"></ellipse>
+      <ellipse cx="0" cy="250" rx="110" ry="16" fill="none" stroke="rgba(232,201,138,0.35)" stroke-width="1" stroke-dasharray="2 6"></ellipse>
+      <path d="M-34 -140 C-40 -60 -58 60 -78 240 L78 240 C58 60 40 -60 34 -140 Z" fill="url(#robeC)" stroke="#05070C" stroke-width="2"></path>
+      <path d="M-36 -136 C-70 -100 -104 -30 -116 30 C-100 44 -86 40 -76 28 C-66 -20 -52 -70 -36 -96 Z" fill="url(#robeC)" stroke="#05070C" stroke-width="2"></path>
+      <path d="M36 -136 C70 -100 104 -30 116 30 C100 44 86 40 76 28 C66 -20 52 -70 36 -96 Z" fill="url(#robeC)" stroke="#05070C" stroke-width="2"></path>
+      <path d="M-14 -142 L0 -100 L14 -142" fill="none" stroke="#E8C98A" stroke-width="2.4"></path>
+      <path d="M-50 -10 H50" stroke="#E8C98A" stroke-width="5"></path>
+      <path d="M-50 -10 H50" stroke="#FFF1CF" stroke-width="1" opacity="0.6"></path>
+      <path d="M34 -140 C40 -60 58 60 78 240" fill="none" stroke="url(#rimC)" stroke-width="3"></path>
+      <path d="M-8 -6 L-12 40 M8 -6 L12 40" stroke="#E8C98A" stroke-width="1.6" opacity="0.7"></path>
+      <path d="M-42 230 C-30 160 30 160 42 230" fill="none" stroke="rgba(232,201,138,0.35)" stroke-width="1"></path>
+      <rect x="-10" y="-166" width="20" height="28" fill="#E9D3BE" stroke="#05070C" stroke-width="1.5"></rect>
+      <path d="M-26 -214 C-28 -246 -14 -258 0 -258 C14 -258 28 -246 26 -214 L24 -196 C20 -180 10 -172 0 -170 C-10 -172 -20 -180 -24 -196 Z" fill="#EEDCC8" stroke="#05070C" stroke-width="1.6"></path>
+      <path d="M-30 -206 C-36 -262 -10 -276 4 -274 C30 -272 36 -248 30 -208 L24 -228 L16 -214 L8 -234 L-4 -216 L-14 -232 L-22 -214 Z" fill="{{ hairC }}" stroke="#05070C" stroke-width="1.6"></path>
+      <path d="M-14 -214 Q-8 -217 -3 -214 M14 -214 Q8 -217 3 -214" stroke="#141018" stroke-width="2" fill="none"></path>
+      <path d="M26 -230 C30 -210 30 -200 26 -196" fill="none" stroke="url(#rimC)" stroke-width="2"></path>
+    </svg>
+    <span style="position: absolute; left: 0; right: 0; bottom: 0; text-align: center; font-size: 11px; letter-spacing: 0.3em; color: #4E5E61">[3D-МОДЕЛЬ ГЕРОЯ · ВРАЩАЕТСЯ МЫШЬЮ]</span>
+  </div>
+
+  <section aria-label="Вид и путь" style="position: absolute; right: 56px; top: 116px; width: 360px; display: flex; flex-direction: column; gap: 22px">
+    <div style="display: flex; flex-direction: column; gap: 10px"><span class="lbl">ВИД</span><div style="display: flex; gap: 6px"><sc-for list="{{ views }}" as="v" hint-placeholder-count="2"><button type="button" class="{{ v.cls }}" aria-pressed="{{ v.on }}" onClick="{{ v.pick }}" style="flex: 1">{{ v.label }}</button></sc-for></div><span style="font-size: 12px; color: #7E9093">Колесо мыши приближает · ЛКМ — повернуть</span></div>
+    <div class="panel" style="padding: 20px 22px; display: flex; flex-direction: column; gap: 10px">
+      <span class="lbl">ВАШ ПУТЬ</span>
+      <div style="display: flex; align-items: baseline; justify-content: space-between"><span class="disp" style="font-size: 30px; line-height: 1">Обычная</span><span class="disp" style="font-size: 30px; color: #7FE0C8">A · 88%</span></div>
+      <p style="margin: 0; font-size: 13px; line-height: 1.55; color: #A8B6B8">Гордость семьи: большое море, наполняется часов за пять.</p>
+      <a href="#" style="font-size: 12px; letter-spacing: 0.16em; color: #E8C98A; text-decoration: none">ИЗМЕНИТЬ ПУТЬ</a>
+    </div>
+    <div style="display: flex; flex-direction: column; gap: 8px; padding-left: 4px">
+      <span class="lbl">ЧТО ЖДЁТ</span>
+      <p style="margin: 0; font-size: 13px; line-height: 1.6; color: #A8B6B8">Вам пятнадцать. Завтра — обряд пробуждения апертуры в академии клана Гу Юэ.</p>
+    </div>
+  </section>
+
+  <div style="position: absolute; left: 56px; right: 56px; bottom: 70px; display: flex; align-items: center; gap: 16px">
+    <button type="button" class="btn ghost"><span>НАЗАД</span></button>
+    <span style="flex: 1"></span>
+    <button type="button" class="btn solid" style="padding: 0 56px"><span>НАЧАТЬ ПУТЬ</span></button>
+  </div>
+  <footer class="foot"><span><span class="key">ЛКМ</span>Повернуть</span><span><span class="key">КОЛЕСО</span>Приблизить</span><span><span class="key">ENTER</span>Начать</span><span><span class="key">ESC</span>Назад</span></footer>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"$preview":{"width":1440,"height":900}}'>
+class Component extends DCLogic {
+  constructor(props) { super(props); this.state = { sex: 0, skin: 1, hair: 0, view: 1 }; }
+  renderVals() {
+    var self = this, st = this.state;
+    function opts(list, key) { return list.map(function (l, i) { var on = st[key] === i; return { label: l, on: on ? 'true' : 'false', cls: on ? 'tb on' : 'tb', pick: function () { var o = {}; o[key] = i; self.setState(o); } }; }); }
+    var SK = [['Фарфор', '#F4E4D6'], ['Светлая', '#EBD2BA'], ['Медовая', '#D9B28E'], ['Тёплая', '#C08E66'], ['Смуглая', '#9A6A48'], ['Тёмная', '#6E4A32']];
+    var HC = ['#1A1418', '#241A16', '#2E2222', '#1C1C24'];
+    return {
+      sexes: opts(['ЮНОША', 'ДЕВУШКА'], 'sex'), hairs: opts(['КОРОТКАЯ', 'С ПРОБОРОМ', 'ПУЧКИ', 'КАРЕ'], 'hair'), views: opts(['ЛИЦО', 'ВЕСЬ РОСТ'], 'view'),
+      skins: SK.map(function (k, i) { var on = st.skin === i; return { name: k[0], c: k[1], on: on ? 'true' : 'false', ring: on ? '0 0 0 2px #03040A, 0 0 0 3px #FFF1CF, 0 0 14px rgba(255,241,207,0.5)' : '0 0 0 1px rgba(234,240,242,0.2)', pick: function () { self.setState({ skin: i }); } }; }),
+      hairC: HC[st.hair]
+    };
+  }
+}
+</script>
+</body>
+</html>

@@ -1,0 +1,83 @@
+<!doctype html>
+<html lang="ru">
+<head>
+<meta charset="utf-8">
+<title>GU World — админ-панель</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@500;600;700&amp;family=Inter+Tight:wght@400;500;600&amp;display=swap" rel="stylesheet">
+<style>
+body{margin:0;background:#03040A}
+.gw{--gold:#E8C98A;--gh:#FFF1CF;--tx:#EAF0F2;--t2:#C9D3D5;--mu:#7E9093;--lb:#B8A47C;width:1440px;height:900px;position:relative;overflow:hidden;background:#0C141E;color:var(--tx);font-family:'Inter Tight',sans-serif}
+.gw *{box-sizing:border-box}
+.key{display:inline-flex;align-items:center;justify-content:center;min-width:20px;height:20px;padding:0 5px;border:1px solid rgba(234,240,242,.32);border-bottom-width:2px;border-radius:4px;font:600 10px 'Inter Tight',sans-serif;color:var(--t2)}
+.disp{font-family:'Cormorant Garamond',serif;font-weight:600}
+.sec{display:flex;flex-direction:column;gap:8px;padding:14px 16px;background:rgba(5,7,12,.78);border:1px solid rgba(200,230,240,.09)}
+.sec h3{margin:0;font:500 10px 'Inter Tight',sans-serif;letter-spacing:.3em;color:#B8A47C}
+.tb{height:28px;padding:0 10px;border:1px solid rgba(234,240,242,.14);background:rgba(234,240,242,.03);color:var(--t2);font:500 11px 'Inter Tight',sans-serif;letter-spacing:.06em;cursor:pointer}
+.tb.on{border-color:rgba(255,241,207,.6);background:rgba(255,241,207,.1);color:var(--gh)}
+.tg{display:flex;justify-content:space-between;align-items:center;height:26px;font-size:12px}
+.tog{position:relative;width:34px;height:18px;border-radius:9px;background:rgba(234,240,242,.1);border:1px solid rgba(234,240,242,.2)}
+.tog::after{content:'';position:absolute;left:2px;top:2px;width:12px;height:12px;border-radius:50%;background:#7E9093}
+.tog.on{background:rgba(255,241,207,.18);border-color:rgba(255,241,207,.6)}.tog.on::after{left:18px;background:#FFF1CF;box-shadow:0 0 8px #FFF1CF}
+</style>
+</helmet>
+<div class="gw">
+  <div aria-hidden="true" style="position: absolute; inset: 0; background: linear-gradient(180deg, #1A2A3E, #0C141E 50%, #0A0C0A); filter: blur(2px)"></div>
+  <div aria-hidden="true" style="position: absolute; inset: 0; background: rgba(3,4,10,0.55)"></div>
+
+  <section aria-label="Админ-панель" style="position: absolute; left: 40px; right: 40px; top: 32px; bottom: 32px; padding: 0; background: rgba(3,4,10,0.72); border: 1px solid rgba(240,138,116,0.35); box-shadow: 0 0 0 4px rgba(3,4,10,0.6), 0 0 40px rgba(240,138,116,0.12); backdrop-filter: blur(12px); display: flex; flex-direction: column">
+    <div style="height: 60px; flex: none; display: flex; align-items: center; gap: 16px; padding: 0 22px; border-bottom: 1px solid rgba(240,138,116,0.25); background: repeating-linear-gradient(135deg, rgba(240,138,116,0.06) 0 8px, transparent 8px 16px)">
+      <span style="width: 8px; height: 8px; transform: rotate(45deg); background: #F08A74; box-shadow: 0 0 10px #F08A74"></span>
+      <span class="disp" style="font-size: 22px; letter-spacing: 0.16em">АДМИН-ПАНЕЛЬ</span>
+      <span style="font-size: 11px; letter-spacing: 0.24em; color: #F08A74">РЕЖИМ АДМИНИСТРАТОРА · ВКЛЮЧЁН</span>
+      <span class="tog on" aria-hidden="true"></span>
+      <span style="flex: 1"></span>
+      <span style="font-size: 12px; color: #7E9093">Кнопки выполняют команды чата — результат одинаковый</span>
+      <button type="button" class="tb">ЗАКРЫТЬ · <span class="key">F10</span> / <span class="key">ESC</span></button>
+    </div>
+    <div style="flex: 1; min-height: 0; padding: 16px; display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 12px; align-content: start">
+      <sc-for list="{{ secs }}" as="s" hint-placeholder-count="12">
+        <div class="sec">
+          <h3>{{ s.t }}</h3>
+          <sc-for list="{{ s.tg }}" as="g" hint-placeholder-count="0"><div class="tg"><span>{{ g.t }}</span><span class="{{ g.cls }}" aria-hidden="true"></span></div></sc-for>
+          <div style="display: flex; flex-wrap: wrap; gap: 4px"><sc-for list="{{ s.b }}" as="b" hint-placeholder-count="3"><button type="button" class="{{ b.cls }}" style="color: {{ b.c }}">{{ b.t }}</button></sc-for></div>
+          <span style="font-size: 11px; color: #7E9093; display: {{ s.ns }}">{{ s.note }}</span>
+        </div>
+      </sc-for>
+    </div>
+  </section>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"$preview":{"width":1440,"height":900}}'>
+class Component extends DCLogic {
+  renderVals() {
+    function S(t, buttons, toggles, note, onIdx, danger) { return { t: t, note: note || '', ns: note ? 'block' : 'none',
+      tg: (toggles || []).map(function (g) { return { t: g[0], cls: g[1] ? 'tog on' : 'tog' }; }),
+      b: buttons.map(function (x, i) { return { t: x, cls: i === onIdx ? 'tb on' : 'tb', c: danger && i === buttons.length - 1 ? '#F08A74' : '' }; }) }; }
+    var secs = [
+      S('ЗДОРОВЬЕ · МОРЕ · СИЛЫ', ['Исцелить', 'Полное море', 'Отдохнуть всем'], [['Бессмертие', 1], ['Бесконечная эссенция', 0]]),
+      S('ГУ', ['Гу в сумку (все ранга)', 'Очистить все в апертуру'], [['Гу не голодают', 1], ['Гу не устают', 0]]),
+      S('РАНГ · 1, НАЧАЛЬНАЯ', ['Ранг I', 'Ранг II', 'Ранг III', 'Начальная', 'Средняя', 'Верхняя', 'Пик'], null, null, 0),
+      S('ПРОРЫВ · ШАНС [12%]', ['Прорыв наверняка'], null, 'Нужно полное море'),
+      S('ВСЁ ТЕЛО', ['Всем 30', 'Всем 60', 'Закалка 100%']),
+      S('ПЕРВОБЫТНЫЕ КАМНИ', ['+100', '+1 000', '+10 000']),
+      S('ВРЕМЯ', ['Рассвет', 'День', 'Вечер', 'Ночь'], null, null, 3),
+      S('ПОГОДА', ['Ясно', 'Облачно', 'Дождь'], null, null, 0),
+      S('МЕСТА', ['Деревня Гу Юэ', 'Пещера', 'Водопад', 'Озеро', 'Источник', 'Вершина', 'Деревня Бай', 'Деревня Сюн']),
+      S('ЗВЕРИ', ['Волки ×3', 'Молниевые ×3', 'Кабаны ×3', 'Медведь', 'Змея', 'Обезьяны']),
+      S('КОРОЛИ ЗВЕРЕЙ · ВОЛЧИЙ ПРИЛИВ', ['Прилив', 'Великий прилив', 'Мириады']),
+      S('ГУ-МАСТЕРА', ['Бай ×2', 'Сюн ×2', 'Разбойники', 'Убрать всех'], null, null, -1, true),
+      S('КЛАНЫ · БАЙ [34] · СЮН [58]', ['Бай +25', 'Сюн +25', 'Мир со всеми']),
+      S('ОТЛАДКА', ['Задание выполнить'], [['Хитбоксы · F7', 0], ['Показывать FPS', 1]])
+    ];
+    return { secs: secs };
+  }
+}
+</script>
+</body>
+</html>

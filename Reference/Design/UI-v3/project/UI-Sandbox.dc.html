@@ -1,0 +1,119 @@
+<!doctype html>
+<html lang="ru">
+<head>
+<meta charset="utf-8">
+<title>GU World — апертура бессмертного</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@500;600;700&amp;family=Inter+Tight:wght@400;500;600&amp;family=Zhi+Mang+Xing&amp;family=Ma+Shan+Zheng&amp;display=swap" rel="stylesheet">
+<style>
+body{margin:0;background:#03040A}
+.gw{--gold:#E8C98A;--gh:#FFF1CF;--tx:#EAF0F2;--t2:#C9D3D5;--mu:#7E9093;--lb:#B8A47C;width:1440px;height:900px;position:relative;overflow:hidden;background:#020309;color:var(--tx);font-family:'Inter Tight',sans-serif}
+.gw *{box-sizing:border-box}
+.bg{position:absolute;inset:-60px;background:radial-gradient(ellipse 800px 500px at 60% 50%,rgba(232,201,138,.12),transparent 70%),radial-gradient(ellipse 600px 400px at 30% 30%,rgba(90,60,150,.22),transparent 70%),radial-gradient(ellipse 1000px 300px at 50% 100%,rgba(40,160,130,.18),transparent 70%)}
+.stars{position:absolute;inset:0;background-image:radial-gradient(1.2px 1.2px at 7% 12%,#fff 50%,transparent 52%),radial-gradient(1px 1px at 23% 67%,#dff 50%,transparent 52%),radial-gradient(1.4px 1.4px at 41% 31%,#fff 50%,transparent 52%),radial-gradient(1px 1px at 58% 82%,#cdf 50%,transparent 52%),radial-gradient(1.2px 1.2px at 73% 18%,#fff 50%,transparent 52%),radial-gradient(1px 1px at 88% 54%,#eff 50%,transparent 52%);background-size:420px 300px;opacity:.6}
+.vig{position:absolute;inset:0;background:radial-gradient(ellipse at 50% 50%,transparent 55%,rgba(0,0,0,.72) 100%);pointer-events:none}
+.hdr{position:absolute;left:56px;right:56px;top:0;height:84px;display:flex;align-items:center;gap:18px}
+.hdr::after{content:'';position:absolute;left:0;right:0;bottom:0;height:1px;background:linear-gradient(90deg,transparent,rgba(232,201,138,.28) 20%,rgba(232,201,138,.28) 80%,transparent)}
+.key{display:inline-flex;align-items:center;justify-content:center;min-width:20px;height:20px;padding:0 5px;border:1px solid rgba(234,240,242,.32);border-bottom-width:2px;border-radius:4px;font:600 10px 'Inter Tight',sans-serif;letter-spacing:.04em;color:var(--t2)}
+.lbl{font-size:11px;letter-spacing:.34em;color:var(--lb)}
+.disp{font-family:'Cormorant Garamond',serif;font-weight:600}
+.tb{height:30px;padding:0 10px;border:1px solid rgba(234,240,242,.14);background:rgba(234,240,242,.03);color:var(--t2);font:500 11px 'Inter Tight',sans-serif;letter-spacing:.12em;cursor:pointer}
+.tb.on{border-color:rgba(255,241,207,.6);background:rgba(255,241,207,.1);color:var(--gh)}
+.mk{position:relative;width:62px;height:62px;padding:0;border:1px solid rgba(200,230,240,.1);background:radial-gradient(circle at 50% 40%,rgba(30,40,56,.6),rgba(4,6,10,.88) 75%);clip-path:polygon(9px 0,calc(100% - 9px) 0,100% 9px,100% calc(100% - 9px),calc(100% - 9px) 100%,9px 100%,0 calc(100% - 9px),0 9px);display:flex;align-items:center;justify-content:center;cursor:pointer}
+.mk .rk{position:absolute;left:9px;right:9px;bottom:0;height:2px}
+.hand{position:relative;width:76px;height:76px;display:flex;align-items:center;justify-content:center;border-radius:50%;background:radial-gradient(circle at 50% 40%,rgba(30,40,56,.9),rgba(2,3,9,.95) 70%);box-shadow:0 0 0 1px rgba(232,201,138,.4),0 0 0 6px rgba(2,3,9,.85),0 0 0 7px rgba(232,201,138,.12)}
+.hand .k{position:absolute;left:50%;top:-10px;margin-left:-10px}
+.foot{position:absolute;left:56px;right:56px;bottom:22px;height:30px;display:flex;align-items:center;justify-content:flex-end;gap:24px;font-size:12px;letter-spacing:.06em;color:var(--mu)}
+.foot span{display:flex;align-items:center;gap:8px}
+@keyframes gwSpin{to{transform:rotate(360deg)}}
+</style>
+</helmet>
+<div class="gw">
+  <svg width="0" height="0" aria-hidden="true" style="position: absolute"><defs>
+    <linearGradient id="moonW" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#E4F3FF"></stop><stop offset="0.55" stop-color="#6E9FD6"></stop><stop offset="1" stop-color="#1A2F52"></stop></linearGradient>
+    <radialGradient id="moonB" cx="0.4" cy="0.3" r="0.8"><stop offset="0" stop-color="#FFFFFF"></stop><stop offset="0.5" stop-color="#8FB6E4"></stop><stop offset="1" stop-color="#1E355E"></stop></radialGradient>
+    <linearGradient id="jadeW" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#CFF7DD"></stop><stop offset="0.55" stop-color="#3F9E72"></stop><stop offset="1" stop-color="#0F3626"></stop></linearGradient>
+    <radialGradient id="jadeB" cx="0.4" cy="0.3" r="0.8"><stop offset="0" stop-color="#F0FFF4"></stop><stop offset="0.5" stop-color="#5BBF8C"></stop><stop offset="1" stop-color="#0E3222"></stop></radialGradient>
+    <linearGradient id="ironW" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#EFE2C2"></stop><stop offset="0.55" stop-color="#A08758"></stop><stop offset="1" stop-color="#3A2D1A"></stop></linearGradient>
+    <radialGradient id="ironB" cx="0.4" cy="0.3" r="0.8"><stop offset="0" stop-color="#FFF4DA"></stop><stop offset="0.5" stop-color="#B09260"></stop><stop offset="1" stop-color="#33261A"></stop></radialGradient>
+    <linearGradient id="frostW" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#FFFFFF" stop-opacity="0.95"></stop><stop offset="0.5" stop-color="#C6EAF8" stop-opacity="0.7"></stop><stop offset="1" stop-color="#4F8DB0" stop-opacity="0.6"></stop></linearGradient>
+    <radialGradient id="frostB" cx="0.4" cy="0.3" r="0.8"><stop offset="0" stop-color="#FFFFFF"></stop><stop offset="0.5" stop-color="#A8D6EE"></stop><stop offset="1" stop-color="#2E5D7C"></stop></radialGradient>
+    <linearGradient id="bloodW" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#FFC2B6"></stop><stop offset="0.55" stop-color="#C93A2E"></stop><stop offset="1" stop-color="#420A08"></stop></linearGradient>
+    <radialGradient id="bloodB" cx="0.4" cy="0.3" r="0.8"><stop offset="0" stop-color="#FFE2DC"></stop><stop offset="0.5" stop-color="#C2392F"></stop><stop offset="1" stop-color="#380707"></stop></radialGradient>
+    <linearGradient id="thunW" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#F2E8FF"></stop><stop offset="0.55" stop-color="#8E7AE0"></stop><stop offset="1" stop-color="#241A52"></stop></linearGradient>
+    <radialGradient id="thunB" cx="0.4" cy="0.3" r="0.8"><stop offset="0" stop-color="#FFFFFF"></stop><stop offset="0.5" stop-color="#A898F0"></stop><stop offset="1" stop-color="#2A1E5E"></stop></radialGradient>
+    <linearGradient id="goldW" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#FFF4D0"></stop><stop offset="0.55" stop-color="#E0B44C"></stop><stop offset="1" stop-color="#5A3C10"></stop></linearGradient>
+    <radialGradient id="goldB" cx="0.4" cy="0.3" r="0.8"><stop offset="0" stop-color="#FFFFFF"></stop><stop offset="0.5" stop-color="#F0C868"></stop><stop offset="1" stop-color="#6A4612"></stop></radialGradient>
+  </defs></svg>
+  <div class="bg" aria-hidden="true"></div><div class="stars" aria-hidden="true"></div><div class="vig" aria-hidden="true"></div>
+  <div aria-hidden="true" style="position: absolute; left: 640px; top: 160px; width: 760px; height: 760px; border-radius: 50%; border: 1px solid rgba(232,201,138,0.08); animation: gwSpin 240s linear infinite"></div>
+
+  <header class="hdr">
+    <div style="display: flex; align-items: center; gap: 14px; min-width: 340px"><svg width="34" height="38" viewBox="0 0 34 38" aria-hidden="true"><path d="M17 1 L33 10 V28 L17 37 L1 28 V10Z" fill="none" stroke="#FFF1CF" stroke-width="1.2" style="filter: drop-shadow(0 0 6px #E8C98A)"></path><text x="17" y="24.5" text-anchor="middle" font-family="'Ma Shan Zheng', serif" font-size="15" fill="#FFF1CF">仙</text></svg><div><div class="disp" style="font-size: 22px; letter-spacing: 0.16em; line-height: 1">АПЕРТУРА БЕССМЕРТНОГО</div><div style="font-size: 11px; letter-spacing: 0.34em; color: #7E9093; margin-top: 5px">ПОЛИГОН · РЕЖИМЫ И ВСЕ ГУ</div></div></div>
+    <div style="flex: 1; display: flex; justify-content: center; gap: 18px">
+      <sc-for list="{{ hand }}" as="h" hint-placeholder-count="8">
+        <div class="hand" style="width: 52px; height: 52px; box-shadow: {{ h.sh }}"><span class="key k">{{ h.k }}</span><svg width="34" height="34" viewBox="0 0 100 100" aria-hidden="true" style="filter: drop-shadow(0 0 5px {{ h.g.glow }})"><path d="{{ h.g.a }}" fill="{{ h.g.w }}"></path><path d="{{ h.g.b }}" fill="{{ h.g.bf }}"></path></svg></div>
+      </sc-for>
+    </div>
+    <div style="min-width: 200px; display: flex; justify-content: flex-end"><a href="#" style="font-size: 12px; letter-spacing: 0.2em; color: #F08A74; text-decoration: none">ПОКИНУТЬ АПЕРТУРУ</a></div>
+  </header>
+
+  <section aria-label="Режимы" style="position: absolute; left: 56px; top: 116px; width: 360px; bottom: 76px; display: flex; flex-direction: column; gap: 14px; overflow: hidden">
+    <sc-for list="{{ modes }}" as="m" hint-placeholder-count="7">
+      <div style="display: flex; flex-direction: column; gap: 8px">
+        <span class="lbl">{{ m.t }}</span>
+        <div style="display: flex; gap: 4px; flex-wrap: wrap"><sc-for list="{{ m.o }}" as="o" hint-placeholder-count="3"><button type="button" class="{{ o.cls }}">{{ o.t }}</button></sc-for></div>
+      </div>
+    </sc-for>
+  </section>
+
+  <section aria-label="Все Гу" style="position: absolute; left: 470px; top: 116px; right: 56px; bottom: 140px; display: flex; flex-direction: column; gap: 14px">
+    <div style="display: flex; align-items: center; gap: 6px"><span class="lbl" style="margin-right: 10px">ВСЕ ГУ · [N]</span><button type="button" class="tb on">ВСЕ</button><button type="button" class="tb">I</button><button type="button" class="tb">II</button><button type="button" class="tb">III</button><button type="button" class="tb">IV</button><button type="button" class="tb">V</button><span style="flex: 1"></span><span style="font-size: 12px; color: #7E9093">ЛКМ — в выбранную ячейку <span class="key">3</span></span></div>
+    <div style="display: grid; grid-template-columns: repeat(12, 62px); gap: 10px">
+      <sc-for list="{{ marks }}" as="m" hint-placeholder-count="60">
+        <button type="button" class="mk" aria-label="{{ m.n }}" style="border-color: {{ m.bd }}; box-shadow: {{ m.sh }}"><svg width="40" height="40" viewBox="0 0 100 100" aria-hidden="true" style="filter: drop-shadow(0 0 5px {{ m.g.glow }})"><path d="{{ m.g.a }}" fill="{{ m.g.w }}" stroke="rgba(0,0,0,0.5)"></path><path d="{{ m.g.b }}" fill="{{ m.g.bf }}" stroke="rgba(0,0,0,0.5)"></path></svg><span class="rk" style="background: {{ m.rim }}"></span></button>
+      </sc-for>
+    </div>
+  </section>
+
+  <div style="position: absolute; left: 470px; right: 56px; bottom: 70px; height: 56px; display: flex; align-items: center; gap: 18px; padding: 0 20px; border: 1px solid rgba(232,201,138,0.25); background: linear-gradient(90deg, rgba(232,201,138,0.08), rgba(3,4,10,0.6))">
+    <span style="width: 8px; height: 8px; transform: rotate(45deg); background: #E8C98A; box-shadow: 0 0 10px #E8C98A"></span>
+    <span class="disp" style="font-size: 22px">Гу Громового Щита</span><span style="font-size: 11px; letter-spacing: 0.2em; color: #F08A74">РАНГ II</span>
+    <span style="font-size: 13px; color: #A8B6B8">держится: ЛКМ — поднять, ещё раз — снять · [описание]</span>
+  </div>
+
+  <footer class="foot"><span><span class="key">1</span>–<span class="key">8</span>Ячейка</span><span><span class="key">ЛКМ</span>Положить Гу</span><span><span class="key">TAB</span>Закрыть</span></footer>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"$preview":{"width":1440,"height":900}}'>
+class Component extends DCLogic {
+  renderVals() {
+    var S = {
+      moth: { a: 'M50 46 C38 22 14 12 7 27 C2 40 18 52 50 54 Z M50 46 C62 22 86 12 93 27 C98 40 82 52 50 54 Z M50 54 C36 58 18 70 25 83 C31 92 44 78 50 62 Z M50 54 C64 58 82 70 75 83 C69 92 56 78 50 62 Z', b: 'M50 34 C55 34 56 44 55 56 C54 70 52 80 50 85 C48 80 46 70 45 56 C44 44 45 34 50 34 Z M50 25 a5.5 5.5 0 1 0 0.01 0 Z' },
+      beetle: { a: 'M50 17 C58 17 62 23 60 30 L40 30 C38 23 42 17 50 17 Z M35 31 C40 26 60 26 65 31 C67 37 60 41 50 41 C40 41 33 37 35 31 Z', b: 'M50 40 C66 40 75 50 75 64 C75 80 64 90 50 90 C36 90 25 80 25 64 C25 50 34 40 50 40 Z' },
+      fly: { a: 'M50 38 C40 30 18 24 5 29 C9 37 30 41 50 43 Z M50 38 C60 30 82 24 95 29 C91 37 70 41 50 43 Z M50 45 C40 47 22 53 11 62 C19 65 38 56 50 49 Z M50 45 C60 47 78 53 89 62 C81 65 62 56 50 49 Z', b: 'M50 22 C54 22 55 28 54 34 C55 40 54 46 53 50 L52 89 C52 93 48 93 48 89 L47 50 C46 46 45 40 46 34 C45 28 46 22 50 22 Z' }
+    };
+    var CW = { moon: 'rgba(140,190,255,0.6)', jade: 'rgba(110,210,160,0.55)', iron: 'rgba(220,190,130,0.5)', frost: 'rgba(190,235,255,0.6)', blood: 'rgba(230,80,60,0.6)', thun: 'rgba(170,150,250,0.6)', gold: 'rgba(240,200,104,0.6)' };
+    function art(s, cw) { return { a: S[s].a, b: S[s].b, w: 'url(#' + cw + 'W)', bf: 'url(#' + cw + 'B)', glow: CW[cw] }; }
+    var shapes = ['moth', 'beetle', 'fly'], cws = ['moon', 'jade', 'iron', 'frost', 'blood', 'thun', 'gold'], RK = ['#7FE0C8', '#F08A74', '#DDE2EA', '#F0C868', '#C3A0F0'];
+    var marks = [];
+    for (var i = 0; i < 60; i++) { var r = Math.min(4, Math.floor(i / 14)); var sel = i === 18; marks.push({ n: '[Гу ' + (i + 1) + ']', g: art(shapes[(i * 7) % 3], cws[(i * 5) % 7]), rim: RK[r], bd: sel ? '#FFF1CF' : 'rgba(200,230,240,0.1)', sh: sel ? 'inset 0 0 16px rgba(255,241,207,0.3)' : 'none' }); }
+    var hand = [];
+    for (var h = 0; h < 8; h++) { hand.push({ k: String(h + 1), g: h < 5 ? art(shapes[h % 3], cws[(h * 3) % 7]) : { a: '', b: '', w: 'none', bf: 'none', glow: 'transparent' }, sh: h === 2 ? '0 0 0 1px #FFF1CF, 0 0 0 5px rgba(2,3,9,0.85), 0 0 18px rgba(255,241,207,0.4)' : '0 0 0 1px rgba(232,201,138,0.35), 0 0 0 5px rgba(2,3,9,0.85)' }); }
+    function M(t, opts, on) { return { t: t, o: opts.map(function (x, i) { return { t: x, cls: i === on ? 'tb on' : 'tb' }; }) }; }
+    var modes = [
+      M('ГЕРОЙ', ['Бессмертный', 'Смертный'], 0), M('ЭССЕНЦИЯ', ['Бесконечная', 'Как у таланта'], 0), M('УСТАЛОСТЬ ГУ', ['Есть', 'Нет'], 1), M('ГОЛОД ГУ', ['Есть (может убить)', 'Нет'], 1),
+      M('РАНГ · 2, СРЕДНЯЯ', ['Ранг 1', 'Ранг 2', 'Ранг 3', 'Начальная', 'Средняя', 'Верхняя', 'Пик'], 1), M('ВРЕМЯ', ['Утро', 'День', 'Вечер', 'Ночь'], 3),
+      M('ВРАГИ · ЖИВЫХ: [0]', ['Серые ×3 (1–3)', 'Молниевые ×3 (4–8)', 'Король кабанов (12)', 'Отряд Бай+Сюн', 'Убрать всех'], -1)
+    ];
+    return { marks: marks, hand: hand, modes: modes };
+  }
+}
+</script>
+</body>
+</html>

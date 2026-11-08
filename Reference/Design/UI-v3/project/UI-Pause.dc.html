@@ -1,0 +1,81 @@
+<!doctype html>
+<html lang="ru">
+<head>
+<meta charset="utf-8">
+<title>GU World — пауза</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@500;600;700&amp;family=Inter+Tight:wght@400;500;600&amp;family=Zhi+Mang+Xing&amp;family=Ma+Shan+Zheng&amp;display=swap" rel="stylesheet">
+<style>
+body{margin:0;background:#03040A}
+.gw{--gold:#E8C98A;--gh:#FFF1CF;--tx:#EAF0F2;--t2:#C9D3D5;--mu:#7E9093;--lb:#B8A47C;width:1440px;height:900px;position:relative;overflow:hidden;background:#05070C;color:var(--tx);font-family:'Inter Tight',sans-serif}
+.gw *{box-sizing:border-box}
+.key{display:inline-flex;align-items:center;justify-content:center;min-width:24px;height:22px;padding:0 6px;border:1px solid rgba(234,240,242,.32);border-bottom-width:2px;border-radius:4px;font:600 10px 'Inter Tight',sans-serif;letter-spacing:.04em;color:var(--t2)}
+.lbl{font-size:11px;letter-spacing:.34em;color:var(--lb)}
+.disp{font-family:'Cormorant Garamond',serif;font-weight:600}
+.row{position:relative;display:flex;align-items:center;justify-content:center;gap:14px;width:100%;border:none;background:transparent;color:var(--t2);cursor:pointer;font-family:inherit;text-decoration:none}
+.row.on{background:linear-gradient(90deg,transparent,rgba(232,201,138,.14),transparent);color:#fff}
+.row.on::before,.row.on::after{content:'';position:absolute;top:50%;width:7px;height:7px;margin-top:-4px;transform:rotate(45deg);background:var(--gold);box-shadow:0 0 12px var(--gold)}
+.row.on::before{left:60px}.row.on::after{right:60px}
+.bar{position:relative;height:3px;background:rgba(234,240,242,.08)}
+.bar i{position:absolute;left:0;top:0;bottom:0;display:block}
+.foot{position:absolute;left:56px;right:56px;bottom:22px;height:30px;display:flex;align-items:center;justify-content:center;gap:24px;font-size:12px;letter-spacing:.06em;color:var(--mu)}
+.foot span{display:flex;align-items:center;gap:8px}
+@keyframes gwSpin{to{transform:rotate(360deg)}}
+@keyframes gwSpinR{to{transform:rotate(-360deg)}}
+</style>
+</helmet>
+<div class="gw">
+  <div aria-hidden="true" style="position: absolute; inset: -40px; background: radial-gradient(ellipse at 30% 40%, #2A3A50, transparent 50%), radial-gradient(ellipse at 70% 60%, #3A2A20, transparent 50%), linear-gradient(180deg, #1A2436, #0C1218 60%, #0A0C0A); filter: blur(30px)"></div>
+  <div aria-hidden="true" style="position: absolute; inset: 0; background: radial-gradient(circle at 50% 46%, rgba(3,4,10,0.55), rgba(3,4,10,0.94) 70%)"></div>
+  <div aria-hidden="true" style="position: absolute; left: 50%; top: 50%; width: 760px; height: 760px; margin: -400px 0 0 -380px; border-radius: 50%; border: 1px solid rgba(232,201,138,0.1); animation: gwSpin 200s linear infinite"></div>
+  <div aria-hidden="true" style="position: absolute; left: 50%; top: 50%; width: 600px; height: 600px; margin: -320px 0 0 -300px; border-radius: 50%; border: 1px dashed rgba(232,201,138,0.1); animation: gwSpinR 160s linear infinite"></div>
+  <span aria-hidden="true" style="position: absolute; left: 50%; top: 70px; margin-left: -260px; width: 520px; text-align: center; font-family: 'Zhi Mang Xing', cursive; font-size: 520px; line-height: 1; color: rgba(232,201,138,0.04)">靜</span>
+
+  <div style="position: absolute; left: 50%; top: 130px; width: 460px; margin-left: -230px; display: flex; flex-direction: column; align-items: center">
+    <span class="lbl">ВРЕМЯ ОСТАНОВЛЕНО</span>
+    <span class="disp" style="margin-top: 10px; font-size: 72px; line-height: 1; letter-spacing: 0.2em; padding-left: 0.2em">ПАУЗА</span>
+    <span style="width: 200px; height: 1px; margin-top: 20px; background: linear-gradient(90deg, transparent, #E8C98A, transparent)"></span>
+    <nav aria-label="Пауза" style="width: 100%; margin-top: 34px; display: flex; flex-direction: column; gap: 4px">
+      <a href="#" class="row on" style="height: 62px"><span class="disp" style="font-size: 28px">Продолжить</span></a>
+      <a href="#" class="row" style="height: 54px"><span class="disp" style="font-size: 24px">Настройки</span></a>
+      <a href="#" class="row" style="height: 54px"><span class="disp" style="font-size: 24px">Главное меню</span></a>
+      <a href="#" class="row" style="height: 54px"><span class="disp" style="font-size: 24px; color: #C9A69E">Начать заново</span></a>
+      <a href="#" class="row" style="height: 50px; margin-top: 10px"><span style="font-size: 12px; letter-spacing: 0.3em; color: #7E9093">ВЫЙТИ ИЗ ИГРЫ</span></a>
+    </nav>
+  </div>
+
+  <section aria-label="Герой" style="position: absolute; left: 72px; top: 300px; width: 280px; display: flex; flex-direction: column; gap: 12px">
+    <span class="lbl">ГЕРОЙ</span>
+    <span class="disp" style="font-size: 30px; line-height: 1">Гу Юэ [Лань]</span>
+    <span style="font-size: 13px; color: #A8B6B8">Ранг I · начальная стадия · путь «Обычная»</span>
+    <div style="display: grid; grid-template-columns: 100px minmax(0, 1fr); gap: 8px 12px; align-items: center; font-size: 12px; color: #7E9093; margin-top: 6px">
+      <span>Здоровье</span><div class="bar"><i style="width: 82%; background: #F08A74"></i></div>
+      <span>Эссенция</span><div class="bar"><i style="width: 64%; background: #7FE0C8"></i></div>
+      <span>Прорыв</span><div class="bar"><i style="width: 34%; background: #FFF1CF"></i></div>
+    </div>
+    <span style="font-size: 12px; color: #7E9093; margin-top: 6px">День [3] · [21:40] · в игре [4 ч 12 мин]</span>
+  </section>
+
+  <section aria-label="Сейчас" style="position: absolute; right: 72px; top: 300px; width: 280px; display: flex; flex-direction: column; gap: 12px; text-align: right; align-items: flex-end">
+    <span class="lbl">СЕЙЧАС</span>
+    <span class="disp" style="font-size: 24px; line-height: 1.1">Волки у южных ворот</span>
+    <span style="font-size: 13px; color: #A8B6B8">Задание академии · [2 / 5]</span>
+    <span style="width: 120px; height: 1px; background: linear-gradient(270deg, rgba(232,201,138,0.4), transparent); margin: 6px 0"></span>
+    <span style="font-size: 12px; color: #7E9093">Сохранено автоматически · [21:38]</span>
+  </section>
+
+  <footer class="foot"><span><span class="key">↑↓</span>Выбор</span><span><span class="key">ENTER</span>Открыть</span><span><span class="key">ESC</span>Вернуться в игру</span></footer>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"$preview":{"width":1440,"height":900}}'>
+class Component extends DCLogic {
+  renderVals() { return {}; }
+}
+</script>
+</body>
+</html>

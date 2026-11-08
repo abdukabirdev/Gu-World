@@ -1,0 +1,101 @@
+<!doctype html>
+<html lang="ru">
+<head>
+<meta charset="utf-8">
+<title>GU World — главное меню</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@500;600;700&amp;family=Inter+Tight:wght@400;500;600&amp;family=Zhi+Mang+Xing&amp;family=Ma+Shan+Zheng&amp;display=swap" rel="stylesheet">
+<style>
+body{margin:0;background:#03040A}
+.gw{--gold:#E8C98A;--gh:#FFF1CF;--tx:#EAF0F2;--t2:#C9D3D5;--mu:#7E9093;--lb:#B8A47C;width:1440px;height:900px;position:relative;overflow:hidden;background:#03040A;color:var(--tx);font-family:'Inter Tight',sans-serif}
+.gw *{box-sizing:border-box}
+.stars{position:absolute;inset:0;background-image:radial-gradient(1.2px 1.2px at 7% 12%,#fff 50%,transparent 52%),radial-gradient(1px 1px at 23% 67%,#dff 50%,transparent 52%),radial-gradient(1.4px 1.4px at 41% 31%,#fff 50%,transparent 52%),radial-gradient(1px 1px at 58% 82%,#cdf 50%,transparent 52%),radial-gradient(1.2px 1.2px at 73% 18%,#fff 50%,transparent 52%),radial-gradient(1px 1px at 88% 54%,#eff 50%,transparent 52%),radial-gradient(.8px .8px at 15% 44%,#fff 50%,transparent 52%),radial-gradient(.8px .8px at 66% 47%,#fff 50%,transparent 52%),radial-gradient(.8px .8px at 34% 90%,#fff 50%,transparent 52%),radial-gradient(.8px .8px at 94% 86%,#fff 50%,transparent 52%);background-size:420px 300px;opacity:.6;animation:gwTw 6s ease-in-out infinite}
+.vig{position:absolute;inset:0;background:radial-gradient(ellipse at 50% 50%,transparent 50%,rgba(0,0,0,.78) 100%);pointer-events:none}
+.key{display:inline-flex;align-items:center;justify-content:center;min-width:24px;height:22px;padding:0 6px;border:1px solid rgba(234,240,242,.32);border-bottom-width:2px;border-radius:4px;font:600 10px 'Inter Tight',sans-serif;letter-spacing:.04em;color:var(--t2)}
+.disp{font-family:'Cormorant Garamond',serif;font-weight:600}
+.row{position:relative;display:flex;align-items:center;gap:14px;width:100%;padding:0 12px 0 26px;border:none;background:transparent;color:var(--t2);text-align:left;cursor:pointer;font-family:inherit;text-decoration:none}
+.row.on{background:linear-gradient(90deg,rgba(232,201,138,.14),transparent 85%);box-shadow:inset 0 1px 0 rgba(232,201,138,.3),inset 0 -1px 0 rgba(232,201,138,.15);color:#fff}
+.row.on::before{content:'';position:absolute;left:4px;top:50%;width:8px;height:8px;margin-top:-4px;transform:rotate(45deg);background:var(--gold);box-shadow:0 0 12px var(--gold)}
+.foot{position:absolute;left:72px;right:72px;bottom:28px;height:30px;display:flex;align-items:center;gap:24px;font-size:12px;letter-spacing:.06em;color:var(--mu)}
+.foot span{display:flex;align-items:center;gap:8px}
+@keyframes gwTw{0%,100%{opacity:.45}50%{opacity:.75}}
+@keyframes gwFog{0%,100%{transform:translateX(-3%)}50%{transform:translateX(3%)}}
+@keyframes gwPulse{0%,100%{opacity:.6;transform:scale(1)}50%{opacity:1;transform:scale(1.05)}}
+@keyframes gwDrift{0%{transform:translate(0,0);opacity:0}15%{opacity:1}100%{transform:translate(-60px,-140px);opacity:0}}
+</style>
+</helmet>
+<div class="gw">
+  <div aria-hidden="true" style="position: absolute; inset: 0; background: radial-gradient(ellipse 900px 600px at 74% 30%, rgba(60,100,160,0.32), transparent 70%), radial-gradient(ellipse 1200px 400px at 50% 100%, rgba(40,160,130,0.22), transparent 70%), linear-gradient(180deg, #060A14, #03040A 70%)"></div>
+  <div class="stars" aria-hidden="true"></div>
+  <div aria-hidden="true" style="position: absolute; left: 860px; top: 40px; width: 520px; height: 520px; border-radius: 50%; background: radial-gradient(circle, rgba(200,220,245,0.32), rgba(110,150,200,0.1) 40%, transparent 70%); animation: gwPulse 9s ease-in-out infinite"></div>
+  <svg width="1440" height="900" viewBox="0 0 1440 900" aria-hidden="true" style="position: absolute; inset: 0">
+    <defs>
+      <radialGradient id="moonT" cx="0.35" cy="0.35" r="0.7"><stop offset="0" stop-color="#FFFFFF"></stop><stop offset="0.6" stop-color="#E4ECF6"></stop><stop offset="1" stop-color="#9FB4CC"></stop></radialGradient>
+      <linearGradient id="mtnA" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#16263A"></stop><stop offset="1" stop-color="#07090F"></stop></linearGradient>
+      <linearGradient id="mtnB" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#0C1622"></stop><stop offset="1" stop-color="#040508"></stop></linearGradient>
+      <filter id="blurT" x="-20%" y="-50%" width="140%" height="200%"><feGaussianBlur stdDeviation="22"></feGaussianBlur></filter>
+      <filter id="glowT" x="-50%" y="-50%" width="200%" height="200%"><feGaussianBlur stdDeviation="6" result="b"></feGaussianBlur><feMerge><feMergeNode in="b"></feMergeNode><feMergeNode in="SourceGraphic"></feMergeNode></feMerge></filter>
+    </defs>
+    <circle cx="1120" cy="300" r="96" fill="url(#moonT)" filter="url(#glowT)"></circle>
+    <circle cx="1156" cy="278" r="88" fill="#071022"></circle>
+    <circle cx="1120" cy="300" r="140" fill="none" stroke="rgba(232,201,138,0.22)" stroke-width="1"></circle>
+    <circle cx="1120" cy="300" r="190" fill="none" stroke="rgba(232,201,138,0.12)" stroke-width="1" stroke-dasharray="2 10"></circle>
+    <path d="M0 640 L120 560 L210 600 L330 500 L420 548 L540 470 L640 530 L760 430 L860 500 L980 420 L1100 520 L1210 470 L1330 540 L1440 500 V900 H0Z" fill="url(#mtnA)"></path>
+    <path d="M760 430 L800 470 L776 466 L760 446 L744 470 L724 470Z" fill="rgba(200,220,240,0.25)"></path>
+    <path d="M980 420 L1010 450 L992 448 L980 436 L966 452Z" fill="rgba(200,220,240,0.2)"></path>
+    <ellipse cx="760" cy="600" rx="700" ry="50" fill="#8FB0D0" opacity="0.1" filter="url(#blurT)"></ellipse>
+    <path d="M0 720 L180 640 L300 690 L460 620 L600 700 L760 640 L900 710 L1060 650 L1200 720 L1320 680 L1440 710 V900 H0Z" fill="url(#mtnB)"></path>
+    <g fill="#05070C"><rect x="930" y="662" width="40" height="30"></rect><path d="M912 666 Q950 650 988 666 Q976 660 970 652 L930 652 Q924 660 912 666Z"></path><rect x="938" y="636" width="24" height="18"></rect><path d="M924 640 Q950 628 976 640 Q968 634 964 628 L936 628 Q932 634 924 640Z"></path><rect x="1010" y="676" width="46" height="24"></rect><path d="M992 680 Q1033 666 1074 680 Q1062 674 1056 668 L1010 668 Q1004 674 992 680Z"></path></g>
+    <g fill="#F0C878"><rect x="942" y="672" width="4" height="7" opacity="0.8"></rect><rect x="956" y="672" width="4" height="7" opacity="0.6"></rect><rect x="1026" y="684" width="4" height="7" opacity="0.7"></rect></g>
+    <ellipse cx="720" cy="760" rx="800" ry="60" fill="#7FE0C8" opacity="0.07" filter="url(#blurT)"></ellipse>
+    <path d="M0 800 C240 760 480 790 720 770 C960 750 1200 790 1440 770 V900 H0Z" fill="#020306"></path>
+  </svg>
+  <div aria-hidden="true" style="position: absolute; left: -10%; right: -10%; bottom: 120px; height: 200px; background: radial-gradient(ellipse at 40% 60%, rgba(150,175,210,0.12), transparent 60%); filter: blur(20px); animation: gwFog 26s ease-in-out infinite"></div>
+  <sc-for list="{{ motes }}" as="m" hint-placeholder-count="0"><span aria-hidden="true" style="position: absolute; left: {{ m.x }}px; top: {{ m.y }}px; width: {{ m.s }}px; height: {{ m.s }}px; border-radius: 50%; background: {{ m.c }}; box-shadow: 0 0 8px {{ m.c }}; animation: gwDrift {{ m.d }}s linear {{ m.dl }}s infinite"></span></sc-for>
+  <div class="vig" aria-hidden="true"></div>
+
+  <div style="position: absolute; left: 72px; top: 96px; display: flex; flex-direction: column">
+    <div style="display: flex; align-items: center; gap: 18px">
+      <span style="font-family: 'Zhi Mang Xing', cursive; font-size: 92px; line-height: 1; color: #E8C98A; text-shadow: 0 0 40px rgba(232,201,138,0.4)">蛊</span>
+      <div style="display: flex; flex-direction: column; gap: 6px">
+        <span class="disp" style="font-size: 76px; line-height: 0.9; letter-spacing: 0.14em; background: linear-gradient(180deg, #FFFFFF, #F2EADB 50%, #BFAE8A); -webkit-background-clip: text; background-clip: text; color: transparent">GU WORLD</span>
+        <span style="font-size: 12px; letter-spacing: 0.5em; color: #B8A47C">МИР ГУ · ПУТЬ МАСТЕРА</span>
+      </div>
+    </div>
+  </div>
+
+  <nav aria-label="Главное меню" style="position: absolute; left: 72px; top: 330px; width: 420px; display: flex; flex-direction: column; gap: 2px">
+    <a href="#" class="row on" style="height: 78px; flex-direction: column; align-items: flex-start; justify-content: center; gap: 6px"><span class="disp" style="font-size: 30px; line-height: 1">Продолжить</span><span style="font-size: 12px; letter-spacing: 0.08em; color: #A8B6B8">[Гу Юэ Лань] · Ранг [1] · День [3] · [14:20]</span></a>
+    <a href="#" class="row" style="height: 54px"><span class="disp" style="font-size: 24px">Новый путь</span></a>
+    <a href="#" class="row" style="height: 54px"><span class="disp" style="font-size: 24px">Апертура бессмертного</span><span style="font-size: 11px; letter-spacing: 0.2em; color: #7E9093">ПОЛИГОН</span></a>
+    <a href="#" class="row" style="height: 54px"><span class="disp" style="font-size: 24px">Кодекс Гу</span><span style="font-size: 11px; letter-spacing: 0.2em; color: #7E9093">[N] ГУ</span></a>
+    <a href="#" class="row" style="height: 54px"><span class="disp" style="font-size: 24px">Настройки</span></a>
+    <a href="#" class="row" style="height: 54px"><span class="disp" style="font-size: 24px">Об игре</span></a>
+    <div style="height: 1px; margin: 10px 0 10px 26px; background: linear-gradient(90deg, rgba(232,201,138,0.3), transparent)"></div>
+    <a href="#" class="row" style="height: 48px"><span style="font-size: 13px; letter-spacing: 0.24em; color: #7E9093">ВЫЙТИ ИЗ ИГРЫ</span></a>
+  </nav>
+
+  <div style="position: absolute; right: 72px; bottom: 96px; width: 320px; text-align: right; display: flex; flex-direction: column; align-items: flex-end; gap: 6px">
+    <span style="font-size: 11px; letter-spacing: 0.34em; color: #B8A47C">ГОРА ЦИНМАО · ЮЖНАЯ ГРАНИЦА</span>
+    <span style="font-size: 13px; line-height: 1.55; color: #7E9093">Клан Гу Юэ · арка первая</span>
+  </div>
+
+  <footer class="foot"><span>Версия [0.2.0]</span><span style="margin-left: auto"><span class="key">↑↓</span>Выбор</span><span><span class="key">ENTER</span>Открыть</span><span><span class="key">ESC</span>Выход</span></footer>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"$preview":{"width":1440,"height":900}}'>
+class Component extends DCLogic {
+  renderVals() {
+    var motes = [];
+    for (var m = 0; m < 26; m++) { motes.push({ x: Math.round(500 + ((Math.sin(m * 12.9898) * 43758.5453) % 1 + 1) % 1 * 900), y: Math.round(300 + ((Math.sin(m * 78.233) * 12345.678) % 1 + 1) % 1 * 500), s: (1 + (m % 3) * 0.8).toFixed(1), d: 9 + (m % 5) * 2, dl: -(m * 0.9).toFixed(1), c: m % 4 === 0 ? 'rgba(232,201,138,0.9)' : 'rgba(170,240,220,0.8)' }); }
+    return { motes: motes };
+  }
+}
+</script>
+</body>
+</html>

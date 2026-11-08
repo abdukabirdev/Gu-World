@@ -1,0 +1,108 @@
+<!doctype html>
+<html lang="ru">
+<head>
+<meta charset="utf-8">
+<title>GU World — выбор пути</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@500;600;700&amp;family=Inter+Tight:wght@400;500;600&amp;family=Zhi+Mang+Xing&amp;family=Ma+Shan+Zheng&amp;display=swap" rel="stylesheet">
+<style>
+body{margin:0;background:#03040A}
+.gw{--gold:#E8C98A;--gh:#FFF1CF;--tx:#EAF0F2;--t2:#C9D3D5;--mu:#7E9093;--lb:#B8A47C;width:1440px;height:900px;position:relative;overflow:hidden;background:#03040A;color:var(--tx);font-family:'Inter Tight',sans-serif}
+.gw *{box-sizing:border-box}
+.bg{position:absolute;inset:-60px;background:radial-gradient(ellipse 640px 440px at 36% 30%,rgba(46,110,140,.26),transparent 70%),radial-gradient(ellipse 560px 400px at 72% 38%,rgba(90,60,150,.2),transparent 70%),radial-gradient(ellipse 1000px 320px at 50% 92%,rgba(40,160,130,.16),transparent 70%);animation:gwNeb 30s ease-in-out infinite}
+.stars{position:absolute;inset:0;background-image:radial-gradient(1.2px 1.2px at 7% 12%,#fff 50%,transparent 52%),radial-gradient(1px 1px at 23% 67%,#dff 50%,transparent 52%),radial-gradient(1.4px 1.4px at 41% 31%,#fff 50%,transparent 52%),radial-gradient(1px 1px at 58% 82%,#cdf 50%,transparent 52%),radial-gradient(1.2px 1.2px at 73% 18%,#fff 50%,transparent 52%),radial-gradient(1px 1px at 88% 54%,#eff 50%,transparent 52%),radial-gradient(.8px .8px at 15% 44%,#fff 50%,transparent 52%),radial-gradient(.8px .8px at 66% 47%,#fff 50%,transparent 52%);background-size:420px 300px;opacity:.55}
+.vig{position:absolute;inset:0;background:radial-gradient(ellipse at 50% 50%,transparent 55%,rgba(0,0,0,.72) 100%);pointer-events:none}
+.hdr{position:absolute;left:56px;right:56px;top:0;height:84px;display:flex;align-items:center;gap:18px}
+.hdr::after{content:'';position:absolute;left:0;right:0;bottom:0;height:1px;background:linear-gradient(90deg,transparent,rgba(232,201,138,.28) 20%,rgba(232,201,138,.28) 80%,transparent)}
+.key{display:inline-flex;align-items:center;justify-content:center;min-width:24px;height:22px;padding:0 6px;border:1px solid rgba(234,240,242,.32);border-bottom-width:2px;border-radius:4px;font:600 10px 'Inter Tight',sans-serif;letter-spacing:.04em;color:var(--t2)}
+.disp{font-family:'Cormorant Garamond',serif;font-weight:600}
+.btn{position:relative;display:inline-flex;align-items:center;justify-content:center;height:56px;padding:0 44px;border:none;background:linear-gradient(180deg,#FFF1CF,#C9A060 50%,#6E5028);clip-path:polygon(20px 0,calc(100% - 20px) 0,100% 50%,calc(100% - 20px) 100%,20px 100%,0 50%);color:#FFF1CF;font:600 14px 'Inter Tight',sans-serif;letter-spacing:.3em;cursor:pointer;filter:drop-shadow(0 0 16px rgba(232,201,138,.3))}
+.btn::before{content:'';position:absolute;inset:1px;background:linear-gradient(180deg,#2A1A10,#120A06);clip-path:polygon(19px 0,calc(100% - 19px) 0,100% 50%,calc(100% - 19px) 100%,19px 100%,0 50%)}
+.btn span{position:relative;display:flex;align-items:center;gap:12px}
+.btn.solid{color:#1A1008}.btn.solid::before{background:linear-gradient(180deg,#FFF1CF,#E2C080 55%,#C29E5C)}
+.btn.ghost{background:rgba(234,240,242,.22);filter:none;color:var(--t2)}.btn.ghost::before{background:linear-gradient(180deg,rgba(14,18,26,.96),rgba(6,8,12,.96))}
+.foot{position:absolute;left:56px;right:56px;bottom:22px;height:30px;display:flex;align-items:center;justify-content:flex-end;gap:24px;font-size:12px;letter-spacing:.06em;color:var(--mu)}
+.foot span{display:flex;align-items:center;gap:8px}
+@keyframes gwNeb{0%,100%{transform:translate(0,0) scale(1)}50%{transform:translate(-20px,10px) scale(1.04)}}
+@keyframes gwWave{0%{transform:translateX(0)}100%{transform:translateX(-60px)}}
+</style>
+</helmet>
+<div class="gw">
+  <div class="bg" aria-hidden="true"></div><div class="stars" aria-hidden="true"></div><div class="vig" aria-hidden="true"></div>
+  <span aria-hidden="true" style="position: absolute; left: 50%; top: 60px; margin-left: -300px; width: 600px; text-align: center; font-family: 'Zhi Mang Xing', cursive; font-size: 560px; line-height: 1; color: rgba(232,201,138,0.04)">道</span>
+
+  <header class="hdr">
+    <div style="display: flex; flex-direction: column; gap: 5px"><span class="disp" style="font-size: 26px; letter-spacing: 0.16em; line-height: 1">ВЫБОР ПУТИ</span><span style="font-size: 11px; letter-spacing: 0.34em; color: #7E9093">ШАГ 1 ИЗ 2 · ЗАТЕМ СОЗДАНИЕ ГЕРОЯ</span></div>
+    <div style="flex: 1"></div>
+    <div style="display: flex; gap: 8px; align-items: center"><span style="width: 28px; height: 2px; background: #FFF1CF; box-shadow: 0 0 8px #FFF1CF"></span><span style="width: 28px; height: 2px; background: rgba(234,240,242,0.15)"></span></div>
+  </header>
+
+  <p style="position: absolute; left: 56px; top: 108px; width: 720px; margin: 0; font-size: 15px; line-height: 1.6; color: #A8B6B8">Путь — это трудность игры и талант, с которым вы родились. Талант решает, сколько эссенции вмещает море апертуры и как быстро оно наполняется.</p>
+
+  <div role="radiogroup" aria-label="Путь" style="position: absolute; left: 56px; right: 56px; top: 176px; height: 560px; display: flex; gap: 18px; align-items: flex-end">
+    <sc-for list="{{ ways }}" as="w" hint-placeholder-count="5">
+      <button type="button" role="radio" aria-checked="{{ w.on }}" onClick="{{ w.pick }}" style="position: relative; flex: 1; height: {{ w.h }}; padding: 26px 22px 24px; border: 1px solid {{ w.bd }}; background: {{ w.bg }}; box-shadow: {{ w.sh }}; color: #EAF0F2; text-align: left; cursor: pointer; display: flex; flex-direction: column; font-family: 'Inter Tight', sans-serif; overflow: hidden; backdrop-filter: blur(8px)">
+        <span aria-hidden="true" style="position: absolute; left: -1px; top: -1px; width: 16px; height: 16px; border-left: 1px solid #E8C98A; border-top: 1px solid #E8C98A; opacity: {{ w.cn }}"></span>
+        <span aria-hidden="true" style="position: absolute; right: -1px; bottom: -1px; width: 16px; height: 16px; border-right: 1px solid #E8C98A; border-bottom: 1px solid #E8C98A; opacity: {{ w.cn }}"></span>
+        <span aria-hidden="true" style="position: absolute; right: -8px; top: -30px; font-family: 'Cormorant Garamond', serif; font-weight: 700; font-size: 220px; line-height: 1; color: {{ w.ghost }}">{{ w.grade }}</span>
+        <span style="position: relative; font-size: 11px; letter-spacing: 0.3em; color: {{ w.c }}">ТАЛАНТ {{ w.grade }}</span>
+        <span class="disp" style="position: relative; margin-top: 8px; font-size: 34px; line-height: 1; color: {{ w.nameC }}">{{ w.name }}</span>
+        <span style="position: relative; align-self: center; margin-top: 26px; width: 150px; height: 150px">
+          <svg width="150" height="150" viewBox="0 0 150 150" aria-hidden="true">
+            <defs><clipPath id="{{ w.clip }}"><circle cx="75" cy="75" r="58"></circle></clipPath></defs>
+            <circle cx="75" cy="75" r="58" fill="rgba(2,6,10,0.9)"></circle>
+            <g clip-path="url(#{{ w.clip }})">
+              <rect x="0" y="{{ w.level }}" width="150" height="150" fill="{{ w.water }}"></rect>
+              <path d="M-10 {{ w.level }} q15 -6 30 0 t30 0 t30 0 t30 0 t30 0 t30 0 t30 0" fill="none" stroke="rgba(230,255,248,0.6)" stroke-width="1.2" style="animation: gwWave 4s linear infinite"></path>
+            </g>
+            <circle cx="75" cy="75" r="62" fill="none" stroke="{{ w.c }}" stroke-width="1.2" opacity="0.7"></circle>
+            <circle cx="75" cy="75" r="70" fill="none" stroke="rgba(232,201,138,0.2)" stroke-dasharray="2 6"></circle>
+          </svg>
+          <span style="position: absolute; inset: 0; display: flex; flex-direction: column; align-items: center; justify-content: center"><span class="disp" style="font-size: 42px; line-height: 1; color: #FFFFFF; text-shadow: 0 2px 10px #000">{{ w.talent }}</span><span style="font-size: 10px; letter-spacing: 0.24em; color: #CFE8E2; text-shadow: 0 1px 6px #000">МОРЕ</span></span>
+        </span>
+        <span style="position: relative; display: flex; justify-content: space-between; margin-top: 24px; padding-top: 12px; border-top: 1px solid rgba(234,240,242,0.1); font-size: 12px"><span style="color: #7E9093">Наполнение</span><span style="color: #C9D3D5">{{ w.refill }}</span></span>
+        <span style="position: relative; display: flex; justify-content: space-between; margin-top: 8px; font-size: 12px"><span style="color: #7E9093">Трудность</span><span style="display: flex; gap: 4px; align-items: center"><sc-for list="{{ w.pips }}" as="p" hint-placeholder-count="5"><span style="width: 7px; height: 7px; transform: rotate(45deg); background: {{ p.c }}"></span></sc-for></span></span>
+        <span style="position: relative; margin-top: 16px; font-size: 13px; line-height: 1.55; color: #A8B6B8">{{ w.about }}</span>
+      </button>
+    </sc-for>
+  </div>
+
+  <div style="position: absolute; left: 56px; right: 56px; top: 770px; display: flex; align-items: center; gap: 16px">
+    <button type="button" class="btn ghost"><span>НАЗАД</span></button>
+    <span style="flex: 1; font-size: 13px; color: #7E9093">Выбрано: <span style="color: #FFF1CF">{{ chosenName }}</span> · талант {{ chosenGrade }} · {{ chosenTalent }}</span>
+    <button type="button" class="btn solid"><span>К СОЗДАНИЮ ГЕРОЯ</span></button>
+  </div>
+
+  <footer class="foot"><span><span class="key">← →</span>Путь</span><span><span class="key">ENTER</span>Дальше</span><span><span class="key">ESC</span>Назад</span></footer>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"$preview":{"width":1440,"height":900}}'>
+class Component extends DCLogic {
+  constructor(props) { super(props); this.state = { pick: 1 }; }
+  renderVals() {
+    var self = this;
+    var W = [
+      ['Лёгкая', 'A', 99, 'минут за двадцать', 'Талант A, 99% — лучший, какой видел клан за поколение. Один шанс из десяти родиться с Телосложением Десяти Крайностей.', '#9FEFC4'],
+      ['Обычная', 'A', 88, 'часов за пять', 'Талант A, 88%. Гордость семьи: большое море, наполняется часов за пять.', '#7FE0C8'],
+      ['Сложная', 'B', 70, 'часов за десять', 'Талант B, 70%. Крепкий середняк: море наполняется часов за десять, камни пригодятся.', '#F0C868'],
+      ['Невыносимая', 'C', 50, 'часов шестнадцать', 'Талант C, 50%. Пять-шесть ударов — и море пусто. Каждый камень на счету.', '#F0A070'],
+      ['Невозможная', 'D', 30, 'больше суток', 'Талант D, 30%. Клан махнул на вас рукой: море мелкое. Выжить — уже победа.', '#F08A74']
+    ];
+    var p = this.state.pick;
+    var ways = W.map(function (w, i) { var on = i === p; var pips = []; for (var k = 0; k < 5; k++) { pips.push({ c: k <= i ? w[5] : 'rgba(234,240,242,0.14)' }); }
+      return { name: w[0], grade: w[1], talent: w[2] + '%', refill: w[3], about: w[4], c: w[5], pips: pips, clip: 'sea' + i, on: on ? 'true' : 'false',
+        level: Math.round(17 + 116 * (1 - w[2] / 100)), water: 'rgba(127,224,200,' + (on ? '0.75' : '0.45') + ')',
+        h: on ? '560px' : '520px', bd: on ? 'rgba(255,241,207,0.6)' : 'rgba(200,230,240,0.1)', bg: on ? 'linear-gradient(180deg, rgba(40,34,24,0.85), rgba(10,10,14,0.92))' : 'linear-gradient(180deg, rgba(12,16,24,0.7), rgba(5,7,12,0.82))',
+        sh: on ? '0 30px 60px rgba(0,0,0,0.6), 0 0 40px rgba(232,201,138,0.12)' : '0 20px 40px rgba(0,0,0,0.4)', cn: on ? '1' : '0', ghost: on ? 'rgba(232,201,138,0.12)' : 'rgba(234,240,242,0.04)', nameC: on ? '#FFFFFF' : '#C9D3D5',
+        pick: function () { self.setState({ pick: i }); } }; });
+    return { ways: ways, chosenName: W[p][0], chosenGrade: W[p][1], chosenTalent: W[p][2] + '%' };
+  }
+}
+</script>
+</body>
+</html>

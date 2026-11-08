@@ -1,0 +1,95 @@
+<!doctype html>
+<html lang="ru">
+<head>
+<meta charset="utf-8">
+<title>GU World — окна и уведомления</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@500;600;700&amp;family=Inter+Tight:wght@400;500;600&amp;family=Zhi+Mang+Xing&amp;family=Ma+Shan+Zheng&amp;display=swap" rel="stylesheet">
+<style>
+body{margin:0;background:#03040A}
+.gw{--gold:#E8C98A;--gh:#FFF1CF;--tx:#EAF0F2;--t2:#C9D3D5;--mu:#7E9093;--lb:#B8A47C;width:1440px;height:900px;position:relative;overflow:hidden;background:#03040A;color:var(--tx);font-family:'Inter Tight',sans-serif}
+.gw *{box-sizing:border-box}
+.bg{position:absolute;inset:-60px;background:radial-gradient(ellipse 640px 440px at 30% 30%,rgba(46,110,140,.22),transparent 70%),radial-gradient(ellipse 560px 400px at 76% 60%,rgba(90,60,150,.18),transparent 70%)}
+.stars{position:absolute;inset:0;background-image:radial-gradient(1.2px 1.2px at 7% 12%,#fff 50%,transparent 52%),radial-gradient(1px 1px at 23% 67%,#dff 50%,transparent 52%),radial-gradient(1.4px 1.4px at 41% 31%,#fff 50%,transparent 52%),radial-gradient(1px 1px at 58% 82%,#cdf 50%,transparent 52%),radial-gradient(1.2px 1.2px at 73% 18%,#fff 50%,transparent 52%);background-size:420px 300px;opacity:.45}
+.key{display:inline-flex;align-items:center;justify-content:center;min-width:20px;height:20px;padding:0 5px;border:1px solid rgba(234,240,242,.32);border-bottom-width:2px;border-radius:4px;font:600 10px 'Inter Tight',sans-serif;color:var(--t2)}
+.lbl{font-size:11px;letter-spacing:.34em;color:var(--lb)}
+.cap{position:absolute;font-size:10px;letter-spacing:.3em;color:#4E5E61}
+.disp{font-family:'Cormorant Garamond',serif;font-weight:600}
+.panel{position:relative;background:linear-gradient(180deg,rgba(12,16,24,.86),rgba(5,7,12,.94));border:1px solid rgba(200,230,240,.1);box-shadow:inset 0 1px 0 rgba(255,255,255,.04),0 30px 70px rgba(0,0,0,.6);backdrop-filter:blur(10px)}
+.panel::before,.panel::after{content:'';position:absolute;width:14px;height:14px;pointer-events:none}
+.panel::before{left:-1px;top:-1px;border-left:1px solid var(--gold);border-top:1px solid var(--gold)}
+.panel::after{right:-1px;bottom:-1px;border-right:1px solid var(--gold);border-bottom:1px solid var(--gold)}
+.btn{position:relative;display:inline-flex;align-items:center;justify-content:center;height:48px;padding:0 30px;border:none;clip-path:polygon(16px 0,calc(100% - 16px) 0,100% 50%,calc(100% - 16px) 100%,16px 100%,0 50%);font:600 12px 'Inter Tight',sans-serif;letter-spacing:.24em;cursor:pointer}
+.btn::before{content:'';position:absolute;inset:1px;clip-path:polygon(15px 0,calc(100% - 15px) 0,100% 50%,calc(100% - 15px) 100%,15px 100%,0 50%)}
+.btn span{position:relative;display:flex;align-items:center;gap:10px}
+.btn.ghost{background:rgba(234,240,242,.22);color:var(--t2)}.btn.ghost::before{background:linear-gradient(180deg,rgba(14,18,26,.96),rgba(6,8,12,.96))}
+.btn.bad{background:linear-gradient(180deg,#FFC2B0,#B84A3C 55%,#5A1A12);color:#FFD6CC;filter:drop-shadow(0 0 14px rgba(240,138,116,.25))}.btn.bad::before{background:linear-gradient(180deg,#2A0E0A,#140605)}
+.btn.solid{background:linear-gradient(180deg,#FFF1CF,#C9A060 50%,#6E5028);color:#1A1008}.btn.solid::before{background:linear-gradient(180deg,#FFF1CF,#E2C080 55%,#C29E5C)}
+.toast{display:flex;align-items:center;gap:12px;height:48px;padding:0 16px;background:linear-gradient(90deg,rgba(5,7,12,.92),rgba(5,7,12,.6));border-left:2px solid;font-size:13px}
+@keyframes gwSpin{to{transform:rotate(360deg)}}
+</style>
+</helmet>
+<div class="gw">
+  <div class="bg" aria-hidden="true"></div><div class="stars" aria-hidden="true"></div>
+
+  <span class="cap" style="left: 56px; top: 36px">ПОДТВЕРЖДЕНИЕ · НЕОБРАТИМОЕ</span>
+  <div role="dialog" aria-label="Сбросить игру?" class="panel" style="position: absolute; left: 56px; top: 60px; width: 600px; padding: 32px 34px; display: flex; flex-direction: column; gap: 14px">
+    <div style="display: flex; align-items: center; gap: 14px"><svg width="30" height="30" viewBox="0 0 24 24" fill="none" stroke="#F08A74" stroke-width="1.6" aria-hidden="true"><path d="M12 3l10 18H2z M12 10v5 M12 18v.5"></path></svg><span class="disp" style="font-size: 34px; line-height: 1">Сбросить игру?</span></div>
+    <p style="margin: 0; font-size: 15px; line-height: 1.6; color: #A8B6B8">Сохранение удалится: герой, апертура, Гу и задания. Настройки останутся. Это не отменить.</p>
+    <div style="display: flex; gap: 12px; margin-top: 8px"><button type="button" class="btn ghost"><span>ОТМЕНА <span class="key">ESC</span></span></button><button type="button" class="btn bad" style="flex: 1"><span>УДЕРЖИВАЙТЕ — ДА, СБРОСИТЬ</span></button></div>
+  </div>
+
+  <span class="cap" style="left: 720px; top: 36px">ПОДТВЕРЖДЕНИЕ · ОБЫЧНОЕ</span>
+  <div role="dialog" aria-label="Выбросить?" class="panel" style="position: absolute; left: 720px; top: 60px; width: 360px; padding: 26px 26px; display: flex; flex-direction: column; gap: 12px">
+    <span class="disp" style="font-size: 28px; line-height: 1">Выбросить?</span>
+    <p style="margin: 0; font-size: 14px; line-height: 1.55; color: #A8B6B8">Мясо кабана ×8 исчезнет из сумки.</p>
+    <div style="display: flex; gap: 8px; margin-top: 6px"><button type="button" class="btn ghost" style="height: 42px; padding: 0 22px"><span>НЕТ</span></button><button type="button" class="btn solid" style="height: 42px; padding: 0 22px"><span>ДА</span></button></div>
+  </div>
+
+  <span class="cap" style="left: 1130px; top: 36px">УВЕДОМЛЕНИЯ</span>
+  <div style="position: absolute; left: 1130px; top: 60px; width: 260px; display: flex; flex-direction: column; gap: 8px">
+    <div class="toast" style="border-color: #A8F0DC"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#A8F0DC" stroke-width="1.6" aria-hidden="true"><path d="M5 12.5L10 17 19 7"></path></svg><span>Лунная орхидея ×3</span></div>
+    <div class="toast" style="border-color: #E8C98A"><span style="width: 7px; height: 7px; transform: rotate(45deg); background: #E8C98A"></span><span>+[4] вклада клана</span></div>
+    <div class="toast" style="border-color: #F0C868"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#F0C868" stroke-width="1.6" aria-hidden="true"><path d="M12 3a9 9 0 1 0 .01 0z M12 7v5l3 2"></path></svg><span>Гу голоден · [3 ч]</span></div>
+    <div class="toast" style="border-color: #F08A74"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#F08A74" stroke-width="1.6" aria-hidden="true"><path d="M12 3l10 18H2z M12 10v5"></path></svg><span>Мало эссенции</span></div>
+  </div>
+
+  <span class="cap" style="left: 56px; top: 330px">БАННЕРЫ · ВЕРХ ЭКРАНА</span>
+  <div style="position: absolute; left: 56px; top: 354px; width: 640px; display: flex; flex-direction: column; gap: 14px">
+    <div style="position: relative; height: 76px; display: flex; flex-direction: column; align-items: center; justify-content: center; background: linear-gradient(90deg, transparent, rgba(3,4,10,0.85) 25%, rgba(3,4,10,0.85) 75%, transparent)"><span style="position: absolute; left: 15%; right: 15%; top: 0; height: 1px; background: linear-gradient(90deg, transparent, #E8C98A, transparent)"></span><span style="position: absolute; left: 15%; right: 15%; bottom: 0; height: 1px; background: linear-gradient(90deg, transparent, #E8C98A, transparent)"></span><span style="font-size: 10px; letter-spacing: 0.4em; color: #E8C98A">ЗАДАНИЕ ВЫПОЛНЕНО</span><span class="disp" style="font-size: 28px; line-height: 1.1">Волки у южных ворот</span></div>
+    <div style="position: relative; height: 76px; display: flex; flex-direction: column; align-items: center; justify-content: center; background: linear-gradient(90deg, transparent, rgba(3,4,10,0.85) 25%, rgba(3,4,10,0.85) 75%, transparent)"><span style="position: absolute; left: 15%; right: 15%; top: 0; height: 1px; background: linear-gradient(90deg, transparent, #7FE0C8, transparent)"></span><span style="position: absolute; left: 15%; right: 15%; bottom: 0; height: 1px; background: linear-gradient(90deg, transparent, #7FE0C8, transparent)"></span><span style="font-size: 10px; letter-spacing: 0.4em; color: #7FE0C8">ПРОРЫВ</span><span class="disp" style="font-size: 28px; line-height: 1.1">Ранг I · средняя стадия</span></div>
+  </div>
+
+  <span class="cap" style="left: 56px; top: 560px">ОБ ИГРЕ</span>
+  <div class="panel" style="position: absolute; left: 56px; top: 584px; width: 640px; padding: 24px 28px; display: flex; gap: 26px">
+    <span style="font-family: 'Zhi Mang Xing', cursive; font-size: 96px; line-height: 1; color: #E8C98A">蛊</span>
+    <div style="display: flex; flex-direction: column; gap: 8px">
+      <span class="disp" style="font-size: 30px; line-height: 1; letter-spacing: 0.1em">GU WORLD</span>
+      <span style="font-size: 12px; letter-spacing: 0.2em; color: #7E9093">ВЕРСИЯ [0.2.0]</span>
+      <span class="lbl" style="margin-top: 8px">АВТОРЫ И ИСТОЧНИКИ</span>
+      <span style="font-size: 13px; line-height: 1.6; color: #A8B6B8">По мотивам романа «Преподобный Гу». Модели персонажей — Quaternius (CC0). Шрифты — Google Fonts (OFL). [Остальные авторы]</span>
+    </div>
+  </div>
+
+  <span class="cap" style="left: 760px; top: 330px">ГИБЕЛЬ</span>
+  <div style="position: absolute; left: 760px; top: 354px; width: 630px; height: 500px; overflow: hidden; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 14px; background: radial-gradient(ellipse at 50% 50%, rgba(80,10,6,0.55), rgba(3,4,10,0.96) 70%); border: 1px solid rgba(240,138,116,0.2)">
+    <div aria-hidden="true" style="position: absolute; left: 50%; top: 50%; width: 700px; height: 700px; margin: -350px 0 0 -350px; border-radius: 50%; background: repeating-conic-gradient(from 0deg, rgba(240,138,116,0.05) 0deg 2deg, transparent 2deg 12deg); animation: gwSpin 80s linear infinite"></div>
+    <span style="position: relative; font-family: 'Zhi Mang Xing', cursive; font-size: 120px; line-height: 1; color: rgba(240,138,116,0.6)">死</span>
+    <span class="disp" style="position: relative; font-size: 56px; line-height: 1; letter-spacing: 0.14em; color: #F2D0C8">ВЫ ПОГИБЛИ</span>
+    <span style="position: relative; font-size: 13px; letter-spacing: 0.2em; color: #A8908A">[СЕРЫЙ ВОЛК] · У ЮЖНЫХ ВОРОТ · ДЕНЬ [3]</span>
+    <div style="position: relative; display: flex; gap: 12px; margin-top: 14px"><button type="button" class="btn ghost"><span>ГЛАВНОЕ МЕНЮ</span></button><button type="button" class="btn solid"><span>С ПОСЛЕДНЕГО СОХРАНЕНИЯ</span></button></div>
+  </div>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"$preview":{"width":1440,"height":900}}'>
+class Component extends DCLogic {
+  renderVals() { return {}; }
+}
+</script>
+</body>
+</html>

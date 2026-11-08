@@ -1,0 +1,184 @@
+<!doctype html>
+<html lang="ru">
+<head>
+<meta charset="utf-8">
+<title>GU World — сумка</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@500;600;700&amp;family=Inter+Tight:wght@400;500;600&amp;family=Zhi+Mang+Xing&amp;family=Ma+Shan+Zheng&amp;display=swap" rel="stylesheet">
+<style>
+body{margin:0;background:#03040A}
+.gw{--gold:#E8C98A;--gh:#FFF1CF;--tx:#EAF0F2;--t2:#C9D3D5;--mu:#7E9093;--lb:#B8A47C;width:1440px;height:900px;position:relative;overflow:hidden;background:#03040A;color:var(--tx);font-family:'Inter Tight',sans-serif}
+.gw *{box-sizing:border-box}
+.bg{position:absolute;inset:-60px;background:radial-gradient(ellipse 640px 440px at 36% 30%,rgba(46,110,140,.24),transparent 70%),radial-gradient(ellipse 560px 400px at 76% 40%,rgba(90,60,150,.18),transparent 70%),radial-gradient(ellipse 1000px 320px at 50% 92%,rgba(40,160,130,.14),transparent 70%)}
+.stars{position:absolute;inset:0;background-image:radial-gradient(1.2px 1.2px at 7% 12%,#fff 50%,transparent 52%),radial-gradient(1px 1px at 23% 67%,#dff 50%,transparent 52%),radial-gradient(1.4px 1.4px at 41% 31%,#fff 50%,transparent 52%),radial-gradient(1px 1px at 58% 82%,#cdf 50%,transparent 52%),radial-gradient(1.2px 1.2px at 73% 18%,#fff 50%,transparent 52%),radial-gradient(1px 1px at 88% 54%,#eff 50%,transparent 52%);background-size:420px 300px;opacity:.45}
+.vig{position:absolute;inset:0;background:radial-gradient(ellipse at 50% 50%,transparent 55%,rgba(0,0,0,.72) 100%);pointer-events:none}
+.hdr{position:absolute;left:56px;right:56px;top:0;height:84px;display:flex;align-items:center;gap:18px}
+.hdr::after{content:'';position:absolute;left:0;right:0;bottom:0;height:1px;background:linear-gradient(90deg,transparent,rgba(232,201,138,.28) 20%,rgba(232,201,138,.28) 80%,transparent)}
+.brand{display:flex;align-items:center;gap:14px;min-width:280px}
+.brand b{display:block;font:600 22px/1 'Cormorant Garamond',serif;letter-spacing:.16em}
+.brand small{display:block;margin-top:5px;font-size:11px;letter-spacing:.34em;color:var(--mu)}
+.tabs{flex:1;display:flex;align-items:center;justify-content:center;gap:24px}
+.tabs a{position:relative;font-size:12px;letter-spacing:.24em;color:var(--mu);text-decoration:none;display:flex;align-items:center;gap:6px}
+.tabs a.on{color:#F7E7C2;text-shadow:0 0 14px rgba(232,201,138,.6)}
+.tabs a.on::after{content:'';position:absolute;left:-8px;right:-4px;bottom:-12px;height:1px;background:linear-gradient(90deg,transparent,var(--gold),transparent)}
+.tabs a.on::before{content:'';position:absolute;left:50%;bottom:-15px;width:6px;height:6px;margin-left:-5px;transform:rotate(45deg);background:var(--gold);box-shadow:0 0 10px var(--gold)}
+.key{display:inline-flex;align-items:center;justify-content:center;min-width:20px;height:20px;padding:0 5px;border:1px solid rgba(234,240,242,.32);border-bottom-width:2px;border-radius:4px;font:600 10px 'Inter Tight',sans-serif;letter-spacing:.04em;color:var(--t2)}
+.lbl{font-size:11px;letter-spacing:.34em;color:var(--lb)}
+.disp{font-family:'Cormorant Garamond',serif;font-weight:600}
+.panel{position:relative;background:linear-gradient(180deg,rgba(12,16,24,.7),rgba(5,7,12,.82));border:1px solid rgba(200,230,240,.09);box-shadow:inset 0 1px 0 rgba(255,255,255,.04),0 24px 60px rgba(0,0,0,.45);backdrop-filter:blur(10px)}
+.panel::before,.panel::after{content:'';position:absolute;width:14px;height:14px;pointer-events:none}
+.panel::before{left:-1px;top:-1px;border-left:1px solid var(--gold);border-top:1px solid var(--gold)}
+.panel::after{right:-1px;bottom:-1px;border-right:1px solid var(--gold);border-bottom:1px solid var(--gold)}
+.tb{height:34px;padding:0 14px;border:1px solid rgba(234,240,242,.14);background:rgba(234,240,242,.03);color:var(--t2);font:500 12px 'Inter Tight',sans-serif;letter-spacing:.16em;cursor:pointer}
+.tb.on{border-color:rgba(255,241,207,.6);background:rgba(255,241,207,.1);color:var(--gh)}
+.cell{position:relative;width:72px;height:72px;padding:0;display:flex;align-items:center;justify-content:center;background:radial-gradient(circle at 50% 40%,rgba(30,40,56,.6),rgba(4,6,10,.88) 75%);border:1px solid rgba(200,230,240,.12);clip-path:polygon(10px 0,calc(100% - 10px) 0,100% 10px,100% calc(100% - 10px),calc(100% - 10px) 100%,10px 100%,0 calc(100% - 10px),0 10px);cursor:pointer;color:inherit}
+.cell .q{position:absolute;right:8px;bottom:5px;font:600 11px 'Inter Tight',sans-serif;color:var(--t2)}
+.cell .rk{position:absolute;left:10px;right:10px;bottom:0;height:2px}
+.cell.on{border-color:var(--gold);box-shadow:inset 0 0 18px rgba(232,201,138,.3)}
+.cell.dim{opacity:.25}
+.btn{position:relative;display:inline-flex;align-items:center;justify-content:center;height:46px;padding:0 24px;border:none;background:linear-gradient(180deg,#FFF1CF,#C9A060 50%,#6E5028);clip-path:polygon(16px 0,calc(100% - 16px) 0,100% 50%,calc(100% - 16px) 100%,16px 100%,0 50%);color:#FFF1CF;font:600 12px 'Inter Tight',sans-serif;letter-spacing:.22em;cursor:pointer}
+.btn::before{content:'';position:absolute;inset:1px;background:linear-gradient(180deg,#2A1A10,#120A06);clip-path:polygon(15px 0,calc(100% - 15px) 0,100% 50%,calc(100% - 15px) 100%,15px 100%,0 50%)}
+.btn span{position:relative;display:flex;align-items:center;gap:10px}
+.btn.solid{color:#1A1008}.btn.solid::before{background:linear-gradient(180deg,#FFF1CF,#E2C080 55%,#C29E5C)}
+.btn.ghost{background:rgba(234,240,242,.22);color:var(--t2)}.btn.ghost::before{background:linear-gradient(180deg,rgba(14,18,26,.96),rgba(6,8,12,.96))}
+.btn.bad{background:linear-gradient(180deg,#FFC2B0,#B84A3C 55%,#5A1A12);color:#FFD6CC}.btn.bad::before{background:linear-gradient(180deg,#2A0E0A,#140605)}
+.foot{position:absolute;left:56px;right:56px;bottom:22px;height:30px;display:flex;align-items:center;justify-content:flex-end;gap:24px;font-size:12px;letter-spacing:.06em;color:var(--mu)}
+.foot span{display:flex;align-items:center;gap:8px}
+@keyframes gwFloat{0%,100%{transform:translateY(0)}50%{transform:translateY(-8px)}}
+@keyframes gwSpin{to{transform:rotate(360deg)}}
+</style>
+</helmet>
+<div class="gw">
+  <svg width="0" height="0" aria-hidden="true" style="position: absolute"><defs>
+    <linearGradient id="moonW" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#E4F3FF"></stop><stop offset="0.55" stop-color="#6E9FD6"></stop><stop offset="1" stop-color="#1A2F52"></stop></linearGradient>
+    <radialGradient id="moonB" cx="0.4" cy="0.3" r="0.8"><stop offset="0" stop-color="#FFFFFF"></stop><stop offset="0.5" stop-color="#8FB6E4"></stop><stop offset="1" stop-color="#1E355E"></stop></radialGradient>
+    <linearGradient id="jadeW" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#CFF7DD"></stop><stop offset="0.55" stop-color="#3F9E72"></stop><stop offset="1" stop-color="#0F3626"></stop></linearGradient>
+    <radialGradient id="jadeB" cx="0.4" cy="0.3" r="0.8"><stop offset="0" stop-color="#F0FFF4"></stop><stop offset="0.5" stop-color="#5BBF8C"></stop><stop offset="1" stop-color="#0E3222"></stop></radialGradient>
+    <linearGradient id="ironW" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#EFE2C2"></stop><stop offset="0.55" stop-color="#A08758"></stop><stop offset="1" stop-color="#3A2D1A"></stop></linearGradient>
+    <radialGradient id="ironB" cx="0.4" cy="0.3" r="0.8"><stop offset="0" stop-color="#FFF4DA"></stop><stop offset="0.5" stop-color="#B09260"></stop><stop offset="1" stop-color="#33261A"></stop></radialGradient>
+    <linearGradient id="bloodW" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#FFC2B6"></stop><stop offset="0.55" stop-color="#C93A2E"></stop><stop offset="1" stop-color="#420A08"></stop></linearGradient>
+    <radialGradient id="bloodB" cx="0.4" cy="0.3" r="0.8"><stop offset="0" stop-color="#FFE2DC"></stop><stop offset="0.5" stop-color="#C2392F"></stop><stop offset="1" stop-color="#380707"></stop></radialGradient>
+    <linearGradient id="orchidW" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#FFF6FF"></stop><stop offset="0.5" stop-color="#C69AE2"></stop><stop offset="1" stop-color="#4C2C68"></stop></linearGradient>
+    <radialGradient id="orchidB" cx="0.4" cy="0.3" r="0.8"><stop offset="0" stop-color="#FFF3C4"></stop><stop offset="0.6" stop-color="#E0B04C"></stop><stop offset="1" stop-color="#8A5A18"></stop></radialGradient>
+    <linearGradient id="gourdW" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#8A6440"></stop><stop offset="1" stop-color="#4A2E18"></stop></linearGradient>
+    <radialGradient id="gourdB" cx="0.35" cy="0.35" r="0.8"><stop offset="0" stop-color="#FFD79A"></stop><stop offset="0.5" stop-color="#B8702E"></stop><stop offset="1" stop-color="#3C1E0C"></stop></radialGradient>
+    <linearGradient id="meatW" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#FFF6E6"></stop><stop offset="1" stop-color="#CBB894"></stop></linearGradient>
+    <radialGradient id="meatB" cx="0.4" cy="0.3" r="0.8"><stop offset="0" stop-color="#FFC0B0"></stop><stop offset="0.55" stop-color="#B84A3C"></stop><stop offset="1" stop-color="#4A120E"></stop></radialGradient>
+    <linearGradient id="stoneW" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#2E6B60"></stop><stop offset="1" stop-color="#0E2A26"></stop></linearGradient>
+    <radialGradient id="stoneB" cx="0.4" cy="0.3" r="0.8"><stop offset="0" stop-color="#E6FFF8"></stop><stop offset="0.5" stop-color="#7FE0C8"></stop><stop offset="1" stop-color="#1F6E5E"></stop></radialGradient>
+    <linearGradient id="herbW" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#D8F2B0"></stop><stop offset="1" stop-color="#3E6A24"></stop></linearGradient>
+    <radialGradient id="herbB" cx="0.4" cy="0.3" r="0.8"><stop offset="0" stop-color="#F2FFD6"></stop><stop offset="1" stop-color="#5A8A30"></stop></radialGradient>
+  </defs></svg>
+  <div class="bg" aria-hidden="true"></div><div class="stars" aria-hidden="true"></div><div class="vig" aria-hidden="true"></div>
+
+  <header class="hdr">
+    <div class="brand"><svg width="34" height="38" viewBox="0 0 34 38" aria-hidden="true"><path d="M17 1 L33 10 V28 L17 37 L1 28 V10Z" fill="none" stroke="#E8C98A" stroke-width="1.2"></path><path d="M11 14h12l-1 13H12z M14 14v-2a3 3 0 0 1 6 0v2" fill="none" stroke="#E8C98A" stroke-width="1.2"></path></svg><div><b>СУМКА</b><small>РАНГ I · НАЧАЛЬНАЯ СТАДИЯ</small></div></div>
+    <nav class="tabs" aria-label="Страницы героя"><span class="key">Q</span><a href="#" class="on" aria-current="page">СУМКА <span class="key">I</span></a><a href="#">АПЕРТУРА <span class="key">K</span></a><a href="#">СЛИЯНИЕ <span class="key">U</span></a><a href="#">КАРТА <span class="key">M</span></a><a href="#">ЖУРНАЛ <span class="key">J</span></a><a href="#">СТАТУС <span class="key">O</span></a><a href="#">ТЕЛО <span class="key">B</span></a><span class="key">E</span></nav>
+    <div style="min-width: 280px; display: flex; justify-content: flex-end; align-items: center; gap: 18px">
+      <span style="display: flex; align-items: center; gap: 8px"><svg width="16" height="20" viewBox="0 0 18 22" aria-hidden="true"><path d="M9 1 L17 8 L9 21 L1 8Z" fill="#1E4A42"></path><path d="M9 1 L17 8 H1Z" fill="#9FE6D2"></path></svg><span style="font-size: 15px; font-weight: 600">[1 240]</span></span>
+      <button type="button" aria-label="Закрыть" style="width: 40px; height: 40px; padding: 0; border: 1px solid rgba(234,240,242,0.2); background: transparent; color: #C9D3D5; cursor: pointer; display: flex; align-items: center; justify-content: center"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" aria-hidden="true"><path d="M6 6l12 12M18 6L6 18"></path></svg></button>
+    </div>
+  </header>
+
+  <section aria-label="Вещи" style="position: absolute; left: 56px; top: 116px; width: 700px; display: flex; flex-direction: column; gap: 16px">
+    <div style="display: flex; align-items: center; gap: 6px">
+      <sc-for list="{{ filters }}" as="f" hint-placeholder-count="5"><button type="button" class="{{ f.cls }}" aria-pressed="{{ f.on }}" onClick="{{ f.pick }}">{{ f.label }}</button></sc-for>
+      <span style="flex: 1"></span>
+      <button type="button" class="tb">УПОРЯДОЧИТЬ</button>
+    </div>
+    <div role="grid" aria-label="Сумка, 40 ячеек" style="display: grid; grid-template-columns: repeat(8, 72px); gap: 12px 14px">
+      <sc-for list="{{ cells }}" as="c" hint-placeholder-count="40">
+        <button type="button" class="{{ c.cls }}" aria-label="{{ c.label }}" aria-pressed="{{ c.on }}" onClick="{{ c.pick }}">
+          <sc-if value="{{ c.full }}" hint-placeholder-val="{{ false }}"><svg width="46" height="46" viewBox="0 0 100 100" aria-hidden="true" style="filter: drop-shadow(0 0 6px {{ c.g.glow }})"><path d="{{ c.g.a }}" fill="{{ c.g.w }}" stroke="rgba(0,0,0,0.55)" stroke-width="1"></path><path d="{{ c.g.b }}" fill="{{ c.g.bf }}" stroke="rgba(0,0,0,0.55)" stroke-width="1"></path><path d="{{ c.g.c }}" fill="none" stroke="{{ c.g.l }}" stroke-width="1.3" stroke-linecap="round" opacity="0.8"></path><path d="{{ c.g.e }}" fill="#FFFFFF" opacity="0.35"></path></svg></sc-if>
+          <span class="rk" style="background: {{ c.rim }}; box-shadow: 0 0 8px {{ c.rim }}"></span><span class="q">{{ c.q }}</span>
+          <span style="position: absolute; left: 7px; top: 5px; font: 600 9px 'Inter Tight', sans-serif; color: #E8C98A">{{ c.hot }}</span>
+        </button>
+      </sc-for>
+    </div>
+    <div style="display: flex; align-items: center; gap: 16px; margin-top: 4px">
+      <span class="lbl">ВЕС</span>
+      <div style="flex: 1; position: relative; height: 4px; background: rgba(234,240,242,0.08)"><i style="position: absolute; left: 0; top: 0; bottom: 0; width: 42%; background: linear-gradient(90deg, #6E5028, #FFF1CF); box-shadow: 0 0 10px rgba(255,241,207,0.5)"></i></div>
+      <span class="disp" style="font-size: 18px">[12,6] <span style="color: #7E9093; font-size: 14px">/ [30] кг</span></span>
+      <span style="font-size: 12px; color: #7E9093">{{ used }} из 40 ячеек</span>
+    </div>
+  </section>
+
+  <section aria-label="Выбранная вещь" class="panel" style="position: absolute; right: 56px; top: 116px; width: 560px; bottom: 76px; padding: 26px 28px; display: flex; flex-direction: column; gap: 16px">
+    <div style="display: flex; gap: 22px; align-items: center">
+      <div style="position: relative; width: 150px; height: 150px; flex: none">
+        <div aria-hidden="true" style="position: absolute; inset: 0; border-radius: 50%; background: radial-gradient(circle, {{ cur.g.glow }}, transparent 65%)"></div>
+        <div aria-hidden="true" style="position: absolute; inset: 6px; border-radius: 50%; border: 1px dashed rgba(232,201,138,0.25); animation: gwSpin 60s linear infinite"></div>
+        <svg width="110" height="110" viewBox="0 0 100 100" aria-hidden="true" style="position: absolute; left: 20px; top: 20px; animation: gwFloat 6s ease-in-out infinite; filter: drop-shadow(0 0 12px {{ cur.g.glow }})"><path d="{{ cur.g.a }}" fill="{{ cur.g.w }}" stroke="rgba(0,0,0,0.5)" stroke-width="0.8"></path><path d="{{ cur.g.b }}" fill="{{ cur.g.bf }}" stroke="rgba(0,0,0,0.5)" stroke-width="0.8"></path><path d="{{ cur.g.c }}" fill="none" stroke="{{ cur.g.l }}" stroke-width="1" stroke-linecap="round" opacity="0.85"></path><path d="{{ cur.g.e }}" fill="#FFFFFF" opacity="0.4"></path></svg>
+      </div>
+      <div style="display: flex; flex-direction: column; gap: 8px; min-width: 0">
+        <span style="font-size: 11px; letter-spacing: 0.3em; color: {{ cur.rim }}">{{ cur.cat }}</span>
+        <span class="disp" style="font-size: 34px; line-height: 1.02">{{ cur.name }}</span>
+        <span style="font-size: 13px; color: #7E9093">Количество · <span style="color: #EAF0F2">{{ cur.q }}</span></span>
+      </div>
+    </div>
+    <p style="margin: 0; font-size: 14px; line-height: 1.6; color: #A8B6B8">{{ cur.about }}</p>
+    <div style="display: flex; flex-direction: column">
+      <sc-for list="{{ cur.stats }}" as="s" hint-placeholder-count="3"><div style="display: flex; justify-content: space-between; align-items: baseline; padding: 10px 0; border-bottom: 1px solid rgba(234,240,242,0.06); font-size: 13px"><span style="color: #7E9093">{{ s.k }}</span><span style="color: {{ s.c }}">{{ s.v }}</span></div></sc-for>
+    </div>
+    <div style="margin-top: auto; display: flex; flex-direction: column; gap: 12px">
+      <div style="display: flex; gap: 10px; flex-wrap: wrap"><sc-for list="{{ cur.acts }}" as="a" hint-placeholder-count="3"><button type="button" class="{{ a.cls }}"><span>{{ a.t }}<span class="key" style="display: {{ a.ks }}; border-color: rgba(26,16,8,0.45); color: inherit">{{ a.k }}</span></span></button></sc-for></div>
+      <span style="font-size: 12px; color: #7E9093">Наведите и нажмите <span class="key">1</span>–<span class="key">9</span> — вещь встанет на панель под рукой.</span>
+    </div>
+  </section>
+
+  <footer class="foot"><span><span class="key">ЛКМ</span>Выбрать</span><span><span class="key">ПКМ</span>Применить</span><span><span class="key">SHIFT</span>+<span class="key">ЛКМ</span>Разделить</span><span><span class="key">ESC</span>Закрыть</span></footer>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"$preview":{"width":1440,"height":900}}'>
+class Component extends DCLogic {
+  constructor(props) { super(props); this.state = { pick: 0, filter: 0 }; }
+  renderVals() {
+    var self = this;
+    var S = {
+      moth: { a: 'M50 46 C38 22 14 12 7 27 C2 40 18 52 50 54 Z M50 46 C62 22 86 12 93 27 C98 40 82 52 50 54 Z M50 54 C36 58 18 70 25 83 C31 92 44 78 50 62 Z M50 54 C64 58 82 70 75 83 C69 92 56 78 50 62 Z', b: 'M50 34 C55 34 56 44 55 56 C54 70 52 80 50 85 C48 80 46 70 45 56 C44 44 45 34 50 34 Z M50 25 a5.5 5.5 0 1 0 0.01 0 Z', c: 'M48 27 C44 17 38 12 31 12 M52 27 C56 17 62 12 69 12 M50 48 C36 36 22 30 13 30 M50 48 C64 36 78 30 87 30 M24 34 a7 7 0 1 0 9 9 M76 34 a7 7 0 1 1 -9 9', e: 'M14 28 C20 22 32 22 40 31 C32 29 22 29 14 33 Z M86 28 C80 22 68 22 60 31 C68 29 78 29 86 33 Z' },
+      beetle: { a: 'M50 17 C58 17 62 23 60 30 L40 30 C38 23 42 17 50 17 Z M35 31 C40 26 60 26 65 31 C67 37 60 41 50 41 C40 41 33 37 35 31 Z', b: 'M50 40 C66 40 75 50 75 64 C75 80 64 90 50 90 C36 90 25 80 25 64 C25 50 34 40 50 40 Z', c: 'M50 41 V90 M27 50 L13 42 L7 46 M26 62 L11 64 L5 60 M29 74 L15 84 L11 92 M73 50 L87 42 L93 46 M74 62 L89 64 L95 60 M71 74 L85 84 L89 92', e: 'M36 50 C38 44 44 42 47 44 L46 76 C40 72 35 62 36 50 Z' },
+      orchid: { a: 'M50 50 C40 30 42 13 50 8 C58 13 60 30 50 50 Z M50 50 C30 42 15 44 10 52 C17 61 34 59 50 50 Z M50 50 C70 42 85 44 90 52 C83 61 66 59 50 50 Z M50 50 C38 64 33 79 40 88 C48 86 53 69 50 50 Z M50 50 C62 64 67 79 60 88 C52 86 47 69 50 50 Z', b: 'M50 43 a7 7 0 1 0 0.01 0 Z', c: 'M50 46 V14 M50 50 L16 52 M50 50 L84 52', e: 'M46 14 C48 11 52 11 54 14 L51 36 Z' },
+      gourd: { a: 'M43 8 H57 V15 H43 Z', b: 'M50 14 C56 14 58 19 56 25 C54 29 64 33 64 43 C64 49 60 51 58 53 C70 57 78 67 78 77 C78 89 66 95 50 95 C34 95 22 89 22 77 C22 67 30 57 42 53 C40 51 36 49 36 43 C36 33 46 29 44 25 C42 19 44 14 50 14 Z', c: 'M41 53 C46 56 54 56 59 53 M40 27 C46 29 54 29 60 27', e: 'M31 72 C31 63 37 59 42 59 C38 65 36 71 36 80 Z' },
+      meat: { a: 'M33 63 L17 79 C13 77 8 81 10 85 C6 87 8 93 13 91 C14 95 20 95 21 90 L37 71 Z', b: 'M30 61 C24 41 44 23 66 29 C84 35 86 59 70 71 C56 81 36 81 30 61 Z', c: 'M40 47 C50 41 62 45 66 53 M38 59 C48 55 58 59 62 65', e: 'M44 37 C54 33 66 35 72 41 C62 39 52 39 44 43 Z' },
+      stone: { a: 'M50 8 L84 34 L50 94 L16 34 Z', b: 'M50 8 L84 34 L16 34 Z', c: 'M16 34 L50 46 L84 34 M50 46 L50 94', e: 'M50 8 L60 34 L50 46 L40 34 Z' },
+      herb: { a: 'M50 92 V40 M50 60 C34 60 22 50 20 34 C36 34 48 44 50 60 M50 50 C66 50 78 40 80 24 C64 24 52 34 50 50', b: 'M50 40 C40 30 40 16 50 8 C60 16 60 30 50 40 Z', c: 'M50 38 V14', e: '' },
+      bone: { a: 'M30 30 a8 8 0 1 0 -6 12 L60 76 a8 8 0 1 0 12 -6 a8 8 0 1 0 -6 -12 L32 24 a8 8 0 1 0 -2 6 Z', b: '', c: 'M34 34 L66 66', e: '' }
+    };
+    var CW = { moon: ['#E6F4FF', 'rgba(140,190,255,0.6)'], jade: ['#D8FFE6', 'rgba(110,210,160,0.55)'], iron: ['#FFF1D0', 'rgba(220,190,130,0.5)'], blood: ['#FFE0DA', 'rgba(230,80,60,0.6)'], orchid: ['#F4E8FF', 'rgba(190,150,230,0.45)'], gourd: ['#FFE2B0', 'rgba(230,170,90,0.35)'], meat: ['#FFD6CC', 'rgba(220,110,90,0.3)'], stone: ['#E6FFF8', 'rgba(127,224,200,0.6)'], herb: ['#F2FFD6', 'rgba(170,220,120,0.4)'] };
+    function art(s, cw) { var x = S[s]; return { a: x.a, b: x.b, c: x.c, e: x.e, w: 'url(#' + cw + 'W)', bf: 'url(#' + cw + 'B)', l: CW[cw][0], glow: CW[cw][1] }; }
+    var R1 = '#7FE0C8', R2 = '#F08A74', N = 'rgba(234,240,242,0.25)';
+    var I = [
+      { n: 'Гу Лунного Света', cat: 'ГУ · РАНГ I', s: 'moth', cw: 'moon', q: 1, rim: R1, f: 1, about: 'Лунный свет, сжатый в лезвие. Простейший атакующий Гу клана Гу Юэ.', stats: [['Навык', '[Лунный клинок]', '#EAF0F2'], ['Ест', 'Лунную орхидею · раз в [3 дня]', '#EAF0F2'], ['Очистка в апертуру', '[8%] эссенции', '#A8F0DC']], acts: [['ОЧИСТИТЬ В АПЕРТУРУ', 'btn solid', 'ПКМ'], ['ВЫБРОСИТЬ', 'btn bad', '']], hot: '1' },
+      { n: 'Гу Нефритовой Кожи', cat: 'ГУ · РАНГ I', s: 'beetle', cw: 'jade', q: 1, rim: R1, f: 1, about: 'Кожа на миг становится крепкой, как нефрит.', stats: [['Навык', '[Нефритовая кожа]', '#EAF0F2'], ['Ест', '[Мясо]', '#EAF0F2']], acts: [['ОЧИСТИТЬ В АПЕРТУРУ', 'btn solid', 'ПКМ'], ['ВЫБРОСИТЬ', 'btn bad', '']], hot: '' },
+      { n: 'Гу Белого Кабана', cat: 'ГУ · РАНГ I', s: 'beetle', cw: 'iron', q: 1, rim: R1, f: 1, about: 'Сила белого кабана — навсегда в мышцах.', stats: [['Навык', 'Пассивный · работает сам', '#EAF0F2']], acts: [['ОЧИСТИТЬ В АПЕРТУРУ', 'btn solid', 'ПКМ']], hot: '' },
+      { n: 'Первобытный камень', cat: 'ПЕРВОБЫТНЫЕ КАМНИ', s: 'stone', cw: 'stone', q: 12, rim: N, f: 0, about: 'Природная эссенция в камне. Поглотите — море пополнится.', stats: [['Даёт', '+[10%] эссенции', '#A8F0DC'], ['Цена', 'это и есть деньги', '#EAF0F2']], acts: [['ПОГЛОТИТЬ', 'btn solid', 'V'], ['РАЗДЕЛИТЬ', 'btn ghost', '']], hot: 'V' },
+      { n: 'Лунная орхидея', cat: 'ТРАВЫ · КОРМ', s: 'orchid', cw: 'orchid', q: 40, rim: N, f: 3, about: 'Цветок, который любят лунные Гу.', stats: [['Кто ест', 'Гу Лунного Света, Гу Лунного блика', '#EAF0F2'], ['Свежесть', 'завянет через [2 дня]', '#F0C868'], ['Цена', '[2] камня', '#EAF0F2']], acts: [['НАКОРМИТЬ ГУ', 'btn solid', 'ПКМ'], ['РАЗДЕЛИТЬ', 'btn ghost', '']], hot: '' },
+      { n: 'Рисовое вино', cat: 'ЕДА · КОРМ', s: 'gourd', cw: 'gourd', q: 12, rim: N, f: 2, about: 'Крепкое вино в тыкве-горлянке. Пьют и люди, и некоторые Гу.', stats: [['Даёт', '+[10] здоровья', '#EAF0F2'], ['Свежесть', 'не портится', '#9FEFC4']], acts: [['ВЫПИТЬ', 'btn solid', 'ПКМ'], ['ПОДКОРМИТЬ ГУ', 'btn ghost', '']], hot: '2' },
+      { n: 'Мясо кабана', cat: 'ЕДА', s: 'meat', cw: 'meat', q: 8, rim: N, f: 2, about: 'Жилистое, но сытное.', stats: [['Даёт', '+[25] здоровья', '#EAF0F2'], ['Свежесть', 'испортится через [10 ч]', '#F08A74']], acts: [['СЪЕСТЬ', 'btn solid', 'ПКМ'], ['НАКОРМИТЬ ГУ', 'btn ghost', '']], hot: '' },
+      { n: 'Бамбуковый побег', cat: 'ТРАВЫ', s: 'herb', cw: 'herb', q: 6, rim: N, f: 3, about: '[Описание травы]', stats: [['Свежесть', 'завянет через [1 день]', '#F0C868']], acts: [['СЪЕСТЬ', 'btn solid', 'ПКМ']], hot: '' },
+      { n: 'Кости для клея', cat: 'МАТЕРИАЛЫ', s: 'bone', cw: 'meat', q: 5, rim: N, f: 4, about: 'Нужны для слияния и поделок.', stats: [['Где нужны', 'Слияние · [рецепты]', '#EAF0F2']], acts: [['ВЫБРОСИТЬ', 'btn bad', '']], hot: '' },
+      { n: 'Гу Кровавого луча', cat: 'ГУ · РАНГ II', s: 'moth', cw: 'blood', q: 1, rim: R2, f: 1, about: '[Описание Гу]', stats: [['Нужен ранг', 'II — пока не очистить', '#F08A74']], acts: [['ВЫБРОСИТЬ', 'btn bad', '']], hot: '' }
+    ];
+    var f = this.state.filter, p = this.state.pick;
+    var cur = I[p];
+    var cells = [];
+    for (var i = 0; i < 40; i++) {
+      var it = I[i]; var full = !!it; var on = full && i === p; var dim = full && f > 0 && it.f !== f;
+      cells.push({ full: full, g: full ? art(it.s, it.cw) : { a: '', b: '', c: '', e: '', w: 'none', bf: 'none', l: 'none', glow: 'transparent' }, q: full && it.q > 1 ? it.q : '', rim: full ? it.rim : 'transparent', hot: full ? it.hot : '', on: on ? 'true' : 'false', label: full ? it.n : 'Пустая ячейка',
+        cls: 'cell' + (on ? ' on' : '') + (dim ? ' dim' : ''), pick: (function (k) { return function () { if (I[k]) { self.setState({ pick: k }); } }; })(i) });
+    }
+    return {
+      filters: ['ВСЕ', 'ГУ', 'ЕДА', 'ТРАВЫ', 'МАТЕРИАЛЫ'].map(function (l, i) { var on = i === f; return { label: l, on: on ? 'true' : 'false', cls: on ? 'tb on' : 'tb', pick: function () { self.setState({ filter: i }); } }; }),
+      cells: cells, used: I.length,
+      cur: { name: cur.n, cat: cur.cat, q: cur.q, about: cur.about, rim: cur.rim === N ? '#B8A47C' : cur.rim, g: art(cur.s, cur.cw), stats: cur.stats.map(function (s) { return { k: s[0], v: s[1], c: s[2] }; }), acts: cur.acts.map(function (a) { return { t: a[0], cls: a[1], k: a[2], ks: a[2] ? 'inline-flex' : 'none' }; }) }
+    };
+  }
+}
+</script>
+</body>
+</html>

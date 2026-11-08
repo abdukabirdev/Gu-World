@@ -1,0 +1,78 @@
+<!doctype html>
+<html lang="ru">
+<head>
+<meta charset="utf-8">
+<title>GU World — разговор</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@500;600;700&amp;family=Inter+Tight:wght@400;500;600&amp;family=Zhi+Mang+Xing&amp;family=Ma+Shan+Zheng&amp;display=swap" rel="stylesheet">
+<style>
+body{margin:0;background:#03040A}
+.gw{--gold:#E8C98A;--gh:#FFF1CF;--tx:#EAF0F2;--t2:#C9D3D5;--mu:#7E9093;--lb:#B8A47C;width:1440px;height:900px;position:relative;overflow:hidden;background:#05070C;color:var(--tx);font-family:'Inter Tight',sans-serif}
+.gw *{box-sizing:border-box}
+.key{display:inline-flex;align-items:center;justify-content:center;min-width:24px;height:22px;padding:0 6px;border:1px solid rgba(234,240,242,.32);border-bottom-width:2px;border-radius:4px;font:600 10px 'Inter Tight',sans-serif;letter-spacing:.04em;color:var(--t2)}
+.disp{font-family:'Cormorant Garamond',serif;font-weight:600}
+.row{position:relative;display:flex;align-items:center;gap:14px;width:100%;padding:0 18px 0 26px;border:none;background:transparent;color:var(--t2);text-align:left;cursor:pointer;font-family:inherit}
+.row.on{background:linear-gradient(90deg,rgba(232,201,138,.14),transparent 90%);box-shadow:inset 0 1px 0 rgba(232,201,138,.3),inset 0 -1px 0 rgba(232,201,138,.15);color:#fff}
+.row.on::before{content:'';position:absolute;left:4px;top:50%;width:8px;height:8px;margin-top:-4px;transform:rotate(45deg);background:var(--gold);box-shadow:0 0 12px var(--gold)}
+@keyframes gwBlink{0%,100%{opacity:.3}50%{opacity:1}}
+</style>
+</helmet>
+<div class="gw">
+  <svg width="1440" height="900" viewBox="0 0 1440 900" aria-hidden="true" style="position: absolute; inset: 0">
+    <defs>
+      <linearGradient id="skyD" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#1A2436"></stop><stop offset="1" stop-color="#0A0E16"></stop></linearGradient>
+      <radialGradient id="lampD" cx="0.5" cy="0.5" r="0.5"><stop offset="0" stop-color="#FFC878" stop-opacity="0.5"></stop><stop offset="1" stop-color="#FFC878" stop-opacity="0"></stop></radialGradient>
+      <linearGradient id="figD" x1="0" y1="0" x2="1" y2="0"><stop offset="0" stop-color="#3A2A22"></stop><stop offset="0.7" stop-color="#1A1210"></stop><stop offset="1" stop-color="#0A0706"></stop></linearGradient>
+      <filter id="blD"><feGaussianBlur stdDeviation="4"></feGaussianBlur></filter>
+    </defs>
+    <rect width="1440" height="900" fill="url(#skyD)"></rect>
+    <g filter="url(#blD)" opacity="0.8">
+      <rect x="0" y="380" width="1440" height="520" fill="#120E0C"></rect>
+      <rect x="140" y="240" width="380" height="300" fill="#1E1612"></rect>
+      <path d="M100 250 Q330 190 560 250 Q530 236 516 220 L144 220 Q130 236 100 250Z" fill="#0E0A08"></path>
+      <rect x="980" y="260" width="320" height="280" fill="#1A1410"></rect>
+      <path d="M940 270 Q1140 214 1340 270 Q1312 256 1298 240 L982 240 Q968 256 940 270Z" fill="#0E0A08"></path>
+      <circle cx="330" cy="330" r="120" fill="url(#lampD)"></circle><rect x="318" y="300" width="24" height="40" rx="10" fill="#E8A050"></rect>
+      <circle cx="1140" cy="340" r="100" fill="url(#lampD)"></circle><rect x="1130" y="316" width="20" height="34" rx="9" fill="#E8A050"></rect>
+    </g>
+    <path d="M720 180 C760 180 778 206 776 240 C774 268 760 286 744 294 L760 320 C840 334 900 380 930 460 L980 900 H460 L510 460 C540 380 600 334 680 320 L696 294 C680 286 666 268 664 240 C662 206 680 180 720 180 Z" fill="url(#figD)"></path>
+    <path d="M776 240 C774 268 760 286 744 294 L760 320 C840 334 900 380 930 460 L980 900" fill="none" stroke="#FFC878" stroke-opacity="0.35" stroke-width="3"></path>
+    <path d="M664 214 C660 170 690 150 720 150 C756 150 784 170 778 216 C760 196 740 190 720 190 C700 190 680 196 664 214Z" fill="#141010"></path>
+  </svg>
+  <div aria-hidden="true" style="position: absolute; inset: 0; background: linear-gradient(0deg, rgba(3,4,10,0.98) 0%, rgba(3,4,10,0.85) 30%, transparent 58%), radial-gradient(ellipse at 50% 40%, transparent 50%, rgba(0,0,0,0.6) 100%)"></div>
+  <div aria-hidden="true" style="position: absolute; left: 0; right: 0; top: 0; height: 44px; background: #000"></div>
+  <div aria-hidden="true" style="position: absolute; left: 0; right: 0; bottom: 0; height: 44px; background: #000"></div>
+
+  <div style="position: absolute; left: 96px; top: 560px; width: 680px; display: flex; flex-direction: column; gap: 14px">
+    <div style="display: flex; align-items: center; gap: 14px">
+      <span style="width: 40px; height: 1px; background: linear-gradient(90deg, transparent, #E8C98A)"></span>
+      <span class="disp" style="font-size: 32px; line-height: 1">Тётушка Хуа</span>
+      <span style="font-size: 11px; letter-spacing: 0.3em; color: #7E9093">ЖИТЕЛЬНИЦА ДЕРЕВНИ</span>
+    </div>
+    <p class="disp" style="margin: 0; font-size: 28px; line-height: 1.32; font-weight: 500; color: #F2EADB">«[Реплика собеседника. Например: волки опять подходят к южным воротам — поможешь, и клан это запомнит.]»</p>
+    <div style="display: flex; align-items: center; gap: 10px; font-size: 12px; color: #7E9093"><span class="key">ЛКМ</span>Дальше<span style="width: 6px; height: 6px; transform: rotate(45deg); background: #E8C98A; animation: gwBlink 1.4s ease-in-out infinite"></span></div>
+  </div>
+
+  <nav aria-label="Ответы" style="position: absolute; right: 96px; top: 560px; width: 480px; display: flex; flex-direction: column; gap: 4px">
+    <span style="font-size: 11px; letter-spacing: 0.34em; color: #B8A47C; margin-bottom: 8px; padding-left: 26px">ОТВЕТ</span>
+    <button type="button" class="row on" style="height: 54px"><span class="key">1</span><span style="font-size: 16px; flex: 1">Возьмусь.</span><span style="font-size: 11px; letter-spacing: 0.18em; color: #E8C98A">ПОРУЧЕНИЕ</span></button>
+    <button type="button" class="row" style="height: 54px"><span class="key">2</span><span style="font-size: 16px; flex: 1">Сколько их и где?</span></button>
+    <button type="button" class="row" style="height: 54px"><span class="key">3</span><span style="font-size: 16px; flex: 1">Расскажите о клане.</span></button>
+    <button type="button" class="row" style="height: 54px"><span class="key">4</span><span style="font-size: 16px; flex: 1; color: #7E9093">Прощайте.</span></button>
+  </nav>
+
+  <div style="position: absolute; right: 96px; top: 70px; display: flex; align-items: center; gap: 10px; font-size: 11px; letter-spacing: 0.2em; color: #7E9093"><span style="width: 6px; height: 6px; border-radius: 50%; background: #9FEFC4; box-shadow: 0 0 8px #9FEFC4"></span>МИР НЕ ЖДЁТ · <span class="key">ESC</span> УЙТИ</div>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"$preview":{"width":1440,"height":900}}'>
+class Component extends DCLogic {
+  renderVals() { return {}; }
+}
+</script>
+</body>
+</html>

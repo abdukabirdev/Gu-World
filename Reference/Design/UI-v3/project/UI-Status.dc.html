@@ -1,0 +1,109 @@
+<!doctype html>
+<html lang="ru">
+<head>
+<meta charset="utf-8">
+<title>GU World — статус</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@500;600;700&amp;family=Inter+Tight:wght@400;500;600&amp;family=Zhi+Mang+Xing&amp;family=Ma+Shan+Zheng&amp;display=swap" rel="stylesheet">
+<style>
+body{margin:0;background:#03040A}
+.gw{--gold:#E8C98A;--sb:#6FB8FF;--tx:#EAF0F2;--t2:#C9D3D5;--mu:#7E9093;--lb:#B8A47C;width:1440px;height:900px;position:relative;overflow:hidden;background:#020309;color:var(--tx);font-family:'Inter Tight',sans-serif}
+.gw *{box-sizing:border-box}
+.bg{position:absolute;inset:-60px;background:radial-gradient(ellipse 700px 500px at 50% 50%,rgba(40,90,160,.3),transparent 70%),radial-gradient(ellipse 520px 380px at 80% 20%,rgba(90,60,150,.18),transparent 70%)}
+.stars{position:absolute;inset:0;background-image:radial-gradient(1.2px 1.2px at 7% 12%,#fff 50%,transparent 52%),radial-gradient(1px 1px at 23% 67%,#dff 50%,transparent 52%),radial-gradient(1.4px 1.4px at 41% 31%,#fff 50%,transparent 52%),radial-gradient(1px 1px at 58% 82%,#cdf 50%,transparent 52%),radial-gradient(1.2px 1.2px at 73% 18%,#fff 50%,transparent 52%),radial-gradient(1px 1px at 88% 54%,#eff 50%,transparent 52%);background-size:420px 300px;opacity:.5}
+.vig{position:absolute;inset:0;background:radial-gradient(ellipse at 50% 50%,transparent 55%,rgba(0,0,0,.72) 100%);pointer-events:none}
+.hdr{position:absolute;left:56px;right:56px;top:0;height:84px;display:flex;align-items:center;gap:18px}
+.hdr::after{content:'';position:absolute;left:0;right:0;bottom:0;height:1px;background:linear-gradient(90deg,transparent,rgba(232,201,138,.28) 20%,rgba(232,201,138,.28) 80%,transparent)}
+.brand{display:flex;align-items:center;gap:14px;min-width:280px}
+.brand b{display:block;font:600 22px/1 'Cormorant Garamond',serif;letter-spacing:.16em}
+.brand small{display:block;margin-top:5px;font-size:11px;letter-spacing:.34em;color:var(--mu)}
+.tabs{flex:1;display:flex;align-items:center;justify-content:center;gap:24px}
+.tabs a{position:relative;font-size:12px;letter-spacing:.24em;color:var(--mu);text-decoration:none;display:flex;align-items:center;gap:6px}
+.tabs a.on{color:#F7E7C2;text-shadow:0 0 14px rgba(232,201,138,.6)}
+.tabs a.on::after{content:'';position:absolute;left:-8px;right:-4px;bottom:-12px;height:1px;background:linear-gradient(90deg,transparent,var(--gold),transparent)}
+.tabs a.on::before{content:'';position:absolute;left:50%;bottom:-15px;width:6px;height:6px;margin-left:-5px;transform:rotate(45deg);background:var(--gold);box-shadow:0 0 10px var(--gold)}
+.key{display:inline-flex;align-items:center;justify-content:center;min-width:20px;height:20px;padding:0 5px;border:1px solid rgba(234,240,242,.32);border-bottom-width:2px;border-radius:4px;font:600 10px 'Inter Tight',sans-serif;letter-spacing:.04em;color:var(--t2)}
+.disp{font-family:'Cormorant Garamond',serif;font-weight:600}
+.num{font-family:'Cormorant Garamond',serif;font-weight:600;line-height:.85}
+.sys{position:absolute;left:150px;right:150px;top:118px;bottom:76px;background:linear-gradient(180deg,rgba(10,26,44,.82),rgba(4,10,20,.9));border:1px solid rgba(111,184,255,.45);box-shadow:0 0 0 1px rgba(2,3,9,.9),0 0 0 4px rgba(111,184,255,.12),0 0 60px rgba(111,184,255,.2),inset 0 0 60px rgba(111,184,255,.08);backdrop-filter:blur(10px)}
+.sys::before{content:'';position:absolute;inset:0;background:repeating-linear-gradient(0deg,rgba(111,184,255,.035) 0 1px,transparent 1px 4px);pointer-events:none}
+.cn{position:absolute;width:22px;height:22px;border-color:#9FD2FF;border-style:solid;filter:drop-shadow(0 0 6px #6FB8FF)}
+.bar{position:relative;height:6px;background:rgba(111,184,255,.1);box-shadow:inset 0 0 0 1px rgba(111,184,255,.15)}
+.bar i{position:absolute;left:0;top:0;bottom:0;display:block}
+.slbl{font-size:11px;letter-spacing:.34em;color:#8FC4FF}
+.tr{display:grid;grid-template-columns:130px 54px minmax(0,1fr) 170px 160px;gap:16px;align-items:center;padding:14px 0;border-bottom:1px solid rgba(111,184,255,.12)}
+.foot{position:absolute;left:56px;right:56px;bottom:22px;height:30px;display:flex;align-items:center;justify-content:flex-end;gap:24px;font-size:12px;letter-spacing:.06em;color:var(--mu)}
+.foot span{display:flex;align-items:center;gap:8px}
+@keyframes gwScan{0%{transform:translateY(-100%)}100%{transform:translateY(900%)}}
+</style>
+</helmet>
+<div class="gw">
+  <div class="bg" aria-hidden="true"></div><div class="stars" aria-hidden="true"></div><div class="vig" aria-hidden="true"></div>
+
+  <header class="hdr">
+    <div class="brand"><svg width="34" height="38" viewBox="0 0 34 38" aria-hidden="true"><path d="M17 1 L33 10 V28 L17 37 L1 28 V10Z" fill="none" stroke="#E8C98A" stroke-width="1.2"></path><path d="M17 10l2.2 4.6 5 .6-3.7 3.4 1 5L17 21.2l-4.5 2.4 1-5-3.7-3.4 5-.6z" fill="none" stroke="#6FB8FF" stroke-width="1.2"></path></svg><div><b>СТАТУС</b><small>ТЕЛО ГЕРОЯ</small></div></div>
+    <nav class="tabs" aria-label="Страницы героя"><span class="key">Q</span><a href="#">СУМКА <span class="key">I</span></a><a href="#">АПЕРТУРА <span class="key">K</span></a><a href="#">СЛИЯНИЕ <span class="key">U</span></a><a href="#">КАРТА <span class="key">M</span></a><a href="#">ЖУРНАЛ <span class="key">J</span></a><a href="#" class="on" aria-current="page">СТАТУС <span class="key">O</span></a><a href="#">ТЕЛО <span class="key">B</span></a><span class="key">E</span></nav>
+    <div style="min-width: 280px; display: flex; justify-content: flex-end"><button type="button" aria-label="Закрыть" style="width: 40px; height: 40px; padding: 0; border: 1px solid rgba(234,240,242,0.2); background: transparent; color: #C9D3D5; cursor: pointer; display: flex; align-items: center; justify-content: center"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" aria-hidden="true"><path d="M6 6l12 12M18 6L6 18"></path></svg></button></div>
+  </header>
+
+  <section class="sys" aria-label="Окно системы">
+    <span class="cn" style="left: -2px; top: -2px; border-width: 2px 0 0 2px"></span><span class="cn" style="right: -2px; top: -2px; border-width: 2px 2px 0 0"></span><span class="cn" style="left: -2px; bottom: -2px; border-width: 0 0 2px 2px"></span><span class="cn" style="right: -2px; bottom: -2px; border-width: 0 2px 2px 0"></span>
+    <div aria-hidden="true" style="position: absolute; left: 0; right: 0; top: 0; height: 80px; background: linear-gradient(180deg, transparent, rgba(111,184,255,0.06), transparent); animation: gwScan 7s linear infinite; pointer-events: none"></div>
+    <div style="position: absolute; left: 0; right: 0; top: 0; height: 56px; display: flex; align-items: center; justify-content: center; gap: 14px; border-bottom: 1px solid rgba(111,184,255,0.25); background: linear-gradient(90deg, transparent, rgba(111,184,255,0.12), transparent)">
+      <span style="width: 6px; height: 6px; transform: rotate(45deg); background: #9FD2FF; box-shadow: 0 0 8px #6FB8FF"></span>
+      <span style="font-size: 13px; letter-spacing: 0.5em; color: #CFE6FF; text-shadow: 0 0 12px rgba(111,184,255,0.8)">СТАТУС</span>
+      <span style="width: 6px; height: 6px; transform: rotate(45deg); background: #9FD2FF; box-shadow: 0 0 8px #6FB8FF"></span>
+    </div>
+
+    <div style="position: absolute; left: 44px; right: 44px; top: 84px; display: grid; grid-template-columns: 300px minmax(0, 1fr); gap: 50px">
+      <div style="display: flex; flex-direction: column; gap: 16px">
+        <div><div class="slbl">ИМЯ</div><div class="disp" style="font-size: 32px; line-height: 1.1; margin-top: 4px">Гу Юэ [Лань]</div></div>
+        <div style="display: flex; align-items: flex-end; gap: 16px"><div><div class="slbl">УРОВЕНЬ ТЕЛА</div><div class="num" style="font-size: 84px; color: #DFF0FF; text-shadow: 0 0 24px rgba(111,184,255,0.7); margin-top: 6px">[7]</div></div><div style="padding-bottom: 8px"><div class="slbl">ТИТУЛ</div><div style="font-size: 15px; margin-top: 6px; color: #CFE6FF">[Закалённый юноша]</div></div></div>
+        <div style="display: flex; flex-direction: column; gap: 12px; margin-top: 6px">
+          <div><div style="display: flex; justify-content: space-between; font-size: 13px; margin-bottom: 6px"><span style="color: #8FC4FF">Здоровье</span><span>[82] / [100]</span></div><div class="bar"><i style="width: 82%; background: linear-gradient(90deg, #7A1E16, #F08A74); box-shadow: 0 0 10px rgba(240,138,116,0.6)"></i></div></div>
+          <div><div style="display: flex; justify-content: space-between; font-size: 13px; margin-bottom: 6px"><span style="color: #8FC4FF">Выносливость</span><span>[58] / [100]</span></div><div class="bar"><i style="width: 58%; background: linear-gradient(90deg, #6E5028, #FFF1CF); box-shadow: 0 0 10px rgba(255,241,207,0.5)"></i></div></div>
+          <div><div style="display: flex; justify-content: space-between; font-size: 13px; margin-bottom: 6px"><span style="color: #8FC4FF">Море эссенции</span><span>64% · ранг I</span></div><div class="bar"><i style="width: 64%; background: linear-gradient(90deg, #1F6E5E, #A8F0DC); box-shadow: 0 0 10px rgba(127,224,200,0.6)"></i></div></div>
+        </div>
+        <div style="margin-top: 10px; padding: 14px 16px; border: 1px solid rgba(111,184,255,0.25); background: rgba(111,184,255,0.05); font-size: 13px; line-height: 1.55; color: #CFE6FF">Свободных очков: <span class="num" style="font-size: 22px; color: #FFFFFF">[0]</span><br><span style="color: #8FC4FF">Тело растёт от того, чем вы его нагружаете.</span></div>
+      </div>
+
+      <div>
+        <div class="tr" style="padding-top: 0; font-size: 10px; letter-spacing: 0.3em; color: #6F9CCC"><span>ЧЕРТА</span><span>УР.</span><span>К СЛЕДУЮЩЕМУ</span><span>ДАЁТ СЕЙЧАС</span><span>РАСТЁТ ОТ</span></div>
+        <sc-for list="{{ traits }}" as="t" hint-placeholder-count="6">
+          <div class="tr">
+            <span style="display: flex; flex-direction: column; gap: 2px"><span class="disp" style="font-size: 22px; line-height: 1">{{ t.n }}</span><span style="font-size: 10px; letter-spacing: 0.2em; color: #6F9CCC">{{ t.en }}</span></span>
+            <span class="num" style="font-size: 36px; color: #DFF0FF; text-shadow: 0 0 14px rgba(111,184,255,0.6)">{{ t.lv }}</span>
+            <span style="display: flex; flex-direction: column; gap: 6px"><span class="bar"><i style="width: {{ t.p }}; background: linear-gradient(90deg, #24507A, #A0D2FF); box-shadow: 0 0 10px rgba(160,210,255,0.6)"></i></span><span style="font-size: 11px; color: #8FC4FF">{{ t.p }}</span></span>
+            <span style="font-size: 13px; color: #EAF0F2">{{ t.give }}</span>
+            <span style="font-size: 12px; line-height: 1.4; color: #8FA6B8">{{ t.train }}</span>
+          </div>
+        </sc-for>
+      </div>
+    </div>
+  </section>
+
+  <footer class="foot"><span><span class="key">Q</span><span class="key">E</span>Страница</span><span><span class="key">O</span><span class="key">ESC</span>Закрыть</span></footer>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"$preview":{"width":1440,"height":900}}'>
+class Component extends DCLogic {
+  renderVals() {
+    var T = [
+      ['Сила', 'STR', '[8]', '62%', 'удар ×[1,18]', 'удары кулаком, Гу силы'],
+      ['Ловкость', 'AGI', '[6]', '30%', 'уклонение +[6%]', 'рывки, уклонения, бег'],
+      ['Крепость', 'VIT', '[7]', '84%', 'урон −[9%]', 'полученные удары'],
+      ['Выносливость', 'END', '[5]', '15%', '+[20] выносливости', 'долгий бег, бой'],
+      ['Закалка', 'TMP', '[3]', '48%', 'раны заживают ×[1,1]', 'медитация, Гу кожи'],
+      ['[Восприятие]', 'PER', '[4]', '70%', 'звери видны на [+12 м]', 'охота, разведка']
+    ];
+    return { traits: T.map(function (t) { return { n: t[0], en: t[1], lv: t[2], p: t[3], give: t[4], train: t[5] }; }) };
+  }
+}
+</script>
+</body>
+</html>

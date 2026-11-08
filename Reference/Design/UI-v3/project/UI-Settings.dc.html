@@ -1,0 +1,120 @@
+<!doctype html>
+<html lang="ru">
+<head>
+<meta charset="utf-8">
+<title>GU World — настройки</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@500;600;700&amp;family=Inter+Tight:wght@400;500;600&amp;family=Zhi+Mang+Xing&amp;family=Ma+Shan+Zheng&amp;display=swap" rel="stylesheet">
+<style>
+body{margin:0;background:#03040A}
+.gw{--gold:#E8C98A;--gh:#FFF1CF;--tx:#EAF0F2;--t2:#C9D3D5;--mu:#7E9093;--lb:#B8A47C;width:1440px;height:900px;position:relative;overflow:hidden;background:#03040A;color:var(--tx);font-family:'Inter Tight',sans-serif}
+.gw *{box-sizing:border-box}
+.bg{position:absolute;inset:-60px;background:radial-gradient(ellipse 640px 440px at 30% 30%,rgba(46,110,140,.22),transparent 70%),radial-gradient(ellipse 560px 400px at 76% 50%,rgba(90,60,150,.16),transparent 70%)}
+.stars{position:absolute;inset:0;background-image:radial-gradient(1.2px 1.2px at 7% 12%,#fff 50%,transparent 52%),radial-gradient(1px 1px at 23% 67%,#dff 50%,transparent 52%),radial-gradient(1.4px 1.4px at 41% 31%,#fff 50%,transparent 52%),radial-gradient(1px 1px at 58% 82%,#cdf 50%,transparent 52%),radial-gradient(1.2px 1.2px at 73% 18%,#fff 50%,transparent 52%),radial-gradient(1px 1px at 88% 54%,#eff 50%,transparent 52%);background-size:420px 300px;opacity:.45}
+.vig{position:absolute;inset:0;background:radial-gradient(ellipse at 50% 50%,transparent 55%,rgba(0,0,0,.72) 100%);pointer-events:none}
+.hdr{position:absolute;left:56px;right:56px;top:0;height:84px;display:flex;align-items:center;gap:18px}
+.hdr::after{content:'';position:absolute;left:0;right:0;bottom:0;height:1px;background:linear-gradient(90deg,transparent,rgba(232,201,138,.28) 20%,rgba(232,201,138,.28) 80%,transparent)}
+.tabs{flex:1;display:flex;align-items:center;justify-content:center;gap:30px}
+.tabs button{position:relative;height:40px;padding:0;border:none;background:transparent;font:500 12px 'Inter Tight',sans-serif;letter-spacing:.28em;color:var(--mu);cursor:pointer}
+.tabs button.on{color:#F7E7C2;text-shadow:0 0 14px rgba(232,201,138,.6)}
+.tabs button.on::after{content:'';position:absolute;left:-8px;right:-4px;bottom:0;height:1px;background:linear-gradient(90deg,transparent,var(--gold),transparent)}
+.tabs button.on::before{content:'';position:absolute;left:50%;bottom:-3px;width:6px;height:6px;margin-left:-5px;transform:rotate(45deg);background:var(--gold);box-shadow:0 0 10px var(--gold)}
+.key{display:inline-flex;align-items:center;justify-content:center;min-width:24px;height:22px;padding:0 6px;border:1px solid rgba(234,240,242,.32);border-bottom-width:2px;border-radius:4px;font:600 10px 'Inter Tight',sans-serif;letter-spacing:.04em;color:var(--t2)}
+.lbl{font-size:11px;letter-spacing:.34em;color:var(--lb)}
+.disp{font-family:'Cormorant Garamond',serif;font-weight:600}
+.set{position:relative;display:flex;align-items:center;gap:20px;height:60px;padding:0 20px 0 26px;border-bottom:1px solid rgba(234,240,242,.06)}
+.set.on{background:linear-gradient(90deg,rgba(232,201,138,.12),transparent 85%);box-shadow:inset 0 1px 0 rgba(232,201,138,.25),inset 0 -1px 0 rgba(232,201,138,.12)}
+.set.on::before{content:'';position:absolute;left:4px;top:50%;width:8px;height:8px;margin-top:-4px;transform:rotate(45deg);background:var(--gold);box-shadow:0 0 12px var(--gold)}
+.tog{position:relative;width:44px;height:22px;border-radius:11px;background:rgba(234,240,242,.1);border:1px solid rgba(234,240,242,.2);cursor:pointer;padding:0}
+.tog::after{content:'';position:absolute;left:3px;top:3px;width:14px;height:14px;border-radius:50%;background:#7E9093}
+.tog.on{background:rgba(255,241,207,.18);border-color:rgba(255,241,207,.6)}.tog.on::after{left:25px;background:#FFF1CF;box-shadow:0 0 10px #FFF1CF}
+.arrow{width:30px;height:30px;padding:0;border:1px solid rgba(234,240,242,.16);background:transparent;color:var(--t2);cursor:pointer;font-size:14px}
+.btn{position:relative;display:inline-flex;align-items:center;justify-content:center;height:40px;padding:0 26px;border:none;clip-path:polygon(14px 0,calc(100% - 14px) 0,100% 50%,calc(100% - 14px) 100%,14px 100%,0 50%);font:600 12px 'Inter Tight',sans-serif;letter-spacing:.24em;cursor:pointer}
+.btn::before{content:'';position:absolute;inset:1px;clip-path:polygon(13px 0,calc(100% - 13px) 0,100% 50%,calc(100% - 13px) 100%,13px 100%,0 50%)}
+.btn span{position:relative}
+.btn.bad{background:linear-gradient(180deg,#FFC2B0,#B84A3C 55%,#5A1A12);color:#FFD6CC}.btn.bad::before{background:linear-gradient(180deg,#2A0E0A,#140605)}
+.foot{position:absolute;left:56px;right:56px;bottom:22px;height:30px;display:flex;align-items:center;justify-content:flex-end;gap:24px;font-size:12px;letter-spacing:.06em;color:var(--mu)}
+.foot span{display:flex;align-items:center;gap:8px}
+</style>
+</helmet>
+<div class="gw">
+  <div class="bg" aria-hidden="true"></div><div class="stars" aria-hidden="true"></div><div class="vig" aria-hidden="true"></div>
+  <span aria-hidden="true" style="position: absolute; right: 60px; top: 160px; font-family: 'Zhi Mang Xing', cursive; font-size: 460px; line-height: 1; color: rgba(232,201,138,0.04)">律</span>
+
+  <header class="hdr">
+    <div style="min-width: 300px; display: flex; flex-direction: column; gap: 5px"><span class="disp" style="font-size: 26px; letter-spacing: 0.16em; line-height: 1">НАСТРОЙКИ</span><span style="font-size: 11px; letter-spacing: 0.34em; color: #7E9093">ХРАНЯТСЯ НА ЭТОМ КОМПЬЮТЕРЕ</span></div>
+    <nav class="tabs" aria-label="Разделы"><span class="key">Q</span><sc-for list="{{ tabs }}" as="t" hint-placeholder-count="4"><button type="button" class="{{ t.cls }}" aria-pressed="{{ t.on }}" onClick="{{ t.pick }}">{{ t.label }}</button></sc-for><span class="key">E</span></nav>
+    <div style="min-width: 300px; text-align: right; font-size: 12px; color: #7E9093">Версия [0.2.0]</div>
+  </header>
+
+  <section aria-label="{{ tabName }}" style="position: absolute; left: 56px; top: 120px; width: 820px; display: flex; flex-direction: column">
+    <sc-for list="{{ rows }}" as="r" hint-placeholder-count="6">
+      <div class="{{ r.cls }}">
+        <span style="flex: 1; display: flex; flex-direction: column; gap: 3px"><span style="font-size: 15px; color: #EAF0F2">{{ r.name }}</span><span style="font-size: 12px; color: #7E9093">{{ r.hint }}</span></span>
+        <sc-if value="{{ r.isTog }}" hint-placeholder-val="{{ false }}"><button type="button" class="{{ r.tc }}" aria-label="{{ r.name }}" aria-pressed="{{ r.val }}" onClick="{{ r.flip }}"></button></sc-if>
+        <sc-if value="{{ r.isChoice }}" hint-placeholder-val="{{ false }}"><span style="display: flex; align-items: center; gap: 14px"><button type="button" class="arrow" aria-label="Назад" onClick="{{ r.prev }}">‹</button><span class="disp" style="min-width: 150px; text-align: center; font-size: 20px; color: #FFF1CF">{{ r.choice }}</span><button type="button" class="arrow" aria-label="Дальше" onClick="{{ r.next }}">›</button></span></sc-if>
+        <sc-if value="{{ r.isSlider }}" hint-placeholder-val="{{ false }}"><span style="display: flex; align-items: center; gap: 16px; width: 300px"><span style="flex: 1; position: relative; height: 2px; background: rgba(234,240,242,0.12)"><span style="position: absolute; left: 0; top: 0; bottom: 0; width: {{ r.pct }}; background: linear-gradient(90deg, #8C6A3A, #FFF1CF)"></span><span style="position: absolute; left: {{ r.pct }}; top: -6px; width: 14px; height: 14px; margin-left: -7px; transform: rotate(45deg); background: #FFF1CF; box-shadow: 0 0 10px #FFF1CF"></span></span><span class="disp" style="width: 50px; text-align: right; font-size: 20px">{{ r.num }}</span></span></sc-if>
+        <sc-if value="{{ r.isKey }}" hint-placeholder-val="{{ false }}"><span style="display: flex; gap: 6px">{{ r.keysLabel }}<sc-for list="{{ r.keys }}" as="k" hint-placeholder-count="1"><span class="key" style="min-width: 34px; height: 28px; font-size: 11px">{{ k.k }}</span></sc-for></span></sc-if>
+        <sc-if value="{{ r.isDanger }}" hint-placeholder-val="{{ false }}"><button type="button" class="btn bad"><span>{{ r.action }}</span></button></sc-if>
+      </div>
+    </sc-for>
+  </section>
+
+  <aside aria-label="Пояснение" style="position: absolute; right: 56px; top: 120px; width: 420px; display: flex; flex-direction: column; gap: 14px">
+    <span class="lbl">{{ tabNameUp }}</span>
+    <span class="disp" style="font-size: 34px; line-height: 1.05">{{ asideTitle }}</span>
+    <p style="margin: 0; font-size: 14px; line-height: 1.6; color: #A8B6B8">{{ asideText }}</p>
+    <span style="width: 120px; height: 1px; background: linear-gradient(90deg, rgba(232,201,138,0.4), transparent); margin: 6px 0"></span>
+    <p style="margin: 0; font-size: 13px; line-height: 1.6; color: #7E9093">Каждая настройка действует сразу. Сброс игры не трогает настройки.</p>
+  </aside>
+
+  <footer class="foot"><span><span class="key">↑↓</span>Выбор</span><span><span class="key">← →</span>Изменить</span><span><span class="key">Q</span><span class="key">E</span>Раздел</span><span><span class="key">ESC</span>Назад</span></footer>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"$preview":{"width":1440,"height":900}}'>
+class Component extends DCLogic {
+  constructor(props) { super(props); this.state = { tab: 0, v: { fps: false, hit: false, inv: false, vsync: true, mode: 1, q: 3 } }; }
+  renderVals() {
+    var self = this, v = this.state.v;
+    function set(k, val) { var n = Object.assign({}, self.state.v); n[k] = val; self.setState({ v: n }); }
+    function tog(name, hint, k) { return { kind: 'tog', name: name, hint: hint, val: v[k] ? 'true' : 'false', tc: v[k] ? 'tog on' : 'tog', flip: function () { set(k, !v[k]); } }; }
+    function choice(name, hint, k, list) { return { kind: 'choice', name: name, hint: hint, choice: list[v[k]], prev: function () { set(k, (v[k] + list.length - 1) % list.length); }, next: function () { set(k, (v[k] + 1) % list.length); } }; }
+    function slider(name, hint, p, num) { return { kind: 'slider', name: name, hint: hint, pct: p + '%', num: num }; }
+    function keys(name, ks) { return { kind: 'key', name: name, hint: '', keysLabel: '', keys: ks.map(function (k) { return { k: k }; }) }; }
+    var T = [
+      ['Игра', 'Как ведёт себя игра', 'Поле зрения и мышь подстраивают камеру. Хитбоксы — для проверки ударов: каждая граница рядом с камерой рисуется линиями.', [
+        slider('Поле зрения', 'Шире — больше видно, сильнее искажение', 55, '[70°]'),
+        slider('Чувствительность мыши', 'Скорость поворота камеры', 40, '[1,0]'),
+        tog('Инверсия по вертикали', 'Мышь вверх — камера вниз', 'inv'),
+        tog('Хитбоксы · F7', 'Границы тел и ударов линиями', 'hit'),
+        { kind: 'danger', name: 'Сбросить игру', hint: 'Сохранение удалится. Настройки останутся.', action: 'СБРОСИТЬ…' }
+      ]],
+      ['Управление', 'Клавиши', 'Клавиши показаны всегда рядом с действием — в HUD, в окнах и в подсказках внизу экрана.', [
+        keys('Движение', ['W', 'A', 'S', 'D']), keys('Прыжок · полёт', ['ПРОБЕЛ']), keys('Гу: держать — прицел, отпустить — удар', ['ЛКМ']), keys('Гу под рукой', ['1', '2', '3', '4']), keys('Кулаки · камень', ['F', 'V']), keys('Сумка · апертура · слияние', ['I', 'K', 'U']), keys('Карта · журнал · статус · тело', ['M', 'J', 'O', 'B']), keys('Чат · команда', ['T', '/'])
+      ]],
+      ['Графика', 'Картинка', '«Кино» — для скриншотов и роликов: максимум теней и дымки. На слабых ноутбуках начните со «Среднего».', [
+        choice('Режим экрана', 'Окно или весь экран', 'mode', ['В окне', 'Во весь экран']),
+        choice('Качество', 'Тени, дымка, дальность', 'q', ['Минимум', 'Низкое', 'Среднее', 'Высокое', 'Ультра', 'Кино']),
+        tog('Вертикальная синхронизация', 'Без разрывов кадра', 'vsync'),
+        tog('Показывать FPS', 'Кадры в секунду в углу экрана', 'fps')
+      ]],
+      ['Звук', 'Громкость', 'Громкость можно менять прямо во время боя — пауза для этого не нужна.', [
+        slider('Общая громкость', 'Всё сразу', 70, '70'), slider('[Музыка]', 'Фон и темы', 55, '55'), slider('[Эффекты]', 'Удары, Гу, шаги', 80, '80'), slider('[Голоса]', 'Реплики жителей', 65, '65')
+      ]]
+    ];
+    var t = T[this.state.tab];
+    var rows = t[3].map(function (r, i) { return Object.assign({ cls: i === 0 ? 'set on' : 'set', isTog: r.kind === 'tog', isChoice: r.kind === 'choice', isSlider: r.kind === 'slider', isKey: r.kind === 'key', isDanger: r.kind === 'danger', keys: [] }, r); });
+    return {
+      tabs: T.map(function (x, i) { var on = i === self.state.tab; return { label: x[0].toUpperCase(), on: on ? 'true' : 'false', cls: on ? 'on' : '', pick: function () { self.setState({ tab: i }); } }; }),
+      rows: rows, tabName: t[0], tabNameUp: t[0].toUpperCase(), asideTitle: t[1], asideText: t[2]
+    };
+  }
+}
+</script>
+</body>
+</html>

@@ -1,0 +1,158 @@
+<!doctype html>
+<html lang="ru">
+<head>
+<meta charset="utf-8">
+<title>GU World — слияние</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@500;600;700&amp;family=Inter+Tight:wght@400;500;600&amp;family=Zhi+Mang+Xing&amp;family=Ma+Shan+Zheng&amp;display=swap" rel="stylesheet">
+<style>
+body{margin:0;background:#03040A}
+.gw{--gold:#E8C98A;--gh:#FFF1CF;--tx:#EAF0F2;--t2:#C9D3D5;--mu:#7E9093;--lb:#B8A47C;width:1440px;height:900px;position:relative;overflow:hidden;background:#020309;color:var(--tx);font-family:'Inter Tight',sans-serif}
+.gw *{box-sizing:border-box}
+.bg{position:absolute;inset:-60px;background:radial-gradient(ellipse 620px 460px at 50% 44%,rgba(70,110,170,.3),transparent 70%),radial-gradient(ellipse 520px 380px at 80% 30%,rgba(90,60,150,.2),transparent 70%),radial-gradient(ellipse 1000px 300px at 50% 96%,rgba(40,160,130,.24),transparent 70%);animation:gwNeb 30s ease-in-out infinite}
+.stars{position:absolute;inset:0;background-image:radial-gradient(1.2px 1.2px at 7% 12%,#fff 50%,transparent 52%),radial-gradient(1px 1px at 23% 67%,#dff 50%,transparent 52%),radial-gradient(1.4px 1.4px at 41% 31%,#fff 50%,transparent 52%),radial-gradient(1px 1px at 58% 82%,#cdf 50%,transparent 52%),radial-gradient(1.2px 1.2px at 73% 18%,#fff 50%,transparent 52%),radial-gradient(1px 1px at 88% 54%,#eff 50%,transparent 52%),radial-gradient(.8px .8px at 15% 44%,#fff 50%,transparent 52%),radial-gradient(.8px .8px at 66% 47%,#fff 50%,transparent 52%);background-size:420px 300px;opacity:.6;animation:gwTw 6s ease-in-out infinite}
+.vig{position:absolute;inset:0;background:radial-gradient(ellipse at 50% 50%,transparent 55%,rgba(0,0,0,.72) 100%);pointer-events:none}
+.hdr{position:absolute;left:56px;right:56px;top:0;height:84px;display:flex;align-items:center;gap:18px}
+.hdr::after{content:'';position:absolute;left:0;right:0;bottom:0;height:1px;background:linear-gradient(90deg,transparent,rgba(232,201,138,.28) 20%,rgba(232,201,138,.28) 80%,transparent)}
+.brand{display:flex;align-items:center;gap:14px;min-width:280px}
+.brand b{display:block;font:600 22px/1 'Cormorant Garamond',serif;letter-spacing:.16em}
+.brand small{display:block;margin-top:5px;font-size:11px;letter-spacing:.34em;color:var(--mu)}
+.tabs{flex:1;display:flex;align-items:center;justify-content:center;gap:24px}
+.tabs a{position:relative;font-size:12px;letter-spacing:.24em;color:var(--mu);text-decoration:none;display:flex;align-items:center;gap:6px}
+.tabs a.on{color:#F7E7C2;text-shadow:0 0 14px rgba(232,201,138,.6)}
+.tabs a.on::after{content:'';position:absolute;left:-8px;right:-4px;bottom:-12px;height:1px;background:linear-gradient(90deg,transparent,var(--gold),transparent)}
+.tabs a.on::before{content:'';position:absolute;left:50%;bottom:-15px;width:6px;height:6px;margin-left:-5px;transform:rotate(45deg);background:var(--gold);box-shadow:0 0 10px var(--gold)}
+.key{display:inline-flex;align-items:center;justify-content:center;min-width:20px;height:20px;padding:0 5px;border:1px solid rgba(234,240,242,.32);border-bottom-width:2px;border-radius:4px;font:600 10px 'Inter Tight',sans-serif;letter-spacing:.04em;color:var(--t2)}
+.lbl{font-size:11px;letter-spacing:.34em;color:var(--lb)}
+.disp{font-family:'Cormorant Garamond',serif;font-weight:600}
+.num{font-family:'Cormorant Garamond',serif;font-weight:600;line-height:.85}
+.row{position:relative;display:flex;align-items:center;gap:14px;width:100%;height:68px;padding:0 12px 0 22px;border:none;background:transparent;color:var(--tx);text-align:left;cursor:pointer;font-family:inherit}
+.row.on{background:linear-gradient(90deg,rgba(232,201,138,.13),transparent 85%);box-shadow:inset 0 1px 0 rgba(232,201,138,.3),inset 0 -1px 0 rgba(232,201,138,.15)}
+.row.on::before{content:'';position:absolute;left:3px;top:50%;width:8px;height:8px;margin-top:-4px;transform:rotate(45deg);background:var(--gold);box-shadow:0 0 12px var(--gold)}
+.dot{width:6px;height:6px;border-radius:50%}
+.btn{position:relative;display:inline-flex;align-items:center;justify-content:center;gap:12px;width:400px;height:62px;border:none;background:linear-gradient(180deg,#FFF1CF,#C9A060 50%,#6E5028);clip-path:polygon(22px 0,calc(100% - 22px) 0,100% 50%,calc(100% - 22px) 100%,22px 100%,0 50%);color:#FFF1CF;font:600 15px 'Inter Tight',sans-serif;letter-spacing:.3em;cursor:pointer;filter:drop-shadow(0 0 18px rgba(232,201,138,.35))}
+.btn::before{content:'';position:absolute;inset:1px;background:linear-gradient(180deg,#2A1A10,#120A06);clip-path:polygon(21px 0,calc(100% - 21px) 0,100% 50%,calc(100% - 21px) 100%,21px 100%,0 50%)}
+.btn span{position:relative;display:flex;align-items:center;gap:12px}
+.foot{position:absolute;left:56px;right:56px;bottom:22px;height:30px;display:flex;align-items:center;justify-content:flex-end;gap:24px;font-size:12px;letter-spacing:.06em;color:var(--mu)}
+.foot span{display:flex;align-items:center;gap:8px}
+@keyframes gwNeb{0%,100%{transform:translate(0,0) scale(1)}50%{transform:translate(-20px,10px) scale(1.04)}}
+@keyframes gwTw{0%,100%{opacity:.4}50%{opacity:.75}}
+@keyframes gwSpin{to{transform:rotate(360deg)}}
+@keyframes gwSpinR{to{transform:rotate(-360deg)}}
+@keyframes gwFloat{0%,100%{transform:translateY(0)}50%{transform:translateY(-10px)}}
+@keyframes gwPulse{0%,100%{opacity:.5;transform:scale(1)}50%{opacity:.95;transform:scale(1.06)}}
+@keyframes gwFlow{to{stroke-dashoffset:-48}}
+@keyframes gwShine{0%{transform:translateX(-140%)}55%,100%{transform:translateX(320%)}}
+</style>
+</helmet>
+<div class="gw" style="--c1: #EAF6FF; --c2: #7FB0E8; --c3: #14264A; --c4: #C6EAFF; --rim: #FFFFFF; --aura: #3F72B4">
+  <svg width="0" height="0" aria-hidden="true" style="position: absolute"><defs>
+    <linearGradient id="moonW" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#E4F3FF"></stop><stop offset="0.55" stop-color="#6E9FD6"></stop><stop offset="1" stop-color="#1A2F52"></stop></linearGradient>
+    <radialGradient id="moonB" cx="0.4" cy="0.3" r="0.8"><stop offset="0" stop-color="#FFFFFF"></stop><stop offset="0.5" stop-color="#8FB6E4"></stop><stop offset="1" stop-color="#1E355E"></stop></radialGradient>
+    <linearGradient id="orchidW" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#FFF6FF"></stop><stop offset="0.5" stop-color="#C69AE2"></stop><stop offset="1" stop-color="#4C2C68"></stop></linearGradient>
+    <radialGradient id="orchidB" cx="0.4" cy="0.3" r="0.8"><stop offset="0" stop-color="#FFF3C4"></stop><stop offset="0.6" stop-color="#E0B04C"></stop><stop offset="1" stop-color="#8A5A18"></stop></radialGradient>
+    <linearGradient id="gold" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#FFF1CF"></stop><stop offset="0.45" stop-color="#E8C98A"></stop><stop offset="1" stop-color="#8C6A3A"></stop></linearGradient>
+    <linearGradient id="seaF" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#9FF2DC" stop-opacity="0.5"></stop><stop offset="0.5" stop-color="#2E8C78" stop-opacity="0.35"></stop><stop offset="1" stop-color="#04201C" stop-opacity="0"></stop></linearGradient>
+    <filter id="soft" x="-50%" y="-50%" width="200%" height="200%"><feGaussianBlur stdDeviation="2.4" result="b"></feGaussianBlur><feMerge><feMergeNode in="b"></feMergeNode><feMergeNode in="SourceGraphic"></feMergeNode></feMerge></filter>
+  </defs></svg>
+  <div class="bg" aria-hidden="true"></div><div class="stars" aria-hidden="true"></div>
+  <span aria-hidden="true" style="position: absolute; left: 50%; top: 60px; margin-left: -320px; width: 640px; text-align: center; font-family: 'Zhi Mang Xing', cursive; font-size: 620px; line-height: 1; color: rgba(232,201,138,0.04)">煉</span>
+  <svg width="1100" height="260" viewBox="0 0 1100 260" aria-hidden="true" style="position: absolute; left: 170px; top: 660px"><ellipse cx="550" cy="130" rx="520" ry="100" fill="url(#seaF)"></ellipse><ellipse cx="550" cy="130" rx="520" ry="100" fill="none" stroke="rgba(160,240,220,0.3)"></ellipse><ellipse cx="550" cy="130" rx="380" ry="72" fill="none" stroke="rgba(160,240,220,0.12)"></ellipse><ellipse cx="550" cy="130" rx="520" ry="100" fill="none" stroke="#FFE6B0" stroke-width="3" stroke-dasharray="270 1800" stroke-dashoffset="-330" filter="url(#soft)"></ellipse></svg>
+  <div class="vig" aria-hidden="true"></div>
+
+  <header class="hdr">
+    <div class="brand"><svg width="34" height="38" viewBox="0 0 34 38" aria-hidden="true"><path d="M17 1 L33 10 V28 L17 37 L1 28 V10Z" fill="none" stroke="#E8C98A" stroke-width="1.2"></path><text x="17" y="24.5" text-anchor="middle" font-family="'Ma Shan Zheng', serif" font-size="15" fill="#E8C98A">融</text></svg><div><b>СЛИЯНИЕ ГУ</b><small>ОБРЯД В АПЕРТУРЕ</small></div></div>
+    <nav class="tabs" aria-label="Страницы героя"><span class="key">Q</span><a href="#">СУМКА <span class="key">I</span></a><a href="#">АПЕРТУРА <span class="key">K</span></a><a href="#" class="on" aria-current="page">СЛИЯНИЕ <span class="key">U</span></a><a href="#">КАРТА <span class="key">M</span></a><a href="#">ЖУРНАЛ <span class="key">J</span></a><a href="#">СТАТУС <span class="key">O</span></a><a href="#">ТЕЛО <span class="key">B</span></a><span class="key">E</span></nav>
+    <div style="min-width: 280px; display: flex; justify-content: flex-end; align-items: center; gap: 16px"><span style="display: flex; align-items: center; gap: 8px"><span class="dot" style="width: 8px; height: 8px; background: #7FE0C8; box-shadow: 0 0 8px #7FE0C8"></span><span style="font-size: 15px; font-weight: 600; color: #A8F0DC">64%</span></span><button type="button" aria-label="Закрыть" style="width: 40px; height: 40px; padding: 0; border: 1px solid rgba(234,240,242,0.2); background: transparent; color: #C9D3D5; cursor: pointer; display: flex; align-items: center; justify-content: center"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" aria-hidden="true"><path d="M6 6l12 12M18 6L6 18"></path></svg></button></div>
+  </header>
+
+  <section aria-label="Книга рецептов" style="position: absolute; left: 56px; top: 116px; width: 330px; bottom: 76px; display: flex; flex-direction: column">
+    <div style="display: flex; justify-content: space-between; align-items: baseline; padding-left: 4px"><span class="lbl">КНИГА РЕЦЕПТОВ</span><span class="disp" style="font-size: 20px; color: #7E9093">5</span></div>
+    <div style="display: flex; gap: 16px; margin: 14px 0 12px; padding: 0 4px 12px; border-bottom: 1px solid rgba(234,240,242,0.08); font-size: 12px; letter-spacing: 0.16em; color: #7E9093"><span style="color: #F7E7C2; border-bottom: 1px solid #E8C98A; padding-bottom: 11px; margin-bottom: -13px">ВСЕ</span><span>ГОТОВЫ</span><span>II</span><span>III</span><span>IV+</span></div>
+    <button type="button" class="row on"><span style="flex: 1; display: flex; flex-direction: column; gap: 4px"><span class="disp" style="font-size: 22px; line-height: 1">Гу Лунного блика</span><span style="font-size: 11px; letter-spacing: 0.18em; color: #7E9093"><span style="font-family: 'Ma Shan Zheng', serif; font-size: 15px; color: #9C8A62">月芒蛊</span> · АТАКА</span></span><span class="disp" style="color: #F08A74">II</span><span class="dot" style="background: #8FE0B0; box-shadow: 0 0 8px #8FE0B0"></span></button>
+    <button type="button" class="row"><span style="flex: 1; display: flex; flex-direction: column; gap: 4px"><span class="disp" style="font-size: 22px; line-height: 1; color: #C9D3D5">Гу Нефритового щита</span><span style="font-size: 11px; letter-spacing: 0.18em; color: #7E9093">ЗАЩИТА</span></span><span class="disp" style="color: #F08A74">II</span><span class="dot" style="background: rgba(234,240,242,0.15)"></span></button>
+    <button type="button" class="row"><span style="flex: 1; display: flex; flex-direction: column; gap: 4px"><span class="disp" style="font-size: 22px; line-height: 1; color: #C9D3D5">Гу Серебряного инея</span><span style="font-size: 11px; letter-spacing: 0.18em; color: #7E9093">КОНТРОЛЬ</span></span><span class="disp" style="color: #DDE2EA">III</span><span class="dot" style="background: rgba(234,240,242,0.15)"></span></button>
+    <button type="button" class="row"><span style="flex: 1; display: flex; flex-direction: column; gap: 4px"><span class="disp" style="font-size: 22px; line-height: 1; color: #C9D3D5">Гу Железной Кости</span><span style="font-size: 11px; letter-spacing: 0.18em; color: #7E9093">ЗАЩИТА</span></span><span class="disp" style="color: #DDE2EA">III</span><span class="dot" style="background: rgba(234,240,242,0.15)"></span></button>
+    <button type="button" class="row"><span style="flex: 1; display: flex; flex-direction: column; gap: 4px"><span class="disp" style="font-size: 22px; line-height: 1; color: #C9D3D5">Гу Кровавого луча</span><span style="font-size: 11px; letter-spacing: 0.18em; color: #7E9093">АТАКА</span></span><span class="disp" style="color: #F0C868">IV</span><span class="dot" style="background: rgba(234,240,242,0.15)"></span></button>
+  </section>
+
+  <section aria-label="Алтарь" style="position: absolute; left: 470px; top: 104px; width: 500px; height: 500px">
+    <div aria-hidden="true" style="position: absolute; inset: 0; border-radius: 50%; border: 1px solid rgba(232,201,138,0.2); animation: gwSpin 160s linear infinite"><span style="position: absolute; left: 50%; top: -4px; width: 7px; height: 7px; margin-left: -4px; transform: rotate(45deg); background: #E8C98A; box-shadow: 0 0 10px #E8C98A"></span></div>
+    <div aria-hidden="true" style="position: absolute; inset: 50px; border-radius: 50%; border: 1px dashed rgba(232,201,138,0.16); animation: gwSpinR 90s linear infinite"></div>
+    <svg width="500" height="500" viewBox="0 0 500 500" aria-hidden="true" style="position: absolute; inset: 0"><circle cx="250" cy="250" r="226" fill="none" stroke="rgba(255,255,255,0.05)" stroke-width="3"></circle><circle cx="250" cy="250" r="226" fill="none" stroke="url(#gold)" stroke-width="3" stroke-linecap="round" stroke-dasharray="1022.4 1420" transform="rotate(-90 250 250)" filter="url(#soft)"></circle>
+      <path d="M62 250 C120 250 160 230 250 250 M438 250 C380 250 340 230 250 250" fill="none" stroke="rgba(200,240,255,0.18)" stroke-width="5" filter="url(#soft)"></path>
+      <path d="M62 250 C120 250 160 230 250 250 M438 250 C380 250 340 230 250 250" fill="none" stroke="#DFF6FF" stroke-width="1.3" stroke-dasharray="6 18" style="animation: gwFlow 1.6s linear infinite"></path></svg>
+    <div aria-hidden="true" style="position: absolute; left: 90px; top: 90px; width: 320px; height: 320px; border-radius: 50%; background: radial-gradient(circle, var(--aura), transparent 65%); opacity: 0.5; filter: blur(18px); animation: gwPulse 5s ease-in-out infinite"></div>
+    <div style="position: absolute; left: 110px; top: 100px; width: 280px; height: 280px; animation: gwFloat 6s ease-in-out infinite">
+      <svg viewBox="0 0 400 400" width="280" height="280" role="img" aria-label="Гу Лунного блика" style="overflow: visible">
+        <defs>
+          <linearGradient id="hmFW" x1="1" y1="1" x2="0" y2="0"><stop offset="0" style="stop-color: var(--c3)"></stop><stop offset="0.35" style="stop-color: var(--c2)"></stop><stop offset="0.8" style="stop-color: var(--c1)"></stop><stop offset="1" style="stop-color: var(--c2)"></stop></linearGradient>
+          <linearGradient id="hmHW" x1="1" y1="0" x2="0" y2="1"><stop offset="0" style="stop-color: var(--c3)"></stop><stop offset="0.5" style="stop-color: var(--c2)"></stop><stop offset="1" style="stop-color: var(--c1)"></stop></linearGradient>
+          <radialGradient id="hmBody" cx="0.35" cy="0.3" r="0.8"><stop offset="0" style="stop-color: var(--c1)"></stop><stop offset="0.5" style="stop-color: var(--c2)"></stop><stop offset="1" style="stop-color: var(--c3)"></stop></radialGradient>
+          <radialGradient id="hmIri" cx="0.5" cy="0.5" r="0.5"><stop offset="0" style="stop-color: var(--c4); stop-opacity: 0.75"></stop><stop offset="1" style="stop-color: var(--c4); stop-opacity: 0"></stop></radialGradient>
+          <filter id="hmGlow" x="-50%" y="-50%" width="200%" height="200%"><feGaussianBlur stdDeviation="2.5" result="b"></feGaussianBlur><feMerge><feMergeNode in="b"></feMergeNode><feMergeNode in="SourceGraphic"></feMergeNode></feMerge></filter>
+        </defs>
+        <g id="hmL">
+          <path d="M104 300 C90 328 82 352 90 376 C98 362 106 340 118 312 Z" fill="url(#hmHW)" style="stroke: var(--c3)" stroke-width="1.2"></path>
+          <path d="M196 200 C162 204 116 222 88 252 C68 274 70 304 92 314 C116 324 146 300 168 270 C182 250 192 226 196 212 Z" fill="url(#hmHW)" style="stroke: var(--c3)" stroke-width="1.4"></path>
+          <circle cx="126" cy="270" r="15" style="fill: var(--c3)" opacity="0.85"></circle><circle cx="126" cy="270" r="10" style="fill: var(--c4)" opacity="0.85" filter="url(#hmGlow)"></circle><circle cx="123" cy="267" r="3" fill="#FFFFFF"></circle>
+          <path d="M196 168 C160 120 104 70 46 62 C26 60 14 74 18 92 C24 122 52 150 84 170 C116 190 160 200 196 196 Z" fill="url(#hmFW)" style="stroke: var(--c3)" stroke-width="1.4"></path>
+          <ellipse cx="104" cy="112" rx="72" ry="36" fill="url(#hmIri)" transform="rotate(-24 104 112)" style="mix-blend-mode: screen"></ellipse>
+          <path d="M196 180 C160 150 110 110 50 76 M196 184 C150 168 100 150 40 118 M196 188 C150 184 110 180 70 168 M150 150 C140 132 128 116 112 102" fill="none" style="stroke: var(--rim)" stroke-width="0.8" opacity="0.4"></path>
+          <path d="M98 104 a22 22 0 1 0 30 30 a17 17 0 1 1 -30 -30 Z" style="fill: var(--c4)" filter="url(#hmGlow)" opacity="0.95"></path>
+          <path d="M196 168 C160 120 104 70 46 62 C30 60 20 68 18 80" fill="none" style="stroke: var(--rim)" stroke-width="2" opacity="0.75" stroke-linecap="round"></path>
+        </g>
+        <use href="#hmL" transform="translate(400 0) scale(-1 1)"></use>
+        <path d="M197 142 C186 116 168 98 148 90 C166 104 180 118 193 144 Z M203 142 C214 116 232 98 252 90 C234 104 220 118 207 144 Z" style="fill: var(--c1)" opacity="0.75"></path>
+        <ellipse cx="200" cy="178" rx="15" ry="22" fill="url(#hmBody)" style="stroke: var(--c3)" stroke-width="1"></ellipse>
+        <g fill="url(#hmBody)" style="stroke: var(--c3)" stroke-width="0.8"><ellipse cx="200" cy="208" rx="12" ry="11"></ellipse><ellipse cx="200" cy="226" rx="11" ry="10"></ellipse><ellipse cx="200" cy="243" rx="10" ry="9"></ellipse><ellipse cx="200" cy="258" rx="8.5" ry="8"></ellipse><ellipse cx="200" cy="271" rx="6.5" ry="6.5"></ellipse></g>
+        <circle cx="200" cy="151" r="10.5" fill="url(#hmBody)" style="stroke: var(--c3)" stroke-width="1"></circle>
+        <circle cx="194" cy="149" r="3.6" style="fill: var(--c4)" filter="url(#hmGlow)"></circle><circle cx="206" cy="149" r="3.6" style="fill: var(--c4)" filter="url(#hmGlow)"></circle>
+      </svg>
+    </div>
+    <div style="position: absolute; left: 22px; top: 210px; width: 80px; display: flex; flex-direction: column; align-items: center">
+      <div style="width: 70px; height: 70px; border-radius: 50%; display: flex; align-items: center; justify-content: center; background: radial-gradient(circle at 50% 40%, rgba(20,34,44,0.95), rgba(2,3,9,0.95) 70%); box-shadow: 0 0 0 1px rgba(232,201,138,0.75), 0 0 0 6px rgba(2,3,9,0.85), 0 0 22px rgba(140,190,255,0.5)"><svg width="44" height="44" viewBox="0 0 100 100" aria-hidden="true"><path d="M50 46 C38 22 14 12 7 27 C2 40 18 52 50 54 Z M50 46 C62 22 86 12 93 27 C98 40 82 52 50 54 Z M50 54 C36 58 18 70 25 83 C31 92 44 78 50 62 Z M50 54 C64 58 82 70 75 83 C69 92 56 78 50 62 Z" fill="url(#moonW)" stroke="rgba(0,0,0,0.5)"></path><path d="M50 34 C55 34 56 44 55 56 C54 70 52 80 50 85 C48 80 46 70 45 56 C44 44 45 34 50 34 Z M50 25 a5.5 5.5 0 1 0 0.01 0 Z" fill="url(#moonB)"></path></svg></div>
+      <span style="margin-top: 8px; font-size: 11px; font-weight: 600; color: #9FEFC4">2/2</span><span style="font-size: 11px; color: #C9D3D5; text-align: center">Гу Лунного Света</span>
+    </div>
+    <div style="position: absolute; right: 22px; top: 210px; width: 80px; display: flex; flex-direction: column; align-items: center">
+      <div style="width: 70px; height: 70px; border-radius: 50%; display: flex; align-items: center; justify-content: center; background: radial-gradient(circle at 50% 40%, rgba(20,34,44,0.95), rgba(2,3,9,0.95) 70%); box-shadow: 0 0 0 1px rgba(232,201,138,0.75), 0 0 0 6px rgba(2,3,9,0.85), 0 0 22px rgba(190,150,230,0.45)"><svg width="44" height="44" viewBox="0 0 100 100" aria-hidden="true"><path d="M50 50 C40 30 42 13 50 8 C58 13 60 30 50 50 Z M50 50 C30 42 15 44 10 52 C17 61 34 59 50 50 Z M50 50 C70 42 85 44 90 52 C83 61 66 59 50 50 Z M50 50 C38 64 33 79 40 88 C48 86 53 69 50 50 Z M50 50 C62 64 67 79 60 88 C52 86 47 69 50 50 Z" fill="url(#orchidW)" stroke="rgba(0,0,0,0.5)"></path><path d="M50 43 a7 7 0 1 0 0.01 0 Z" fill="url(#orchidB)"></path></svg></div>
+      <span style="margin-top: 8px; font-size: 11px; font-weight: 600; color: #9FEFC4">40/3</span><span style="font-size: 11px; color: #C9D3D5; text-align: center">Лунная орхидея</span>
+    </div>
+  </section>
+
+  <div style="position: absolute; left: 420px; width: 600px; top: 612px; display: flex; flex-direction: column; align-items: center; gap: 6px">
+    <span style="font-size: 11px; letter-spacing: 0.34em; color: #F08A74"><span style="font-family: 'Ma Shan Zheng', serif; font-size: 16px; letter-spacing: 0.1em; color: #C9B07A">月芒蛊</span> · РАНГ II · КРАСНАЯ СТАЛЬ</span>
+    <span class="disp" style="font-size: 48px; line-height: 1; background: linear-gradient(180deg, #FFFFFF, #F2EADB 45%, #C9B590); -webkit-background-clip: text; background-clip: text; color: transparent">Гу Лунного блика</span>
+  </div>
+  <div style="position: absolute; left: 520px; top: 712px; display: flex; flex-direction: column; align-items: center; gap: 10px">
+    <button type="button" class="btn" aria-label="Удерживайте, чтобы слить"><span style="position: absolute; left: 1px; top: 1px; bottom: 1px; width: 38%; background: linear-gradient(90deg, rgba(232,201,138,0.15), rgba(255,236,190,0.55)); box-shadow: 4px 0 16px rgba(255,236,190,0.8)"></span><span><span class="key" style="border-color: rgba(255,240,210,0.55); color: #FFF1CF">ПРОБЕЛ</span>СЛИЯНИЕ…</span></button>
+    <span style="font-size: 12px; color: #8E8676">Удерживайте, пока кольцо не замкнётся</span>
+  </div>
+
+  <section aria-label="Обряд" style="position: absolute; right: 56px; top: 116px; width: 320px; display: flex; flex-direction: column; gap: 20px">
+    <div><span class="lbl">ШАНС УСПЕХА</span><div style="display: flex; align-items: flex-end; gap: 12px; margin-top: 6px"><span class="num" style="font-size: 92px; background: linear-gradient(180deg, #FFF6E2, #E8C98A 60%, #9C7A44); -webkit-background-clip: text; background-clip: text; color: transparent">72<span style="font-size: 40px">%</span></span><span style="padding-bottom: 8px; font-size: 12px; letter-spacing: 0.2em; color: #9FEFC4">НАДЁЖНО</span></div></div>
+    <div><div style="display: flex; justify-content: space-between; align-items: baseline"><span class="lbl">ЭССЕНЦИЯ</span><span style="font-size: 14px"><span style="font-weight: 600; color: #FFE6B0">−18%</span> · останется 46%</span></div><div style="display: grid; grid-template-columns: repeat(25, minmax(0, 1fr)); gap: 3px; margin-top: 10px">{{ segs }}<sc-for list="{{ seg }}" as="g" hint-placeholder-count="25"><span style="height: 12px; background: {{ g.c }}"></span></sc-for></div></div>
+    <div style="height: 1px; background: linear-gradient(90deg, rgba(232,201,138,0.3), transparent)"></div>
+    <div><span class="lbl">О ГУ</span><p style="margin: 8px 0 0; font-size: 14px; line-height: 1.6; color: #A39B89">[Описание Гу.] <span style="color: #E2D9C6">[Навык]</span> — [что делает].</p></div>
+    <div style="display: flex; align-items: center; gap: 10px; padding: 10px 14px; border: 1px solid rgba(240,138,116,0.3); background: rgba(240,138,116,0.05); font-size: 12px; color: #E8B0A4">Срыв — гибнут Гу и материалы</div>
+  </section>
+
+  <footer class="foot"><span><span class="key">ЛКМ</span>Рецепт</span><span><span class="key">ПРОБЕЛ</span>Удерживать — слить</span><span><span class="key">ESC</span>Назад</span></footer>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"$preview":{"width":1440,"height":900}}'>
+class Component extends DCLogic {
+  renderVals() {
+    var seg = [];
+    for (var q = 0; q < 25; q++) { var p = (q + 1) * 4, lit = p <= 64, eaten = lit && p > 46; seg.push({ c: eaten ? 'linear-gradient(180deg, #FFF1CF, #C9A060)' : (lit ? 'linear-gradient(180deg, #A8F0DC, #3E9C86)' : 'rgba(242,234,219,0.07)') }); }
+    return { seg: seg, segs: '' };
+  }
+}
+</script>
+</body>
+</html>

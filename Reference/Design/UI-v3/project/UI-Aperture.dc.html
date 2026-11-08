@@ -1,0 +1,199 @@
+<!doctype html>
+<html lang="ru">
+<head>
+<meta charset="utf-8">
+<title>GU World — апертура</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@500;600;700&amp;family=Inter+Tight:wght@400;500;600&amp;family=Zhi+Mang+Xing&amp;family=Ma+Shan+Zheng&amp;display=swap" rel="stylesheet">
+<style>
+body{margin:0;background:#03040A}
+.gw{--gold:#E8C98A;--gh:#FFF1CF;--tx:#EAF0F2;--t2:#C9D3D5;--mu:#7E9093;--lb:#B8A47C;width:1440px;height:900px;position:relative;overflow:hidden;background:#020309;color:var(--tx);font-family:'Inter Tight',sans-serif}
+.gw *{box-sizing:border-box}
+.bg{position:absolute;inset:-60px;background:radial-gradient(ellipse 620px 420px at 50% 48%,rgba(46,130,140,.3),transparent 70%),radial-gradient(ellipse 520px 380px at 74% 30%,rgba(90,60,150,.2),transparent 70%),radial-gradient(ellipse 400px 300px at 24% 70%,rgba(60,90,160,.18),transparent 70%);animation:gwNeb 30s ease-in-out infinite}
+.stars{position:absolute;inset:0;background-image:radial-gradient(1.2px 1.2px at 7% 12%,#fff 50%,transparent 52%),radial-gradient(1px 1px at 23% 67%,#dff 50%,transparent 52%),radial-gradient(1.4px 1.4px at 41% 31%,#fff 50%,transparent 52%),radial-gradient(1px 1px at 58% 82%,#cdf 50%,transparent 52%),radial-gradient(1.2px 1.2px at 73% 18%,#fff 50%,transparent 52%),radial-gradient(1px 1px at 88% 54%,#eff 50%,transparent 52%),radial-gradient(.8px .8px at 15% 44%,#fff 50%,transparent 52%),radial-gradient(.8px .8px at 66% 47%,#fff 50%,transparent 52%);background-size:420px 300px;opacity:.6;animation:gwTw 6s ease-in-out infinite}
+.vig{position:absolute;inset:0;background:radial-gradient(ellipse at 50% 50%,transparent 55%,rgba(0,0,0,.72) 100%);pointer-events:none}
+.hdr{position:absolute;left:56px;right:56px;top:0;height:84px;display:flex;align-items:center;gap:18px}
+.hdr::after{content:'';position:absolute;left:0;right:0;bottom:0;height:1px;background:linear-gradient(90deg,transparent,rgba(232,201,138,.28) 20%,rgba(232,201,138,.28) 80%,transparent)}
+.brand{display:flex;align-items:center;gap:14px;min-width:280px}
+.brand b{display:block;font:600 22px/1 'Cormorant Garamond',serif;letter-spacing:.16em}
+.brand small{display:block;margin-top:5px;font-size:11px;letter-spacing:.34em;color:var(--mu)}
+.tabs{flex:1;display:flex;align-items:center;justify-content:center;gap:24px}
+.tabs a{position:relative;font-size:12px;letter-spacing:.24em;color:var(--mu);text-decoration:none;display:flex;align-items:center;gap:6px}
+.tabs a.on{color:#F7E7C2;text-shadow:0 0 14px rgba(232,201,138,.6)}
+.tabs a.on::after{content:'';position:absolute;left:-8px;right:-4px;bottom:-12px;height:1px;background:linear-gradient(90deg,transparent,var(--gold),transparent)}
+.tabs a.on::before{content:'';position:absolute;left:50%;bottom:-15px;width:6px;height:6px;margin-left:-5px;transform:rotate(45deg);background:var(--gold);box-shadow:0 0 10px var(--gold)}
+.key{display:inline-flex;align-items:center;justify-content:center;min-width:20px;height:20px;padding:0 5px;border:1px solid rgba(234,240,242,.32);border-bottom-width:2px;border-radius:4px;font:600 10px 'Inter Tight',sans-serif;letter-spacing:.04em;color:var(--t2)}
+.lbl{font-size:11px;letter-spacing:.34em;color:var(--lb)}
+.disp{font-family:'Cormorant Garamond',serif;font-weight:600}
+.num{font-family:'Cormorant Garamond',serif;font-weight:600;line-height:.85}
+.bar{position:relative;height:3px;background:rgba(234,240,242,.08)}
+.bar i{position:absolute;left:0;top:0;bottom:0;display:block}
+.stat{display:flex;justify-content:space-between;align-items:baseline;padding:9px 0;border-bottom:1px solid rgba(234,240,242,.06);font-size:13px}
+.stat span:first-child{color:var(--mu)}
+.btn{position:relative;display:inline-flex;align-items:center;justify-content:center;height:46px;padding:0 24px;border:none;background:linear-gradient(180deg,#FFF1CF,#C9A060 50%,#6E5028);clip-path:polygon(16px 0,calc(100% - 16px) 0,100% 50%,calc(100% - 16px) 100%,16px 100%,0 50%);color:#FFF1CF;font:600 12px 'Inter Tight',sans-serif;letter-spacing:.22em;cursor:pointer}
+.btn::before{content:'';position:absolute;inset:1px;background:linear-gradient(180deg,#2A1A10,#120A06);clip-path:polygon(15px 0,calc(100% - 15px) 0,100% 50%,calc(100% - 15px) 100%,15px 100%,0 50%)}
+.btn span{position:relative;display:flex;align-items:center;gap:10px}
+.btn.solid{color:#1A1008}.btn.solid::before{background:linear-gradient(180deg,#FFF1CF,#E2C080 55%,#C29E5C)}
+.btn.off{background:rgba(234,240,242,.14);color:#5E6A6C;cursor:default}.btn.off::before{background:#08090C}
+.slot{position:relative;width:56px;height:56px;display:flex;align-items:center;justify-content:center;background:radial-gradient(circle at 50% 40%,rgba(30,40,56,.6),rgba(4,6,10,.88) 75%);border:1px solid rgba(200,230,240,.14);clip-path:polygon(8px 0,calc(100% - 8px) 0,100% 8px,100% calc(100% - 8px),calc(100% - 8px) 100%,8px 100%,0 calc(100% - 8px),0 8px)}
+.slot .k{position:absolute;left:5px;top:3px;font:600 10px 'Inter Tight',sans-serif;color:var(--t2)}
+.foot{position:absolute;left:56px;right:56px;bottom:22px;height:30px;display:flex;align-items:center;justify-content:flex-end;gap:24px;font-size:12px;letter-spacing:.06em;color:var(--mu)}
+.foot span{display:flex;align-items:center;gap:8px}
+@keyframes gwNeb{0%,100%{transform:translate(0,0) scale(1)}50%{transform:translate(-20px,10px) scale(1.04)}}
+@keyframes gwTw{0%,100%{opacity:.4}50%{opacity:.75}}
+@keyframes gwSpin{to{transform:rotate(360deg)}}
+@keyframes gwSpinR{to{transform:rotate(-360deg)}}
+@keyframes gwWave{0%{transform:translateX(0)}100%{transform:translateX(-80px)}}
+@keyframes gwPulse{0%,100%{opacity:.5;transform:scale(1)}50%{opacity:.95;transform:scale(1.05)}}
+@keyframes gwRipple{0%{transform:scale(.4);opacity:.8}100%{transform:scale(1.1);opacity:0}}
+</style>
+</helmet>
+<div class="gw">
+  <svg width="0" height="0" aria-hidden="true" style="position: absolute"><defs>
+    <linearGradient id="moonW" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#E4F3FF"></stop><stop offset="0.55" stop-color="#6E9FD6"></stop><stop offset="1" stop-color="#1A2F52"></stop></linearGradient>
+    <radialGradient id="moonB" cx="0.4" cy="0.3" r="0.8"><stop offset="0" stop-color="#FFFFFF"></stop><stop offset="0.5" stop-color="#8FB6E4"></stop><stop offset="1" stop-color="#1E355E"></stop></radialGradient>
+    <linearGradient id="jadeW" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#CFF7DD"></stop><stop offset="0.55" stop-color="#3F9E72"></stop><stop offset="1" stop-color="#0F3626"></stop></linearGradient>
+    <radialGradient id="jadeB" cx="0.4" cy="0.3" r="0.8"><stop offset="0" stop-color="#F0FFF4"></stop><stop offset="0.5" stop-color="#5BBF8C"></stop><stop offset="1" stop-color="#0E3222"></stop></radialGradient>
+    <linearGradient id="ironW" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#EFE2C2"></stop><stop offset="0.55" stop-color="#A08758"></stop><stop offset="1" stop-color="#3A2D1A"></stop></linearGradient>
+    <radialGradient id="ironB" cx="0.4" cy="0.3" r="0.8"><stop offset="0" stop-color="#FFF4DA"></stop><stop offset="0.5" stop-color="#B09260"></stop><stop offset="1" stop-color="#33261A"></stop></radialGradient>
+    <linearGradient id="seaA" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#BFFFEF" stop-opacity="0.85"></stop><stop offset="0.3" stop-color="#4EB8A0" stop-opacity="0.75"></stop><stop offset="1" stop-color="#0C3A34" stop-opacity="0.9"></stop></linearGradient>
+  </defs></svg>
+  <div class="bg" aria-hidden="true"></div><div class="stars" aria-hidden="true"></div><div class="vig" aria-hidden="true"></div>
+  <span aria-hidden="true" style="position: absolute; left: 50%; top: 100px; margin-left: -330px; width: 660px; text-align: center; font-family: 'Zhi Mang Xing', cursive; font-size: 600px; line-height: 1; color: rgba(127,224,200,0.035)">竅</span>
+
+  <header class="hdr">
+    <div class="brand"><svg width="34" height="38" viewBox="0 0 34 38" aria-hidden="true"><path d="M17 1 L33 10 V28 L17 37 L1 28 V10Z" fill="none" stroke="#E8C98A" stroke-width="1.2"></path><circle cx="17" cy="19" r="7" fill="none" stroke="#7FE0C8" stroke-width="1.2"></circle><circle cx="17" cy="19" r="3" fill="#7FE0C8"></circle></svg><div><b>АПЕРТУРА</b><small>КЛАН ГУ ЮЭ · ГОРА ЦИНМАО</small></div></div>
+    <nav class="tabs" aria-label="Страницы героя"><span class="key">Q</span><a href="#">СУМКА <span class="key">I</span></a><a href="#" class="on" aria-current="page">АПЕРТУРА <span class="key">K</span></a><a href="#">СЛИЯНИЕ <span class="key">U</span></a><a href="#">КАРТА <span class="key">M</span></a><a href="#">ЖУРНАЛ <span class="key">J</span></a><a href="#">СТАТУС <span class="key">O</span></a><a href="#">ТЕЛО <span class="key">B</span></a><span class="key">E</span></nav>
+    <div style="min-width: 280px; display: flex; justify-content: flex-end; align-items: center; gap: 18px">
+      <span style="display: flex; align-items: center; gap: 8px"><svg width="16" height="20" viewBox="0 0 18 22" aria-hidden="true"><path d="M9 1 L17 8 L9 21 L1 8Z" fill="#1E4A42"></path><path d="M9 1 L17 8 H1Z" fill="#9FE6D2"></path></svg><span style="font-size: 15px; font-weight: 600">[1 240]</span></span>
+      <button type="button" aria-label="Закрыть" style="width: 40px; height: 40px; padding: 0; border: 1px solid rgba(234,240,242,0.2); background: transparent; color: #C9D3D5; cursor: pointer; display: flex; align-items: center; justify-content: center"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" aria-hidden="true"><path d="M6 6l12 12M18 6L6 18"></path></svg></button>
+    </div>
+  </header>
+
+  <section aria-label="Море и ранг" style="position: absolute; left: 56px; top: 116px; width: 320px; bottom: 76px; display: flex; flex-direction: column; gap: 18px">
+    <div style="display: flex; align-items: flex-end; gap: 16px">
+      <span class="num" style="font-size: 96px; color: #FFF1CF; text-shadow: 0 0 30px rgba(255,241,207,0.35)">I</span>
+      <div style="display: flex; flex-direction: column; gap: 4px; padding-bottom: 8px"><span class="lbl">РАНГ</span><span class="disp" style="font-size: 22px; line-height: 1">Начальная стадия</span><span style="font-size: 12px; color: #7FE0C8">зелёная медь</span></div>
+    </div>
+    <div style="display: flex; flex-direction: column; gap: 8px">
+      <div style="display: flex; justify-content: space-between; align-items: baseline"><span class="lbl">МОРЕ ЭССЕНЦИИ</span><span class="num" style="font-size: 34px; color: #A8F0DC">64%</span></div>
+      <div class="bar" style="height: 4px"><i style="width: 64%; background: linear-gradient(90deg, #1F6E5E, #A8F0DC); box-shadow: 0 0 10px rgba(127,224,200,0.6)"></i></div>
+      <span style="font-size: 12px; color: #7E9093">предел [100%] · +[18%] в час · полное за [2 ч]</span>
+    </div>
+    <div>
+      <div class="stat"><span>Талант</span><span>класс A · 88%</span></div>
+      <div class="stat"><span>Плотность эссенции</span><span>×[1,0]</span></div>
+      <div class="stat"><span>Сила · крепость</span><span>×[1,2] · ×[1,1]</span></div>
+      <div class="stat"><span>Закалка апертуры</span><span style="color: #FFF1CF">[34%]</span></div>
+      <div class="stat"><span>Шанс прорыва</span><span style="color: #F0C868">[12%]</span></div>
+    </div>
+    <div style="margin-top: auto; display: flex; flex-direction: column; gap: 10px">
+      <button type="button" class="btn solid"><span>ПОГЛОТИТЬ КАМЕНЬ <span class="key" style="border-color: rgba(26,16,8,0.45); color: #1A1008">V</span></span></button>
+      <button type="button" class="btn off" aria-disabled="true"><span>ПРОРЫВ — НУЖНО ПОЛНОЕ МОРЕ</span></button>
+    </div>
+  </section>
+
+  <section aria-label="Кольцо Гу" style="position: absolute; left: 420px; top: 104px; width: 600px; height: 600px">
+    <div aria-hidden="true" style="position: absolute; inset: 0; border-radius: 50%; border: 1px solid rgba(232,201,138,0.16); animation: gwSpin 180s linear infinite"><span style="position: absolute; left: 50%; top: -4px; width: 7px; height: 7px; margin-left: -4px; transform: rotate(45deg); background: #E8C98A; box-shadow: 0 0 10px #E8C98A"></span></div>
+    <div aria-hidden="true" style="position: absolute; inset: 36px; border-radius: 50%; border: 1px dashed rgba(232,201,138,0.14); animation: gwSpinR 120s linear infinite"></div>
+    <svg width="600" height="600" viewBox="0 0 600 600" aria-hidden="true" style="position: absolute; inset: 0"><path d="{{ spokes }}" stroke="rgba(160,240,220,0.1)" stroke-width="1"></path><circle cx="300" cy="300" r="214" fill="none" stroke="rgba(160,240,220,0.12)"></circle></svg>
+    <div aria-hidden="true" style="position: absolute; left: 160px; top: 160px; width: 280px; height: 280px; border-radius: 50%; background: radial-gradient(circle, rgba(127,224,200,0.45), transparent 65%); filter: blur(18px); animation: gwPulse 6s ease-in-out infinite"></div>
+    <div aria-hidden="true" style="position: absolute; left: 175px; top: 175px; width: 250px; height: 250px; border-radius: 50%; border: 1px solid rgba(190,255,240,0.35); animation: gwRipple 5s ease-out infinite"></div>
+    <svg width="220" height="220" viewBox="0 0 220 220" aria-hidden="true" style="position: absolute; left: 190px; top: 190px">
+      <defs><clipPath id="seaClip"><circle cx="110" cy="110" r="100"></circle></clipPath></defs>
+      <circle cx="110" cy="110" r="100" fill="rgba(2,8,12,0.9)"></circle>
+      <g clip-path="url(#seaClip)">
+        <rect x="0" y="82" width="220" height="140" fill="url(#seaA)"></rect>
+        <g style="animation: gwWave 5s linear infinite"><path d="M-20 82 q20 -8 40 0 t40 0 t40 0 t40 0 t40 0 t40 0 t40 0" fill="none" stroke="#E6FFF8" stroke-width="1.6" opacity="0.8"></path></g>
+        <g style="animation: gwWave 7s linear infinite"><path d="M-20 92 q20 6 40 0 t40 0 t40 0 t40 0 t40 0 t40 0 t40 0" fill="none" stroke="#BFFFEF" stroke-width="1" opacity="0.4"></path></g>
+        <ellipse cx="80" cy="130" rx="40" ry="10" fill="#FFFFFF" opacity="0.08"></ellipse>
+      </g>
+      <circle cx="110" cy="110" r="100" fill="none" stroke="#7FE0C8" stroke-width="1.6" style="filter: drop-shadow(0 0 8px #7FE0C8)"></circle>
+      <circle cx="110" cy="110" r="106" fill="none" stroke="rgba(232,201,138,0.4)" stroke-width="1" stroke-dasharray="1 5"></circle>
+    </svg>
+    <span style="position: absolute; left: 0; right: 0; top: 268px; text-align: center; font-family: 'Cormorant Garamond', serif; font-weight: 600; font-size: 46px; line-height: 1; color: #FFFFFF; text-shadow: 0 2px 14px rgba(0,0,0,0.9)">64%</span>
+    <span style="position: absolute; left: 0; right: 0; top: 318px; text-align: center; font-size: 10px; letter-spacing: 0.34em; color: #DFFFF6; text-shadow: 0 1px 8px #000">МОРЕ ПОЛНИТСЯ</span>
+
+    <sc-for list="{{ ring }}" as="c" hint-placeholder-count="8">
+      <button type="button" aria-label="{{ c.label }}" aria-pressed="{{ c.on }}" onClick="{{ c.pick }}" style="position: absolute; left: {{ c.x }}px; top: {{ c.y }}px; width: 84px; height: 84px; padding: 0; border: none; border-radius: 50%; background: radial-gradient(circle at 50% 40%, rgba(20,34,44,0.95), rgba(2,3,9,0.95) 70%); box-shadow: {{ c.ring }}; cursor: pointer; display: flex; align-items: center; justify-content: center; opacity: {{ c.op }}">
+        <sc-if value="{{ c.hasGu }}" hint-placeholder-val="{{ false }}"><svg width="54" height="54" viewBox="0 0 100 100" aria-hidden="true" style="filter: drop-shadow(0 0 8px {{ c.g.glow }})"><path d="{{ c.g.a }}" fill="{{ c.g.w }}" stroke="rgba(0,0,0,0.55)" stroke-width="1"></path><path d="{{ c.g.b }}" fill="{{ c.g.bf }}" stroke="rgba(0,0,0,0.55)" stroke-width="1"></path><path d="{{ c.g.c }}" fill="none" stroke="{{ c.g.l }}" stroke-width="1.3" stroke-linecap="round" opacity="0.8"></path></svg></sc-if>
+        <sc-if value="{{ c.isEmpty }}" hint-placeholder-val="{{ false }}"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="rgba(234,240,242,0.35)" stroke-width="1.4" aria-hidden="true"><path d="M12 5v14 M5 12h14"></path></svg></sc-if>
+        <sc-if value="{{ c.isLocked }}" hint-placeholder-val="{{ false }}"><svg width="20" height="22" viewBox="0 0 24 24" fill="none" stroke="rgba(234,240,242,0.3)" stroke-width="1.4" aria-hidden="true"><path d="M6 11h12v10H6z M8 11V8a4 4 0 0 1 8 0v3"></path></svg></sc-if>
+        <span aria-hidden="true" style="position: absolute; right: 6px; top: 6px; width: 10px; height: 10px; border-radius: 50%; background: {{ c.dot }}; box-shadow: {{ c.dotSh }}; border: 2px solid #020309"></span>
+        <span style="position: absolute; left: 50%; top: 88px; width: 120px; margin-left: -60px; text-align: center; font-size: 11px; line-height: 1.2; color: {{ c.nc }}; text-shadow: 0 1px 6px #000">{{ c.name }}</span>
+      </button>
+    </sc-for>
+  </section>
+
+  <div style="position: absolute; left: 420px; width: 600px; top: 744px; display: flex; flex-direction: column; align-items: center; gap: 8px">
+    <div style="display: flex; gap: 10px"><sc-for list="{{ bar }}" as="b" hint-placeholder-count="4"><div class="slot" style="border-color: {{ b.bd }}"><span class="k">{{ b.k }}</span><span style="font-size: 10px; color: {{ b.c }}; text-align: center; line-height: 1.1">{{ b.t }}</span></div></sc-for></div>
+    <span style="font-size: 11px; letter-spacing: 0.14em; color: #7E9093">Гу под рукой · <span class="key">1</span>–<span class="key">4</span> · щелчок убирает</span>
+  </div>
+
+  <section aria-label="Выбранная ячейка" style="position: absolute; right: 56px; top: 116px; width: 330px; bottom: 76px; display: flex; flex-direction: column; gap: 14px">
+    <span class="lbl">{{ cur.tag }}</span>
+    <span class="disp" style="font-size: 34px; line-height: 1.02">{{ cur.name }}</span>
+    <span style="font-size: 12px; letter-spacing: 0.2em; color: {{ cur.rc }}">{{ cur.sub }}</span>
+    <p style="margin: 0; font-size: 14px; line-height: 1.6; color: #A8B6B8">{{ cur.about }}</p>
+    <sc-if value="{{ cur.hasGu }}" hint-placeholder-val="{{ true }}">
+      <div style="display: flex; flex-direction: column; gap: 14px">
+        <div style="display: flex; flex-direction: column; gap: 6px"><div style="display: flex; justify-content: space-between; font-size: 13px"><span style="color: #7E9093">Сытость</span><span style="color: {{ cur.hc }}">{{ cur.due }}</span></div><div class="bar"><i style="width: {{ cur.full }}; background: {{ cur.hc }}; box-shadow: 0 0 8px {{ cur.hc }}"></i></div></div>
+        <div style="display: flex; flex-direction: column; gap: 6px"><div style="display: flex; justify-content: space-between; font-size: 13px"><span style="color: #7E9093">Усталость</span><span>{{ cur.tired }}</span></div><div class="bar"><i style="width: {{ cur.tiredW }}; background: #A0D2FF"></i></div></div>
+        <div class="stat"><span>Пища</span><span>{{ cur.food }}</span></div>
+        <button type="button" class="btn solid" style="align-self: flex-start"><span>НАКОРМИТЬ</span></button>
+      </div>
+    </sc-if>
+    <div style="margin-top: auto; padding-top: 14px; border-top: 1px solid rgba(232,201,138,0.18); display: flex; flex-direction: column; gap: 10px">
+      <div style="display: flex; justify-content: space-between; align-items: baseline"><span class="lbl">КОРМЛЕНИЕ</span><span style="font-size: 12px; color: #F0C868">1 Гу голоден</span></div>
+      <button type="button" class="btn"><span>НАКОРМИТЬ ВСЕХ</span></button>
+    </div>
+  </section>
+
+  <footer class="foot"><span><span class="key">ЛКМ</span>Ячейка</span><span><span class="key">1</span>–<span class="key">4</span>На панель</span><span><span class="key">V</span>Камень</span><span><span class="key">ESC</span>Закрыть</span></footer>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"$preview":{"width":1440,"height":900}}'>
+class Component extends DCLogic {
+  constructor(props) { super(props); this.state = { pick: 0 }; }
+  renderVals() {
+    var self = this;
+    var S = {
+      moth: { a: 'M50 46 C38 22 14 12 7 27 C2 40 18 52 50 54 Z M50 46 C62 22 86 12 93 27 C98 40 82 52 50 54 Z M50 54 C36 58 18 70 25 83 C31 92 44 78 50 62 Z M50 54 C64 58 82 70 75 83 C69 92 56 78 50 62 Z', b: 'M50 34 C55 34 56 44 55 56 C54 70 52 80 50 85 C48 80 46 70 45 56 C44 44 45 34 50 34 Z M50 25 a5.5 5.5 0 1 0 0.01 0 Z', c: 'M48 27 C44 17 38 12 31 12 M52 27 C56 17 62 12 69 12 M50 48 C36 36 22 30 13 30 M50 48 C64 36 78 30 87 30 M24 34 a7 7 0 1 0 9 9 M76 34 a7 7 0 1 1 -9 9' },
+      beetle: { a: 'M50 17 C58 17 62 23 60 30 L40 30 C38 23 42 17 50 17 Z M35 31 C40 26 60 26 65 31 C67 37 60 41 50 41 C40 41 33 37 35 31 Z', b: 'M50 40 C66 40 75 50 75 64 C75 80 64 90 50 90 C36 90 25 80 25 64 C25 50 34 40 50 40 Z', c: 'M50 41 V90 M27 50 L13 42 L7 46 M26 62 L11 64 L5 60 M29 74 L15 84 L11 92 M73 50 L87 42 L93 46 M74 62 L89 64 L95 60 M71 74 L85 84 L89 92' }
+    };
+    var CW = { moon: ['#E6F4FF', 'rgba(140,190,255,0.65)'], jade: ['#D8FFE6', 'rgba(110,210,160,0.55)'], iron: ['#FFF1D0', 'rgba(220,190,130,0.5)'] };
+    var blank = { a: '', b: '', c: '', w: 'none', bf: 'none', l: 'none', glow: 'transparent' };
+    function art(s, cw) { return { a: S[s].a, b: S[s].b, c: S[s].c, w: 'url(#' + cw + 'W)', bf: 'url(#' + cw + 'B)', l: CW[cw][0], glow: CW[cw][1] }; }
+    var C = [
+      { t: 'gu', n: 'Гу Лунного Света', s: 'moth', cw: 'moon', sub: 'РАНГ I · АТАКА · ЖИЗНЕННЫЙ ГУ', about: 'Ваш жизненный Гу: без него апертура рушится. Его нельзя отдать в слияние.', hunger: 'ok', due: 'еда через [1 д 4 ч]', full: '70%', tired: 'бодр', tiredW: '10%', food: 'Лунная орхидея · [40]', vital: true },
+      { t: 'gu', n: 'Гу Нефритовой Кожи', s: 'beetle', cw: 'jade', sub: 'РАНГ I · ЗАЩИТА', about: '[Описание Гу]', hunger: 'warn', due: 'еда через [3 ч]', full: '22%', tired: 'устал · [8 с]', tiredW: '60%', food: 'Мясо кабана · [8]' },
+      { t: 'gu', n: 'Гу Белого Кабана', s: 'beetle', cw: 'iron', sub: 'РАНГ I · СИЛА · ПАССИВНЫЙ', about: 'Сила белого кабана. Работает сам, пока в ячейке.', hunger: 'ok', due: 'еда через [2 д]', full: '90%', tired: 'бодр', tiredW: '0%', food: 'Рисовое вино · [12]' },
+      { t: 'empty' }, { t: 'empty' }, { t: 'lock', need: 'II' }, { t: 'lock', need: 'II' }, { t: 'lock', need: 'III' }
+    ];
+    var p = this.state.pick, ring = [], spokes = '';
+    C.forEach(function (c, i) {
+      var a = (-90 + i * 45) * Math.PI / 180, x = 300 + 214 * Math.cos(a), y = 300 + 214 * Math.sin(a), on = i === p;
+      spokes += 'M' + (300 + 110 * Math.cos(a)).toFixed(0) + ' ' + (300 + 110 * Math.sin(a)).toFixed(0) + 'L' + (300 + 170 * Math.cos(a)).toFixed(0) + ' ' + (300 + 170 * Math.sin(a)).toFixed(0);
+      var hc = c.hunger === 'warn' ? '#F0C868' : '#9FEFC4';
+      ring.push({ x: Math.round(x - 42), y: Math.round(y - 42), on: on ? 'true' : 'false', hasGu: c.t === 'gu', isEmpty: c.t === 'empty', isLocked: c.t === 'lock', g: c.t === 'gu' ? art(c.s, c.cw) : blank,
+        name: c.t === 'gu' ? c.n.replace('Гу ', '') : (c.t === 'empty' ? 'Свободно' : 'Ранг ' + c.need), nc: c.t === 'lock' ? '#4A585B' : (on ? '#FFF1CF' : '#C9D3D5'),
+        label: c.t === 'gu' ? c.n : (c.t === 'empty' ? 'Пустая ячейка' : 'Закрыто: нужен ранг ' + c.need), op: c.t === 'lock' ? '0.55' : '1',
+        ring: on ? '0 0 0 1px #FFF1CF, 0 0 0 6px rgba(2,3,9,0.85), 0 0 0 7px rgba(232,201,138,0.5), 0 0 28px rgba(255,241,207,0.35)' : (c.vital ? '0 0 0 1px #7FE0C8, 0 0 0 6px rgba(2,3,9,0.85), 0 0 0 7px rgba(127,224,200,0.3)' : '0 0 0 1px rgba(200,240,255,0.35), 0 0 0 6px rgba(2,3,9,0.85), 0 0 0 7px rgba(200,240,255,0.08)'),
+        dot: c.t === 'gu' ? hc : 'transparent', dotSh: c.t === 'gu' ? '0 0 8px ' + hc : 'none', pick: function () { self.setState({ pick: i }); } });
+    });
+    var c = C[p], cur;
+    if (c.t === 'gu') { var hc2 = c.hunger === 'warn' ? '#F0C868' : '#9FEFC4'; cur = { hasGu: true, tag: c.vital ? 'ЖИЗНЕННЫЙ ГУ' : 'ГУ В ЯЧЕЙКЕ', name: c.n, sub: c.sub, rc: '#7FE0C8', about: c.about, due: c.due, full: c.full, hc: hc2, tired: c.tired, tiredW: c.tiredW, food: c.food }; }
+    else if (c.t === 'empty') { cur = { hasGu: false, tag: 'ПУСТАЯ ЯЧЕЙКА', name: 'Свободно', sub: 'ОЧИСТИТЕ ГУ ИЗ СУМКИ', rc: '#B8A47C', about: 'Выберите Гу в сумке и очистите его в апертуру — он займёт эту ячейку.' }; }
+    else { cur = { hasGu: false, tag: 'ЗАКРЫТО', name: 'Нужен ранг ' + c.need, sub: 'ЯЧЕЙКА ОТКРОЕТСЯ С ПРОРЫВОМ', rc: '#7E9093', about: 'С каждым рангом апертура растёт и вмещает больше Гу.' }; }
+    var bar = [{ k: '1', t: 'Лунный свет', c: '#FFF1CF', bd: 'rgba(255,241,207,0.6)' }, { k: '2', t: 'Нефрит. кожа', c: '#C9D3D5', bd: 'rgba(200,230,240,0.14)' }, { k: '3', t: 'Белый кабан', c: '#C9D3D5', bd: 'rgba(200,230,240,0.14)' }, { k: '4', t: 'пусто', c: '#4A585B', bd: 'rgba(200,230,240,0.08)' }];
+    return { ring: ring, spokes: spokes, cur: cur, bar: bar };
+  }
+}
+</script>
+</body>
+</html>

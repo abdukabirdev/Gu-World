@@ -274,7 +274,7 @@ namespace GuWorld.UI
                     host.Drop(cellIndex);
                     bagChosen = -1;
                     Show(Page.Bag);
-                }, Page.Bag), ButtonKind.Danger, 15).Size(50, -1, 1);
+                }, Page.Bag, false), ButtonKind.Danger, 15).Size(50, -1, 1);
 
         }
 

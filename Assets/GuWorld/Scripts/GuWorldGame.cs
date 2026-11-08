@@ -4185,7 +4185,10 @@ namespace GuWorld
         {
             var mouse = Mouse.current;
 
-            if (mouse != null && mouse.position.ReadValue().x > menus.CreatorPanelWidth)
+            var (dragLeft, dragRight) = menus.CreatorDragArea;
+            var pointerX = mouse != null ? mouse.position.ReadValue().x : -1;
+
+            if (mouse != null && pointerX > dragLeft && pointerX < dragRight)
             {
                 if (mouse.leftButton.isPressed)
                 {
@@ -4207,8 +4210,8 @@ namespace GuWorld
             var distance = Mathf.Lerp(3.1f, 0.8f, z);
             var facing = body.Facing + creatorAngle;
             var direction = new Vector3(Mathf.Sin(facing), 0, Mathf.Cos(facing));
-            // Seen a little from the right of the screen's middle, leaving room for the panel.
-            var aside = Vector3.Cross(Vector3.up, direction).normalized * Mathf.Lerp(0.75f, 0.18f, z);
+            // In the screen's middle, between the look's panel and the way's.
+            var aside = Vector3.zero;
             var camera = view.transform;
             camera.position = target + direction * distance + Vector3.up * Mathf.Lerp(0.25f, 0.02f, z) + aside;
             camera.rotation = Quaternion.LookRotation(target + aside - camera.position, Vector3.up);

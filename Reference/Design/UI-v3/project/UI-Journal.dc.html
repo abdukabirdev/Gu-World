@@ -1,0 +1,128 @@
+<!doctype html>
+<html lang="ru">
+<head>
+<meta charset="utf-8">
+<title>GU World — журнал</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@500;600;700&amp;family=Inter+Tight:wght@400;500;600&amp;family=Zhi+Mang+Xing&amp;family=Ma+Shan+Zheng&amp;display=swap" rel="stylesheet">
+<style>
+body{margin:0;background:#03040A}
+.gw{--gold:#E8C98A;--tx:#EAF0F2;--t2:#C9D3D5;--mu:#7E9093;--lb:#B8A47C;width:1440px;height:900px;position:relative;overflow:hidden;background:#03040A;color:var(--tx);font-family:'Inter Tight',sans-serif}
+.gw *{box-sizing:border-box}
+.bg{position:absolute;inset:-60px;background:radial-gradient(ellipse 640px 440px at 30% 34%,rgba(46,110,140,.24),transparent 70%),radial-gradient(ellipse 560px 400px at 78% 40%,rgba(150,110,50,.14),transparent 70%)}
+.stars{position:absolute;inset:0;background-image:radial-gradient(1.2px 1.2px at 7% 12%,#fff 50%,transparent 52%),radial-gradient(1px 1px at 23% 67%,#dff 50%,transparent 52%),radial-gradient(1.4px 1.4px at 41% 31%,#fff 50%,transparent 52%),radial-gradient(1px 1px at 58% 82%,#cdf 50%,transparent 52%),radial-gradient(1.2px 1.2px at 73% 18%,#fff 50%,transparent 52%);background-size:420px 300px;opacity:.45}
+.vig{position:absolute;inset:0;background:radial-gradient(ellipse at 50% 50%,transparent 55%,rgba(0,0,0,.72) 100%);pointer-events:none}
+.hdr{position:absolute;left:56px;right:56px;top:0;height:84px;display:flex;align-items:center;gap:18px}
+.hdr::after{content:'';position:absolute;left:0;right:0;bottom:0;height:1px;background:linear-gradient(90deg,transparent,rgba(232,201,138,.28) 20%,rgba(232,201,138,.28) 80%,transparent)}
+.brand{display:flex;align-items:center;gap:14px;min-width:280px}
+.brand b{display:block;font:600 22px/1 'Cormorant Garamond',serif;letter-spacing:.16em}
+.brand small{display:block;margin-top:5px;font-size:11px;letter-spacing:.34em;color:var(--mu)}
+.tabs{flex:1;display:flex;align-items:center;justify-content:center;gap:24px}
+.tabs a{position:relative;font-size:12px;letter-spacing:.24em;color:var(--mu);text-decoration:none;display:flex;align-items:center;gap:6px}
+.tabs a.on{color:#F7E7C2;text-shadow:0 0 14px rgba(232,201,138,.6)}
+.tabs a.on::after{content:'';position:absolute;left:-8px;right:-4px;bottom:-12px;height:1px;background:linear-gradient(90deg,transparent,var(--gold),transparent)}
+.tabs a.on::before{content:'';position:absolute;left:50%;bottom:-15px;width:6px;height:6px;margin-left:-5px;transform:rotate(45deg);background:var(--gold);box-shadow:0 0 10px var(--gold)}
+.key{display:inline-flex;align-items:center;justify-content:center;min-width:20px;height:20px;padding:0 5px;border:1px solid rgba(234,240,242,.32);border-bottom-width:2px;border-radius:4px;font:600 10px 'Inter Tight',sans-serif;letter-spacing:.04em;color:var(--t2)}
+.lbl{font-size:11px;letter-spacing:.34em;color:var(--lb)}
+.disp{font-family:'Cormorant Garamond',serif;font-weight:600}
+.num{font-family:'Cormorant Garamond',serif;font-weight:600;line-height:.85}
+.panel{position:relative;background:linear-gradient(180deg,rgba(12,16,24,.7),rgba(5,7,12,.82));border:1px solid rgba(200,230,240,.09);box-shadow:inset 0 1px 0 rgba(255,255,255,.04),0 24px 60px rgba(0,0,0,.45);backdrop-filter:blur(10px)}
+.panel::before,.panel::after{content:'';position:absolute;width:14px;height:14px;pointer-events:none}
+.panel::before{left:-1px;top:-1px;border-left:1px solid var(--gold);border-top:1px solid var(--gold)}
+.panel::after{right:-1px;bottom:-1px;border-right:1px solid var(--gold);border-bottom:1px solid var(--gold)}
+.bar{position:relative;height:3px;background:rgba(234,240,242,.08)}
+.bar i{position:absolute;left:0;top:0;bottom:0;display:block}
+.stat{display:flex;justify-content:space-between;align-items:baseline;padding:10px 0;border-bottom:1px solid rgba(234,240,242,.06);font-size:13px}
+.stat span:first-child{color:var(--mu)}
+.tlink{height:30px;padding:0 12px;border:1px solid rgba(234,240,242,.16);background:transparent;color:var(--mu);font:500 11px 'Inter Tight',sans-serif;letter-spacing:.16em;cursor:pointer}
+.foot{position:absolute;left:56px;right:56px;bottom:22px;height:30px;display:flex;align-items:center;justify-content:flex-end;gap:24px;font-size:12px;letter-spacing:.06em;color:var(--mu)}
+.foot span{display:flex;align-items:center;gap:8px}
+</style>
+</helmet>
+<div class="gw">
+  <div class="bg" aria-hidden="true"></div><div class="stars" aria-hidden="true"></div><div class="vig" aria-hidden="true"></div>
+  <span aria-hidden="true" style="position: absolute; left: 420px; top: 150px; font-family: 'Zhi Mang Xing', cursive; font-size: 540px; line-height: 1; color: rgba(232,201,138,0.035)">誌</span>
+
+  <header class="hdr">
+    <div class="brand"><svg width="34" height="38" viewBox="0 0 34 38" aria-hidden="true"><path d="M17 1 L33 10 V28 L17 37 L1 28 V10Z" fill="none" stroke="#E8C98A" stroke-width="1.2"></path><path d="M11 11h9a3 3 0 0 1 3 3v12h-9a3 3 0 0 1-3-3z M11 23a3 3 0 0 1 3-3h9" fill="none" stroke="#E8C98A" stroke-width="1.2"></path></svg><div><b>ЖУРНАЛ</b><small>ЗАДАНИЯ · ВКЛАД · КЛАНЫ</small></div></div>
+    <nav class="tabs" aria-label="Страницы героя"><span class="key">Q</span><a href="#">СУМКА <span class="key">I</span></a><a href="#">АПЕРТУРА <span class="key">K</span></a><a href="#">СЛИЯНИЕ <span class="key">U</span></a><a href="#">КАРТА <span class="key">M</span></a><a href="#" class="on" aria-current="page">ЖУРНАЛ <span class="key">J</span></a><a href="#">СТАТУС <span class="key">O</span></a><a href="#">ТЕЛО <span class="key">B</span></a><span class="key">E</span></nav>
+    <div style="min-width: 280px; display: flex; justify-content: flex-end"><button type="button" aria-label="Закрыть" style="width: 40px; height: 40px; padding: 0; border: 1px solid rgba(234,240,242,0.2); background: transparent; color: #C9D3D5; cursor: pointer; display: flex; align-items: center; justify-content: center"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" aria-hidden="true"><path d="M6 6l12 12M18 6L6 18"></path></svg></button></div>
+  </header>
+
+  <section aria-label="Задания" style="position: absolute; left: 56px; top: 116px; width: 820px; display: flex; flex-direction: column; gap: 22px">
+    <div class="lbl">ЗАДАНИЕ АКАДЕМИИ</div>
+    <div class="panel" style="padding: 24px 28px; display: flex; gap: 26px; align-items: center">
+      <div style="position: relative; width: 96px; height: 96px; flex: none">
+        <svg width="96" height="96" viewBox="0 0 96 96" aria-hidden="true"><circle cx="48" cy="48" r="42" fill="none" stroke="rgba(232,201,138,0.15)" stroke-width="3"></circle><circle cx="48" cy="48" r="42" fill="none" stroke="#E8C98A" stroke-width="3" stroke-linecap="round" stroke-dasharray="105.6 263.9" transform="rotate(-90 48 48)" style="filter: drop-shadow(0 0 6px #E8C98A)"></circle></svg>
+        <span style="position: absolute; inset: 0; display: flex; flex-direction: column; align-items: center; justify-content: center"><span class="num" style="font-size: 30px">2/5</span></span>
+      </div>
+      <div style="flex: 1; display: flex; flex-direction: column; gap: 6px">
+        <span class="disp" style="font-size: 32px; line-height: 1">Волки у южных ворот</span>
+        <span style="font-size: 13px; color: #7E9093">Гу Юэ Кан · наставник академии</span>
+        <span style="font-size: 15px; color: #C9D3D5; margin-top: 4px">Убейте серых волков у южных ворот деревни.</span>
+      </div>
+      <div style="display: flex; flex-direction: column; align-items: flex-end; gap: 6px; font-size: 13px">
+        <span style="font-size: 10px; letter-spacing: 0.3em; color: #7E9093">НАГРАДА</span>
+        <span style="display: flex; align-items: center; gap: 6px"><svg width="12" height="14" viewBox="0 0 18 22" aria-hidden="true"><path d="M9 1 L17 8 L9 21 L1 8Z" fill="#1E4A42"></path><path d="M9 1 L17 8 H1Z" fill="#9FE6D2"></path></svg>[30] камней</span>
+        <span style="color: #E8C98A">+[10] вклада</span>
+        <a href="#" style="margin-top: 6px; font-size: 11px; letter-spacing: 0.18em; color: #E8C98A; text-decoration: none">ПОКАЗАТЬ НА КАРТЕ <span class="key">M</span></a>
+      </div>
+    </div>
+
+    <div style="display: flex; justify-content: space-between; align-items: baseline; margin-top: 4px"><span class="lbl">ПОБОЧНЫЕ ПОРУЧЕНИЯ · 2 ИЗ 3</span><span style="font-size: 12px; color: #7E9093">Поручения дают жители деревни <span class="key">E</span> и павильон клана</span></div>
+    <sc-for list="{{ sides }}" as="s" hint-placeholder-count="2">
+      <div class="panel" style="padding: 18px 24px; display: grid; grid-template-columns: minmax(0, 1fr) 180px 150px; gap: 24px; align-items: center">
+        <div style="display: flex; flex-direction: column; gap: 5px"><span style="display: flex; align-items: baseline; gap: 10px"><span class="disp" style="font-size: 24px; line-height: 1">{{ s.t }}</span><span style="font-size: 12px; color: #7E9093">· {{ s.g }}</span></span><span style="font-size: 14px; color: {{ s.gc }}">{{ s.goal }}</span></div>
+        <div style="display: flex; flex-direction: column; gap: 6px"><span style="display: flex; justify-content: space-between; font-size: 12px"><span style="color: #7E9093">Прогресс</span><span>{{ s.p }}</span></span><span class="bar"><i style="width: {{ s.w }}; background: {{ s.bc }}; box-shadow: 0 0 8px {{ s.bc }}"></i></span><span style="font-size: 12px; color: #A8B6B8">{{ s.rw }}</span></div>
+        <button type="button" class="tlink" style="justify-self: end">ОСТАВИТЬ</button>
+      </div>
+    </sc-for>
+    <div style="height: 64px; border: 1px dashed rgba(234,240,242,0.12); display: flex; align-items: center; justify-content: center; font-size: 13px; color: #4E5E61">Свободное место для поручения</div>
+  </section>
+
+  <section aria-label="Клан" style="position: absolute; right: 56px; top: 116px; width: 440px; display: flex; flex-direction: column; gap: 18px">
+    <div style="display: flex; align-items: center; gap: 14px"><svg width="40" height="40" viewBox="0 0 40 40" aria-hidden="true"><circle cx="20" cy="20" r="16" fill="#C9D2DC"></circle><circle cx="26" cy="16" r="15" fill="#03040A"></circle><circle cx="20" cy="20" r="19" fill="none" stroke="rgba(232,201,138,0.4)" stroke-dasharray="1 4"></circle></svg><div><div class="lbl">КЛАН</div><div class="disp" style="font-size: 30px; line-height: 1; margin-top: 4px">Гу Юэ</div></div></div>
+    <div style="display: flex; align-items: flex-end; gap: 16px"><span class="num" style="font-size: 76px; color: #FFF1CF; text-shadow: 0 0 24px rgba(255,241,207,0.3)">[46]</span><span style="padding-bottom: 8px; font-size: 12px; letter-spacing: 0.24em; color: #B8A47C">ВКЛАД</span></div>
+    <div>
+      <div class="stat"><span>Всего заработано</span><span>[120]</span></div>
+      <div class="stat"><span>Положение</span><span style="color: #E8C98A">[Надёжный ученик]</span></div>
+      <div class="stat"><span>Скидка в лавках</span><span>[5%]</span></div>
+    </div>
+    <p style="margin: 0; font-size: 13px; line-height: 1.6; color: #7E9093">Вклад дают задания и поручения. Распорядительница в павильоне клана каждый день даёт три новых поручения и держит сокровищницу — там за вклад Гу, которых не купить за камни.</p>
+    <div style="height: 1px; background: linear-gradient(90deg, rgba(232,201,138,0.3), transparent)"></div>
+    <div class="lbl">КЛАНЫ ГОРЫ</div>
+    <sc-for list="{{ clans }}" as="c" hint-placeholder-count="2">
+      <div style="display: flex; flex-direction: column; gap: 6px">
+        <div style="display: flex; justify-content: space-between; align-items: baseline"><span class="disp" style="font-size: 22px">{{ c.n }}</span><span style="font-size: 12px; color: {{ c.c }}">{{ c.st }} · вражда {{ c.h }}</span></div>
+        <div class="bar" style="height: 4px"><i style="width: {{ c.w }}; background: linear-gradient(90deg, #6E5028, {{ c.c }}); box-shadow: 0 0 8px {{ c.c }}"></i><span style="position: absolute; left: 50%; top: -3px; width: 1px; height: 10px; background: rgba(234,240,242,0.4)"></span><span style="position: absolute; left: 75%; top: -3px; width: 1px; height: 10px; background: rgba(240,138,116,0.6)"></span></div>
+      </div>
+    </sc-for>
+    <p style="margin: 0; font-size: 12px; line-height: 1.6; color: #7E9093">Убитые Гу-мастера злят клан: от 50 дозоры нападают без слов, от 75 его отряды охотятся на вас в лесах. Со временем вражда остывает.</p>
+  </section>
+
+  <footer class="foot"><span><span class="key">ЛКМ</span>Выбрать</span><span><span class="key">M</span>На карте</span><span><span class="key">ESC</span>Закрыть</span></footer>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"$preview":{"width":1440,"height":900}}'>
+class Component extends DCLogic {
+  renderVals() {
+    return {
+      sides: [
+        { t: 'Змеи у источника', g: 'Тётушка Хуа', goal: 'Прогоните змей от источника за деревней.', gc: '#C9D3D5', p: '[1 / 4]', w: '25%', bc: '#E8C98A', rw: '[12] камней · +[4] вклада' },
+        { t: 'Кабаны в бамбуке', g: 'Дед Сун', goal: 'Готово — вернитесь к: Дед Сун', gc: '#9FEFC4', p: '[3 / 3]', w: '100%', bc: '#9FEFC4', rw: '[18] камней · +[6] вклада' }
+      ],
+      clans: [
+        { n: 'Бай', st: 'насторожены', h: '[34]', w: '34%', c: '#A0D2FF' },
+        { n: 'Сюн', st: 'враждебны', h: '[58]', w: '58%', c: '#F08A74' }
+      ]
+    };
+  }
+}
+</script>
+</body>
+</html>

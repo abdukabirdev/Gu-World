@@ -18,6 +18,7 @@ namespace GuWorld.UI
         readonly List<(RectTransform root, Text name, RectTransform fill, Image fillImage)> plates = new List<(RectTransform, Text, RectTransform, Image)>();
         RectTransform bossBar;
         Text bossName;
+        Text bossRung;
         Text bossState;
         RectTransform bossFill;
         Image bossFillImage;
@@ -25,10 +26,10 @@ namespace GuWorld.UI
 
         static readonly Color[] TierColours =
         {
-            UiKit.Hex(0xE6DCC8),
-            UiKit.Hex(0xF0D08A),
-            UiKit.Hex(0xF0A050),
-            UiKit.Hex(0xE86A8A),
+            UiKit.Hex(0xEAF0F2),
+            UiKit.Hex(0xF0C868),
+            UiKit.Hex(0xF0A070),
+            UiKit.Hex(0xF08A74),
         };
 
         void BuildPlates()
@@ -41,28 +42,38 @@ namespace GuWorld.UI
                 var root = UiKit.Rect("Plate", layer);
                 root.anchorMin = root.anchorMax = new Vector2(0.5f, 0.5f);
                 root.sizeDelta = new Vector2(170, 34);
-                var name = UiKit.Label("", root, 14, UiKit.Text, TextAnchor.LowerCenter, FontStyle.Bold).Shadowed();
-                name.rectTransform.Place(Vector2.zero, Vector2.one, -40, 10, -40, 0);
+                var name = UiKit.Label("", root, 14, UiKit.Text, TextAnchor.LowerCenter).Shadowed();
+                name.rectTransform.Place(Vector2.zero, Vector2.one, -40, 9, -40, 0);
                 name.horizontalOverflow = HorizontalWrapMode.Overflow;
-                var back = UiKit.Image("Bar", root, UiKit.Hex(0x000000, 0.6f));
-                back.rectTransform.Place(Vector2.zero, new Vector2(1, 0), 25, 0, 25, -7);
-                var fill = UiKit.Image("Fill", back.transform, UiKit.Danger);
-                fill.rectTransform.Place(Vector2.zero, new Vector2(0, 1), 1, 1, 1, 1);
+                var back = UiKit.Image("Bar", root, new Color(3 / 255f, 4 / 255f, 10 / 255f, 0.7f), UiKit.Plain);
+                back.rectTransform.Place(Vector2.zero, new Vector2(1, 0), 31, 0, 31, -5);
+                UiKit.Frame(back.transform, new Color(234 / 255f, 240 / 255f, 242 / 255f, 0.1f));
+                var fill = UiKit.Image("Fill", back.transform, UiKit.Danger, UiKit.Plain);
+                fill.rectTransform.Place(Vector2.zero, new Vector2(0, 1));
                 root.gameObject.SetActive(false);
                 plates.Add((root, name, fill.rectTransform, fill));
             }
 
-            bossBar = UiKit.Rect("Boss", hud).Place(new Vector2(0.5f, 1), new Vector2(0.5f, 1), -380, -96, -380, 30);
-            bossName = UiKit.Label("", bossBar, 22, TierColours[3], TextAnchor.UpperCenter, FontStyle.Bold).Shadowed();
-            bossName.rectTransform.Place(Vector2.zero, Vector2.one, 0, 26, 0, 0);
-            var bossBack = UiKit.Image("Bar", bossBar, UiKit.Hex(0x000000, 0.65f), UiKit.Chamfer);
-            bossBack.rectTransform.Place(Vector2.zero, new Vector2(1, 0), 0, 4, 0, -24);
-            UiKit.Frame(bossBack.transform, UiKit.GoldDeep);
-            bossFillImage = UiKit.Image("Fill", bossBack.transform, UiKit.Danger);
+            // A king that hunts the hero: its rung in spaced capitals, its name, a long bar across the top.
+            bossBar = UiKit.Rect("Boss", hudStage);
+            bossBar.anchorMin = bossBar.anchorMax = new Vector2(0.5f, 1);
+            bossBar.pivot = new Vector2(0.5f, 1);
+            bossBar.anchoredPosition = new Vector2(0, -22);
+            bossBar.sizeDelta = new Vector2(560, 64);
+            bossRung = UiKit.Lbl("", bossBar, 11, UiKit.Danger, 0.34f, TextAnchor.MiddleCenter).Shadowed();
+            bossRung.rectTransform.Place(new Vector2(0, 1), Vector2.one, 0, -14, 0, 0);
+            bossName = UiKit.Disp("", bossBar, 26, UiKit.Text, TextAnchor.MiddleCenter).Shadowed();
+            bossName.rectTransform.Place(new Vector2(0, 1), Vector2.one, -100, -46, -100, 18);
+            var bossBack = UiKit.Image("Bar", bossBar, new Color(3 / 255f, 4 / 255f, 10 / 255f, 0.7f), UiKit.Plain);
+            bossBack.rectTransform.Place(Vector2.zero, new Vector2(1, 0), 0, 4, 0, -12);
+            UiKit.Frame(bossBack.transform, UiKit.Danger.A(0.35f));
+            bossFillImage = UiKit.Image("Fill", bossBack.transform, Color.white, UiKit.Plain);
+            bossFillImage.Gradient(UiKit.Hex(0x5A1A12), UiKit.Danger, true);
+            UiKit.Glow(bossFillImage.transform, UiKit.Danger.A(0.3f), 12);
             bossFill = bossFillImage.rectTransform;
-            bossFill.Place(Vector2.zero, new Vector2(0, 1), 3, 3, 3, 3);
-            bossState = UiKit.Label("", bossBack.transform, 12, UiKit.Text, TextAnchor.MiddleCenter, FontStyle.Bold).Shadowed();
-            bossState.rectTransform.Fill();
+            bossFill.Place(Vector2.zero, new Vector2(0, 1));
+            bossState = UiKit.Label("", bossBar, 10, UiKit.Text2, TextAnchor.UpperCenter).Shadowed();
+            bossState.rectTransform.Place(Vector2.zero, new Vector2(1, 0), 0, -14, 0, 2);
             bossBar.gameObject.SetActive(false);
         }
 
@@ -123,10 +134,10 @@ namespace GuWorld.UI
                     // Smaller far off, never too small to read.
                     root.localScale = Vector3.one * Mathf.Clamp(16 / Mathf.Max(1, distance), 0.95f, 1.2f);
                     var colour = wolf.Tamed ? UiKit.EssenceLit : wolf.Berserk ? UiKit.Danger : TierColours[Mathf.Clamp(wolf.Tier, 0, 3)];
-                    name.text = $"{wolf.Title} <size=11>· {(wolf is GuMaster ? wolf.Rung : $"ур. {wolf.Level}")}</size>" + (wolf.Tamed ? " <size=11>· ваш</size>" : "");
+                    name.text = $"{wolf.Title} <size=11><color=#7E9093>{(wolf is GuMaster ? wolf.Rung : $"ур. {wolf.Level}")}</color></size>" + (wolf.Tamed ? " <size=11><color=#A8F0DC>· ваш</color></size>" : "");
                     name.color = colour;
                     fill.anchorMax = new Vector2(Mathf.Clamp01(wolf.Health / wolf.MaxHealth), 1);
-                    fillImage.color = wolf.Shielded ? UiKit.Hex(0x6FA8FF) : wolf.Tamed ? UiKit.Essence : UiKit.Danger;
+                    fillImage.color = wolf.Shielded ? UiKit.Moon : wolf.Tamed ? UiKit.Essence : UiKit.Danger;
                 }
             }
 
@@ -142,10 +153,11 @@ namespace GuWorld.UI
 
             if (boss != null)
             {
-                bossName.text = $"{boss.Title}  <size=15><color=#A69A86>{boss.Rung}{(boss is GuMaster ? "" : $" · уровень {boss.Level}")}</color></size>";
-                bossName.color = TierColours[Mathf.Clamp(boss.Tier, 0, 3)];
+                bossName.text = boss.Title;
+                bossRung.text = (boss.Rung + (boss is GuMaster ? "" : $" · уровень {boss.Level}")).ToUpperInvariant();
+                bossRung.color = TierColours[Mathf.Clamp(boss.Tier, 0, 3)];
                 bossFill.anchorMax = new Vector2(Mathf.Clamp01(boss.Health / boss.MaxHealth), 1);
-                bossFillImage.color = boss.Shielded ? UiKit.Hex(0x6FA8FF) : boss.Berserk ? UiKit.Hex(0xE0533F) : UiKit.Danger;
+                bossFillImage.color = boss.Shielded ? UiKit.Moon : boss.Berserk ? UiKit.Hex(0xFF6040) : Color.white;
                 bossState.text = $"{Mathf.CeilToInt(boss.Health)} / {Mathf.CeilToInt(boss.MaxHealth)}" + boss.State;
             }
         }

@@ -1,0 +1,152 @@
+<!doctype html>
+<html lang="ru">
+<head>
+<meta charset="utf-8">
+<title>GU World — карта</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@500;600;700&amp;family=Inter+Tight:wght@400;500;600&amp;family=Zhi+Mang+Xing&amp;family=Ma+Shan+Zheng&amp;display=swap" rel="stylesheet">
+<style>
+body{margin:0;background:#03040A}
+.gw{--gold:#E8C98A;--tx:#EAF0F2;--t2:#C9D3D5;--mu:#7E9093;--lb:#B8A47C;width:1440px;height:900px;position:relative;overflow:hidden;background:#03040A;color:var(--tx);font-family:'Inter Tight',sans-serif}
+.gw *{box-sizing:border-box}
+.hdr{position:absolute;left:56px;right:56px;top:0;height:84px;display:flex;align-items:center;gap:18px;z-index:2}
+.hdr::after{content:'';position:absolute;left:0;right:0;bottom:0;height:1px;background:linear-gradient(90deg,transparent,rgba(232,201,138,.28) 20%,rgba(232,201,138,.28) 80%,transparent)}
+.brand{display:flex;align-items:center;gap:14px;min-width:280px}
+.brand b{display:block;font:600 22px/1 'Cormorant Garamond',serif;letter-spacing:.16em}
+.brand small{display:block;margin-top:5px;font-size:11px;letter-spacing:.34em;color:var(--mu)}
+.tabs{flex:1;display:flex;align-items:center;justify-content:center;gap:24px}
+.tabs a{position:relative;font-size:12px;letter-spacing:.24em;color:var(--mu);text-decoration:none;display:flex;align-items:center;gap:6px}
+.tabs a.on{color:#F7E7C2;text-shadow:0 0 14px rgba(232,201,138,.6)}
+.tabs a.on::after{content:'';position:absolute;left:-8px;right:-4px;bottom:-12px;height:1px;background:linear-gradient(90deg,transparent,var(--gold),transparent)}
+.tabs a.on::before{content:'';position:absolute;left:50%;bottom:-15px;width:6px;height:6px;margin-left:-5px;transform:rotate(45deg);background:var(--gold);box-shadow:0 0 10px var(--gold)}
+.key{display:inline-flex;align-items:center;justify-content:center;min-width:20px;height:20px;padding:0 5px;border:1px solid rgba(234,240,242,.32);border-bottom-width:2px;border-radius:4px;font:600 10px 'Inter Tight',sans-serif;letter-spacing:.04em;color:var(--t2)}
+.lbl{font-size:11px;letter-spacing:.34em;color:var(--lb)}
+.disp{font-family:'Cormorant Garamond',serif;font-weight:600}
+.panel{position:relative;background:linear-gradient(180deg,rgba(12,16,24,.82),rgba(5,7,12,.9));border:1px solid rgba(200,230,240,.09);box-shadow:inset 0 1px 0 rgba(255,255,255,.04),0 24px 60px rgba(0,0,0,.45);backdrop-filter:blur(10px)}
+.panel::before,.panel::after{content:'';position:absolute;width:14px;height:14px;pointer-events:none}
+.panel::before{left:-1px;top:-1px;border-left:1px solid var(--gold);border-top:1px solid var(--gold)}
+.panel::after{right:-1px;bottom:-1px;border-right:1px solid var(--gold);border-bottom:1px solid var(--gold)}
+.zb{width:40px;height:40px;padding:0;border:1px solid rgba(234,240,242,.2);background:rgba(3,4,10,.8);color:var(--t2);font-size:18px;cursor:pointer}
+.btn{position:relative;display:inline-flex;align-items:center;justify-content:center;height:44px;padding:0 22px;border:none;background:linear-gradient(180deg,#FFF1CF,#C9A060 50%,#6E5028);clip-path:polygon(15px 0,calc(100% - 15px) 0,100% 50%,calc(100% - 15px) 100%,15px 100%,0 50%);color:#FFF1CF;font:600 12px 'Inter Tight',sans-serif;letter-spacing:.22em;cursor:pointer}
+.btn::before{content:'';position:absolute;inset:1px;background:linear-gradient(180deg,#2A1A10,#120A06);clip-path:polygon(14px 0,calc(100% - 14px) 0,100% 50%,calc(100% - 14px) 100%,14px 100%,0 50%)}
+.btn span{position:relative}
+.btn.solid{color:#1A1008}.btn.solid::before{background:linear-gradient(180deg,#FFF1CF,#E2C080 55%,#C29E5C)}
+.foot{position:absolute;left:56px;right:56px;bottom:22px;height:30px;display:flex;align-items:center;justify-content:flex-end;gap:24px;font-size:12px;letter-spacing:.06em;color:var(--mu);z-index:2}
+.foot span{display:flex;align-items:center;gap:8px}
+@keyframes gwPulse{0%,100%{opacity:.5;transform:scale(1)}50%{opacity:1;transform:scale(1.3)}}
+@keyframes gwFlow{to{stroke-dashoffset:-24}}
+</style>
+</helmet>
+<div class="gw">
+  <svg width="1440" height="900" viewBox="0 0 1440 900" aria-hidden="true" style="position: absolute; inset: 0">
+    <defs>
+      <radialGradient id="landM" cx="0.45" cy="0.5" r="0.6"><stop offset="0" stop-color="#18261F"></stop><stop offset="0.6" stop-color="#0C1410"></stop><stop offset="1" stop-color="#04060A"></stop></radialGradient>
+      <radialGradient id="peakM" cx="0.5" cy="0.5" r="0.5"><stop offset="0" stop-color="#3A4A44" stop-opacity="0.7"></stop><stop offset="1" stop-color="#3A4A44" stop-opacity="0"></stop></radialGradient>
+      <pattern id="treeM" width="14" height="14" patternUnits="userSpaceOnUse"><circle cx="4" cy="4" r="2.2" fill="#1E3A2A"></circle><circle cx="11" cy="10" r="2.6" fill="#1A3426"></circle></pattern>
+      <pattern id="gridM" width="80" height="80" patternUnits="userSpaceOnUse"><path d="M80 0 H0 V80" fill="none" stroke="rgba(234,240,242,0.035)"></path></pattern>
+    </defs>
+    <rect width="1440" height="900" fill="url(#landM)"></rect>
+    <rect width="1440" height="900" fill="url(#gridM)"></rect>
+    <ellipse cx="560" cy="300" rx="260" ry="180" fill="url(#peakM)"></ellipse>
+    <g fill="none" stroke="rgba(160,200,180,0.12)" stroke-width="1">
+      <path d="M300 300 C320 180 520 120 640 150 C780 180 840 300 790 400 C740 500 560 520 440 480 C330 444 290 380 300 300Z"></path>
+      <path d="M360 300 C370 210 520 170 620 190 C730 214 770 300 730 380 C690 450 560 466 470 436 C390 410 352 360 360 300Z"></path>
+      <path d="M420 300 C426 240 530 216 600 230 C680 248 700 300 674 350 C646 398 560 408 500 390 C446 372 416 342 420 300Z"></path>
+      <path d="M480 300 C484 268 540 254 580 262 C624 272 636 300 620 326 C604 352 556 358 524 348 C494 338 478 322 480 300Z"></path>
+      <path d="M200 600 C300 540 480 560 620 620 C760 680 980 660 1100 600"></path>
+      <path d="M180 660 C300 600 480 620 620 680 C760 740 980 720 1120 660"></path>
+    </g>
+    <path d="M140 560 C220 520 300 540 380 520 C420 510 460 520 520 540 L600 600 L520 700 L300 720 L160 680Z" fill="url(#treeM)" opacity="0.9"></path>
+    <path d="M860 160 C940 140 1020 170 1060 220 L1040 330 L940 360 L860 300Z" fill="url(#treeM)" opacity="0.9"></path>
+    <path d="M820 460 C880 440 960 470 980 520 L940 600 L860 610 L800 560Z" fill="url(#treeM)" opacity="0.7"></path>
+    <path d="M620 120 C640 200 700 260 760 300 C820 340 860 420 900 500 C940 580 1000 640 1080 700 C1120 730 1180 760 1260 780" fill="none" stroke="#2E8C78" stroke-width="6" opacity="0.6"></path>
+    <path d="M620 120 C640 200 700 260 760 300 C820 340 860 420 900 500 C940 580 1000 640 1080 700 C1120 730 1180 760 1260 780" fill="none" stroke="#A8F0DC" stroke-width="1.2" opacity="0.5"></path>
+    <ellipse cx="1110" cy="720" rx="60" ry="30" fill="#1F6E5E" opacity="0.6" stroke="#A8F0DC" stroke-opacity="0.4"></ellipse>
+    <path d="{{ roads }}" fill="none" stroke="rgba(232,201,138,0.45)" stroke-width="1.4" stroke-dasharray="4 6"></path>
+    <path d="M600 520 C640 440 700 400 760 360" fill="none" stroke="#E8C98A" stroke-width="2" stroke-dasharray="6 6" style="animation: gwFlow 1.2s linear infinite"></path>
+  </svg>
+  <div aria-hidden="true" style="position: absolute; inset: 0; background: radial-gradient(ellipse at 42% 50%, transparent 45%, rgba(3,4,10,0.85) 85%), linear-gradient(90deg, transparent 60%, rgba(3,4,10,0.9) 72%)"></div>
+
+  <sc-for list="{{ places }}" as="p" hint-placeholder-count="10">
+    <button type="button" aria-label="{{ p.n }}" aria-pressed="{{ p.on }}" onClick="{{ p.pick }}" style="position: absolute; left: {{ p.x }}px; top: {{ p.y }}px; padding: 0; border: none; background: transparent; cursor: pointer; display: flex; align-items: center; gap: 8px; color: {{ p.c }}; font-family: 'Inter Tight', sans-serif">
+      <span style="width: {{ p.s }}; height: {{ p.s }}; transform: rotate(45deg); background: {{ p.fill }}; border: 1px solid {{ p.c }}; box-shadow: 0 0 10px {{ p.glow }}"></span>
+      <span style="font-size: {{ p.fs }}; letter-spacing: 0.06em; text-shadow: 0 1px 6px #000, 0 0 3px #000">{{ p.n }}</span>
+    </button>
+  </sc-for>
+  <div aria-hidden="true" style="position: absolute; left: 589px; top: 509px; width: 22px; height: 22px"><span style="position: absolute; inset: -10px; border-radius: 50%; border: 1px solid rgba(255,241,207,0.5); animation: gwPulse 2s ease-in-out infinite"></span><svg width="22" height="22" viewBox="0 0 22 22"><path d="M11 1 L19 21 L11 15 L3 21Z" fill="#FFF1CF" transform="rotate(30 11 11)" style="filter: drop-shadow(0 0 6px #FFF1CF)"></path></svg></div>
+  <span style="position: absolute; left: 618px; top: 512px; font-size: 11px; letter-spacing: 0.2em; color: #FFF1CF; text-shadow: 0 1px 6px #000">ВЫ</span>
+  <div aria-hidden="true" style="position: absolute; left: 752px; top: 350px; width: 18px; height: 18px; transform: rotate(45deg); background: #E8C98A; box-shadow: 0 0 16px #E8C98A; animation: gwPulse 1.6s ease-in-out infinite"></div>
+  <svg width="20" height="28" viewBox="0 0 24 32" aria-hidden="true" style="position: absolute; left: 950px; top: 238px"><path d="M12 31 C12 31 2 18 2 11 a10 10 0 0 1 20 0 c0 7 -10 20 -10 20z" fill="#F08A74" stroke="#03040A"></path><circle cx="12" cy="11" r="4" fill="#03040A"></circle></svg>
+
+  <header class="hdr">
+    <div class="brand"><svg width="34" height="38" viewBox="0 0 34 38" aria-hidden="true"><path d="M17 1 L33 10 V28 L17 37 L1 28 V10Z" fill="none" stroke="#E8C98A" stroke-width="1.2"></path><path d="M9 13l5-2 6 2 5-2v13l-5 2-6-2-5 2z M14 11v13 M20 13v13" fill="none" stroke="#E8C98A" stroke-width="1.1"></path></svg><div><b>КАРТА</b><small>ГОРА ЦИНМАО · ЮЖНАЯ ГРАНИЦА</small></div></div>
+    <nav class="tabs" aria-label="Страницы героя"><span class="key">Q</span><a href="#">СУМКА <span class="key">I</span></a><a href="#">АПЕРТУРА <span class="key">K</span></a><a href="#">СЛИЯНИЕ <span class="key">U</span></a><a href="#" class="on" aria-current="page">КАРТА <span class="key">M</span></a><a href="#">ЖУРНАЛ <span class="key">J</span></a><a href="#">СТАТУС <span class="key">O</span></a><a href="#">ТЕЛО <span class="key">B</span></a><span class="key">E</span></nav>
+    <div style="min-width: 280px; display: flex; justify-content: flex-end"><button type="button" aria-label="Закрыть" style="width: 40px; height: 40px; padding: 0; border: 1px solid rgba(234,240,242,0.2); background: transparent; color: #C9D3D5; cursor: pointer; display: flex; align-items: center; justify-content: center"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" aria-hidden="true"><path d="M6 6l12 12M18 6L6 18"></path></svg></button></div>
+  </header>
+
+  <div style="position: absolute; left: 56px; top: 110px; display: flex; flex-direction: column; gap: 6px; z-index: 2">
+    <button type="button" class="zb" aria-label="Приблизить">+</button><button type="button" class="zb" aria-label="Отдалить">−</button>
+    <div style="margin-top: 10px; width: 40px; height: 40px; border-radius: 50%; border: 1px solid rgba(232,201,138,0.45); display: flex; align-items: center; justify-content: center; font: 600 15px 'Cormorant Garamond', serif; color: #E8C98A">С</div>
+  </div>
+  <div style="position: absolute; left: 56px; bottom: 70px; display: flex; align-items: center; gap: 10px; font-size: 11px; color: #7E9093; z-index: 2"><span style="width: 100px; height: 6px; border: 1px solid rgba(234,240,242,0.4); border-top: none"></span>[200 м]</div>
+
+  <section aria-label="Место" class="panel" style="position: absolute; right: 56px; top: 116px; width: 380px; padding: 24px 26px; display: flex; flex-direction: column; gap: 12px; z-index: 2">
+    <span class="lbl">{{ cur.kind }}</span>
+    <span class="disp" style="font-size: 34px; line-height: 1">{{ cur.n }}</span>
+    <span style="font-size: 13px; color: #A8B6B8">от вас <span style="color: #EAF0F2">{{ cur.d }}</span> · высота {{ cur.h }} м</span>
+    <p style="margin: 0; font-size: 14px; line-height: 1.6; color: #A8B6B8">{{ cur.about }}</p>
+    <div style="display: flex; gap: 10px; margin-top: 4px"><button type="button" class="btn solid"><span>ПОСТАВИТЬ МЕТКУ</span></button><button type="button" class="btn"><span>ТЕЛЕПОРТ</span></button></div>
+  </section>
+
+  <section aria-label="Атлас мира" class="panel" style="position: absolute; right: 56px; top: 452px; width: 380px; padding: 22px 26px; display: flex; flex-direction: column; gap: 12px; z-index: 2">
+    <span class="lbl">ПО АТЛАСУ МИРА</span>
+    <svg width="328" height="150" viewBox="0 0 328 150" aria-hidden="true">
+      <rect width="328" height="150" fill="rgba(3,4,10,0.6)" stroke="rgba(234,240,242,0.1)"></rect>
+      <path d="M40 30 C90 10 150 20 200 14 C250 10 300 30 310 60 C300 100 250 130 180 136 C110 140 50 120 30 90 C20 60 24 40 40 30Z" fill="rgba(60,90,80,0.25)" stroke="rgba(160,200,180,0.25)"></path>
+      <path d="M110 40 C130 60 140 90 120 120" fill="none" stroke="rgba(232,201,138,0.25)" stroke-dasharray="2 4"></path>
+      <g font-family="'Inter Tight', sans-serif" font-size="8" fill="#7E9093" letter-spacing="1.5"><text x="160" y="40">СЕВЕРНЫЕ РАВНИНЫ</text><text x="60" y="78">ЗАПАДНАЯ ПУСТЫНЯ</text><text x="200" y="90">ВОСТОЧНОЕ МОРЕ</text><text x="150" y="128" fill="#E8C98A">ЮЖНАЯ ГРАНИЦА</text></g>
+      <rect x="162" y="106" width="9" height="9" transform="rotate(45 166 110)" fill="#E8C98A" style="filter: drop-shadow(0 0 6px #E8C98A)"></rect>
+    </svg>
+    <p style="margin: 0; font-size: 13px; line-height: 1.55; color: #A8B6B8">Гора Цинмао лежит на Южной границе. Ранги мастеров здесь — 1–3. У подножия — хутора простых людей.</p>
+    <span style="font-size: 12px; color: #4E5E61">Остальной мир атласа откроется в следующих арках.</span>
+  </section>
+
+  <footer class="foot"><span><span class="key">КОЛЕСО</span>Масштаб</span><span><span class="key">ЛКМ</span>Двигать</span><span><span class="key">ПКМ</span>Метка</span><span><span class="key">ESC</span>Закрыть</span></footer>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"$preview":{"width":1440,"height":900}}'>
+class Component extends DCLogic {
+  constructor(props) { super(props); this.state = { pick: 0 }; }
+  renderVals() {
+    var self = this;
+    var P = [
+      ['Деревня Гу Юэ', 560, 470, 'ДЕРЕВНЯ КЛАНА', 'big', '[60] м', '[820]', 'Дом клана Гу Юэ: академия, павильон клана, площадь с лавками.'],
+      ['Академия', 520, 420, 'УЧЁБА', 'mid', '[140] м', '[840]', 'Здесь дают задания академии и учат первым Гу.'],
+      ['Павильон клана', 640, 430, 'ПОРУЧЕНИЯ', 'mid', '[120] м', '[830]', 'Распорядительница даёт поручения и держит сокровищницу.'],
+      ['Площадь', 580, 560, 'ТОРГОВЛЯ', 'mid', '[70] м', '[815]', 'Лавка на площади: Гу, корм и камни.'],
+      ['Южные ворота', 760, 330, 'ЦЕЛЬ ЗАДАНИЯ', 'quest', '[180] м', '[790]', 'Волки подходят к воротам по ночам.'],
+      ['Пещера', 470, 250, 'ОПАСНО', 'small', '[420] м', '[1 060]', 'Тёмная пещера в склоне. Ходят слухи о наследии.'],
+      ['Водопад', 640, 150, 'МЕСТО', 'small', '[560] м', '[1 120]', 'Вода падает с высокой скалы.'],
+      ['Озеро', 1080, 690, 'МЕСТО', 'small', '[640] м', '[700]', '[Описание места]'],
+      ['Деревня Бай', 960, 210, 'КЛАН БАЙ', 'rival', '[780] м', '[900]', 'Соседи-соперники. Лёд и иней.'],
+      ['Деревня Сюн', 260, 640, 'КЛАН СЮН', 'rival', '[700] м', '[760]', 'Соседи-соперники. Медведи и сила.'],
+      ['Бамбуковая роща', 860, 520, 'ОХОТА', 'small', '[300] м', '[780]', 'Здесь водятся кабаны.']
+    ];
+    var p = this.state.pick;
+    var places = P.map(function (x, i) { var on = i === p, t = x[4];
+      var c = t === 'quest' ? '#E8C98A' : (t === 'rival' ? '#F08A74' : (on ? '#FFF1CF' : '#C9D3D5'));
+      return { n: x[0], x: x[1], y: x[2], on: on ? 'true' : 'false', c: c, s: t === 'big' ? '14px' : (t === 'small' ? '8px' : '10px'), fs: t === 'big' ? '16px' : '12px',
+        fill: on ? '#FFF1CF' : (t === 'big' ? 'rgba(232,201,138,0.3)' : 'rgba(3,4,10,0.8)'), glow: on ? '#FFF1CF' : 'transparent', pick: function () { self.setState({ pick: i }); } }; });
+    var roads = 'M567 477 L527 427 M567 477 L647 437 M567 477 L587 567 M647 437 L767 337 M527 427 L477 257 L647 157 M587 567 L267 647 M647 437 L867 527 L1087 697 M767 337 L967 217';
+    var c = P[p];
+    return { places: places, roads: roads, cur: { n: c[0], kind: c[3], d: c[5], h: c[6], about: c[7] } };
+  }
+}
+</script>
+</body>
+</html>

@@ -40,34 +40,45 @@ namespace GuWorld.UI
             shade.rectTransform.Fill(-3);
             questBeaconMark = UiKit.Image("Mark", questBeacon, UiKit.GoldLit, UiKit.Diamond);
             questBeaconMark.rectTransform.Fill();
-            UiKit.Image("Heart", questBeacon, UiKit.Seal, UiKit.Diamond).rectTransform.Fill(9);
-            questBeaconLine = UiKit.Label("", questBeacon, 15, UiKit.GoldLit, TextAnchor.UpperCenter, FontStyle.Bold).Shadowed();
+            UiKit.Image("Heart", questBeacon, UiKit.Void, UiKit.Diamond).rectTransform.Fill(9);
+            questBeaconLine = UiKit.Label("", questBeacon, 14, UiKit.Gold, TextAnchor.UpperCenter).Shadowed();
             questBeaconLine.rectTransform.anchorMin = questBeaconLine.rectTransform.anchorMax = new Vector2(0.5f, 0);
             questBeaconLine.rectTransform.pivot = new Vector2(0.5f, 1);
             questBeaconLine.rectTransform.anchoredPosition = new Vector2(0, -4);
             questBeaconLine.rectTransform.sizeDelta = new Vector2(220, 22);
             questBeacon.gameObject.SetActive(false);
 
-            // The banner: a dark band across the top with gold rules, a title and a line under it.
-            var band = UiKit.Rect("Banner", hud).Place(new Vector2(0.5f, 1), new Vector2(0.5f, 1), -460, -290, -460, 180);
+            // The banner: a dark band fading out at its ends, gold lines above and below, a title and a line under it.
+            var band = UiKit.Rect("Banner", hudStage);
+            band.anchorMin = band.anchorMax = new Vector2(0.5f, 1);
+            band.pivot = new Vector2(0.5f, 1);
+            band.anchoredPosition = new Vector2(0, -108);
+            band.sizeDelta = new Vector2(620, 72);
             banner = band.gameObject.AddComponent<CanvasGroup>();
             banner.blocksRaycasts = false;
             banner.interactable = false;
-            UiKit.Image("Back", band, UiKit.Hex(0x0E0D0C, 0.74f), UiKit.Chamfer).rectTransform.Fill();
-            UiKit.Image("Rule", band, UiKit.GoldDeep).rectTransform.Place(new Vector2(0, 1), Vector2.one, 120, -2, 120, 0);
-            UiKit.Image("Rule", band, UiKit.GoldDeep).rectTransform.Place(Vector2.zero, new Vector2(1, 0), 120, 0, 120, -2);
-            bannerTitle = UiKit.Label("", band, 34, UiKit.GoldLit, TextAnchor.MiddleCenter, FontStyle.Bold).Shadowed();
-            bannerTitle.rectTransform.Place(new Vector2(0, 0.42f), Vector2.one, 20, 0, 20, 6);
-            bannerLine = UiKit.Label("", band, 18, UiKit.Text, TextAnchor.MiddleCenter).Shadowed();
-            bannerLine.rectTransform.Place(Vector2.zero, new Vector2(1, 0.45f), 20, 8, 20, 0);
+            var bandBack = UiKit.Image("Back", band, new Color(3 / 255f, 4 / 255f, 10 / 255f, 0.75f), UiKit.FadeBoth);
+            bandBack.rectTransform.Fill();
+            UiKit.Image("Rule", band, UiKit.Gold, UiKit.FadeBoth).rectTransform.Place(new Vector2(0.15f, 1), new Vector2(0.85f, 1), 0, -1, 0, 0);
+            UiKit.Image("Rule", band, UiKit.Gold, UiKit.FadeBoth).rectTransform.Place(new Vector2(0.15f, 0), new Vector2(0.85f, 0), 0, 0, 0, -1);
+            bannerTitle = UiKit.Disp("", band, 26, UiKit.Text, TextAnchor.MiddleCenter).Shadowed();
+            bannerTitle.rectTransform.Place(Vector2.zero, new Vector2(1, 0.68f), 20, 6, 20, 0);
+            bannerLine = UiKit.Lbl("", band, 10, UiKit.Gold, 0.4f, TextAnchor.MiddleCenter).Shadowed();
+            bannerLine.rectTransform.Place(new Vector2(0, 0.62f), Vector2.one, 20, 0, 20, 8);
             banner.gameObject.SetActive(false);
 
-            // The advice, at the top in the middle.
-            hintBox = UiKit.Panel("Hint", hud, UiKit.Hex(0x0E0D0C, 0.78f), UiKit.GoldDeep).rectTransform;
-            hintBox.Place(new Vector2(0.5f, 1), new Vector2(0.5f, 1), -400, -96, -400, 40);
-            UiKit.Caps("Совет", hintBox, 12).rectTransform.Place(new Vector2(0, 0), new Vector2(0, 1), 18, 0, -90, 0);
-            hintLine = UiKit.Label("", hintBox, 17, UiKit.Text, TextAnchor.MiddleLeft).Shadowed();
-            hintLine.rectTransform.Place(Vector2.zero, Vector2.one, 104, 0, 16, 0);
+            // The advice, at the bottom left: "СОВЕТ" and the words, in a thin gold frame.
+            var advice = UiKit.Image("Hint", hudStage, new Color(3 / 255f, 4 / 255f, 10 / 255f, 0.6f), UiKit.Plain);
+            hintBox = advice.rectTransform;
+            hintBox.BottomLeft(32, 110, 400, 32);
+            UiKit.Frame(hintBox, UiKit.Gold.A(0.25f));
+            var row = hintBox.Stack<HorizontalLayoutGroup>(10, new RectOffset(12, 12, 0, 0), TextAnchor.MiddleLeft);
+            row.childForceExpandWidth = false;
+            hintBox.gameObject.AddComponent<ContentSizeFitter>().horizontalFit = ContentSizeFitter.FitMode.PreferredSize;
+            UiKit.Lbl("Совет", hintBox, 10, UiKit.Gold, 0.3f).Size(32);
+            hintLine = UiKit.Label("", hintBox, 12, UiKit.Text2, TextAnchor.MiddleLeft);
+            hintLine.horizontalOverflow = HorizontalWrapMode.Overflow;
+            hintLine.Size(32);
             hintBox.gameObject.SetActive(false);
         }
 
@@ -79,8 +90,10 @@ namespace GuWorld.UI
                 return;
             }
 
-            bannerTitle.text = title ?? "";
-            bannerLine.text = line ?? "";
+            // As the design sets it: what happened in small gold capitals over it, the matter itself big ("ЗАДАНИЕ ВЫПОЛНЕНО" over the task).
+            var both = !string.IsNullOrEmpty(line);
+            bannerLine.text = both ? (title ?? "").ToUpperInvariant() : "";
+            bannerTitle.text = both ? line : title ?? "";
             bannerAt = Time.unscaledTime;
         }
 

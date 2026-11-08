@@ -1,0 +1,68 @@
+<!doctype html>
+<html lang="ru">
+<head>
+<meta charset="utf-8">
+<title>GU World — чат</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@500;600;700&amp;family=Inter+Tight:wght@400;500;600&amp;family=JetBrains+Mono:wght@400;500&amp;display=swap" rel="stylesheet">
+<style>
+body{margin:0;background:#03040A}
+.gw{--gold:#E8C98A;--gh:#FFF1CF;--tx:#EAF0F2;--t2:#C9D3D5;--mu:#7E9093;width:1440px;height:900px;position:relative;overflow:hidden;background:#0C141E;color:var(--tx);font-family:'Inter Tight',sans-serif}
+.gw *{box-sizing:border-box}
+.key{display:inline-flex;align-items:center;justify-content:center;min-width:20px;height:20px;padding:0 5px;border:1px solid rgba(234,240,242,.32);border-bottom-width:2px;border-radius:4px;font:600 10px 'Inter Tight',sans-serif;letter-spacing:.04em;color:var(--t2);background:rgba(3,4,10,.6)}
+.mono{font-family:'JetBrains Mono',monospace}
+.ln{font-size:14px;line-height:1.55;text-shadow:0 1px 4px #000}
+@keyframes gwBlink{0%,49%{opacity:1}50%,100%{opacity:0}}
+</style>
+</helmet>
+<div class="gw">
+  <svg width="1440" height="900" viewBox="0 0 1440 900" aria-hidden="true" style="position: absolute; inset: 0">
+    <defs><linearGradient id="skyC" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#1A2A3E"></stop><stop offset="1" stop-color="#0C141E"></stop></linearGradient><linearGradient id="grC" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#1A2620"></stop><stop offset="1" stop-color="#070A08"></stop></linearGradient></defs>
+    <rect width="1440" height="900" fill="url(#skyC)"></rect>
+    <path d="M0 440 L180 350 L340 400 L520 320 L700 400 L880 310 L1060 390 L1240 330 L1440 380 V900 H0Z" fill="#162232"></path>
+    <path d="M0 560 C300 520 600 540 900 520 C1100 508 1300 530 1440 520 V900 H0Z" fill="url(#grC)"></path>
+    <g fill="#0B1014"><rect x="900" y="470" width="90" height="60"></rect><path d="M870 476 Q945 444 1020 476 Q1000 466 990 456 L900 456 Q890 466 870 476Z"></path></g>
+  </svg>
+  <div aria-hidden="true" style="position: absolute; inset: 0; background: linear-gradient(90deg, rgba(3,4,10,0.75), transparent 55%)"></div>
+
+  <section aria-label="Чат" style="position: absolute; left: 32px; bottom: 32px; width: 680px; display: flex; flex-direction: column; gap: 10px">
+    <div style="display: flex; flex-direction: column; gap: 2px; padding: 14px 16px; background: linear-gradient(180deg, rgba(3,4,10,0.25), rgba(3,4,10,0.7)); border-left: 1px solid rgba(232,201,138,0.3)">
+      <span class="ln" style="color: #7E9093">[21:31] Вы вошли в Деревню Гу Юэ.</span>
+      <span class="ln"><span style="color: #E8C98A">Гу Юэ Кан:</span> <span style="color: #EAF0F2">Волки снова у южных ворот.</span></span>
+      <span class="ln" style="color: #A8F0DC">Вы получили: Лунная орхидея ×3</span>
+      <span class="ln"><span style="color: #E8C98A">Тётушка Хуа:</span> <span style="color: #EAF0F2">[Реплика жителя]</span></span>
+      <span class="ln" style="color: #F0C868">Гу Нефритовой Кожи устал · отдых 8 с</span>
+      <span class="ln mono" style="color: #A0D2FF; font-size: 13px">&gt; /time night</span>
+      <span class="ln" style="color: #A0D2FF">Система: время — ночь.</span>
+      <span class="ln" style="color: #F08A74">Команда доступна только в режиме администратора (F10).</span>
+    </div>
+
+    <div role="listbox" aria-label="Подсказки команд" style="display: flex; flex-direction: column; background: rgba(5,7,12,0.92); border: 1px solid rgba(200,230,240,0.12); backdrop-filter: blur(8px)">
+      <div role="option" aria-selected="true" style="position: relative; display: flex; align-items: baseline; gap: 14px; padding: 9px 14px 9px 24px; background: linear-gradient(90deg, rgba(232,201,138,0.14), transparent 80%)"><span style="position: absolute; left: 8px; top: 50%; width: 7px; height: 7px; margin-top: -4px; transform: rotate(45deg); background: #E8C98A; box-shadow: 0 0 10px #E8C98A"></span><span class="mono" style="font-size: 13px; color: #FFF1CF">/give</span><span class="mono" style="font-size: 12px; color: #7E9093">&lt;вещь&gt; [количество]</span><span style="margin-left: auto; font-size: 12px; color: #A8B6B8">Положить вещь в сумку</span></div>
+      <div role="option" aria-selected="false" style="display: flex; align-items: baseline; gap: 14px; padding: 9px 14px 9px 24px"><span class="mono" style="font-size: 13px; color: #C9D3D5">/gu</span><span class="mono" style="font-size: 12px; color: #7E9093">&lt;имя Гу&gt;</span><span style="margin-left: auto; font-size: 12px; color: #7E9093">Гу в сумку</span></div>
+      <div role="option" aria-selected="false" style="display: flex; align-items: baseline; gap: 14px; padding: 9px 14px 9px 24px"><span class="mono" style="font-size: 13px; color: #C9D3D5">/goto</span><span class="mono" style="font-size: 12px; color: #7E9093">&lt;место&gt;</span><span style="margin-left: auto; font-size: 12px; color: #7E9093">Перенестись</span></div>
+    </div>
+
+    <label style="display: flex; align-items: center; gap: 10px; height: 46px; padding: 0 14px; background: rgba(3,4,10,0.92); border: 1px solid rgba(255,241,207,0.5); box-shadow: 0 0 20px rgba(232,201,138,0.15)">
+      <span class="mono" style="font-size: 14px; color: #E8C98A">&gt;</span>
+      <span class="mono" style="font-size: 14px; color: #EAF0F2">/g<span style="display: inline-block; width: 8px; height: 16px; margin-left: 1px; vertical-align: -3px; background: #FFF1CF; animation: gwBlink 1s steps(1) infinite"></span></span>
+      <span class="mono" style="font-size: 14px; color: #4E5E61">ive</span>
+      <span style="margin-left: auto; display: flex; gap: 10px; font-size: 11px; color: #7E9093"><span><span class="key">TAB</span> дописать</span><span><span class="key">↑↓</span> выбор</span><span><span class="key">ENTER</span> отправить</span><span><span class="key">ESC</span> закрыть</span></span>
+    </label>
+  </section>
+
+  <div style="position: absolute; right: 32px; top: 28px; display: flex; align-items: center; gap: 10px; font-size: 11px; letter-spacing: 0.2em; color: #7E9093; text-shadow: 0 1px 4px #000"><span style="width: 6px; height: 6px; border-radius: 50%; background: #9FEFC4; box-shadow: 0 0 8px #9FEFC4"></span>МИР НЕ ЖДЁТ</div>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"$preview":{"width":1440,"height":900}}'>
+class Component extends DCLogic {
+  renderVals() { return {}; }
+}
+</script>
+</body>
+</html>

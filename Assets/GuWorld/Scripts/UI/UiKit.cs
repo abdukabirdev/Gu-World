@@ -8,211 +8,94 @@ using UnityEngine.UI;
 namespace GuWorld.UI
 {
     /// <summary>
-    /// The parts GU World's menus are built from, in code (uGUI), in the
-    /// design's look (GuWorld-Design: "black lacquer, cinnabar, old gold"):
-    /// near-black panels with cut corners and a thin bronze frame, warm parchment
-    /// text, gold for what is chosen, cinnabar for the main action, the rank
-    /// colours for essence and Gu. A canvas scaled from 1920×1080, panels, text,
-    /// menu entries that light up when pointed at, buttons, sliders, rows of
-    /// choices, item cells and the shapes the HUD needs (rings, discs, diamonds).
+    /// The parts GU World's menus are built from, in code (uGUI), in the look of the
+    /// interface v3, «Обряд × Апертура» (Reference/Design/UI-v3): glass panels over a
+    /// starry void with a thin cold frame and two gold corners, Cormorant Garamond for
+    /// names and big numbers, Inter Tight for everything else, gold for what is chosen,
+    /// the essence's sea-green, the moon's blue, a coral red for danger, the ranks'
+    /// colours for Gu. A canvas scaled from 1920×1080 (the pages made after the v3 design
+    /// put a Stage on it, 900 units tall, the design's own pixels), panels, text, menu
+    /// entries, the long hexagon buttons, rows of choices, item cells and the shapes the
+    /// HUD needs (rings, discs, diamonds). The shapes are in UiShapes, the effects
+    /// (gradients, letter spacing, motion) in UiEffects, the v3's own parts in UiParts.
     /// </summary>
-    public static class UiKit
+    public static partial class UiKit
     {
-        // The design's tokens (README "Дизайн-токены интерфейса").
-        public static readonly Color Ink = Hex(0x0B0A0A, 0.96f);
-        public static readonly Color Panel1 = Hex(0x121010, 0.97f);
-        public static readonly Color PanelTop = Hex(0x17130F, 0.97f);
-        public static readonly Color Line = Hex(0x3A3128);
-        public static readonly Color LineLit = Hex(0x4A3E2E);
-        public static readonly Color Text = Hex(0xE6DCC8);
-        public static readonly Color Muted = Hex(0xA69A86);
-        public static readonly Color Gold = Hex(0xC9A563);
-        public static readonly Color GoldLit = Hex(0xF0D08A);
-        public static readonly Color GoldDeep = Hex(0x6A5A44);
-        public static readonly Color Cinnabar = Hex(0x9C2A23);
-        public static readonly Color CinnabarLit = Hex(0xB3342B);
-        public static readonly Color Seal = Hex(0xA82E25);
-        public static readonly Color Danger = Hex(0xC2413A);
-        public static readonly Color Essence = Hex(0x4E9A86);
-        public static readonly Color EssenceLit = Hex(0x8FD0BC);
-        public static readonly Color Hunger = Hex(0xE0A13A);
-        public static readonly Color Life = Hex(0xB8473E);
-        /// <summary>A chosen tab or filter: dark brown under gold.</summary>
-        public static readonly Color Chosen = Hex(0x3A2A1C);
-        public static readonly Color InkLight = Hex(0x1A1613, 0.95f);
-        public static readonly Color InkHover = Hex(0x241D17, 0.98f);
-        public static readonly Color OnGold = Hex(0xF3E9D6);
+        // The design's tokens (README «Токены»). The older names are kept, pointed at the new colours.
+        /// <summary>The void behind everything.</summary>
+        public static readonly Color Void = Hex(0x03040A);
+        public static readonly Color Ink = Hex(0x05070C, 0.9f);
+        public static readonly Color Panel1 = Hex(0x0A0E15, 0.86f);
+        public static readonly Color PanelTop = Hex(0x0C1018, 0.9f);
+        /// <summary>The panels' thin cold frame and the rules.</summary>
+        public static readonly Color Line = new Color(200 / 255f, 230 / 255f, 240 / 255f, 0.12f);
+        public static readonly Color LineLit = new Color(234 / 255f, 240 / 255f, 242 / 255f, 0.3f);
+        public static readonly Color Text = Hex(0xEAF0F2);
+        /// <summary>Quieter text (the design's --t2).</summary>
+        public static readonly Color Text2 = Hex(0xC9D3D5);
+        /// <summary>Captions and hints (--mu).</summary>
+        public static readonly Color Muted = Hex(0x7E9093);
+        /// <summary>The small spaced headings (--lb).</summary>
+        public static readonly Color LabelGold = Hex(0xB8A47C);
+        public static readonly Color Gold = Hex(0xE8C98A);
+        public static readonly Color GoldLit = Hex(0xFFF1CF);
+        public static readonly Color GoldDeep = Hex(0x8C6A3A);
+        /// <summary>The chosen tab's text.</summary>
+        public static readonly Color GoldText = Hex(0xF7E7C2);
+        public static readonly Color Cinnabar = Hex(0xB84A3C);
+        public static readonly Color CinnabarLit = Hex(0xF08A74);
+        public static readonly Color Seal = Hex(0x0C1018, 0.95f);
+        /// <summary>Threat, a failure, a deletion.</summary>
+        public static readonly Color Danger = Hex(0xF08A74);
+        public static readonly Color Essence = Hex(0x7FE0C8);
+        public static readonly Color EssenceLit = Hex(0xA8F0DC);
+        /// <summary>The moon; the system window's blue.</summary>
+        public static readonly Color Moon = Hex(0xA0D2FF);
+        public static readonly Color SystemBlue = Hex(0x6FB8FF);
+        /// <summary>Enough, ready.</summary>
+        public static readonly Color Ok = Hex(0x9FEFC4);
+        public static readonly Color Hunger = Hex(0xF0B060);
+        public static readonly Color Life = Hex(0xF08A74);
+        /// <summary>A chosen tab or filter: a faint gold.</summary>
+        public static readonly Color Chosen = new Color(1, 241 / 255f, 207 / 255f, 0.1f);
+        public static readonly Color InkLight = new Color(14 / 255f, 18 / 255f, 26 / 255f, 0.9f);
+        public static readonly Color InkHover = new Color(26 / 255f, 32 / 255f, 44 / 255f, 0.95f);
+        /// <summary>Text on gold.</summary>
+        public static readonly Color OnGold = Hex(0x1A1008);
 
         public static Color Hex(int rgb, float alpha = 1) =>
             new Color(((rgb >> 16) & 0xff) / 255f, ((rgb >> 8) & 0xff) / 255f, (rgb & 0xff) / 255f, alpha);
 
-        static Font font;
-        static Sprite rounded, softEdge, chamfer, chamferFrame, ring, disc, diamond, arrow;
+        /// <summary>A colour with another alpha.</summary>
+        public static Color A(this Color colour, float alpha) => new Color(colour.r, colour.g, colour.b, alpha);
 
-        /// <summary>The text font (Unity's own).</summary>
-        public static Font Font => font != null ? font : font = Resources.GetBuiltinResource<Font>("LegacyRuntime.ttf");
+        static Font font, fontMedium, fontBold, display, sealFont, brushFont;
 
-
-        /// <summary>A rounded rectangle, sliced so it stretches to any size.</summary>
-        public static Sprite Rounded => rounded != null ? rounded : rounded = MakeShape(64, 14, Shape.Round, 0);
-
-        /// <summary>A rectangle with its corners cut off (the design's panels and cells), and its frame.</summary>
-        public static Sprite Chamfer => chamfer != null ? chamfer : chamfer = MakeShape(64, 10, Shape.Cut, 0);
-        public static Sprite ChamferFrame => chamferFrame != null ? chamferFrame : chamferFrame = MakeShape(64, 10, Shape.Cut, 1.6f);
-
-        /// <summary>White fading to clear from left to right, for darkening a side of the screen.</summary>
-        public static Sprite SoftEdge => softEdge != null ? softEdge : softEdge = MakeFade();
-
-        /// <summary>A ring (for radial fills: the essence round the portrait, the sea), a disc, a diamond, an arrow.</summary>
-        public static Sprite Ring => ring != null ? ring : ring = MakeRound(256, 0.78f);
-        public static Sprite Disc => disc != null ? disc : disc = MakeRound(128, 0);
-        public static Sprite Diamond => diamond != null ? diamond : diamond = MakeDiamond(128);
-        public static Sprite Arrow => arrow != null ? arrow : arrow = MakeArrow(64);
-
-        enum Shape
+        static Font LoadFont(string name, ref Font cache)
         {
-            Round,
-            Cut,
-        }
-
-        /// <summary>A sliced shape: rounded or corner-cut, filled or (line &gt; 0) just its outline.</summary>
-        static Sprite MakeShape(int size, int corner, Shape shape, float line)
-        {
-            var texture = new Texture2D(size, size, TextureFormat.RGBA32, false) { wrapMode = TextureWrapMode.Clamp, hideFlags = HideFlags.DontSave };
-            var pixels = new Color32[size * size];
-
-            for (var y = 0; y < size; y++)
+            if (cache == null)
             {
-                for (var x = 0; x < size; x++)
+                cache = Resources.Load<Font>("Fonts/" + name);
+
+                if (cache == null)
                 {
-                    // Signed distance to the edge (positive inside).
-                    var px = x + 0.5f;
-                    var py = y + 0.5f;
-                    var inside = Mathf.Min(Mathf.Min(px, size - px), Mathf.Min(py, size - py));
-                    var cx = Mathf.Max(0, Mathf.Max(corner - px, px - (size - corner)));
-                    var cy = Mathf.Max(0, Mathf.Max(corner - py, py - (size - corner)));
-                    float d;
-
-                    if (shape == Shape.Round)
-                    {
-                        d = cx > 0 && cy > 0 ? corner - Mathf.Sqrt(cx * cx + cy * cy) : inside;
-                    }
-                    else
-                    {
-                        // The cut: a 45° line across each corner.
-                        d = Mathf.Min(inside, (Mathf.Min(px, size - px) + Mathf.Min(py, size - py) - corner) / 1.4142f);
-                    }
-
-                    var alpha = line > 0 ? Mathf.Clamp01(d + 0.5f) * Mathf.Clamp01(line + 0.5f - d) : Mathf.Clamp01(d + 0.5f);
-                    pixels[y * size + x] = new Color32(255, 255, 255, (byte)(alpha * 255));
+                    cache = Resources.GetBuiltinResource<Font>("LegacyRuntime.ttf");
                 }
             }
 
-            texture.SetPixels32(pixels);
-            texture.Apply();
-            var border = corner + 3;
-
-            return Sprite.Create(texture, new Rect(0, 0, size, size), new Vector2(0.5f, 0.5f), 100, 0, SpriteMeshType.FullRect, new Vector4(border, border, border, border));
+            return cache;
         }
 
-        /// <summary>A disc, or (hole &gt; 0) a ring whose hole is that share of its radius.</summary>
-        static Sprite MakeRound(int size, float hole)
-        {
-            var texture = new Texture2D(size, size, TextureFormat.RGBA32, false) { wrapMode = TextureWrapMode.Clamp, hideFlags = HideFlags.DontSave };
-            var pixels = new Color32[size * size];
-            var r = size * 0.5f;
-
-            for (var y = 0; y < size; y++)
-            {
-                for (var x = 0; x < size; x++)
-                {
-                    var d = Vector2.Distance(new Vector2(x + 0.5f, y + 0.5f), new Vector2(r, r));
-                    var alpha = Mathf.Clamp01(r - 0.5f - d + 0.5f);
-
-                    if (hole > 0)
-                    {
-                        alpha *= Mathf.Clamp01(d - r * hole + 0.5f);
-                    }
-
-                    pixels[y * size + x] = new Color32(255, 255, 255, (byte)(alpha * 255));
-                }
-            }
-
-            texture.SetPixels32(pixels);
-            texture.Apply();
-
-            return Sprite.Create(texture, new Rect(0, 0, size, size), new Vector2(0.5f, 0.5f));
-        }
-
-        static Sprite MakeDiamond(int size)
-        {
-            var texture = new Texture2D(size, size, TextureFormat.RGBA32, false) { wrapMode = TextureWrapMode.Clamp, hideFlags = HideFlags.DontSave };
-            var pixels = new Color32[size * size];
-            var r = size * 0.5f;
-
-            for (var y = 0; y < size; y++)
-            {
-                for (var x = 0; x < size; x++)
-                {
-                    var d = r - (Mathf.Abs(x + 0.5f - r) + Mathf.Abs(y + 0.5f - r));
-                    pixels[y * size + x] = new Color32(255, 255, 255, (byte)(Mathf.Clamp01(d / 1.4142f + 0.5f) * 255));
-                }
-            }
-
-            texture.SetPixels32(pixels);
-            texture.Apply();
-
-            return Sprite.Create(texture, new Rect(0, 0, size, size), new Vector2(0.5f, 0.5f));
-        }
-
-        /// <summary>An arrowhead pointing up (the hero on the maps).</summary>
-        static Sprite MakeArrow(int size)
-        {
-            var texture = new Texture2D(size, size, TextureFormat.RGBA32, false) { wrapMode = TextureWrapMode.Clamp, hideFlags = HideFlags.DontSave };
-            var pixels = new Color32[size * size];
-            Vector2 tip = new Vector2(size * 0.5f, size * 0.95f), left = new Vector2(size * 0.12f, size * 0.08f), notch = new Vector2(size * 0.5f, size * 0.3f), right = new Vector2(size * 0.88f, size * 0.08f);
-
-            for (var y = 0; y < size; y++)
-            {
-                for (var x = 0; x < size; x++)
-                {
-                    var p = new Vector2(x + 0.5f, y + 0.5f);
-                    var inside = InTriangle(p, tip, left, notch) || InTriangle(p, tip, notch, right);
-                    pixels[y * size + x] = new Color32(255, 255, 255, (byte)(inside ? 255 : 0));
-                }
-            }
-
-            texture.SetPixels32(pixels);
-            texture.Apply();
-
-            return Sprite.Create(texture, new Rect(0, 0, size, size), new Vector2(0.5f, 0.5f));
-        }
-
-        static bool InTriangle(Vector2 p, Vector2 a, Vector2 b, Vector2 c)
-        {
-            float Side(Vector2 u, Vector2 v, Vector2 w) => (u.x - w.x) * (v.y - w.y) - (v.x - w.x) * (u.y - w.y);
-            var d1 = Side(p, a, b);
-            var d2 = Side(p, b, c);
-            var d3 = Side(p, c, a);
-
-            return !((d1 < 0 || d2 < 0 || d3 < 0) && (d1 > 0 || d2 > 0 || d3 > 0));
-        }
-
-        static Sprite MakeFade()
-        {
-            const int width = 256;
-            var texture = new Texture2D(width, 1, TextureFormat.RGBA32, false) { wrapMode = TextureWrapMode.Clamp, hideFlags = HideFlags.DontSave };
-
-            for (var x = 0; x < width; x++)
-            {
-                var t = x / (width - 1f);
-                texture.SetPixel(x, 0, new Color(1, 1, 1, 1 - t * t * (3 - 2 * t)));
-            }
-
-            texture.Apply();
-
-            return Sprite.Create(texture, new Rect(0, 0, width, 1), new Vector2(0.5f, 0.5f));
-        }
+        /// <summary>The interface's text: Inter Tight 400, 500 and 600 (Google Fonts, OFL).</summary>
+        public static Font Font => LoadFont("InterTight-Regular", ref font);
+        public static Font FontMedium => LoadFont("InterTight-Medium", ref fontMedium);
+        public static Font FontBold => LoadFont("InterTight-SemiBold", ref fontBold);
+        /// <summary>Headings, names and big numbers: Cormorant Garamond 600.</summary>
+        public static Font Display => LoadFont("CormorantGaramond-SemiBold", ref display);
+        /// <summary>Gu's names and seals in hanzi: Ma Shan Zheng (a subset).</summary>
+        public static Font SealFont => LoadFont("MaShanZheng-Regular", ref sealFont);
+        /// <summary>The brush strokes in the background: Zhi Mang Xing (a subset).</summary>
+        public static Font BrushFont => LoadFont("ZhiMangXing-Regular", ref brushFont);
 
         /// <summary>A screen-wide canvas (and the event system the pointer needs).</summary>
         public static Canvas Canvas(string name, int order)
@@ -234,6 +117,18 @@ namespace GuWorld.UI
             }
 
             return canvas;
+        }
+
+        /// <summary>
+        /// A stage over its parent in the design's own units: always 900 tall (the design's
+        /// 1440 × 900 frame), as wide as the screen's shape makes it (1600 on 16:9).
+        /// </summary>
+        public static RectTransform Stage(Transform parent)
+        {
+            var rect = Rect("Stage", parent);
+            rect.gameObject.AddComponent<DesignStage>().Fit();
+
+            return rect;
         }
 
         public static RectTransform Rect(string name, Transform parent)
@@ -267,6 +162,53 @@ namespace GuWorld.UI
             return rect;
         }
 
+        /// <summary>
+        /// Puts a rectangle as the design does, by its top-left corner and size, measured
+        /// from the parent's top-left (y down), the way CSS's `left`/`top` read.
+        /// </summary>
+        public static RectTransform TopLeft(this RectTransform rect, float left, float top, float width, float height)
+        {
+            rect.anchorMin = rect.anchorMax = new Vector2(0, 1);
+            rect.pivot = new Vector2(0, 1);
+            rect.anchoredPosition = new Vector2(left, -top);
+            rect.sizeDelta = new Vector2(width, height);
+
+            return rect;
+        }
+
+        /// <summary>The same from the parent's top-right corner (CSS `right`/`top`).</summary>
+        public static RectTransform TopRight(this RectTransform rect, float right, float top, float width, float height)
+        {
+            rect.anchorMin = rect.anchorMax = new Vector2(1, 1);
+            rect.pivot = new Vector2(1, 1);
+            rect.anchoredPosition = new Vector2(-right, -top);
+            rect.sizeDelta = new Vector2(width, height);
+
+            return rect;
+        }
+
+        /// <summary>The same from the parent's bottom-left corner (CSS `left`/`bottom`).</summary>
+        public static RectTransform BottomLeft(this RectTransform rect, float left, float bottom, float width, float height)
+        {
+            rect.anchorMin = rect.anchorMax = new Vector2(0, 0);
+            rect.pivot = new Vector2(0, 0);
+            rect.anchoredPosition = new Vector2(left, bottom);
+            rect.sizeDelta = new Vector2(width, height);
+
+            return rect;
+        }
+
+        /// <summary>The same from the parent's bottom-right corner (CSS `right`/`bottom`).</summary>
+        public static RectTransform BottomRight(this RectTransform rect, float right, float bottom, float width, float height)
+        {
+            rect.anchorMin = rect.anchorMax = new Vector2(1, 0);
+            rect.pivot = new Vector2(1, 0);
+            rect.anchoredPosition = new Vector2(-right, bottom);
+            rect.sizeDelta = new Vector2(width, height);
+
+            return rect;
+        }
+
         /// <summary>Fills its parent (with an inset).</summary>
         public static RectTransform Fill(this RectTransform rect, float inset = 0) =>
             rect.Place(Vector2.zero, Vector2.one, inset, inset, inset, inset);
@@ -282,32 +224,66 @@ namespace GuWorld.UI
             return image;
         }
 
-        /// <summary>A panel: dark, corners cut, a thin bronze frame (the frame ignores layouts).</summary>
-        public static Image Panel(string name, Transform parent, Color? colour = null, Color? frame = null)
+        /// <summary>
+        /// A panel: glass over the void — a dark gradient, a thin cold frame and two gold
+        /// corners (top left, bottom right), a deep shadow under it. A colour given only
+        /// sets how see-through it is; a frame given replaces the cold one.
+        /// </summary>
+        public static Image Panel(string name, Transform parent, Color? colour = null, Color? frame = null, bool corners = true)
         {
-            var panel = Image(name, parent, colour ?? Panel1, Chamfer);
-            Frame(panel.transform, frame ?? Line);
+            var panel = Image(name, parent, new Color(1, 1, 1, Mathf.Clamp01((colour?.a ?? 0.97f) / 0.97f)), Plain);
+            panel.Gradient(new Color(12 / 255f, 16 / 255f, 24 / 255f, 0.78f), new Color(5 / 255f, 7 / 255f, 12 / 255f, 0.9f));
+            Frame(panel.transform, frame ?? new Color(200 / 255f, 230 / 255f, 240 / 255f, 0.1f));
+
+            if (corners)
+            {
+                GoldCorners(panel.transform, 14);
+            }
 
             return panel;
         }
 
-        /// <summary>The cut-corner outline over a shape.</summary>
+        /// <summary>A thin square outline over a shape (ignoring layouts).</summary>
         public static Image Frame(Transform parent, Color colour)
         {
-            var frame = Image("Frame", parent, colour, ChamferFrame);
+            var frame = Image("Frame", parent, colour, Outline);
             frame.rectTransform.Fill();
             frame.gameObject.AddComponent<LayoutElement>().ignoreLayout = true;
 
             return frame;
         }
 
+        /// <summary>The two gold corners of a panel: top left and bottom right, `size` long, 1 thick, just outside the frame.</summary>
+        public static void GoldCorners(Transform parent, float size, Color? colour = null)
+        {
+            var gold = colour ?? Gold;
+            Corner(parent, gold, new Vector2(0, 1), new Vector2(-1, 1), new Vector2(size, 1));
+            Corner(parent, gold, new Vector2(0, 1), new Vector2(-1, 1), new Vector2(1, size));
+            Corner(parent, gold, new Vector2(1, 0), new Vector2(1, -1), new Vector2(size, 1));
+            Corner(parent, gold, new Vector2(1, 0), new Vector2(1, -1), new Vector2(1, size));
+        }
+
+        static void Corner(Transform parent, Color colour, Vector2 anchor, Vector2 offset, Vector2 size)
+        {
+            var line = Image("Corner", parent, colour);
+            line.rectTransform.anchorMin = line.rectTransform.anchorMax = anchor;
+            line.rectTransform.pivot = anchor;
+            line.rectTransform.anchoredPosition = offset;
+            line.rectTransform.sizeDelta = size;
+            line.gameObject.AddComponent<LayoutElement>().ignoreLayout = true;
+        }
+
+        /// <summary>
+        /// Text. Bold is Inter Tight's semibold face, not a made-up bold; `Display` text
+        /// uses Cormorant Garamond.
+        /// </summary>
         public static Text Label(string text, Transform parent, int size, Color? colour = null, TextAnchor align = TextAnchor.MiddleLeft, FontStyle style = FontStyle.Normal)
         {
             var label = Rect("Text", parent).gameObject.AddComponent<Text>();
-            label.font = Font;
+            label.font = style == FontStyle.Bold || style == FontStyle.BoldAndItalic ? FontBold : Font;
             label.text = text;
             label.fontSize = size;
-            label.fontStyle = style;
+            label.fontStyle = style == FontStyle.BoldAndItalic ? FontStyle.Italic : style == FontStyle.Bold ? FontStyle.Normal : style;
             label.color = colour ?? Text;
             label.alignment = align;
             label.horizontalOverflow = HorizontalWrapMode.Wrap;
@@ -329,34 +305,48 @@ namespace GuWorld.UI
             return icon;
         }
 
-        /// <summary>Text set as a mark (a rank's numeral in a seal): centred, bold.</summary>
-        public static Text Mark(string text, Transform parent, int size, Color colour) =>
-            Label(text, parent, size, colour, TextAnchor.MiddleCenter, FontStyle.Bold);
+        /// <summary>Text set as a mark (a rank's numeral in a seal): centred, in the display face.</summary>
+        public static Text Mark(string text, Transform parent, int size, Color colour)
+        {
+            var mark = Label(text, parent, size, colour, TextAnchor.MiddleCenter);
+            mark.font = Display;
 
-        /// <summary>A small labelled heading in spaced capitals ("ЗАДАНИЕ").</summary>
-        public static Text Caps(string text, Transform parent, int size = 15, Color? colour = null) =>
-            Label(Spaced(text), parent, size, colour ?? Gold, TextAnchor.MiddleLeft, FontStyle.Bold);
+            return mark;
+        }
 
-        /// <summary>Capitals with a thin space between letters, as the design sets its small headings.</summary>
+        /// <summary>A small heading in spaced capitals ("ЗАДАНИЕ"), the design's label gold.</summary>
+        public static Text Caps(string text, Transform parent, int size = 15, Color? colour = null)
+        {
+            var caps = Label(text.ToUpperInvariant(), parent, size, colour ?? LabelGold, TextAnchor.MiddleLeft, FontStyle.Bold);
+            caps.Track(0.3f);
+
+            return caps;
+        }
+
+        /// <summary>Capitals with a thin space between letters, for text made into a string before it is shown.</summary>
         public static string Spaced(string text) => string.Join(" ", text.ToUpperInvariant().ToCharArray());
 
-        /// <summary>A cinnabar seal: a square with an icon in it.</summary>
+        /// <summary>A seal: the design's brand mark, a hexagon outlined in gold, with an icon in it.</summary>
         public static Image SealMark(string icon, Transform parent, float size)
         {
-            var seal = Image("Seal", parent, Seal, Chamfer);
-            seal.rectTransform.sizeDelta = new Vector2(size, size);
-            var mark = Icon(icon, seal.transform, size * 0.62f, OnGold);
-            mark.rectTransform.At(new Vector2(0.5f, 0.5f), Vector2.zero, Vector2.one * size * 0.62f);
+            var seal = Image("Seal", parent, Seal, HexagonUp);
+            seal.rectTransform.sizeDelta = new Vector2(size, size * 38 / 34f);
+            var rim = Image("Rim", seal.transform, Gold, HexagonUpLine);
+            rim.rectTransform.Fill();
+            var mark = Icon(icon, seal.transform, size * 0.5f, Gold);
+            mark.rectTransform.At(new Vector2(0.5f, 0.5f), Vector2.zero, Vector2.one * size * 0.5f);
 
             return seal;
         }
 
-        /// <summary>A cinnabar seal with a numeral or a word in it (a rank).</summary>
+        /// <summary>The same seal with a numeral or a word in it (a rank, a grade).</summary>
         public static Image SealText(string text, Transform parent, float size)
         {
-            var seal = Image("Seal", parent, Seal, Chamfer);
-            seal.rectTransform.sizeDelta = new Vector2(size, size);
-            var mark = Mark(text, seal.transform, Mathf.RoundToInt(size * (text.Length > 2 ? 0.36f : 0.48f)), OnGold);
+            var seal = Image("Seal", parent, Seal, HexagonUp);
+            seal.rectTransform.sizeDelta = new Vector2(size, size * 38 / 34f);
+            var rim = Image("Rim", seal.transform, Gold, HexagonUpLine);
+            rim.rectTransform.Fill();
+            var mark = Mark(text, seal.transform, Mathf.RoundToInt(size * (text.Length > 2 ? 0.36f : 0.52f)), GoldLit);
             mark.rectTransform.Fill();
 
             return seal;
@@ -399,7 +389,7 @@ namespace GuWorld.UI
             return element;
         }
 
-        /// <summary>A big entry of the main menu: text that lights up gold when pointed at, an icon at its right.</summary>
+        /// <summary>A big entry of a menu: a name in the display face that the chosen row's gold lights when pointed at; a note under it or beside it.</summary>
         public static MenuEntry Entry(string text, string detail, Transform parent, Action click, string icon = null)
         {
             var rect = Rect(text, parent);
@@ -411,28 +401,23 @@ namespace GuWorld.UI
         }
 
         /// <summary>
-        /// A button, in the design's plates: plain (dark, framed), gold — the main action,
-        /// in cinnabar — red (one that cannot be undone), or a chosen tab (gold on brown).
+        /// A button, the design's long hexagon: plain (a quiet grey edge), gold — the main
+        /// action (a gold edge round a dark body), danger (coral), or a chosen tab (a solid gold
+        /// body). Its words are set in spaced capitals.
         /// </summary>
-        public static Hover Button(string text, Transform parent, Action click, ButtonKind kind = ButtonKind.Plain, int size = 20)
+        public static HexButton Button(string text, Transform parent, Action click, ButtonKind kind = ButtonKind.Plain, int size = 20)
         {
-            var image = Image(text, parent, Color.white, Chamfer);
-            image.raycastTarget = true;
-            var (rest, lit, ink, frame) = kind switch
+            var look = kind switch
             {
-                ButtonKind.Gold => (Cinnabar, CinnabarLit, OnGold, Gold),
-                ButtonKind.Danger => (Hex(0x3A1714, 0.95f), Hex(0x5A211C), Hex(0xF2C9C2), Danger),
-                ButtonKind.Tab => (Chosen, Hex(0x47331F), GoldLit, Gold),
-                _ => (InkLight, InkHover, Text, Line),
+                ButtonKind.Gold => HexKind.Main,
+                ButtonKind.Danger => HexKind.Bad,
+                ButtonKind.Tab => HexKind.Solid,
+                ButtonKind.Solid => HexKind.Solid,
+                ButtonKind.Off => HexKind.Off,
+                _ => HexKind.Ghost,
             };
-            Frame(image.transform, frame);
-            var label = Label(text, image.transform, size, ink, TextAnchor.MiddleCenter, kind == ButtonKind.Plain ? FontStyle.Normal : FontStyle.Bold);
-            label.rectTransform.Fill(4);
-            var hover = image.gameObject.AddComponent<Hover>();
-            hover.Set(image, rest, lit, click);
-            image.Size(52);
 
-            return hover;
+            return HexButton(text, parent, click, look, Mathf.RoundToInt(size * 0.8f), 52);
         }
 
         /// <summary>A row: a name on the left, and whatever `fill` puts on the right.</summary>
@@ -441,13 +426,13 @@ namespace GuWorld.UI
             var row = Rect(name, parent);
             row.Stack<HorizontalLayoutGroup>(16, null, TextAnchor.MiddleLeft);
             row.Size(height);
-            var label = Label(name, row, 20, Text);
+            var label = Label(name, row, 19, Text);
             label.Size(-1, 300, 0);
 
             return row;
         }
 
-        /// <summary>A row of choices, the chosen one gold on brown; `pick` gets the index chosen.</summary>
+        /// <summary>A row of choices (the design's filter buttons), the chosen one lit gold; `pick` gets the index chosen.</summary>
         public static void Choices(Transform parent, IList<string> options, int chosen, Action<int> pick, int size = 18)
         {
             var row = Rect("Choices", parent);
@@ -457,34 +442,42 @@ namespace GuWorld.UI
             for (var i = 0; i < options.Count; i++)
             {
                 var index = i;
-                var button = Button(options[i], row, () => pick(index), i == chosen ? ButtonKind.Tab : ButtonKind.Plain, size);
-                button.Size(46, -1, 1);
+                var button = Tb(options[i], row, i == chosen, () => pick(index), Mathf.RoundToInt(size * 0.8f));
+                button.Size(44, -1, 1);
             }
         }
 
-        /// <summary>A slider from min to max, its value shown beside it.</summary>
+        /// <summary>A slider from min to max (the design's: a hairline, a gold fill, a diamond to drag), its value beside it.</summary>
         public static Slider Slider(Transform parent, float min, float max, float value, Func<float, string> show, Action<float> change)
         {
             var holder = Rect("Slider", parent);
             holder.Size(48, -1, 1);
-            var track = Image("Track", holder, InkLight, Rounded);
-            track.rectTransform.Place(new Vector2(0, 0.5f), new Vector2(1, 0.5f), 0, -4, 90, -4);
-            var fillArea = Rect("Fill Area", holder).Place(new Vector2(0, 0.5f), new Vector2(1, 0.5f), 0, -4, 90, -4);
-            var fill = Image("Fill", fillArea, Gold, Rounded);
+            var hit = Image("Hit", holder, new Color(0, 0, 0, 0));
+            hit.rectTransform.Place(new Vector2(0, 0), new Vector2(1, 1), 0, 0, 90, 0);
+            hit.raycastTarget = true;
+            var track = Image("Track", holder, new Color(234 / 255f, 240 / 255f, 242 / 255f, 0.12f));
+            track.rectTransform.Place(new Vector2(0, 0.5f), new Vector2(1, 0.5f), 0, -1, 90, -1);
+            var fillArea = Rect("Fill Area", holder).Place(new Vector2(0, 0.5f), new Vector2(1, 0.5f), 0, -1, 90, -1);
+            var fill = Image("Fill", fillArea, Color.white);
+            fill.Gradient(GoldDeep, GoldLit, true);
             fill.rectTransform.Fill();
-            var handleArea = Rect("Handle Area", holder).Place(new Vector2(0, 0), new Vector2(1, 1), 10, 0, 100, 0);
-            var handle = Image("Handle", handleArea, GoldLit, Chamfer);
-            handle.rectTransform.sizeDelta = new Vector2(18, 0);
-            handle.rectTransform.anchorMin = new Vector2(0, 0.22f);
-            handle.rectTransform.anchorMax = new Vector2(0, 0.78f);
+            var handleArea = Rect("Handle Area", holder).Place(new Vector2(0, 0), new Vector2(1, 1), 0, 0, 90, 0);
+            var handle = Image("Handle", handleArea, GoldLit, Diamond);
+            handle.rectTransform.sizeDelta = new Vector2(20, 0);
+            handle.rectTransform.anchorMin = new Vector2(0, 0.5f);
+            handle.rectTransform.anchorMax = new Vector2(0, 0.5f);
+            handle.rectTransform.sizeDelta = new Vector2(20, 20);
             handle.raycastTarget = true;
-            var number = Label(show(value), holder, 20, Text, TextAnchor.MiddleRight);
+            Glow(handle.transform, GoldLit.A(0.5f), 10);
+            var number = Label(show(value), holder, 22, Text, TextAnchor.MiddleRight);
+            number.font = Display;
             number.rectTransform.Place(new Vector2(1, 0), new Vector2(1, 1), -80, 0, 0, 0);
 
             var slider = holder.gameObject.AddComponent<Slider>();
             slider.fillRect = fill.rectTransform;
             slider.handleRect = handle.rectTransform;
             slider.targetGraphic = handle;
+            slider.transition = Selectable.Transition.None;
             slider.minValue = min;
             slider.maxValue = max;
             slider.value = value;
@@ -500,15 +493,15 @@ namespace GuWorld.UI
         /// <summary>A one-line text field (the hero's name), with a hint while empty.</summary>
         public static InputField Field(Transform parent, string value, string hint, int limit, Action<string> change)
         {
-            var box = Image("Field", parent, InkLight, Chamfer);
+            var box = Image("Field", parent, new Color(4 / 255f, 6 / 255f, 10 / 255f, 0.8f), Plain);
             box.raycastTarget = true;
-            Frame(box.transform, LineLit);
-            box.Size(52, -1, 1);
-            var text = Label("", box.transform, 22, Text);
+            Frame(box.transform, new Color(234 / 255f, 240 / 255f, 242 / 255f, 0.16f));
+            box.Size(44, -1, 1);
+            var text = Label("", box.transform, 16, Text);
             text.rectTransform.Fill(14);
             text.supportRichText = false;
             text.horizontalOverflow = HorizontalWrapMode.Overflow;
-            var placeholder = Label(hint, box.transform, 20, new Color(Muted.r, Muted.g, Muted.b, 0.6f), TextAnchor.MiddleLeft, FontStyle.Italic);
+            var placeholder = Label(hint, box.transform, 15, Muted.A(0.8f));
             placeholder.rectTransform.Fill(14);
 
             var field = box.gameObject.AddComponent<InputField>();
@@ -517,8 +510,9 @@ namespace GuWorld.UI
             field.characterLimit = limit;
             field.lineType = InputField.LineType.SingleLine;
             field.targetGraphic = box;
+            field.transition = Selectable.Transition.None;
             field.caretColor = GoldLit;
-            field.selectionColor = new Color(Gold.r, Gold.g, Gold.b, 0.35f);
+            field.selectionColor = Gold.A(0.35f);
             field.text = value ?? "";
             field.onValueChanged.AddListener(v => change(v));
 
@@ -526,12 +520,12 @@ namespace GuWorld.UI
         }
 
         /// <summary>
-        /// An item cell (the design's corner-cut cells): its rim in a rank's or kind's colour,
-        /// an icon in the middle, a count at the foot. Clicking it calls `click`.
+        /// An item cell (the design's octagon): a dark round glow inside a thin cold edge, an
+        /// icon in the middle, a count at the foot, the rank's strip under it. Clicking it calls `click`.
         /// </summary>
         public static Cell Cell(Transform parent, float size, Action click = null)
         {
-            var back = Image("Cell", parent, Hex(0x0E0D0C, 0.95f), Chamfer);
+            var back = Image("Cell", parent, Color.white, Octagon);
             back.raycastTarget = click != null;
             back.rectTransform.sizeDelta = new Vector2(size, size);
             var cell = back.gameObject.AddComponent<Cell>();
@@ -543,12 +537,17 @@ namespace GuWorld.UI
 
     public enum ButtonKind
     {
+        /// <summary>A quiet one (the design's ghost).</summary>
         Plain,
-        /// <summary>The main action (cinnabar).</summary>
+        /// <summary>The main action (a gold edge, a dark body).</summary>
         Gold,
         Danger,
         /// <summary>A chosen tab or filter.</summary>
         Tab,
+        /// <summary>A solid gold body (the action the page is for).</summary>
+        Solid,
+        /// <summary>Out of reach: greyed.</summary>
+        Off,
     }
 
     /// <summary>A clickable image that eases between its resting and lit colours (in real time, so it works while paused).</summary>
@@ -559,6 +558,9 @@ namespace GuWorld.UI
         Color lit;
         Action click;
         bool over;
+
+        /// <summary>Whether the pointer is on it.</summary>
+        public bool Over => over;
 
         public void Set(Image target, Color resting, Color lighted, Action onClick)
         {
@@ -589,7 +591,7 @@ namespace GuWorld.UI
         }
     }
 
-    /// <summary>An item cell: rim, icon, count, a corner mark (rank), a badge (the vital Gu's heart), a dot (hunger), a shade (rest after use).</summary>
+    /// <summary>An item cell: rim, icon, count, a corner mark (rank), a badge (the vital Gu's heart), a dot (hunger), a shade (rest after use), the rank's strip.</summary>
     public class Cell : MonoBehaviour, IPointerClickHandler, IPointerEnterHandler, IPointerExitHandler
     {
         public Image Back;
@@ -601,6 +603,8 @@ namespace GuWorld.UI
         public Image Badge;
         public Image Dot;
         public Image Shade;
+        /// <summary>The strip in the rank's colour under the cell (hidden until SetRank).</summary>
+        public Image Strip;
         Action click;
         bool over;
         Color rim;
@@ -609,23 +613,29 @@ namespace GuWorld.UI
         {
             Back = back;
             click = onClick;
-            Rim = UiKit.Frame(back.transform, UiKit.Line);
-            Shade = UiKit.Image("Rest", back.transform, new Color(0, 0, 0, 0.62f), UiKit.Chamfer);
+            Rim = UiKit.Image("Rim", back.transform, UiKit.Line, UiKit.OctagonLine);
+            Rim.rectTransform.Fill();
+            Shade = UiKit.Image("Rest", back.transform, new Color(0, 0, 0, 0.62f), UiKit.Octagon);
             Shade.rectTransform.Place(Vector2.zero, new Vector2(1, 0));
-            Mark = UiKit.Icon(null, back.transform, size * 0.56f, UiKit.Text);
-            Mark.rectTransform.At(new Vector2(0.5f, 0.5f), Vector2.zero, Vector2.one * size * 0.56f);
-            Count = UiKit.Label("", back.transform, Mathf.RoundToInt(Mathf.Clamp(size * 0.24f, 13, 18)), UiKit.Text, TextAnchor.LowerRight, FontStyle.Bold).Shadowed();
-            Count.rectTransform.Fill(5);
-            Corner = UiKit.Label("", back.transform, Mathf.RoundToInt(Mathf.Clamp(size * 0.2f, 11, 16)), UiKit.Essence, TextAnchor.UpperRight, FontStyle.Bold);
-            Corner.rectTransform.Fill(5);
-            Badge = UiKit.Icon("heart", back.transform, Mathf.Clamp(size * 0.22f, 11, 18), UiKit.Danger);
-            Badge.rectTransform.At(Vector2.zero, new Vector2(Mathf.Clamp(size * 0.22f, 11, 18) * 0.5f + 5, Mathf.Clamp(size * 0.22f, 11, 18) * 0.5f + 5), Vector2.one * Mathf.Clamp(size * 0.22f, 11, 18));
+            Mark = UiKit.Icon(null, back.transform, size * 0.5f, UiKit.Text);
+            Mark.rectTransform.At(new Vector2(0.5f, 0.5f), Vector2.zero, Vector2.one * size * 0.5f);
+            Count = UiKit.Label("", back.transform, Mathf.RoundToInt(Mathf.Clamp(size * 0.18f, 11, 16)), UiKit.Text2, TextAnchor.LowerRight, FontStyle.Bold).Shadowed();
+            Count.rectTransform.Fill(size * 0.09f);
+            Corner = UiKit.Label("", back.transform, Mathf.RoundToInt(Mathf.Clamp(size * 0.2f, 11, 16)), UiKit.Essence, TextAnchor.UpperRight);
+            Corner.font = UiKit.Display;
+            Corner.rectTransform.Fill(size * 0.1f);
+            var badge = Mathf.Clamp(size * 0.2f, 10, 16);
+            Badge = UiKit.Icon("heart", back.transform, badge, UiKit.Danger);
+            Badge.rectTransform.At(Vector2.zero, new Vector2(badge * 0.5f + size * 0.1f, badge * 0.5f + size * 0.08f), Vector2.one * badge);
             Badge.enabled = false;
-            Key = UiKit.Label("", back.transform, 14, UiKit.Muted, TextAnchor.UpperLeft, FontStyle.Bold);
-            Key.rectTransform.Fill(5);
+            Key = UiKit.Label("", back.transform, Mathf.RoundToInt(Mathf.Clamp(size * 0.17f, 10, 14)), UiKit.Muted, TextAnchor.UpperLeft, FontStyle.Bold);
+            Key.rectTransform.Fill(size * 0.1f);
             Dot = UiKit.Image("Dot", back.transform, UiKit.Hunger, UiKit.Disc);
-            Dot.rectTransform.At(new Vector2(1, 1), new Vector2(-9, -9), new Vector2(9, 9));
+            Dot.rectTransform.At(new Vector2(1, 1), new Vector2(-size * 0.14f, -size * 0.14f), new Vector2(8, 8));
             Dot.enabled = false;
+            Strip = UiKit.Image("Rank", back.transform, Color.clear);
+            Strip.rectTransform.Place(new Vector2(0, 0), new Vector2(1, 0), size * 0.14f, 0, size * 0.14f, -2);
+            Strip.enabled = false;
             SetRim(UiKit.Line);
         }
 
@@ -633,6 +643,17 @@ namespace GuWorld.UI
         {
             rim = colour;
             Rim.color = colour;
+        }
+
+        /// <summary>The strip under the cell in a rank's colour (0: none).</summary>
+        public void SetRank(int rank)
+        {
+            Strip.enabled = rank > 0;
+
+            if (rank > 0)
+            {
+                Strip.color = GuWorld.Cultivation.Aperture.RankColour(rank);
+            }
         }
 
         /// <summary>The icon in the middle (null: none).</summary>
@@ -673,45 +694,138 @@ namespace GuWorld.UI
         }
     }
 
-    /// <summary>An entry of the main menu: big text; pointed at, a gold bar grows beside it and the text slides right and turns gold.</summary>
+    /// <summary>
+    /// An entry of a menu, the design's list row: a name in the display face; pointed at
+    /// (or chosen), a gold diamond shows at its left, a gold wash fades to the right and
+    /// thin gold lines run above and below it. A note can sit under the name or after it.
+    /// </summary>
     public class MenuEntry : MonoBehaviour, IPointerEnterHandler, IPointerExitHandler, IPointerClickHandler
     {
         Text title;
         Text note;
+        Text aside;
         Image mark;
-        Image bar;
-        Image glow;
+        Image wash;
+        Image top;
+        Image bottom;
+        Image diamond;
+        Image halo;
+        Image diamond2;
+        Image halo2;
         Action click;
         float lit;
         bool over;
+        Color rest = UiKit.Text2;
+        Color bright = Color.white;
 
-        public void Build(string text, string detail, Action onClick, string icon)
+        /// <summary>Lit as chosen even when the pointer is elsewhere.</summary>
+        public bool Chosen;
+        /// <summary>Worked by keys (MenuKeys): only being chosen lights it; the pointer chooses it.</summary>
+        public bool Keyed;
+        /// <summary>Told when the pointer comes onto it.</summary>
+        public Action Entered;
+
+        public void Build(string text, string detail, Action onClick, string icon, int size = 26)
         {
             click = onClick;
             var rect = (RectTransform)transform;
-            glow = UiKit.Image("Glow", rect, new Color(1, 1, 1, 0), UiKit.SoftEdge);
-            glow.rectTransform.Fill();
-            glow.raycastTarget = true;
-            bar = UiKit.Image("Bar", rect, UiKit.GoldLit);
-            bar.rectTransform.Place(new Vector2(0, 0.2f), new Vector2(0, 0.8f), 0, 0, 0, 0);
-            bar.rectTransform.sizeDelta = new Vector2(0, bar.rectTransform.sizeDelta.y);
-            title = UiKit.Label(UiKit.Spaced(text), rect, 28, UiKit.Text, TextAnchor.MiddleLeft, FontStyle.Bold).Shadowed();
-            title.rectTransform.Place(new Vector2(0, detail != null ? 0.38f : 0), Vector2.one, 24, 0, 60, 0);
+            wash = UiKit.Image("Wash", rect, new Color(1, 1, 1, 0), UiKit.SoftEdge);
+            wash.rectTransform.Fill();
+            wash.raycastTarget = true;
+            top = UiKit.Image("Top", rect, new Color(1, 1, 1, 0), UiKit.SoftEdge);
+            top.rectTransform.Place(new Vector2(0, 1), new Vector2(1, 1), 0, -1, 0, 0);
+            bottom = UiKit.Image("Bottom", rect, new Color(1, 1, 1, 0), UiKit.SoftEdge);
+            bottom.rectTransform.Place(new Vector2(0, 0), new Vector2(1, 0), 0, 0, 0, -1);
+            halo = UiKit.Image("Halo", rect, new Color(1, 1, 1, 0), UiKit.Halo);
+            halo.rectTransform.At(new Vector2(0, 0.5f), new Vector2(8, 0), new Vector2(32, 32));
+            diamond = UiKit.Image("Diamond", rect, new Color(1, 1, 1, 0), UiKit.Diamond);
+            diamond.rectTransform.At(new Vector2(0, 0.5f), new Vector2(8, 0), new Vector2(11, 11));
+            title = UiKit.Label(text, rect, size, rest, TextAnchor.MiddleLeft);
+            title.font = UiKit.Display;
+            title.horizontalOverflow = HorizontalWrapMode.Overflow;
+            title.rectTransform.Place(new Vector2(0, detail != null ? 0.42f : 0), Vector2.one, 26, 0, 60, 0);
 
             if (detail != null)
             {
-                note = UiKit.Label(detail, rect, 17, UiKit.Muted).Shadowed();
-                note.rectTransform.Place(Vector2.zero, new Vector2(1, 0.42f), 26, 0, 60, 0);
+                note = UiKit.Label(detail, rect, 12, UiKit.Hex(0xA8B6B8));
+                note.Track(0.08f);
+                note.rectTransform.Place(Vector2.zero, new Vector2(1, 0.42f), 27, 4, 20, 0);
             }
 
             if (icon != null)
             {
-                mark = UiKit.Icon(icon, rect, 30, UiKit.Hex(0x3A3024));
-                mark.rectTransform.At(new Vector2(1, 0.5f), new Vector2(-26, 0), new Vector2(30, 30));
+                mark = UiKit.Icon(icon, rect, 22, UiKit.Muted.A(0.5f));
+                mark.rectTransform.At(new Vector2(1, 0.5f), new Vector2(-24, 0), new Vector2(22, 22));
             }
         }
 
-        public void OnPointerEnter(PointerEventData _) => over = true;
+        /// <summary>The name's size, the row's height and a note after the name (spaced capitals); returns the entry.</summary>
+        public MenuEntry Restyle(int size, float height, string after = null)
+        {
+            title.fontSize = size;
+            this.Size(height);
+
+            if (after != null)
+            {
+                aside = UiKit.Lbl(after, transform, 11, UiKit.Muted, 0.2f);
+                aside.rectTransform.Place(new Vector2(0, 0), new Vector2(0, 1), 26 + title.preferredWidth + 14, 0, -400, 0);
+            }
+
+            return this;
+        }
+
+        /// <summary>A quiet entry (leaving the game): small spaced capitals, grey.</summary>
+        public MenuEntry Quiet(float height)
+        {
+            title.font = UiKit.Font;
+            title.fontSize = 13;
+            title.text = title.text.ToUpperInvariant();
+            title.Track(0.24f);
+            rest = UiKit.Muted;
+            bright = UiKit.Text;
+            title.color = rest;
+            this.Size(height);
+
+            return this;
+        }
+
+        /// <summary>A centred entry (the pause): the name in the middle, the wash fading both ways, a diamond at each side and no lines.</summary>
+        public MenuEntry Centre(float inset = 60)
+        {
+            title.alignment = TextAnchor.MiddleCenter;
+            title.rectTransform.offsetMin = new Vector2(0, title.rectTransform.offsetMin.y);
+            title.rectTransform.offsetMax = new Vector2(0, title.rectTransform.offsetMax.y);
+            wash.sprite = UiKit.FadeBoth;
+            top.enabled = false;
+            bottom.enabled = false;
+            diamond.rectTransform.anchoredPosition = new Vector2(inset + 4, 0);
+            halo.rectTransform.anchoredPosition = new Vector2(inset + 4, 0);
+            halo2 = UiKit.Image("Halo", transform, new Color(1, 1, 1, 0), UiKit.Halo);
+            halo2.rectTransform.At(new Vector2(1, 0.5f), new Vector2(-inset - 4, 0), new Vector2(32, 32));
+            diamond2 = UiKit.Image("Diamond", transform, new Color(1, 1, 1, 0), UiKit.Diamond);
+            diamond2.rectTransform.At(new Vector2(1, 0.5f), new Vector2(-inset - 4, 0), new Vector2(10, 10));
+
+            return this;
+        }
+
+        /// <summary>The name's resting colour (a quieter or warning entry).</summary>
+        public MenuEntry Tint(Color colour)
+        {
+            rest = colour;
+            title.color = colour;
+
+            return this;
+        }
+
+        /// <summary>Does what the entry is for.</summary>
+        public void Open() => click?.Invoke();
+
+        public void OnPointerEnter(PointerEventData _)
+        {
+            over = true;
+            Entered?.Invoke();
+        }
+
         public void OnPointerExit(PointerEventData _) => over = false;
 
         public void OnPointerClick(PointerEventData data)
@@ -724,16 +838,24 @@ namespace GuWorld.UI
 
         void Update()
         {
-            lit = Mathf.MoveTowards(lit, over ? 1 : 0, Time.unscaledDeltaTime * 6);
+            lit = Mathf.MoveTowards(lit, (over && !Keyed) || Chosen ? 1 : 0, Time.unscaledDeltaTime * 7);
             var ease = lit * lit * (3 - 2 * lit);
-            bar.rectTransform.sizeDelta = new Vector2(4 * ease, bar.rectTransform.sizeDelta.y);
-            title.rectTransform.offsetMin = new Vector2(24 + 14 * ease, title.rectTransform.offsetMin.y);
-            title.color = Color.Lerp(UiKit.Text, UiKit.GoldLit, ease);
-            glow.color = new Color(UiKit.Gold.r, UiKit.Gold.g, UiKit.Gold.b, 0.1f * ease);
+            wash.color = UiKit.Gold.A(0.14f * ease);
+            top.color = UiKit.Gold.A(0.3f * ease);
+            bottom.color = UiKit.Gold.A(0.15f * ease);
+            diamond.color = UiKit.Gold.A(ease);
+            halo.color = UiKit.Gold.A(0.45f * ease);
+
+            if (diamond2 != null)
+            {
+                diamond2.color = diamond.color;
+                halo2.color = halo.color;
+            }
+            title.color = Color.Lerp(rest, bright, ease);
 
             if (mark != null)
             {
-                mark.color = Color.Lerp(UiKit.Hex(0x3A3024), UiKit.Gold, ease);
+                mark.color = Color.Lerp(UiKit.Muted.A(0.5f), UiKit.Gold, ease);
             }
         }
     }
