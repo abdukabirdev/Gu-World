@@ -1,3 +1,4 @@
+using System;
 using System.Collections.Generic;
 using GuWorld.Cultivation;
 using GuWorld.Items;
@@ -9,63 +10,71 @@ using UnityEngine.UI;
 namespace GuWorld.UI
 {
     /// <summary>
-    /// The hero's pages share a frame (the design's inventory and aperture
-    /// boards): a seal and a title, tabs between the bag (I), the aperture (K)
-    /// and the map (M), the stones carried and a way out. This part holds the
-    /// frame and the bag: forty cells with filters, the weight, and what the
-    /// chosen thing is and what can be done with it. A thing or a Gu chosen on
-    /// these pages goes onto the action bar with a key, 1–9.
+    /// The hero's pages share a frame (UI-Bag and its siblings): the starry void, the header
+    /// — a gold hexagon with the page's mark, its title and the rank under it, the pages'
+    /// tabs between Q and E, the stones carried and a close button. This part holds the frame
+    /// and the bag (UI-Bag.dc.html): forty octagon cells under the filters, the weight under
+    /// them, and on a panel at the right the chosen thing — its mark floating in a glow, what
+    /// it is, its numbers, and what can be done with it.
     /// </summary>
     public partial class Menus
     {
-        const float BagCell = 86;
-        const float BagGap = 8;
+        const float BagCell = 72;
+        const float BagGapX = 14;
+        const float BagGapY = 12;
 
         readonly List<Cell> pageCells = new List<Cell>();
         int bagChosen = -1;
         /// <summary>The bag's filter: -1 all, else an ItemCategory.</summary>
         int bagFilter = -1;
 
-        /// <summary>The frame of the hero's pages; returns the body to fill.</summary>
-        RectTransform BookFrame(string icon, string title, Page page)
+        /// <summary>The stage of the hero's page on screen (its footer goes on it).</summary>
+        RectTransform bookStage;
+
+        /// <summary>The tabs of the hero's pages (the immortal's aperture has its own), each with its key.</summary>
+        List<(string name, string key, Page page)> PageTabs() => host.Sandbox
+            ? new List<(string, string, Page)> { ("Все Гу", "Tab", Page.Sandbox), ("Статус", "O", Page.Status), ("Карта", "M", Page.Map), ("Тело", "B", Page.Body) }
+            : new List<(string, string, Page)>(Array.ConvertAll(UiKit.HeroPages, p => (p.name, p.key, p.page)));
+
+        /// <summary>
+        /// The frame of the hero's pages, on a stage in the design's units; returns the body to fill (1328 × 708 on
+        /// the design's frame, wider on wider screens: 56 in from the sides, 116 from the top, 76 from the foot).
+        /// </summary>
+        RectTransform BookFrame(string icon, string title, Page page, string subtitle = null)
         {
-            var dim = UiKit.Image("Dim", pageRoot, UiKit.Hex(0x0B0A0A, 0.95f));
-            dim.rectTransform.Fill();
-            dim.raycastTarget = true;
+            var stage = UiKit.Stage(pageRoot);
+            bookStage = stage;
+            UiKit.Backdrop(stage);
+            var a = host.Cultivator.Aperture;
+            var pages = PageTabs();
+            var tabs = new List<(string, string, bool, Action)>();
 
-            var top = UiKit.Rect("Top", pageRoot).Place(new Vector2(0, 1), Vector2.one, 48, -112, 48, 28);
-            var seal = UiKit.SealMark(icon, top, 60);
-            seal.rectTransform.At(new Vector2(0, 0.5f), new Vector2(30, 0), new Vector2(60, 60));
-            var name = UiKit.Label(title, top, 34, UiKit.Text, TextAnchor.MiddleLeft, FontStyle.Bold);
-            name.rectTransform.Place(Vector2.zero, new Vector2(0, 1), 82, 0, -420, 0);
-
-            // Five tabs (the immortal's aperture adds its own) need more room.
-            var tabs = UiKit.Rect("Tabs", top).Place(Vector2.zero, new Vector2(0, 1), 430, 12, -1380, 12);
-            tabs.Stack<HorizontalLayoutGroup>(8, null, TextAnchor.MiddleLeft).childForceExpandWidth = true;
-
-            // The immortal's aperture has no bag or ring to look after: its own page instead.
-            var pages = host.Sandbox
-                ? new System.Collections.Generic.List<(string, string, Page)> { ("Все Гу", "Tab", Page.Sandbox), ("Статус", "O", Page.Status), ("Карта", "M", Page.Map), ("Тело", "B", Page.Body) }
-                : new System.Collections.Generic.List<(string, string, Page)> { ("Сумка", "I", Page.Bag), ("Апертура", "K", Page.Aperture), ("Статус", "O", Page.Status), ("Журнал", "J", Page.Journal), ("Слияние", "U", Page.Fusion), ("Карта", "M", Page.Map), ("Тело", "B", Page.Body) };
-
-            foreach (var (label, key, target) in pages)
+            foreach (var (name, key, target) in pages)
             {
                 var to = target;
-                UiKit.Button(pages.Count > 4 ? $"{label.ToUpperInvariant()}  <color=#A69A86>{key}</color>" : $"{UiKit.Spaced(label)}   <color=#A69A86>{key}</color>", tabs, () => host.OpenPage(to),
-                    target == page ? ButtonKind.Tab : ButtonKind.Plain, pages.Count > 4 ? 15 : 16).Size(52, -1, 1);
+                tabs.Add((name, key, target == page, () => host.OpenPage(to)));
             }
 
-            var close = UiKit.Button("Закрыть · Esc", top, host.Resume, ButtonKind.Plain, 16);
-            ((RectTransform)close.transform).Place(new Vector2(1, 0), Vector2.one, -190, 12, 0, 12);
-            var coin = UiKit.Icon("stone", top, 24, UiKit.Gold);
-            coin.rectTransform.Place(new Vector2(1, 0), Vector2.one, -420, 0, 380, 0);
-            var stones = UiKit.Label($"<b>{host.Cultivator.Stones}</b>  <color=#A69A86>камней</color>", top, 20, UiKit.Text);
-            stones.rectTransform.Place(new Vector2(1, 0), Vector2.one, -376, 0, 206, 0);
+            UiKit.Header(stage, icon, title, subtitle ?? $"Ранг {Aperture.RankNumeral(a.Rank)} · {Aperture.Name(a.Stage)}", tabs, host.Resume, right =>
+            {
+                var stone = UiKit.Icon("stone", right, 16, UiKit.EssenceLit);
+                stone.Size(20, 16, 0);
+                var count = UiKit.Label($"{host.Cultivator.Stones}", right, 15, UiKit.Text, TextAnchor.MiddleLeft, FontStyle.Bold);
+                count.horizontalOverflow = HorizontalWrapMode.Overflow;
+                count.Size(40, count.preferredWidth + 4, 0);
+            });
 
-            var rule = UiKit.Image("Rule", pageRoot, UiKit.Line);
-            rule.rectTransform.Place(new Vector2(0, 1), Vector2.one, 48, -120, 48, 118);
+            // Q and E: the page before and after.
+            var index = pages.FindIndex(p => p.page == page);
+            var keys = stage.gameObject.AddComponent<PageKeys>();
 
-            return UiKit.Rect("Body", pageRoot).Place(Vector2.zero, Vector2.one, 48, 36, 48, 140);
+            if (index >= 0)
+            {
+                keys.On(Key.Q, () => host.OpenPage(pages[(index + pages.Count - 1) % pages.Count].page));
+                keys.On(Key.E, () => host.OpenPage(pages[(index + 1) % pages.Count].page));
+            }
+
+            return UiKit.Rect("Body", stage).Place(Vector2.zero, Vector2.one, 56, 76, 56, 116);
         }
 
         /// <summary>Keys on the aperture page: 1–4 put the chosen Gu on that key.</summary>
@@ -121,7 +130,7 @@ namespace GuWorld.UI
         {
             var gu = host.Cultivator;
             var bag = gu.Bag;
-            var body = BookFrame("bag", "Инвентарь", Page.Bag);
+            var body = BookFrame("bag", "Сумка", Page.Bag);
 
             if (bag[bagChosen] == null)
             {
@@ -134,35 +143,41 @@ namespace GuWorld.UI
                 }
             }
 
-            // The hero, on the left.
-            var left = UiKit.Panel("Hero", body);
-            left.rectTransform.Place(Vector2.zero, new Vector2(0, 1), 0, 0, -340, 0);
-            var info = UiKit.Rect("Info", left.transform).Fill();
-            info.Stack<VerticalLayoutGroup>(8, new RectOffset(26, 26, 24, 22));
-            UiKit.Label(host.Look.FullName, info, 24, UiKit.Text, TextAnchor.MiddleLeft, FontStyle.Bold).Size(60);
-            var a = gu.Aperture;
-            UiKit.Caps($"Ранг {a.Rank} · {Aperture.Name(a.Stage)}", info, 14, Aperture.RankColour(a.Rank)).Size(22);
-            UiKit.Image("Rule", info, UiKit.Line).Size(2);
-            Stat(info, "Жизнь", $"{Mathf.CeilToInt(host.Health.Current)} / {host.Health.Max:0}");
-            Stat(info, "Эссенция", $"{a.Essence:0} / {a.Cap:0}%");
-            Stat(info, "Первобытные камни", $"{gu.Stones}");
-            Stat(info, "Вес", $"{bag.Weight:0.0} / {bag.Limit:0}");
-            UiKit.Image("Rule", info, UiKit.Line).Size(2);
-            UiKit.Label("Камни поглощаются клавишей V (3 с). Гу ставятся на клавиши 1–4 в апертуре (K).", info, 16, UiKit.Muted).Size(64);
-            UiKit.Label("Гу в сумке лежат в сосуде и не голодают — пока вы не очистите их в апертуру.", info, 16, UiKit.Muted).Size(64);
+            // The filters, the cells and the weight, at the left.
+            var gridWidth = Bag.Across * BagCell + (Bag.Across - 1) * BagGapX;
+            var rows = Mathf.CeilToInt(Bag.Cells / (float)Bag.Across);
+            var gridHeight = rows * BagCell + (rows - 1) * BagGapY;
+            var left = UiKit.Rect("Things", body);
+            left.TopLeft(0, 0, 700, 600);
 
-            // The cells, in the middle.
-            var gridWidth = Bag.Across * BagCell + (Bag.Across - 1) * BagGap;
-            var centre = UiKit.Rect("Centre", body).Place(Vector2.zero, new Vector2(0, 1), 380, 0, -(380 + gridWidth), 0);
-            var filters = UiKit.Rect("Filters", centre).Place(new Vector2(0, 1), Vector2.one, 0, -48, 0, 0);
-            filters.Stack<VerticalLayoutGroup>(0);
-            UiKit.Choices(filters, new[] { "Все", "Гу", "Еда", "Травы", "Материалы" }, bagFilter + 1, i =>
+            var filters = UiKit.Rect("Filters", left);
+            filters.TopLeft(0, 0, 700, 34);
+            var filterRow = filters.Stack<HorizontalLayoutGroup>(6, null, TextAnchor.MiddleLeft);
+            filterRow.childForceExpandWidth = false;
+            var names = new[] { "Все", "Гу", "Еда", "Травы", "Материалы" };
+
+            for (var i = 0; i < names.Length; i++)
             {
-                bagFilter = i - 1;
-                Show(Page.Bag);
-            }, 16);
+                var index = i;
+                var tb = UiKit.Tb(names[i], filters, bagFilter + 1 == i, () =>
+                {
+                    bagFilter = index - 1;
+                    Show(Page.Bag);
+                });
+                tb.Size(34, tb.Words.preferredWidth + names[i].Length * 12 * 0.16f + 30, 0);
+            }
 
-            var grid = UiKit.Rect("Grid", centre).Place(new Vector2(0, 1), Vector2.one, 0, -(64 + 5 * BagCell + 4 * BagGap), 0, 64);
+            UiKit.Rect("Space", filters).Size(34, -1, 1);
+            UiKit.Tb("Упорядочить", filters, false, () =>
+            {
+                host.Cultivator.Bag.Sort();
+                bagChosen = -1;
+                Show(Page.Bag);
+            }).Size(34, 150, 0);
+
+            var grid = UiKit.Rect("Grid", left);
+            grid.TopLeft(0, 50, gridWidth, gridHeight);
+            var used = 0;
 
             for (var i = 0; i < Bag.Cells; i++)
             {
@@ -173,80 +188,97 @@ namespace GuWorld.UI
                     Show(Page.Bag);
                 });
                 cell.Back.rectTransform.anchorMin = cell.Back.rectTransform.anchorMax = new Vector2(0, 1);
-                cell.Back.rectTransform.anchoredPosition = new Vector2(BagCell / 2 + i % Bag.Across * (BagCell + BagGap), -(BagCell / 2 + i / Bag.Across * (BagCell + BagGap)));
+                cell.Back.rectTransform.anchoredPosition = new Vector2(BagCell / 2 + i % Bag.Across * (BagCell + BagGapX), -(BagCell / 2 + i / Bag.Across * (BagCell + BagGapY)));
                 ShowStack(cell, bag[i], i == bagChosen, host.Now);
                 pageCells.Add(cell);
+                used += bag[i] != null ? 1 : 0;
             }
 
-            var foot = UiKit.Rect("Foot", centre).Place(new Vector2(0, 1), Vector2.one, 0, -(64 + 5 * BagCell + 4 * BagGap + 70), 0, 64 + 5 * BagCell + 4 * BagGap + 16);
-            foot.Stack<HorizontalLayoutGroup>(12, null, TextAnchor.MiddleLeft).childForceExpandWidth = false;
-            UiKit.Label($"{UiKit.Spaced("Вес")}   <b>{bag.Weight:0.0} / {bag.Limit:0}</b>", foot, 17, UiKit.Muted).Size(54, 420, 1);
-            UiKit.Button(UiKit.Spaced("Упорядочить"), foot, () =>
-            {
-                host.Cultivator.Bag.Sort();
-                bagChosen = -1;
-                Show(Page.Bag);
-            }, ButtonKind.Plain, 16).Size(54, 260);
+            var weight = UiKit.Rect("Weight", left);
+            weight.TopLeft(0, 50 + gridHeight + 22, gridWidth, 24);
+            var weightRow = weight.Stack<HorizontalLayoutGroup>(16, null, TextAnchor.MiddleLeft);
+            weightRow.childForceExpandWidth = false;
+            UiKit.Lbl("Вес", weight).Size(24, 40, 0);
+            var track = UiKit.Rect("Track", weight);
+            track.Size(24, -1, 1);
+            var bar = UiKit.Bar(track, UiKit.BarKind.Stamina, bag.Limit > 0 ? bag.Weight / bag.Limit : 0);
+            bar.transform.parent.GetComponent<RectTransform>().Place(new Vector2(0, 0.5f), new Vector2(1, 0.5f), 0, -2, 0, -2);
+            bar.transform.parent.GetComponent<LayoutElement>().ignoreLayout = true;
+            var load = UiKit.Disp($"{bag.Weight:0.#} <size=14><color=#7E9093>/ {bag.Limit:0} кг</color></size>", weight, 18, bag.Weight > bag.Limit ? UiKit.Danger : UiKit.Text);
+            load.horizontalOverflow = HorizontalWrapMode.Overflow;
+            load.Size(24, 110, 0);
+            UiKit.Label($"{used} из {Bag.Cells} ячеек", weight, 12, UiKit.Muted).Size(24, 110, 0);
 
-            // The chosen thing, on the right.
-            var right = UiKit.Panel("Details", body);
-            right.rectTransform.Place(new Vector2(1, 0), Vector2.one, -500, 0, 0, 0);
-            var details = UiKit.Rect("Column", right.transform).Fill();
-            details.Stack<VerticalLayoutGroup>(8, new RectOffset(28, 28, 26, 24));
+            // The chosen thing, on a panel at the right.
+            var panel = UiKit.Panel("Details", body);
+            panel.rectTransform.Place(new Vector2(1, 0), Vector2.one, -560, 0, 0, 0);
+            var details = UiKit.Rect("Column", panel.transform).Fill();
+            details.Stack<VerticalLayoutGroup>(14, new RectOffset(28, 28, 26, 26));
             var chosen = bag[bagChosen];
+
+            UiKit.Footer(bookStage, new[] { ("ЛКМ", "Выбрать"), ("Q+E", "Страница"), ("Esc", "Закрыть") });
 
             if (chosen == null)
             {
-                UiKit.Label("Выберите вещь в сумке.", details, 20, UiKit.Muted).Size(40);
+                UiKit.Disp("Сумка пуста", details, 30, UiKit.Text2).Size(40);
+                UiKit.Label("Собирайте травы, покупайте в лавках, берите с поверженных зверей.", details, 14, UiKit.Hex(0xA8B6B8), TextAnchor.UpperLeft).Size(40);
 
                 return;
             }
 
             var kind = chosen.Kind;
+            var rankColour = kind.Rank > 0 ? Aperture.RankColour(kind.Rank) : UiKit.Gold;
             var head = UiKit.Rect("Head", details);
-            head.Size(120);
-            var big = UiKit.Cell(head, 112);
-            big.Back.rectTransform.anchorMin = big.Back.rectTransform.anchorMax = new Vector2(0, 0.5f);
-            big.Back.rectTransform.anchoredPosition = new Vector2(56, 0);
-            ShowStack(big, chosen, false, host.Now);
-            var title = UiKit.Rect("Title", head).Place(Vector2.zero, Vector2.one, 130, 0, 0, 0);
-            title.Stack<VerticalLayoutGroup>(4, null, TextAnchor.MiddleLeft);
-            UiKit.Label(kind.Name, title, 24, UiKit.Text, TextAnchor.MiddleLeft, FontStyle.Bold).Size(60);
-            UiKit.Caps((kind.Rank > 0 ? $"Ранг {kind.Rank} · " : "") + kind.Kind, title, 13, kind.Rank > 0 ? Aperture.RankColour(kind.Rank) : UiKit.Muted).Size(22);
+            head.Size(150);
+            var art = UiKit.Rect("Art", head);
+            art.TopLeft(0, 0, 150, 150);
+            ShowArt(art, kind.Icon, rankColour);
+            var title = UiKit.Rect("Title", head).Place(Vector2.zero, Vector2.one, 172, 0, 0, 0);
+            title.Stack<VerticalLayoutGroup>(8, null, TextAnchor.MiddleLeft);
+            UiKit.Lbl((kind.Rank > 0 ? $"{kind.Kind} · ранг {Aperture.RankNumeral(kind.Rank)}" : kind.Kind) ?? "", title, 11, rankColour, 0.3f).Size(14);
+            var name = UiKit.Disp(kind.Name, title, 34);
+            name.horizontalOverflow = HorizontalWrapMode.Wrap;
+            UiKit.Label($"Количество · <color=#EAF0F2>{chosen.count}</color>", title, 13, UiKit.Muted).Size(18);
 
-            UiKit.Label(kind.About, details, 17).Size(96);
-            UiKit.Image("Rule", details, UiKit.Line).Size(2);
-            Stat(details, "Количество", $"{chosen.count}");
-            Stat(details, "Вес", $"{chosen.count * kind.Weight:0.##}");
-            Stat(details, "Цена", kind.Price > 0 ? (kind.Bundle > 1 ? $"{kind.Bundle} шт. — {ItemBook.Stones(kind.Price)}" : ItemBook.Stones(kind.Price)) : "—");
-            Stat(details, "Свежесть", chosen.spoils > 0 ? $"завянет через {Span(chosen.spoils - host.Now)}" : "не портится");
+            var about = UiKit.Label(kind.About, details, 14, UiKit.Hex(0xA8B6B8), TextAnchor.UpperLeft);
+            about.lineSpacing = 1.15f;
+            about.Size(66);
+            var stats = UiKit.Rect("Stats", details);
+            stats.Stack<VerticalLayoutGroup>(0);
+            Stat(stats, "Вес", $"{chosen.count * kind.Weight:0.##} кг");
+            Stat(stats, "Цена", kind.Price > 0 ? (kind.Bundle > 1 ? $"{kind.Bundle} шт. — {ItemBook.Stones(kind.Price)}" : ItemBook.Stones(kind.Price)) : "—");
+            Stat(stats, "Свежесть", chosen.spoils > 0 ? $"завянет через {Span(chosen.spoils - host.Now)}" : "не портится",
+                chosen.spoils > 0 && chosen.spoils - host.Now < 24 * 60 ? UiKit.Hunger : (Color?)null);
 
             if (kind.Use == ItemUse.Feed)
             {
-                Stat(details, "Кто ест", kind.AnyGu ? "любой Гу — вместо одной порции" : FeedsWhom(kind.Id));
+                Stat(stats, "Кто ест", kind.AnyGu ? "любой Гу — вместо одной порции" : FeedsWhom(kind.Id));
             }
             else if (kind.Use == ItemUse.Eat && kind.Heal > 0)
             {
-                Stat(details, "Даёт", $"+{kind.Heal:0} здоровья");
+                Stat(stats, "Даёт", $"+{kind.Heal:0} здоровья", UiKit.Ok);
             }
             else if (GuBook.Find(kind.Gu) is GuKind gk)
             {
-                Stat(details, "Навык", gk.SkillName);
-                UiKit.Label(SkillLine(gk), details, 14, UiKit.Muted).Size(40);
+                Stat(stats, "Навык", gk.SkillName);
 
                 if (!gk.Passive)
                 {
-                    Stat(details, "Вам стоит", $"{host.Cultivator.CostOf(gk):0.#}% эссенции");
+                    Stat(stats, "Вам стоит", $"{host.Cultivator.CostOf(gk):0.#}% эссенции", UiKit.EssenceLit);
                 }
             }
 
-            var space = UiKit.Rect("Space", details);
-            space.Size(-1).flexibleHeight = 1;
+            UiKit.Rect("Space", details).Size(-1).flexibleHeight = 1;
             var cellIndex = bagChosen;
+            var actions = UiKit.Rect("Actions", details);
+            var actionRow = actions.Stack<HorizontalLayoutGroup>(10, null, TextAnchor.MiddleLeft);
+            actionRow.childForceExpandWidth = false;
+            actions.Size(48);
 
             if (kind.Use != ItemUse.None)
             {
-                UiKit.Button(UiKit.Spaced(ActionName(kind, host.Cultivator)), details, () =>
+                var act = ActionName(kind, host.Cultivator);
+                UiKit.HexButton(act, actions, () =>
                 {
                     // A stone is drawn in over three seconds in the world: back to it.
                     if (host.Cultivator.UseCell(cellIndex) && kind.Use == ItemUse.Absorb)
@@ -257,30 +289,43 @@ namespace GuWorld.UI
                     {
                         Show(Page.Bag);
                     }
-                }, ButtonKind.Gold, 17).Size(56);
+                }, UiKit.HexKind.Solid, 12, 48).Size(48, Mathf.Min(300, 90 + act.Length * 10), 0);
             }
 
-            var row = UiKit.Rect("Row", details);
-            row.Stack<HorizontalLayoutGroup>(8).childForceExpandWidth = true;
-            row.Size(50);
-            UiKit.Button(UiKit.Spaced("Разделить"), row, () =>
+            UiKit.HexButton("Разделить", actions, () =>
             {
                 host.Cultivator.Bag.Split(cellIndex);
                 Show(Page.Bag);
-            }, ButtonKind.Plain, 15).Size(50, -1, 1);
-            UiKit.Button(UiKit.Spaced("Выбросить"), row, () =>
-                Ask("Выбросить?", $"{kind.Name} ×{chosen.count} — выброшенное не вернуть.", "Выбросить", () =>
+            }, UiKit.HexKind.Ghost, 12, 48).Size(48, 150, 0);
+            UiKit.HexButton("Выбросить", actions, () =>
+                Ask("Выбросить?", $"{kind.Name} ×{chosen.count} исчезнет из сумки.", "Выбросить", () =>
                 {
                     host.Drop(cellIndex);
                     bagChosen = -1;
                     Show(Page.Bag);
-                }, Page.Bag, false), ButtonKind.Danger, 15).Size(50, -1, 1);
+                }, Page.Bag, false), UiKit.HexKind.Bad, 12, 48).Size(48, 150, 0);
+            UiKit.Label("Гу ставятся на клавиши 1–4 в апертуре (K). Камни поглощаются клавишей V.", details, 12, UiKit.Muted).Size(18);
+        }
 
+        /// <summary>A thing's mark, big: a glow of its colour, a dashed gold ring turning, the mark floating in it (150 across).</summary>
+        static void ShowArt(RectTransform holder, string icon, Color colour)
+        {
+            UiKit.Image("Glow", holder, Icons.Tint(icon).A(0.45f), UiKit.Halo).rectTransform.Fill();
+            var ring = UiKit.Image("Ring", holder, UiKit.Gold.A(0.25f), UiKit.RingLine(138, 6));
+            ring.rectTransform.Fill(6);
+            ring.gameObject.AddComponent<Spin>().Period = 60;
+            var mark = UiKit.Icon(icon, holder, 84, Icons.Tint(icon));
+            mark.rectTransform.At(new Vector2(0.5f, 0.5f), Vector2.zero, new Vector2(84, 84));
+            var bob = mark.gameObject.AddComponent<Bob>();
+            bob.Period = 6;
+            bob.Rise = 8;
+            var strip = UiKit.Image("Rank", holder, colour, UiKit.Diamond);
+            strip.rectTransform.At(new Vector2(0.5f, 0), new Vector2(0, 8), new Vector2(10, 10));
         }
 
         static string ActionName(ItemKind kind, Cultivator gu) => kind.Use switch
         {
-            ItemUse.Refine => $"Очистить в апертуру · {gu.RefineCostOf(GuBook.Find(kind.Gu)):0.#}%",
+            ItemUse.Refine => $"Очистить · {gu.RefineCostOf(GuBook.Find(kind.Gu)):0.#}%",
             ItemUse.Activate => $"{kind.Verb ?? "Применить"} · {gu.CostOf(GuBook.Find(kind.Gu)):0.#}%",
             ItemUse.Absorb => "Поглотить · V",
             _ when kind.Verb != null => kind.Verb,
@@ -304,32 +349,42 @@ namespace GuWorld.UI
             return who.Count > 0 ? string.Join(", ", who) : "—";
         }
 
-        /// <summary>A pile in a cell: its icon, its count, its rank, whether it is about to spoil; chosen or filtered out.</summary>
+        /// <summary>A pile in a cell: its icon, its count, its rank's strip, whether it is about to spoil; chosen or filtered out.</summary>
         void ShowStack(Cell cell, ItemStack stack, bool chosen, double now)
         {
             var kind = stack?.Kind;
             cell.SetIcon(kind?.Icon);
             cell.Count.text = stack != null && stack.count > 1 ? $"{stack.count}" : "";
-            cell.Corner.text = kind != null && kind.Rank > 0 ? Aperture.RankNumeral(kind.Rank) : "";
-            cell.Corner.color = Aperture.RankColour(kind?.Rank ?? 1);
+            cell.SetRank(kind?.Rank ?? 0);
             cell.Dot.enabled = stack != null && stack.spoils > 0 && stack.spoils - now < 24 * 60;
             cell.Dot.color = UiKit.Hunger;
-            cell.SetRim(chosen ? UiKit.GoldLit : kind == null ? UiKit.Hex(0x2A2622) : kind.Rank > 0 ? Aperture.RankColour(kind.Rank) : UiKit.GoldDeep);
-            cell.Back.color = chosen ? UiKit.Hex(0x2A1E12) : UiKit.Hex(0x0E0D0C, 0.95f);
+            cell.SetRim(chosen ? UiKit.Gold : UiKit.Line);
+
+            if (chosen)
+            {
+                UiKit.Glow(cell.transform, UiKit.Gold.A(0.12f), 10);
+                var inner = UiKit.Image("Inner", cell.transform, UiKit.Gold.A(0.16f), UiKit.Halo);
+                inner.rectTransform.Fill(-4);
+                inner.transform.SetSiblingIndex(1);
+            }
+
             var shown = kind == null || bagFilter < 0 || (int)kind.Category == bagFilter;
             var alpha = shown ? 1 : 0.25f;
-            var tint = Icons.Tint(kind?.Icon);
-            cell.Mark.color = new Color(tint.r, tint.g, tint.b, alpha);
-            cell.Count.color = new Color(UiKit.Text.r, UiKit.Text.g, UiKit.Text.b, alpha);
+            cell.Mark.color = Icons.Tint(kind?.Icon).A(alpha);
+            cell.Count.color = UiKit.Text2.A(alpha);
+            cell.Strip.color = cell.Strip.color.A(alpha);
         }
 
-        static void Stat(Transform parent, string name, string value)
+        /// <summary>A line of numbers: a quiet name at the left, the value at the right, a hairline under it.</summary>
+        static void Stat(Transform parent, string name, string value, Color? colour = null)
         {
             var row = UiKit.Rect(name, parent);
-            row.Stack<HorizontalLayoutGroup>(8, null, TextAnchor.MiddleLeft).childForceExpandWidth = false;
-            row.Size(28);
-            UiKit.Label(name, row, 16, UiKit.Muted).Size(-1, 170, 0);
-            UiKit.Label(value, row, 17, UiKit.Text, TextAnchor.MiddleLeft, FontStyle.Bold).Size(-1, -1, 1);
+            row.Size(36);
+            UiKit.Label(name, row, 13, UiKit.Muted).rectTransform.Place(Vector2.zero, new Vector2(0.4f, 1));
+            var text = UiKit.Label(value, row, 13, colour ?? UiKit.Text, TextAnchor.MiddleRight);
+            text.rectTransform.Place(new Vector2(0.3f, 0), Vector2.one);
+            var rule = UiKit.Image("Rule", row, new Color(234 / 255f, 240 / 255f, 242 / 255f, 0.06f), UiKit.Plain);
+            rule.rectTransform.Place(Vector2.zero, new Vector2(1, 0), 0, 0, 0, -1);
         }
 
         /// <summary>A stretch of game time in words: "3 дн 4 ч", "5 ч 20 мин", "12 мин".</summary>

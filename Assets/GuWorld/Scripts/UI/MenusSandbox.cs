@@ -23,14 +23,18 @@ namespace GuWorld.UI
         {
             var gu = host.Cultivator;
             var a = gu.Aperture;
-            var body = BookFrame("ring", "Апертура бессмертного", Page.Sandbox);
+            var body = BookFrame("ring", "Апертура бессмертного", Page.Sandbox, "Полигон · ничего не сохраняется");
+            var ring = UiKit.Rect("Ring", bookStage);
+            ring.TopLeft(640, 160, 760, 760);
+            UiKit.Orbit(ring, 760, UiKit.Gold.A(0.08f), 240, 0);
+            ring.SetSiblingIndex(1);
 
-            // ── The modes, on the left ──
-            var left = UiKit.Panel("Modes", body);
-            left.rectTransform.Place(Vector2.zero, new Vector2(0, 1), 0, 0, -520, 0);
-            var modes = UiKit.Rect("Column", left.transform).Fill();
-            modes.Stack<VerticalLayoutGroup>(4, new RectOffset(22, 22, 18, 16));
-            UiKit.Label("РЕЖИМЫ", modes, 20, UiKit.Gold, TextAnchor.MiddleLeft, FontStyle.Bold).Size(28);
+            // ── The modes, at the left, scrolling ──
+            var left = UiKit.Rect("Modes", body);
+            left.Place(Vector2.zero, new Vector2(0, 1), 0, 0, -360, 0);
+            left.Stack<VerticalLayoutGroup>(8);
+            var modes = Scroll(left, 0);
+            modes.GetComponent<VerticalLayoutGroup>().spacing = 4;
 
             void Toggle(string name, bool on, string yes, string no, System.Action<bool> set)
             {
@@ -42,12 +46,12 @@ namespace GuWorld.UI
                 }, 14);
             }
 
-            Toggle("ГЕРОЙ", host.Health.Immortal, "Бессмертный", "Смертный", on => host.Health.Immortal = on);
-            Toggle("ЭССЕНЦИЯ", gu.EndlessEssence, "Бесконечная", "Как у таланта", on => gu.EndlessEssence = on);
-            Toggle("УСТАЛОСТЬ ГУ", !gu.Untiring, "Есть (может убить)", "Нет", on => gu.Untiring = !on);
-            Toggle("ГОЛОД ГУ", !gu.Sated, "Есть", "Нет", on => gu.Sated = !on);
+            Toggle("Герой", host.Health.Immortal, "Бессмертный", "Смертный", on => host.Health.Immortal = on);
+            Toggle("Эссенция", gu.EndlessEssence, "Бесконечная", "Как у таланта", on => gu.EndlessEssence = on);
+            Toggle("Усталость Гу", !gu.Untiring, "Есть (может убить)", "Нет", on => gu.Untiring = !on);
+            Toggle("Голод Гу", !gu.Sated, "Есть", "Нет", on => gu.Sated = !on);
 
-            Heading(modes, $"РАНГ · {a.Rank}, {Aperture.Name(a.Stage)}");
+            Heading(modes, $"Ранг · {a.Rank}, {Aperture.Name(a.Stage)}");
             UiKit.Choices(modes, new[] { "I", "II", "III", "IV", "V" }, a.Rank - 1, i =>
             {
                 host.Cultivator.SetRealm(i + 1, host.Cultivator.Aperture.Stage);
@@ -59,7 +63,7 @@ namespace GuWorld.UI
                 Show(Page.Sandbox);
             }, 13);
 
-            Heading(modes, $"ТАЛАНТ · {a.TalentName}");
+            Heading(modes, $"Талант · {a.TalentName}");
             float[] talents = { 30, 50, 70, 88, 99, 100 };
             UiKit.Choices(modes, new[] { "D 30", "C 50", "B 70", "A 88", "A 99", "100" }, System.Array.FindIndex(talents, t => Mathf.Abs(t - a.Talent) < 0.5f), i =>
             {
@@ -68,7 +72,7 @@ namespace GuWorld.UI
                 Show(Page.Sandbox);
             }, 13);
 
-            Heading(modes, "ВРЕМЯ");
+            Heading(modes, "Время");
             float[] hours = { 7, 13, 19, 23 };
             UiKit.Choices(modes, new[] { "Утро", "День", "Вечер", "Ночь" }, -1, i =>
             {
@@ -76,10 +80,10 @@ namespace GuWorld.UI
                 Show(Page.Sandbox);
             }, 13);
 
-            Heading(modes, $"ВРАГИ · живых: {LivingWolves()}");
+            Heading(modes, $"Враги · живых: {LivingWolves()}");
             var g = GuWorld.Creatures.WolfKinds.Grey;
             var l = GuWorld.Creatures.WolfKinds.Lightning;
-            UiKit.Choices(modes, new[] { "Серые ×3 (1–3)", "Молниевые ×3 (4–8)", "Убрать всех" }, -1, i =>
+            UiKit.Choices(modes, new[] { "Серые ×3", "Молниевые ×3", "Убрать всех" }, -1, i =>
             {
                 if (i == 2)
                 {
@@ -95,7 +99,7 @@ namespace GuWorld.UI
             }, 12);
             // The beast kings, each with its pack.
             var kings = new[] { GuWorld.Creatures.WolfKinds.Bold, GuWorld.Creatures.WolfKinds.Frenzy, GuWorld.Creatures.WolfKinds.ThunderCrown };
-            UiKit.Choices(modes, new[] { "Отважный (12)", "Неистовый (20)", "Громовая корона (35)" }, -1, i =>
+            UiKit.Choices(modes, new[] { "Отважный", "Неистовый", "Гром. корона" }, -1, i =>
             {
                 Notify($"{kings[i].Name} идёт со стаей ({host.SpawnPack(kings[i], 1)})");
                 host.Resume();
@@ -109,29 +113,26 @@ namespace GuWorld.UI
                 host.Resume();
             }, 12);
             var beastKings = new[] { GuWorld.Creatures.BeastKinds.BoarKing, GuWorld.Creatures.BeastKinds.MonkeyKing };
-            UiKit.Choices(modes, new[] { "Король кабанов (12)", "Король обезьян (10)", "Волчий прилив", "Великий прилив" }, -1, i =>
+            UiKit.Choices(modes, new[] { "Кор. кабанов", "Кор. обезьян" }, -1, i =>
             {
-                if (i >= 2)
-                {
-                    host.StartTide(i == 3);
-                }
-                else
-                {
-                    Notify($"{beastKings[i].Name} идёт со своими ({host.SpawnPack(beastKings[i], 1)})");
-                }
-
+                Notify($"{beastKings[i].Name} идёт со своими ({host.SpawnPack(beastKings[i], 1)})");
+                host.Resume();
+            }, 12);
+            UiKit.Choices(modes, new[] { "Волчий прилив", "Великий прилив" }, -1, i =>
+            {
+                host.StartTide(i == 1);
                 host.Resume();
             }, 12);
             // Gu Masters of the clans: a Bai with ice, a Xiong with the bear's strength, a Gu Yue with moonblades — a pair of
             // youths of rank one, a master of rank two, an elder of rank three.
-            var masters = GuWorld.Creatures.MasterKinds.All;
             string[] clans = { "bai", "xiong", "gu_yue" };
+            Heading(modes, "Гу-мастера");
             UiKit.Choices(modes, new[] { "Бай: лёд", "Сюн: медведь", "Гу Юэ: луна" }, -1, i =>
             {
                 Notify($"Гу-мастера пришли: {host.SpawnMasters(clans[i], 1, 2)}");
                 host.Resume();
             }, 12);
-            UiKit.Choices(modes, new[] { "Ранг 2", "Старейшина 3", "Отряд Бай+Сюн" }, -1, i =>
+            UiKit.Choices(modes, new[] { "Ранг 2", "Старейшина 3", "Бай+Сюн" }, -1, i =>
             {
                 var came = i == 2
                     ? host.SpawnMasters("bai", 1, 1) + host.SpawnMasters("xiong", 2, 1)
@@ -140,88 +141,90 @@ namespace GuWorld.UI
                 host.Resume();
             }, 12);
 
-            var space = UiKit.Rect("Space", modes);
-            space.Size(-1).flexibleHeight = 1;
-            var row = UiKit.Rect("Row", modes);
-            row.Stack<HorizontalLayoutGroup>(8).childForceExpandWidth = true;
-            row.Size(42);
-            UiKit.Button("Вылечить · отдых Гу", row, () =>
+            Heading(modes, "Герой и место");
+            UiKit.Choices(modes, new[] { "Вылечить · отдых Гу", "На старт" }, -1, i =>
             {
-                host.Health.Set(host.Health.Max);
-                host.Cultivator.RestAll();
-                host.Cultivator.Aperture.Essence = host.Cultivator.Aperture.Cap;
-                Notify("Здоровье, эссенция и Гу — в порядке");
-                Show(Page.Sandbox);
-            }, ButtonKind.Plain, 13).Size(42, -1, 1);
-            UiKit.Button("На старт", row, () =>
-            {
-                host.BackToStart();
-                host.Resume();
-            }, ButtonKind.Plain, 13).Size(42, -1, 1);
-            UiKit.Button("Покинуть апертуру", modes, () => FadeThrough(host.LeaveSandbox), ButtonKind.Danger, 14).Size(42);
+                if (i == 0)
+                {
+                    host.Health.Set(host.Health.Max);
+                    host.Cultivator.RestAll();
+                    host.Cultivator.Aperture.Essence = host.Cultivator.Aperture.Cap;
+                    Notify("Здоровье, эссенция и Гу — в порядке");
+                    Show(Page.Sandbox);
+                }
+                else
+                {
+                    host.BackToStart();
+                    host.Resume();
+                }
+            }, 12);
+            UiKit.HexButton("Покинуть апертуру", left, () => FadeThrough(host.LeaveSandbox), UiKit.HexKind.Bad, 11, 42).Size(42);
 
-            // ── All the Gu, on the right ──
-            var right = UiKit.Panel("All Gu", body);
-            right.rectTransform.Place(Vector2.zero, Vector2.one, 540, 0, 0, 0);
-            var column = UiKit.Rect("Column", right.transform).Fill();
-            column.Stack<VerticalLayoutGroup>(8, new RectOffset(24, 24, 18, 16));
-            UiKit.Label($"ВСЕ ГУ · {GuBook.Count}", column, 20, UiKit.Gold, TextAnchor.MiddleLeft, FontStyle.Bold).Size(28);
-            UiKit.Label("<b>1.</b> Выберите ячейку ниже (1–8).   <b>2.</b> Щёлкните по Гу в сетке — он встанет в неё.   " +
-                        "<b>3.</b> Закройте (Tab или Esc) и жмите <b>ЛКМ</b> — Гу сработает туда, куда смотрите.", column, 16, UiKit.Text).Size(46);
+            // ── All the Gu, at the right ──
+            var right = UiKit.Rect("All Gu", body);
+            right.Place(Vector2.zero, Vector2.one, 414, 64, 0, 0);
+            right.Stack<VerticalLayoutGroup>(14);
 
             // The eight cells at hand: a click chooses where the next Gu goes.
-            var hand = UiKit.Rect("Hand", column);
-            hand.Stack<HorizontalLayoutGroup>(8, null, TextAnchor.MiddleLeft).childForceExpandWidth = false;
-            hand.Size(84);
+            var hand = UiKit.Rect("Hand", right);
+            var handRow = hand.Stack<HorizontalLayoutGroup>(12, null, TextAnchor.MiddleLeft);
+            handRow.childForceExpandWidth = false;
+            hand.Size(62);
+            UiKit.Lbl("Под рукой", hand).Size(62, 90, 0);
 
             for (var i = 0; i < GuWorldGame.SandboxCells; i++)
             {
                 var slot = i;
                 var kind = GuBook.Find(host.SandboxBar[i]);
                 var chosen = i == host.SandboxSlot;
-                var cell = UiKit.Cell(hand, 76, () =>
+                var cell = UiKit.Cell(hand, 52, () =>
                 {
                     host.SandboxSlot = slot;
                     Show(Page.Sandbox);
                 });
-                cell.Size(76, 76, 0);
+                cell.Size(52, 52, 0);
                 cell.Key.text = $"{i + 1}";
-                cell.Back.color = chosen ? UiKit.Hex(0x3A2A1C, 0.97f) : UiKit.Hex(0x0E0D0C, 0.95f);
                 cell.SetIcon(kind?.Icon);
                 cell.Mark.color = Icons.Tint(kind?.Icon);
-                cell.Corner.text = kind != null ? Aperture.RankNumeral(kind.Rank) : "";
-                cell.Corner.color = Aperture.RankColour(kind?.Rank ?? 1);
-                cell.SetRim(chosen ? UiKit.GoldLit : kind != null ? Aperture.RankColour(kind.Rank) : UiKit.Line);
+                cell.SetRank(kind?.Rank ?? 0);
+                cell.SetRim(chosen ? UiKit.GoldLit : UiKit.Line);
+
+                if (chosen)
+                {
+                    UiKit.Glow(cell.transform, UiKit.GoldLit.A(0.3f), 12);
+                }
+
                 cell.Hovered = () => ShowArsenalInfo(kind, slot);
             }
 
-            UiKit.Button("Очистить ячейку", hand, () =>
+            UiKit.Tb("Очистить", hand, false, () =>
             {
                 host.PutInSlot(host.SandboxSlot, null);
                 Show(Page.Sandbox);
-            }, ButtonKind.Plain, 13).Size(42, 160);
+            }, 11).Size(34, 110, 0);
 
-            // What the pointer is over (or the chosen cell's Gu).
-            arsenalInfo = UiKit.Label("", column, 15, UiKit.Text);
-            arsenalInfo.Size(48);
-            ShowArsenalInfo(GuBook.Find(host.SandboxBar[host.SandboxSlot]), host.SandboxSlot);
-
-            var filters = UiKit.Rect("Ranks", column);
-            filters.Stack<HorizontalLayoutGroup>(6).childForceExpandWidth = true;
-            filters.Size(38);
+            var filters = UiKit.Rect("Ranks", right);
+            var filterRow = filters.Stack<HorizontalLayoutGroup>(6, null, TextAnchor.MiddleLeft);
+            filterRow.childForceExpandWidth = false;
+            filters.Size(34);
+            UiKit.Lbl($"Все Гу · {GuBook.Count}", filters).Size(34, 120, 0);
 
             for (var rank = 0; rank <= 5; rank++)
             {
                 var r = rank;
-                UiKit.Button(rank == 0 ? "Все" : $"Ранг {Aperture.RankNumeral(rank)}", filters, () =>
+                UiKit.Tb(rank == 0 ? "Все" : Aperture.RankNumeral(rank), filters, rank == arsenalRank, () =>
                 {
                     arsenalRank = r;
                     arsenalScroll = 0;
                     Show(Page.Sandbox);
-                }, rank == arsenalRank ? ButtonKind.Tab : ButtonKind.Plain, 14).Size(38, -1, 1);
+                }).Size(34, rank == 0 ? 64 : 48, 0);
             }
 
-            var grid = GridScroll(column, arsenalScroll, y => arsenalScroll = y);
+            UiKit.Rect("Space", filters).Size(34, -1, 1);
+            var tip = UiKit.Label($"ЛКМ — в выбранную ячейку ({host.SandboxSlot + 1})", filters, 12, UiKit.Muted, TextAnchor.MiddleRight);
+            tip.Size(34, 260, 0);
+
+            var grid = GridScroll(right, arsenalScroll, y => arsenalScroll = y);
 
             foreach (var kind in GuBook.All)
             {
@@ -232,24 +235,35 @@ namespace GuWorld.UI
 
                 var k = kind;
                 var item = UiKit.Rect(kind.Id, grid);
-                item.Stack<VerticalLayoutGroup>(2, null, TextAnchor.UpperCenter);
-                var cell = UiKit.Cell(item, 64, () =>
+                var cell = UiKit.Cell(item, 62, () =>
                 {
                     host.PutInSlot(host.SandboxSlot, k);
                     Notify($"{k.Name} — в ячейке {host.SandboxSlot + 1}");
                     Show(Page.Sandbox);
                 });
-                cell.Size(64, 64, 0);
+                cell.Back.rectTransform.At(new Vector2(0.5f, 1), new Vector2(0, -31), new Vector2(62, 62));
                 cell.SetIcon(kind.Icon);
                 cell.Mark.color = Icons.Tint(kind.Icon);
-                cell.Corner.text = Aperture.RankNumeral(kind.Rank);
-                cell.Corner.color = Aperture.RankColour(kind.Rank);
+                cell.SetRank(kind.Rank);
                 var inHand = System.Array.IndexOf(host.SandboxBar, kind.Id) >= 0;
-                cell.SetRim(inHand ? UiKit.GoldLit : Aperture.RankColour(kind.Rank) * 0.8f);
+                cell.SetRim(inHand ? UiKit.GoldLit : UiKit.Line);
                 cell.Hovered = () => ShowArsenalInfo(k, -1);
-                var label = UiKit.Label(ShortName(kind.Name), item, 11, inHand ? UiKit.GoldLit : UiKit.Muted, TextAnchor.UpperCenter);
-                label.Size(30);
+                var label = UiKit.Label(ShortName(kind.Name), item, 9, inHand ? UiKit.GoldLit : UiKit.Muted, TextAnchor.UpperCenter);
+                label.rectTransform.Place(Vector2.zero, new Vector2(1, 0), -6, 0, -6, -16);
             }
+
+            // What the pointer is over (or the chosen cell's Gu): a band at the foot.
+            var band = UiKit.Image("Info", body, Color.white, UiKit.Plain);
+            band.rectTransform.Place(Vector2.zero, new Vector2(1, 0), 414, -6, 0, -56);
+            band.Gradient(UiKit.Gold.A(0.08f), new Color(3 / 255f, 4 / 255f, 10 / 255f, 0.6f), true);
+            UiKit.Frame(band.transform, UiKit.Gold.A(0.25f));
+            var gem = UiKit.Image("Gem", band.transform, UiKit.Gold, UiKit.Diamond);
+            gem.rectTransform.At(new Vector2(0, 0.5f), new Vector2(24, 0), new Vector2(9, 9));
+            arsenalInfo = UiKit.Label("", band.transform, 13, UiKit.Hex(0xA8B6B8));
+            arsenalInfo.rectTransform.Place(Vector2.zero, Vector2.one, 44, 0, 16, 0);
+            ShowArsenalInfo(GuBook.Find(host.SandboxBar[host.SandboxSlot]), host.SandboxSlot);
+
+            UiKit.Footer(bookStage, new[] { ("1–8", "Ячейка"), ("ЛКМ", "Положить Гу"), ("Tab", "Закрыть") });
         }
 
         /// <summary>A Gu's name without the word "Гу" (the grid's labels are small).</summary>
@@ -271,8 +285,7 @@ namespace GuWorld.UI
 
             var use = kind.OneUse ? "разовый: срабатывает по ЛКМ, здесь не кончается" : kind.Passive ? "пассивный: работает сам, пока в ячейке" :
                 kind.Held ? "держится: ЛКМ — поднять, ещё раз — снять" : "ЛКМ — применить";
-            arsenalInfo.text = $"<b>{kind.Name}</b> <color=#{ColorUtility.ToHtmlStringRGB(Aperture.RankColour(kind.Rank))}>ранг {kind.Rank}</color> · {kind.Kind} · {use}\n" +
-                               $"<color=#A69A86>{kind.SkillName} — {SkillLine(kind)}</color>";
+            arsenalInfo.text = $"<size=22><color=#EAF0F2>{kind.Name}</color></size>  <color=#{ColorUtility.ToHtmlStringRGB(Aperture.RankColour(kind.Rank))}>РАНГ {Aperture.RankNumeral(kind.Rank)}</color>  ·  {use}  ·  {kind.SkillName} — {SkillLine(kind)}";
         }
 
         /// <summary>A scrolling grid (the Gu are far more than fit), scrolled `down` points from its top at first.</summary>
@@ -289,8 +302,8 @@ namespace GuWorld.UI
             content.pivot = new Vector2(0.5f, 1);
             content.offsetMin = content.offsetMax = Vector2.zero;
             var grid = content.gameObject.AddComponent<GridLayoutGroup>();
-            grid.cellSize = new Vector2(104, 100);
-            grid.spacing = new Vector2(6, 6);
+            grid.cellSize = new Vector2(72, 82);
+            grid.spacing = new Vector2(4, 4);
             grid.childAlignment = TextAnchor.UpperLeft;
             content.gameObject.AddComponent<ContentSizeFitter>().verticalFit = ContentSizeFitter.FitMode.PreferredSize;
             var scroll = view.gameObject.AddComponent<ScrollRect>();

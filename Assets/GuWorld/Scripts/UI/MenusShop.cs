@@ -60,7 +60,7 @@ namespace GuWorld.UI
             var top = UiKit.Rect("Top", pageRoot).Place(new Vector2(0, 1), Vector2.one, 48, -112, 48, 28);
             var seal = UiKit.SealMark("coin", top, 60);
             seal.rectTransform.At(new Vector2(0, 0.5f), new Vector2(30, 0), new Vector2(60, 60));
-            var title = UiKit.Label($"<b>Лавка</b>  <size=18><color=#A69A86>{shop.Keeper} · деревня Гу Юэ</color></size>", top, 32, UiKit.Text);
+            var title = UiKit.Label($"<b>Лавка</b>  <size=18><color=#7E9093>{shop.Keeper} · деревня Гу Юэ</color></size>", top, 32, UiKit.Text);
             title.rectTransform.Place(Vector2.zero, new Vector2(0, 1), 82, 0, -760, 0);
             var modes = UiKit.Rect("Modes", top).Place(Vector2.zero, new Vector2(0, 1), 780, 12, -1180, 12);
             modes.Stack<HorizontalLayoutGroup>(8).childForceExpandWidth = true;
@@ -74,7 +74,7 @@ namespace GuWorld.UI
             ((RectTransform)close.transform).Place(new Vector2(1, 0), Vector2.one, -190, 12, 0, 12);
             var coin = UiKit.Icon("stone", top, 24, UiKit.Gold);
             coin.rectTransform.Place(new Vector2(1, 0), Vector2.one, -420, 0, 380, 0);
-            var purse = UiKit.Label(shop.ForMerit ? $"<b>{purseNow}</b>  <color=#A69A86>вклада</color>" : $"<b>{purseNow}</b>  <color=#A69A86>камней</color>", top, 20, UiKit.Text);
+            var purse = UiKit.Label(shop.ForMerit ? $"<b>{purseNow}</b>  <color=#7E9093>вклада</color>" : $"<b>{purseNow}</b>  <color=#7E9093>камней</color>", top, 20, UiKit.Text);
             purse.rectTransform.Place(new Vector2(1, 0), Vector2.one, -376, 0, 206, 0);
             var body = UiKit.Rect("Body", pageRoot).Place(Vector2.zero, Vector2.one, 48, 36, 48, 140);
 
@@ -310,7 +310,7 @@ namespace GuWorld.UI
                 Show(Page.Shop);
             });
             UiKit.Label(left > 0 ? (kind.Bundle > 1 ? $"{left * kind.Bundle} шт." : $"{left}") : "нет", row, 16, left > 0 ? UiKit.Text : UiKit.Danger).Size(-1, 120, 0);
-            UiKit.Label(kind.Bundle > 1 ? $"{priceText}\n<size=13><color=#A69A86>за {kind.Bundle} шт.</color></size>" : priceText, row, 16, UiKit.Text).Size(-1, 150, 0);
+            UiKit.Label(kind.Bundle > 1 ? $"{priceText}\n<size=13><color=#7E9093>за {kind.Bundle} шт.</color></size>" : priceText, row, 16, UiKit.Text).Size(-1, 150, 0);
             Counter(row, kind.Bundle > 1 ? $"{lots * kind.Bundle}" : $"{lots}", lots > 0, () =>
             {
                 shopLots[kind.Id] = Mathf.Max(0, lots - 1);
@@ -332,7 +332,7 @@ namespace GuWorld.UI
                 Show(Page.Shop);
             });
             UiKit.Label($"{stack.count}", row, 16, UiKit.Text).Size(-1, 120, 0);
-            UiKit.Label($"{ItemBook.Price(Trade.SellPrice(kind, kind.Bundle))}" + (kind.Bundle > 1 ? $"\n<size=13><color=#A69A86>за {kind.Bundle} шт.</color></size>" : ""), row, 15, UiKit.Text).Size(-1, 150, 0);
+            UiKit.Label($"{ItemBook.Price(Trade.SellPrice(kind, kind.Bundle))}" + (kind.Bundle > 1 ? $"\n<size=13><color=#7E9093>за {kind.Bundle} шт.</color></size>" : ""), row, 15, UiKit.Text).Size(-1, 150, 0);
             var step = kind.Bundle;
             Counter(row, $"{count}", count > 0, () =>
             {
@@ -370,7 +370,7 @@ namespace GuWorld.UI
             cell.Corner.text = kind.Rank > 0 ? Aperture.RankNumeral(kind.Rank) : "";
             cell.Corner.color = Aperture.RankColour(kind.Rank);
             cell.SetRim(kind.Rank > 0 ? Aperture.RankColour(kind.Rank) : UiKit.GoldDeep);
-            UiKit.Label($"<b>{kind.Name}</b>\n<size=13><color=#A69A86>{kind.Kind}</color></size>", row, 17).Size(-1, -1, 1);
+            UiKit.Label($"<b>{kind.Name}</b>\n<size=13><color=#7E9093>{kind.Kind}</color></size>", row, 17).Size(-1, -1, 1);
 
             return row;
         }

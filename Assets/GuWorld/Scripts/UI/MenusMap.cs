@@ -24,8 +24,8 @@ namespace GuWorld.UI
     /// </summary>
     public partial class Menus
     {
-        const float MapSize = 820;
-        const float WorldSize = 420;
+        const float MapSize = 700;
+        const float WorldSize = 180;
         /// <summary>The closest the map comes: about a metre and a half of the mountain to a point of the screen.</summary>
         const float MapZoomMax = 16;
         /// <summary>From this close the part in sight is drawn finely.</summary>
@@ -80,15 +80,15 @@ namespace GuWorld.UI
             mapGridLabels.Clear();
             mapView = null;
 
+            // The map: a square window onto the mountain at the left, in a frame with gold corners.
             var left = UiKit.Panel("Mountain", body);
-            left.rectTransform.Place(Vector2.zero, new Vector2(0, 1), 0, 0, -(MapSize + 40), 0);
-            var frame = UiKit.Rect("Frame", left.transform).At(new Vector2(0.5f, 0.5f), new Vector2(0, -14), new Vector2(MapSize, MapSize));
-            UiKit.Caps(host.PlaceName, left.transform, 14).rectTransform.Place(new Vector2(0, 1), Vector2.one, 22, -30, 22, 8);
+            left.rectTransform.TopLeft(0, 0, MapSize + 8, MapSize + 8);
+            var frame = UiKit.Rect("Frame", left.transform).At(new Vector2(0.5f, 0.5f), Vector2.zero, new Vector2(MapSize, MapSize));
 
             if (map != null)
             {
                 // The window onto the map (it catches the wheel and the drag), and the map inside it, as big as the zoom makes it.
-                var under = UiKit.Image("View", frame, UiKit.Hex(0x0E0D0C));
+                var under = UiKit.Image("View", frame, UiKit.Hex(0x04060A));
                 under.rectTransform.Fill();
                 under.raycastTarget = true;
                 under.gameObject.AddComponent<RectMask2D>();
@@ -99,6 +99,7 @@ namespace GuWorld.UI
                 picture.texture = map.Texture;
                 picture.rectTransform.Fill();
                 picture.raycastTarget = false;
+                picture.color = new Color(0.86f, 0.9f, 0.94f, 1);
 
                 mapNearImage = UiKit.Rect("Near", mapContent).gameObject.AddComponent<RawImage>();
                 mapNearImage.raycastTarget = false;
@@ -108,118 +109,145 @@ namespace GuWorld.UI
                 // The grid (its lines on the map, their distances along the view's top and left edges).
                 for (var i = 0; i < MapGridLines; i++)
                 {
-                    mapGrid.Add(UiKit.Image("Grid", mapContent, new Color(1, 1, 1, 0.09f)).rectTransform);
-                    var number = UiKit.Label("", mapView, 11, new Color(UiKit.Text.r, UiKit.Text.g, UiKit.Text.b, 0.55f), TextAnchor.MiddleCenter).Shadowed();
+                    mapGrid.Add(UiKit.Image("Grid", mapContent, new Color(234 / 255f, 240 / 255f, 242 / 255f, 0.06f)).rectTransform);
+                    var number = UiKit.Label("", mapView, 10, UiKit.Muted, TextAnchor.MiddleCenter).Shadowed();
                     number.rectTransform.sizeDelta = new Vector2(64, 16);
                     mapGridLabels.Add(number);
                 }
 
-                // The big places first (they keep their names where names would cover each other).
+                // The big places first (they keep their names where names would cover each other): diamonds, as the design's constellation.
                 var marks = new List<MapMark>(map.Marks);
                 marks.Sort((x, y) => y.Major.CompareTo(x.Major));
 
                 foreach (var mark in marks)
                 {
-                    var dot = UiKit.Image("Mark", mapContent, mark.Major ? UiKit.GoldLit : UiKit.Text, UiKit.Disc);
-                    dot.rectTransform.At(new Vector2(0.5f, 0.5f), Vector2.zero, Vector2.one * (mark.Major ? 12 : 7));
-                    var label = UiKit.Label(mark.Label, mapContent, mark.Major ? 17 : 13, mark.Major ? UiKit.Text : UiKit.Muted, TextAnchor.MiddleCenter, mark.Major ? FontStyle.Bold : FontStyle.Normal).Shadowed();
-                    label.rectTransform.At(new Vector2(0.5f, 0.5f), Vector2.zero, new Vector2(240, 24));
+                    var dot = UiKit.Image("Mark", mapContent, mark.Major ? UiKit.Gold : UiKit.Text2, UiKit.Diamond);
+                    dot.rectTransform.At(new Vector2(0.5f, 0.5f), Vector2.zero, Vector2.one * (mark.Major ? 14 : 8));
+
+                    if (mark.Major)
+                    {
+                        UiKit.HaloAt(dot.transform, UiKit.Gold.A(0.35f), Vector2.zero, 34);
+                    }
+
+                    var label = UiKit.Label(mark.Label, mapContent, mark.Major ? 14 : 11, mark.Major ? UiKit.Text : UiKit.Text2, TextAnchor.MiddleCenter).Shadowed();
+                    label.rectTransform.At(new Vector2(0.5f, 0.5f), Vector2.zero, new Vector2(240, 20));
                     mapMarks.Add((mark, dot.rectTransform, label));
                 }
 
-                // Where the task leads.
-                mapQuestMark = UiKit.Image("Quest", mapContent, UiKit.GoldLit, UiKit.Diamond).rectTransform;
+                // Where the task leads: a gold diamond, breathing.
+                mapQuestMark = UiKit.Image("Quest", mapContent, UiKit.Gold, UiKit.Diamond).rectTransform;
                 mapQuestMark.At(new Vector2(0.5f, 0.5f), Vector2.zero, new Vector2(18, 18));
-                UiKit.Image("Heart", mapQuestMark, UiKit.Seal, UiKit.Diamond).rectTransform.Fill(5);
-                mapQuestLabel = UiKit.Label("", mapQuestMark, 14, UiKit.GoldLit, TextAnchor.LowerCenter, FontStyle.Bold).Shadowed();
+                UiKit.HaloAt(mapQuestMark, UiKit.Gold.A(0.5f), Vector2.zero, 44);
+                var breathe = mapQuestMark.gameObject.AddComponent<Pulse>();
+                breathe.Period = 1.6f;
+                breathe.Low = 0.6f;
+                breathe.High = 1;
+                breathe.Grow = 0.08f;
+                mapQuestLabel = UiKit.Label("", mapQuestMark, 13, UiKit.GoldLit, TextAnchor.LowerCenter).Shadowed();
                 mapQuestLabel.rectTransform.anchorMin = mapQuestLabel.rectTransform.anchorMax = new Vector2(0.5f, 1);
                 mapQuestLabel.rectTransform.pivot = new Vector2(0.5f, 0);
-                mapQuestLabel.rectTransform.anchoredPosition = new Vector2(0, 2);
+                mapQuestLabel.rectTransform.anchoredPosition = new Vector2(0, 4);
                 mapQuestLabel.rectTransform.sizeDelta = new Vector2(260, 20);
 
                 // The mark: a pin, its point on the spot.
-                mapPinMark = UiKit.Icon("pin", mapContent, 34, UiKit.Seal).rectTransform;
+                mapPinMark = UiKit.Icon("pin", mapContent, 30, UiKit.Danger).rectTransform;
                 mapPinMark.pivot = new Vector2(0.5f, 0.04f);
-                var pinHole = UiKit.Image("Hole", mapPinMark, UiKit.OnGold, UiKit.Disc).rectTransform;
-                pinHole.At(new Vector2(0.5f, 0.5f), new Vector2(0, 5), new Vector2(9, 9));
+                var pinHole = UiKit.Image("Hole", mapPinMark, UiKit.Void, UiKit.Disc).rectTransform;
+                pinHole.At(new Vector2(0.5f, 0.5f), new Vector2(0, 4), new Vector2(8, 8));
 
-                var hero = UiKit.Image("Hero", mapContent, UiKit.Seal, UiKit.Arrow);
+                var hero = UiKit.Image("Hero", mapContent, UiKit.GoldLit, UiKit.Arrow);
                 mapHero = hero.rectTransform;
-                mapHero.At(new Vector2(0.5f, 0.5f), Vector2.zero, new Vector2(26, 26));
+                mapHero.At(new Vector2(0.5f, 0.5f), Vector2.zero, new Vector2(24, 24));
                 mapHero.localEulerAngles = new Vector3(0, 0, -host.HeroFacing * Mathf.Rad2Deg);
+                UiKit.HaloAt(mapHero, UiKit.GoldLit.A(0.4f), Vector2.zero, 40).transform.SetAsFirstSibling();
+                var you = UiKit.Lbl("Вы", mapHero, 10, UiKit.GoldLit, 0.2f, TextAnchor.MiddleCenter).Shadowed();
+                you.rectTransform.At(new Vector2(0.5f, 0), new Vector2(0, -10), new Vector2(40, 14));
 
-                UiKit.Frame(frame, UiKit.GoldDeep);
-                var north = UiKit.Label("С", frame, 20, UiKit.GoldLit, TextAnchor.MiddleCenter, FontStyle.Bold).Shadowed();
-                north.rectTransform.At(new Vector2(0.5f, 1), new Vector2(0, -18), new Vector2(30, 30));
+                // The edges darken toward the frame.
+                var edge = UiKit.Image("Vignette", frame, new Color(3 / 255f, 4 / 255f, 10 / 255f, 0.7f), UiKit.Vignette);
+                edge.rectTransform.Fill();
 
-                // Where the pointer is, in the top right corner.
-                mapCursorLine = UiKit.Label("", frame, 14, UiKit.Text, TextAnchor.MiddleRight).Shadowed();
-                mapCursorLine.rectTransform.Place(new Vector2(0.5f, 1), Vector2.one, 30, -36, 16, 10);
+                // North, the zoom, the hero, the whole mountain: at the top left, as the design has them.
+                var tools = UiKit.Rect("Tools", frame);
+                tools.TopLeft(14, 14, 40, 200);
+                tools.Stack<VerticalLayoutGroup>(6);
+                MapButton(tools, "+", null, () => ZoomMap(mapZoom * 1.6f, Vector2.zero));
+                MapButton(tools, "−", null, () => ZoomMap(mapZoom / 1.6f, Vector2.zero));
+                MapButton(tools, null, "ring", CentreMapOnHero);
+                MapButton(tools, null, "map", () => { mapZoom = 1; mapCentre = new Vector2(0.5f, 0.5f); LayOutMap(); });
+                var north = UiKit.Image("North", frame, new Color(3 / 255f, 4 / 255f, 10 / 255f, 0.6f), UiKit.Disc);
+                north.rectTransform.TopRight(14, 14, 40, 40);
+                var northRing = UiKit.Image("Ring", north.transform, UiKit.Gold.A(0.45f), UiKit.RingLine(40));
+                northRing.rectTransform.Fill();
+                UiKit.Disp("С", north.transform, 15, UiKit.Gold, TextAnchor.MiddleCenter).rectTransform.Fill();
 
-                // The mark's corner: where it is, and going there.
-                mapPinPanel = UiKit.Panel("Pin", frame, UiKit.Hex(0x0E0D0C), UiKit.GoldDeep).rectTransform;
-                mapPinPanel.GetComponent<Image>().raycastTarget = true;
-                mapPinPanel.Place(new Vector2(0, 1), new Vector2(0, 1), 14, -166, -344, 14);
-                var pinIcon = UiKit.Icon("pin", mapPinPanel, 26, UiKit.Seal);
-                pinIcon.rectTransform.At(new Vector2(0, 1), new Vector2(26, -26), new Vector2(26, 26));
-                UiKit.Caps("Метка", mapPinPanel, 12).rectTransform.Place(new Vector2(0, 1), Vector2.one, 46, -34, 40, 12);
-                mapPinLine = UiKit.Label("", mapPinPanel, 20, UiKit.Text, TextAnchor.MiddleLeft, FontStyle.Bold);
-                mapPinLine.rectTransform.Place(new Vector2(0, 1), Vector2.one, 16, -66, 16, 38);
-                mapPinDetail = UiKit.Label("", mapPinPanel, 14, UiKit.Muted);
-                mapPinDetail.rectTransform.Place(new Vector2(0, 1), Vector2.one, 16, -88, 16, 68);
-                var teleport = UiKit.Button(UiKit.Spaced("Телепорт"), mapPinPanel, TeleportToPin, ButtonKind.Gold, 15);
-                ((RectTransform)teleport.transform).Place(Vector2.zero, new Vector2(1, 0), 14, 12, 120, -50);
-                var centreOn = UiKit.Button("", mapPinPanel, CentreMapOnPin, ButtonKind.Plain, 15);
-                ((RectTransform)centreOn.transform).Place(new Vector2(1, 0), new Vector2(1, 0), -112, 12, 62, -50);
-                UiKit.Icon("ring", centreOn.transform, 20, UiKit.Text).rectTransform.At(new Vector2(0.5f, 0.5f), Vector2.zero, new Vector2(20, 20));
-                var remove = UiKit.Button("×", mapPinPanel, () => SetMapPin(null), ButtonKind.Plain, 22);
-                ((RectTransform)remove.transform).Place(new Vector2(1, 0), new Vector2(1, 0), -56, 12, 14, -50);
+                // Where the pointer is, at the top right under the north.
+                mapCursorLine = UiKit.Label("", frame, 12, UiKit.Text2, TextAnchor.MiddleRight).Shadowed();
+                mapCursorLine.rectTransform.Place(new Vector2(0.5f, 1), Vector2.one, 0, -78, 16, 62);
 
-                // The scale: a bar of a round length, and what it is.
-                mapScaleBar = UiKit.Image("Scale Bar", frame, UiKit.GoldLit).rectTransform;
+                // The scale: a bracket of a round length, and what it is, at the bottom left.
+                mapScaleBar = UiKit.Image("Scale Bar", frame, new Color(234 / 255f, 240 / 255f, 242 / 255f, 0.5f)).rectTransform;
                 mapScaleBar.anchorMin = mapScaleBar.anchorMax = new Vector2(0, 0);
                 mapScaleBar.pivot = new Vector2(0, 0.5f);
-                mapScaleBar.anchoredPosition = new Vector2(18, 22);
-                mapScaleLine = UiKit.Label("", frame, 14, UiKit.Text, TextAnchor.MiddleLeft).Shadowed();
-                mapScaleLine.rectTransform.Place(Vector2.zero, new Vector2(1, 0), 18, 30, 60, -54);
-                var help = UiKit.Label("колесо, + и − — масштаб · тянуть — левая кнопка · клик — метка", frame, 13, UiKit.Muted, TextAnchor.MiddleRight).Shadowed();
-                help.rectTransform.Place(Vector2.zero, new Vector2(1, 0), 10, 6, 70, -26);
+                mapScaleBar.anchoredPosition = new Vector2(16, 24);
+                mapScaleLine = UiKit.Label("", frame, 11, UiKit.Muted, TextAnchor.MiddleLeft).Shadowed();
+                mapScaleLine.rectTransform.Place(Vector2.zero, new Vector2(1, 0), 16, 32, 60, -50);
 
-                // The buttons, on the map's right.
-                var buttons = UiKit.Rect("Buttons", frame).Place(new Vector2(1, 0), new Vector2(1, 0), -62, 14, 12, -14 - 4 * 52);
-                buttons.Stack<VerticalLayoutGroup>(4);
-
-                // Closer, farther, to the hero, the whole mountain.
-                foreach (var (text, icon, act) in new (string, string, System.Action)[]
-                {
-                    ("+", null, () => ZoomMap(mapZoom * 1.6f, Vector2.zero)),
-                    ("−", null, () => ZoomMap(mapZoom / 1.6f, Vector2.zero)),
-                    ("", "ring", CentreMapOnHero),
-                    ("", "map", () => { mapZoom = 1; mapCentre = new Vector2(0.5f, 0.5f); LayOutMap(); }),
-                })
-                {
-                    var button = UiKit.Button(text, buttons, act, ButtonKind.Plain, 26);
-                    button.Size(48, 50);
-
-                    if (icon != null)
-                    {
-                        UiKit.Icon(icon, button.transform, 24, UiKit.Text).rectTransform.At(new Vector2(0.5f, 0.5f), Vector2.zero, new Vector2(24, 24));
-                    }
-                }
+                // The mark's corner (shown while there is one): where it is, going there.
+                mapPinPanel = UiKit.Panel("Pin", frame).rectTransform;
+                mapPinPanel.GetComponent<Image>().raycastTarget = true;
+                mapPinPanel.Place(new Vector2(1, 0), new Vector2(1, 0), -330, 14, 14, -148);
+                var pinIcon = UiKit.Icon("pin", mapPinPanel, 20, UiKit.Danger);
+                pinIcon.rectTransform.At(new Vector2(0, 1), new Vector2(24, -24), new Vector2(20, 20));
+                UiKit.Lbl("Метка", mapPinPanel).rectTransform.Place(new Vector2(0, 1), Vector2.one, 42, -32, 40, 16);
+                mapPinLine = UiKit.Disp("", mapPinPanel, 20, UiKit.Text);
+                mapPinLine.rectTransform.Place(new Vector2(0, 1), Vector2.one, 16, -62, 16, 36);
+                mapPinDetail = UiKit.Label("", mapPinPanel, 12, UiKit.Muted);
+                mapPinDetail.rectTransform.Place(new Vector2(0, 1), Vector2.one, 16, -84, 16, 64);
+                var teleport = UiKit.HexButton("Телепорт", mapPinPanel, TeleportToPin, UiKit.HexKind.Main, 11, 40);
+                ((RectTransform)teleport.transform).Place(Vector2.zero, new Vector2(1, 0), 12, 12, 104, -52);
+                var centreOn = MapButton(mapPinPanel, null, "ring", CentreMapOnPin);
+                centreOn.Place(new Vector2(1, 0), new Vector2(1, 0), -96, 12, 56, -52);
+                var remove = MapButton(mapPinPanel, "×", null, () => SetMapPin(null));
+                remove.Place(new Vector2(1, 0), new Vector2(1, 0), -50, 12, 10, -52);
 
                 ShowMapPin();
                 LayOutMap();
             }
             else
             {
-                UiKit.Label("Карты этого места нет.", frame, 20, UiKit.Muted, TextAnchor.MiddleCenter).rectTransform.Fill();
+                UiKit.Label("Карты этого места нет.", frame, 18, UiKit.Muted, TextAnchor.MiddleCenter).rectTransform.Fill();
             }
 
-            // The world of the atlas.
-            var right = UiKit.Panel("World", body);
-            right.rectTransform.Place(Vector2.zero, Vector2.one, MapSize + 80, 0, 0, 0);
-            var world = UiKit.Rect("World Map", right.transform).Place(new Vector2(0, 1), new Vector2(0, 1), 28, -(WorldSize + 72), -(28 + WorldSize), 72);
-            UiKit.Caps($"{Atlas.WorldName} — атлас", right.transform, 14).rectTransform.Place(new Vector2(0, 1), Vector2.one, 28, -56, 28, 26);
+            // The place, and the world of the atlas, at the right.
+            var right = UiKit.Rect("Side", body);
+            right.Place(Vector2.zero, Vector2.one, MapSize + 32, 0, 0, 0);
+            right.Stack<VerticalLayoutGroup>(20);
+            var place = Atlas.QingMao;
+            var region = place.Region;
+
+            var here = UiKit.Panel("Place", right);
+            here.Size(-1).flexibleHeight = 1;
+            var about = here.rectTransform.Stack<VerticalLayoutGroup>(10, new RectOffset(26, 26, 24, 22));
+            about.childControlHeight = true;
+            UiKit.Lbl(region.Name, here.transform).Size(14);
+            UiKit.Disp(place.Name, here.transform, 34).Size(36);
+            UiKit.Label(host.PlaceName, here.transform, 13, UiKit.Hex(0xA8B6B8)).Size(18);
+            UiKit.Label($"Около {place.Width / 1000:0} км в поперечнике, вершина {place.Top:0} м, {place.Rock}. Ранги мастеров здесь — {place.RankMin}–{place.RankMax}. " +
+                        "Три деревни делят одну гору и враждуют: Гу Юэ — на поясе горы, Сюн — на передней горе, Бай — у омута под водопадом на задней.",
+                here.transform, 13, UiKit.Hex(0xA8B6B8), TextAnchor.UpperLeft).Size(92);
+            var facts = UiKit.Rect("Facts", here.transform);
+            facts.Stack<VerticalLayoutGroup>(0);
+            Stat(facts, "Климат", region.Climate);
+            Stat(facts, "Погода", string.Join(", ", region.Weather));
+            Stat(facts, "Опасности", string.Join(", ", region.Hazards), UiKit.Hex(0xF0C868));
+
+            var atlas = UiKit.Panel("Atlas", right);
+            atlas.Size(WorldSize + 64);
+            var row = atlas.rectTransform.Stack<HorizontalLayoutGroup>(20, new RectOffset(22, 22, 22, 22), TextAnchor.UpperLeft);
+            row.childForceExpandWidth = false;
+            var world = UiKit.Rect("World Map", atlas.transform);
+            world.Size(WorldSize, WorldSize, 0);
             var texture = Atlas.WorldMap();
 
             if (texture != null)
@@ -228,36 +256,51 @@ namespace GuWorld.UI
                 picture.texture = texture;
                 picture.rectTransform.Fill();
                 picture.raycastTarget = false;
-                UiKit.Frame(world, UiKit.GoldDeep);
-                var here = (Atlas.ToMap(Atlas.QingMao.At) - new Vector2(0.5f, 0.5f)) * WorldSize;
-                var ring = UiKit.Image("Here", world, UiKit.Seal, UiKit.Ring);
-                ring.rectTransform.At(new Vector2(0.5f, 0.5f), here, new Vector2(26, 26));
-                var dot = UiKit.Image("Dot", world, UiKit.GoldLit, UiKit.Disc);
-                dot.rectTransform.At(new Vector2(0.5f, 0.5f), here, new Vector2(7, 7));
-                var label = UiKit.Label(Atlas.QingMao.Name, world, 15, UiKit.Text, TextAnchor.MiddleLeft, FontStyle.Bold).Shadowed();
-                label.rectTransform.At(new Vector2(0.5f, 0.5f), here + new Vector2(96, 0), new Vector2(170, 22));
+                UiKit.Frame(world, new Color(234 / 255f, 240 / 255f, 242 / 255f, 0.1f));
+                var at = (Atlas.ToMap(Atlas.QingMao.At) - new Vector2(0.5f, 0.5f)) * WorldSize;
+                var gem = UiKit.Image("Here", world, UiKit.Gold, UiKit.Diamond);
+                gem.rectTransform.At(new Vector2(0.5f, 0.5f), at, new Vector2(11, 11));
+                UiKit.HaloAt(gem.transform, UiKit.Gold.A(0.5f), Vector2.zero, 32);
             }
 
-            var info = UiKit.Rect("Info", right.transform).Place(new Vector2(0, 0), new Vector2(1, 1), WorldSize + 56, 24, 28, 72);
-            info.Stack<VerticalLayoutGroup>(6);
-            var place = Atlas.QingMao;
-            var region = place.Region;
-            UiKit.Label(place.Name, info, 26, UiKit.Text, TextAnchor.MiddleLeft, FontStyle.Bold).Size(34);
-            UiKit.Caps(region.Name, info, 13, UiKit.EssenceLit).Size(22);
-            UiKit.Label($"По атласу: около {place.Width / 1000:0} км в поперечнике, вершина {place.Top:0} м над морем, {place.Rock}. " +
-                        $"Ранги мастеров здесь — {place.RankMin}–{place.RankMax}.", info, 16).Size(70);
-            UiKit.Label("Три деревни делят одну гору и враждуют: Гу Юэ — на поясе горы, Сюн — на передней горе, Бай — у глубокого омута под водопадом на задней. " +
-                        "У подножия — хутора простых людей.", info, 16, UiKit.Muted).Size(70);
-            UiKit.Label($"<b>Климат:</b> {region.Climate}", info, 16).Size(26);
-            UiKit.Label($"<b>Погода:</b> {string.Join(", ", region.Weather)}", info, 16).Size(48);
-            UiKit.Label($"<b>Природа:</b> {string.Join(", ", region.Nature)}", info, 16).Size(48);
-            UiKit.Label($"<b>Опасности:</b> {string.Join(", ", region.Hazards)}", info, 16).Size(48);
+            var atlasWords = UiKit.Rect("Words", atlas.transform);
+            atlasWords.Stack<VerticalLayoutGroup>(8);
+            atlasWords.Size(WorldSize, -1, 1);
+            UiKit.Lbl($"{Atlas.WorldName} · атлас", atlasWords).Size(14);
+            UiKit.Label($"Гора Цинмао лежит на Южной границе. {region.Climate}.", atlasWords, 13, UiKit.Hex(0xA8B6B8), TextAnchor.UpperLeft).Size(54);
+            UiKit.Label("Играть можно только на горе Цинмао: на карте — вся гора, двадцать километров с запада на восток. Остальной мир атласа откроется в следующих арках.",
+                atlasWords, 12, UiKit.Hex(0x6E7E81), TextAnchor.UpperLeft).Size(80);
 
-            // Under the world map, in its column.
-            var below = UiKit.Rect("Below", right.transform).Place(Vector2.zero, new Vector2(0, 1), 28, 24, -(28 + WorldSize), 72 + WorldSize + 20);
-            below.Stack<VerticalLayoutGroup>(6);
-            UiKit.Label("Играть можно только на горе Цинмао: на карте — вся гора, двадцать километров с запада на восток. " +
-                        "Остальной мир атласа откроется в следующих арках.", below, 16, UiKit.Muted).Size(70);
+            UiKit.Footer(bookStage, new[] { ("Колесо", "Масштаб"), ("ЛКМ", "Двигать · метка"), ("Q+E", "Страница"), ("Esc", "Закрыть") });
+        }
+
+        /// <summary>A small square button on the map (.zb): a thin edge, a sign or an icon.</summary>
+        static RectTransform MapButton(Transform parent, string text, string icon, System.Action click)
+        {
+            var box = UiKit.Image("Button", parent, new Color(3 / 255f, 4 / 255f, 10 / 255f, 0.7f), UiKit.Plain);
+            box.raycastTarget = true;
+            UiKit.Frame(box.transform, new Color(234 / 255f, 240 / 255f, 242 / 255f, 0.2f));
+            box.Size(40, 40, 0);
+            Graphic mark;
+
+            if (icon != null)
+            {
+                var image = UiKit.Icon(icon, box.transform, 20, UiKit.Text2);
+                image.rectTransform.At(new Vector2(0.5f, 0.5f), Vector2.zero, new Vector2(20, 20));
+                mark = image;
+            }
+            else
+            {
+                var label = UiKit.Label(text, box.transform, 20, UiKit.Text2, TextAnchor.MiddleCenter);
+                label.rectTransform.Fill();
+                mark = label;
+            }
+
+            var clickable = box.gameObject.AddComponent<Clickable>();
+            clickable.Click = click;
+            clickable.Pointed = over => mark.color = over ? UiKit.GoldLit : UiKit.Text2;
+
+            return box.rectTransform;
         }
 
         /// <summary>The map page's wheel, drag and keys, and the fine drawing of what is in sight (each frame while it is open).</summary>
@@ -324,7 +367,7 @@ namespace GuWorld.UI
                 if (mapCursorLine != null)
                 {
                     var under = MapPointAt(local);
-                    mapCursorLine.text = over ? $"<color=#A69A86>X</color> {under.x:0}   <color=#A69A86>Z</color> {under.z:0}" : "";
+                    mapCursorLine.text = over ? $"<color=#7E9093>X</color> {under.x:0}   <color=#7E9093>Z</color> {under.z:0}" : "";
                 }
             }
 
@@ -430,7 +473,7 @@ namespace GuWorld.UI
             var pin = MapPin.Value;
             var hero = host.HeroAt;
             var distance = new Vector2(pin.x - hero.x, pin.z - hero.z).magnitude;
-            mapPinLine.text = $"<color=#A69A86>X</color> {pin.x:0}   <color=#A69A86>Z</color> {pin.z:0}";
+            mapPinLine.text = $"<color=#7E9093>X</color> {pin.x:0}   <color=#7E9093>Z</color> {pin.z:0}";
             mapPinDetail.text = (float.IsNaN(pin.y) ? "" : $"высота {pin.y:0} м · ") + $"от вас {Distance(distance)}";
         }
 
@@ -532,7 +575,7 @@ namespace GuWorld.UI
             var want = metresPerUnit * MapSize / 6;
             var step = Mathf.Pow(10, Mathf.Floor(Mathf.Log10(want)));
             var nice = want / step >= 5 ? 5 * step : want / step >= 2 ? 2 * step : step;
-            mapScaleBar.sizeDelta = new Vector2(nice / metresPerUnit, 4);
+            mapScaleBar.sizeDelta = new Vector2(nice / metresPerUnit, 2);
             mapScaleLine.text = (nice >= 1000 ? $"{nice / 1000:0.#} км" : $"{nice:0} м") + $"   ·   ×{mapZoom:0.#}";
         }
 
