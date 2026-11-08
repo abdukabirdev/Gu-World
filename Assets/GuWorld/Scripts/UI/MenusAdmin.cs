@@ -16,33 +16,46 @@ namespace GuWorld.UI
     {
         void AdminPage()
         {
-            var dim = UiKit.Image("Dim", pageRoot, UiKit.Hex(0x0B0A0A, 0.95f));
+            var stage = UiKit.Stage(pageRoot);
+            var dim = UiKit.Image("Dim", stage, new Color(3 / 255f, 4 / 255f, 10 / 255f, 0.6f), UiKit.Plain);
             dim.rectTransform.Fill();
             dim.raycastTarget = true;
 
-            var top = UiKit.Rect("Top", pageRoot).Place(new Vector2(0, 1), Vector2.one, 48, -112, 48, 28);
-            var title = UiKit.Label("Админ-панель", top, 34, UiKit.Text, TextAnchor.MiddleLeft, FontStyle.Bold);
-            title.rectTransform.Place(Vector2.zero, new Vector2(0, 1), 0, 0, -600, 0);
-            var mode = UiKit.Label(host.Admin ? "режим администратора <color=#8FD0BC>включён</color>" : "режим администратора <color=#C2413A>выключен</color>",
-                top, 18, UiKit.Muted, TextAnchor.MiddleLeft);
-            mode.rectTransform.Place(Vector2.zero, new Vector2(0, 1), 330, 0, -1000, 0);
-            var close = UiKit.Button("Закрыть · F10 / Esc", top, host.Resume, ButtonKind.Plain, 16);
-            ((RectTransform)close.transform).Place(new Vector2(1, 0), Vector2.one, -260, 12, 0, 12);
-            var rule = UiKit.Image("Rule", pageRoot, UiKit.Line);
-            rule.rectTransform.Place(new Vector2(0, 1), Vector2.one, 48, -120, 48, 118);
-            var body = UiKit.Rect("Body", pageRoot).Place(Vector2.zero, Vector2.one, 48, 36, 48, 140);
+            // The panel: dark glass, a coral edge — this is not the game, it is its workshop.
+            var frame = UiKit.Image("Admin", stage, new Color(3 / 255f, 4 / 255f, 10 / 255f, 0.72f), UiKit.Plain);
+            frame.rectTransform.Place(Vector2.zero, Vector2.one, 40, 32, 40, 32);
+            UiKit.Frame(frame.transform, UiKit.Danger.A(0.35f));
+            UiKit.Glow(frame.transform, UiKit.Danger.A(0.12f), 40);
+            var top = UiKit.Image("Top", frame.transform, UiKit.Danger.A(0.06f), UiKit.Plain).rectTransform;
+            top.Place(new Vector2(0, 1), Vector2.one, 0, -60, 0, 0);
+            UiKit.Image("Rule", top, UiKit.Danger.A(0.25f), UiKit.Plain).rectTransform.Place(Vector2.zero, new Vector2(1, 0), 0, 0, 0, -1);
+            var head = top.Stack<HorizontalLayoutGroup>(16, new RectOffset(22, 22, 0, 0), TextAnchor.MiddleLeft);
+            head.childForceExpandWidth = false;
+            var gem = UiKit.Image("Gem", top, UiKit.Danger, UiKit.Diamond);
+            gem.Size(8, 8, 0);
+            var title = UiKit.Disp("АДМИН-ПАНЕЛЬ", top, 22);
+            title.Track(0.16f);
+            title.Size(60);
+            UiKit.Lbl(host.Admin ? "Режим администратора · включён" : "Режим администратора · выключен", top, 11, host.Admin ? UiKit.Danger : UiKit.Muted, 0.24f).Size(60);
+            UiKit.Rect("Space", top).Size(60, -1, 1);
+            UiKit.Label("Кнопки выполняют команды чата — результат одинаковый", top, 12, UiKit.Muted).Size(60);
+            UiKit.Tb("Закрыть · F10 / Esc", top, false, host.Resume, 11).Size(34, 190, 0);
+            var body = UiKit.Rect("Body", frame.transform).Place(Vector2.zero, Vector2.one, 16, 16, 16, 76);
 
             var columns = new Transform[3];
 
             for (var i = 0; i < 3; i++)
             {
-                var panel = UiKit.Panel("Column", body);
+                var panel = UiKit.Image("Column", body, new Color(234 / 255f, 240 / 255f, 242 / 255f, 0.02f), UiKit.Plain);
+                UiKit.Frame(panel.transform, new Color(234 / 255f, 240 / 255f, 242 / 255f, 0.08f));
                 panel.rectTransform.anchorMin = new Vector2(i / 3f, 0);
                 panel.rectTransform.anchorMax = new Vector2((i + 1) / 3f, 1);
-                panel.rectTransform.offsetMin = new Vector2(i == 0 ? 0 : 12, 0);
-                panel.rectTransform.offsetMax = new Vector2(i == 2 ? 0 : -12, 0);
-                var column = UiKit.Rect("Inside", panel.transform).Fill();
-                column.Stack<VerticalLayoutGroup>(4, new RectOffset(22, 22, 16, 14));
+                panel.rectTransform.offsetMin = new Vector2(i == 0 ? 0 : 6, 0);
+                panel.rectTransform.offsetMax = new Vector2(i == 2 ? 0 : -6, 0);
+                var holder = UiKit.Rect("Holder", panel.transform).Fill(12);
+                holder.Stack<VerticalLayoutGroup>(0);
+                var column = Scroll(holder, 0);
+                column.GetComponent<VerticalLayoutGroup>().spacing = 2;
                 columns[i] = column;
             }
 

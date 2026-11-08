@@ -40,44 +40,91 @@ namespace GuWorld.UI
 
         void ChatPage()
         {
-            var panel = UiKit.Image("Chat", pageRoot, UiKit.Hex(0x0B0A0A, 0.5f), UiKit.Chamfer).rectTransform;
-            panel.Place(Vector2.zero, Vector2.zero, 24, 104, -820, -440);
-            var lines = UiKit.Rect("Lines", panel).Place(Vector2.zero, Vector2.one, 16, 64, 16, 10);
+            var stage = UiKit.Stage(pageRoot);
+            var shade = UiKit.Image("Shade", stage, new Color(3 / 255f, 4 / 255f, 10 / 255f, 0.75f), UiKit.SoftEdge);
+            shade.rectTransform.Place(Vector2.zero, new Vector2(0.55f, 1));
+            var panel = UiKit.Rect("Chat", stage);
+            panel.BottomLeft(32, 32, 680, 520);
+
+            // The line to type in: a gold prompt, the keys at its right.
+            var line = UiKit.Image("Line", panel, new Color(3 / 255f, 4 / 255f, 10 / 255f, 0.92f), UiKit.Plain);
+            line.rectTransform.Place(Vector2.zero, new Vector2(1, 0), 0, 0, 0, -46);
+            UiKit.Frame(line.transform, UiKit.GoldLit.A(0.5f));
+            UiKit.Glow(line.transform, UiKit.Gold.A(0.15f), 20);
+            UiKit.Label(">", line.transform, 14, UiKit.Gold, TextAnchor.MiddleLeft, FontStyle.Bold).rectTransform.Place(Vector2.zero, new Vector2(0, 1), 14, 0, -30, 0);
+            var field = UiKit.Field(line.transform, chatStart, "Сообщение или /команда", 160, OnChatTyped);
+            field.GetComponent<LayoutElement>().ignoreLayout = true;
+            field.GetComponent<Image>().color = new Color(0, 0, 0, 0);
+            field.transform.Find("Frame").gameObject.SetActive(false);
+            ((RectTransform)field.transform).Place(Vector2.zero, Vector2.one, 20, 0, 330, 0);
+            field.textComponent.supportRichText = false;
+            field.textComponent.fontSize = 14;
+            field.caretWidth = 2;
+            chatField = field;
+            var keys = UiKit.Rect("Keys", line.transform);
+            keys.Place(new Vector2(1, 0), Vector2.one, -330, 0, 14, 0);
+            var keyRow = keys.Stack<HorizontalLayoutGroup>(10, null, TextAnchor.MiddleRight);
+            keyRow.childForceExpandWidth = false;
+            UiKit.Hint(keys, "Tab", "дописать", 11);
+            UiKit.Hint(keys, "Enter", "отправить", 11);
+            UiKit.Hint(keys, "Esc", "закрыть", 11);
+
+            // How the command is written, over the line.
+            chatUsage = UiKit.Label("", panel, 12, UiKit.Muted).Shadowed();
+            chatUsage.rectTransform.Place(Vector2.zero, new Vector2(1, 0), 2, 50, 0, -70);
+
+            // The log: a column fading in from the top, a gold line at its left.
+            var logBox = UiKit.Image("Log", panel, Color.white, UiKit.Plain);
+            logBox.rectTransform.Place(Vector2.zero, Vector2.one, 0, 76, 0, 0);
+            logBox.Gradient(new Color(3 / 255f, 4 / 255f, 10 / 255f, 0.25f), new Color(3 / 255f, 4 / 255f, 10 / 255f, 0.7f));
+            var edge = UiKit.Image("Edge", logBox.transform, UiKit.Gold.A(0.3f), UiKit.Plain);
+            edge.rectTransform.Place(Vector2.zero, new Vector2(0, 1), 0, 0, -1, 0);
+            var lines = UiKit.Rect("Lines", logBox.transform).Place(Vector2.zero, Vector2.one, 16, 14, 16, 14);
             lines.Stack<VerticalLayoutGroup>(2, null, TextAnchor.LowerLeft);
             var first = Mathf.Max(0, log.Count - ChatLines);
 
             for (var i = first; i < log.Count; i++)
             {
                 var (text, _) = log[i];
-                var line = UiKit.Label(ChatLine(text), lines, 17, UiKit.Text).Shadowed();
-                line.Size(24);
+                var row = UiKit.Label(ChatLine(text), lines, 14, UiKit.Text2).Shadowed();
+                row.Size(22);
             }
 
-            var field = UiKit.Field(panel, chatStart, "Сообщение или /команда — Tab дополнит", 160, OnChatTyped);
-            field.GetComponent<LayoutElement>().ignoreLayout = true;
-            ((RectTransform)field.transform).Place(Vector2.zero, new Vector2(1, 0), 8, 8, 8, -54);
-            field.textComponent.supportRichText = false;
-            chatField = field;
-
-            chatUsage = UiKit.Label("", panel, 15, UiKit.Muted).Shadowed();
-            chatUsage.rectTransform.Place(new Vector2(0, 1), new Vector2(1, 1), 12, 4, 8, -26);
-
-            suggestionBox = UiKit.Image("Suggestions", panel, UiKit.Hex(0x0B0A0A, 0.94f), UiKit.Chamfer).rectTransform;
-            UiKit.Frame(suggestionBox, UiKit.Line);
+            // What fits what is typed: a list over the line, the chosen one lit with a gold diamond.
+            suggestionBox = UiKit.Image("Suggestions", panel, new Color(5 / 255f, 7 / 255f, 12 / 255f, 0.94f), UiKit.Plain).rectTransform;
+            UiKit.Frame(suggestionBox, new Color(200 / 255f, 230 / 255f, 240 / 255f, 0.12f));
             suggestionBox.anchorMin = suggestionBox.anchorMax = new Vector2(0, 0);
             suggestionBox.pivot = new Vector2(0, 0);
-            suggestionBox.anchoredPosition = new Vector2(8, 62);
+            suggestionBox.anchoredPosition = new Vector2(0, 74);
             suggestionRows.Clear();
+            suggestionMarks.Clear();
 
             for (var i = 0; i < ShownSuggestions; i++)
             {
-                var row = UiKit.Label("", suggestionBox, 17, UiKit.Text);
+                var wash = UiKit.Image("Wash", suggestionBox, UiKit.Gold.A(0), UiKit.SoftEdge);
+                wash.rectTransform.anchorMin = new Vector2(0, 0);
+                wash.rectTransform.anchorMax = new Vector2(1, 0);
+                wash.rectTransform.pivot = new Vector2(0, 0);
+                wash.rectTransform.offsetMin = new Vector2(0, 6 + i * 30);
+                wash.rectTransform.offsetMax = new Vector2(0, 6 + i * 30 + 30);
+                var gem = UiKit.Image("Gem", wash.transform, UiKit.Gold, UiKit.Diamond);
+                gem.rectTransform.At(new Vector2(0, 0.5f), new Vector2(12, 0), new Vector2(8, 8));
+                var row = UiKit.Label("", suggestionBox, 13, UiKit.Text2);
                 row.rectTransform.anchorMin = row.rectTransform.anchorMax = new Vector2(0, 0);
                 row.rectTransform.pivot = new Vector2(0, 0);
-                row.rectTransform.sizeDelta = new Vector2(420, 24);
-                row.rectTransform.anchoredPosition = new Vector2(12, 6 + i * 24);
+                row.rectTransform.sizeDelta = new Vector2(600, 30);
+                row.rectTransform.anchoredPosition = new Vector2(24, 6 + i * 30);
                 suggestionRows.Add(row);
+                suggestionMarks.Add(wash);
             }
+
+            // The world does not wait.
+            var note = UiKit.Rect("Note", stage);
+            note.TopRight(32, 28, 300, 20);
+            var noteRow = note.Stack<HorizontalLayoutGroup>(10, null, TextAnchor.MiddleRight);
+            noteRow.childForceExpandWidth = false;
+            UiKit.Image("Dot", note, UiKit.Ok, UiKit.Disc).Size(6, 6, 0);
+            UiKit.Lbl("Мир не ждёт", note, 11, UiKit.Muted, 0.2f).Size(20);
 
             suggestedFor = null;
             sentBack = -1;
@@ -85,9 +132,11 @@ namespace GuWorld.UI
             RefreshSuggestions();
         }
 
-        /// <summary>A log line as the chat shows it: a command sent in gold, a refusal in red.</summary>
+        readonly List<Image> suggestionMarks = new List<Image>();
+
+        /// <summary>A log line as the chat shows it: a command sent in the moon's blue, a refusal in coral.</summary>
         static string ChatLine(string text) =>
-            text.StartsWith("> ") ? $"<color=#C9A563>{text}</color>" : text.StartsWith("!") ? $"<color=#E08A80>{text.Substring(1)}</color>" : text;
+            text.StartsWith("> ") ? $"<color=#A0D2FF>{text}</color>" : text.StartsWith("!") ? $"<color=#F08A74>{text.Substring(1)}</color>" : text;
 
         void OnChatTyped(string text)
         {
@@ -115,7 +164,7 @@ namespace GuWorld.UI
             }
 
             suggestionChosen = 0;
-            chatUsage.text = usage ?? (text.Length == 0 ? "Enter — отправить · Esc — закрыть · /help — команды" : "");
+            chatUsage.text = usage ?? (text.Length == 0 ? "/help — все команды · ↑ ↓ — прежние строки" : "");
             ShowSuggestions();
         }
 
@@ -125,7 +174,6 @@ namespace GuWorld.UI
             suggestionBox.gameObject.SetActive(shown > 0);
             // The chosen one stays in the window as one goes down a long list.
             var start = Mathf.Clamp(suggestionChosen - shown + 1, 0, Mathf.Max(0, suggestions.Count - shown));
-            var width = 200f;
 
             for (var i = 0; i < ShownSuggestions; i++)
             {
@@ -136,18 +184,19 @@ namespace GuWorld.UI
                 if (i >= shown)
                 {
                     row.text = "";
+                    suggestionMarks[i].gameObject.SetActive(false);
 
                     continue;
                 }
 
                 var chosen = index == suggestionChosen;
                 row.text = suggestions[index];
-                row.color = chosen ? UiKit.GoldLit : UiKit.Text;
-                row.fontStyle = chosen ? FontStyle.Bold : FontStyle.Normal;
-                width = Mathf.Max(width, row.preferredWidth + 28);
+                row.color = chosen ? UiKit.GoldLit : UiKit.Text2;
+                suggestionMarks[i].gameObject.SetActive(chosen);
+                suggestionMarks[i].color = UiKit.Gold.A(0.14f);
             }
 
-            suggestionBox.sizeDelta = new Vector2(width, shown * 24 + 12);
+            suggestionBox.sizeDelta = new Vector2(680, shown * 30 + 12);
         }
 
         /// <summary>The chat's keys each frame: Tab, ↑ ↓, Enter, Esc.</summary>
@@ -234,7 +283,7 @@ namespace GuWorld.UI
                 }
                 else
                 {
-                    Notify($"<color=#F0D08A>{host.Look.FullName}:</color> {text}");
+                    Notify($"<color=#E8C98A>{host.Look.FullName}:</color> {text}");
                 }
             }
 

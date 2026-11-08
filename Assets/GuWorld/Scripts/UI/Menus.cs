@@ -182,7 +182,7 @@ namespace GuWorld.UI
         Page confirmBack;
         Page settingsBack;
         string codexChosen;
-        int codexRank = 1;
+        int codexRank;
 
         public Page Current { get; private set; } = (Page)(-1);
 
@@ -421,109 +421,6 @@ namespace GuWorld.UI
         }
 
         // ── About, the encyclopedia, confirmations ────────────────────
-
-        /// <summary>The Gu encyclopedia: the Gu the game knows, and what the lore says each eats and does.</summary>
-        void Codex()
-        {
-            Backdrop();
-            var card = UiKit.Panel("Codex", pageRoot);
-            card.rectTransform.Place(new Vector2(0.5f, 0.5f), new Vector2(0.5f, 0.5f), -720, -420, -720, -420);
-
-            var header = UiKit.Rect("Header", card.transform).Place(new Vector2(0, 1), new Vector2(1, 1), 40, -110, 40, 30);
-            var seal = UiKit.SealMark("book", header, 64);
-            seal.rectTransform.At(new Vector2(0, 0.5f), new Vector2(32, 0), new Vector2(64, 64));
-            var title = UiKit.Label("ЭНЦИКЛОПЕДИЯ ГУ", header, 34, UiKit.Gold, TextAnchor.MiddleLeft, FontStyle.Bold);
-            title.rectTransform.Place(Vector2.zero, Vector2.one, 86, 0, 0, 0);
-
-            // The ranks' tabs, then that rank's Gu in two columns.
-            var tabs = UiKit.Rect("Ranks", card.transform).Place(Vector2.zero, new Vector2(0, 1), 40, 0, -660, 124);
-            tabs.Stack<HorizontalLayoutGroup>(6).childForceExpandWidth = true;
-            tabs.Place(new Vector2(0, 1), new Vector2(0, 1), 40, -170, -660, 124);
-
-            for (var rank = 1; rank <= 5; rank++)
-            {
-                var r = rank;
-                UiKit.Button($"Ранг {Aperture.RankNumeral(rank)}", tabs, () =>
-                {
-                    codexRank = r;
-                    codexChosen = null;
-                    Show(Page.Codex);
-                }, rank == codexRank ? ButtonKind.Tab : ButtonKind.Plain, 16).Size(42, -1, 1);
-            }
-
-            var list = UiKit.Rect("List", card.transform).Place(Vector2.zero, new Vector2(0, 1), 40, 100, -660, 184);
-            var grid = list.gameObject.AddComponent<GridLayoutGroup>();
-            grid.cellSize = new Vector2(306, 32);
-            grid.spacing = new Vector2(8, 4);
-            GuKind chosen = null;
-
-            foreach (var kind in GuBook.All)
-            {
-                if (kind.Rank != codexRank)
-                {
-                    continue;
-                }
-
-                chosen ??= kind;
-
-                if (kind.Id == codexChosen)
-                {
-                    chosen = kind;
-                }
-            }
-
-            foreach (var kind in GuBook.All)
-            {
-                if (kind.Rank != codexRank)
-                {
-                    continue;
-                }
-
-                var k = kind;
-                UiKit.Button(kind.Name, list, () =>
-                {
-                    codexChosen = k.Id;
-                    Show(Page.Codex);
-                }, kind == chosen ? ButtonKind.Tab : ButtonKind.Plain, 14);
-            }
-
-            var details = UiKit.Rect("Details", card.transform).Place(Vector2.zero, Vector2.one, 700, 100, 40, 130);
-            details.Stack<VerticalLayoutGroup>(8);
-
-            if (chosen != null)
-            {
-                var item = ItemBook.Find(chosen.Item);
-                var food = ItemBook.Find(chosen.Food);
-                UiKit.Label(chosen.Name, details, 28, UiKit.Text, TextAnchor.MiddleLeft, FontStyle.Bold).Size(40);
-                UiKit.Caps($"Ранг {chosen.Rank} · {chosen.Kind} · {chosen.Line}", details, 14, Aperture.RankColour(chosen.Rank)).Size(24);
-                UiKit.Label(item?.About ?? chosen.About ?? "", details, 17).Size(76);
-                UiKit.Image("Rule", details, UiKit.Line).Size(2);
-                UiKit.Label($"<b>Навык:</b> {chosen.SkillName} — {SkillLine(chosen)}", details, 16).Size(48);
-                UiKit.Label(food != null ? $"<b>Пища:</b> {food.Name.ToLowerInvariant()} ×{chosen.Meal} {MealLine(chosen.MealEvery)}" : "<b>Пища:</b> не ест", details, 16).Size(26);
-
-                if (!chosen.OneUse)
-                {
-                    UiKit.Label($"<b>Очищение в апертуру:</b> {chosen.RefineCost:0}% эссенции разом (мастеру ранга {chosen.Rank}) · <b>усталость</b> {chosen.Tire:0} за раз", details, 16).Size(26);
-                }
-
-                UiKit.Label($"<b>Цена:</b> как сказано — мастеру ранга {chosen.Rank} в начальной стадии; мастеру рангом ниже — вчетверо дороже, рангом выше — вчетверо дешевле, каждая малая ступень — в полтора раза дешевле", details, 14, UiKit.Muted).Size(40);
-                UiKit.Label($"<b>В лавке:</b> {(item != null && item.Price > 0 ? ItemBook.Stones(item.Price) : "не продаётся")}", details, 16).Size(26);
-
-                foreach (var recipe in GuBook.RecipesFor(chosen.Id))
-                {
-                    UiKit.Label(RecipeLine(recipe), details, 15, UiKit.EssenceLit).Size(40);
-                }
-
-                UiKit.Label($"Запись лор-базы: {chosen.LoreRef}", details, 13, UiKit.Muted).Size(20);
-            }
-
-            var count = UiKit.Label($"Всего Гу: {GuBook.Count}", card.transform, 15, UiKit.Muted);
-            count.rectTransform.Place(new Vector2(0, 0), new Vector2(0, 0), 40, 40, -400, -80);
-
-            var buttons = UiKit.Rect("Buttons", card.transform).Place(new Vector2(1, 0), new Vector2(1, 0), -280, 36, 40, -88);
-            buttons.Stack<HorizontalLayoutGroup>(10, null, TextAnchor.MiddleRight).childForceExpandWidth = true;
-            UiKit.Button("Назад", buttons, () => Show(Page.Title)).Size(52);
-        }
 
         /// <summary>A Gu's skill in a line: what it costs and does (the price a master of its own rank pays).</summary>
         static string SkillLine(GuKind k) => k.Skill switch

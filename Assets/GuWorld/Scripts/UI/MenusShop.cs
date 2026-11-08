@@ -54,73 +54,105 @@ namespace GuWorld.UI
             var discount = shop.ForMerit ? 0 : host.Quests.Discount;
             var purseNow = shop.ForMerit ? host.Quests.Merit : gu.Stones;
             shopSelling &= shop.Buys;
-            Backdrop();
+            var stage = UiKit.Stage(pageRoot);
+            UiKit.Backdrop(stage, "商", 460, new Vector2(-60 - 230, -160 - 230));
 
-            // The head: the seal, the shop, buying or selling, the purse.
-            var top = UiKit.Rect("Top", pageRoot).Place(new Vector2(0, 1), Vector2.one, 48, -112, 48, 28);
-            var seal = UiKit.SealMark("coin", top, 60);
-            seal.rectTransform.At(new Vector2(0, 0.5f), new Vector2(30, 0), new Vector2(60, 60));
-            var title = UiKit.Label($"<b>Лавка</b>  <size=18><color=#7E9093>{shop.Keeper} · деревня Гу Юэ</color></size>", top, 32, UiKit.Text);
-            title.rectTransform.Place(Vector2.zero, new Vector2(0, 1), 82, 0, -760, 0);
-            var modes = UiKit.Rect("Modes", top).Place(Vector2.zero, new Vector2(0, 1), 780, 12, -1180, 12);
-            modes.Stack<HorizontalLayoutGroup>(8).childForceExpandWidth = true;
-            UiKit.Button(UiKit.Spaced("Купить"), modes, () => { shopSelling = false; shopScroll = 0; Show(Page.Shop); }, shopSelling ? ButtonKind.Plain : ButtonKind.Tab, 16).Size(52, -1, 1);
+            // The header: the shop, buying or selling between Q and E, the purse.
+            var tabs = new List<(string, string, bool, System.Action)> { ("Купить", null, !shopSelling, () => { shopSelling = false; shopScroll = 0; Show(Page.Shop); }) };
 
             if (shop.Buys)
             {
-                UiKit.Button(UiKit.Spaced("Продать"), modes, () => { shopSelling = true; shopScroll = 0; Show(Page.Shop); }, shopSelling ? ButtonKind.Tab : ButtonKind.Plain, 16).Size(52, -1, 1);
-            }
-            var close = UiKit.Button("Закрыть · Esc", top, host.Resume, ButtonKind.Plain, 16);
-            ((RectTransform)close.transform).Place(new Vector2(1, 0), Vector2.one, -190, 12, 0, 12);
-            var coin = UiKit.Icon("stone", top, 24, UiKit.Gold);
-            coin.rectTransform.Place(new Vector2(1, 0), Vector2.one, -420, 0, 380, 0);
-            var purse = UiKit.Label(shop.ForMerit ? $"<b>{purseNow}</b>  <color=#7E9093>вклада</color>" : $"<b>{purseNow}</b>  <color=#7E9093>камней</color>", top, 20, UiKit.Text);
-            purse.rectTransform.Place(new Vector2(1, 0), Vector2.one, -376, 0, 206, 0);
-            var body = UiKit.Rect("Body", pageRoot).Place(Vector2.zero, Vector2.one, 48, 36, 48, 140);
-
-            // The keeper.
-            var left = UiKit.Panel("Keeper", body);
-            left.rectTransform.Place(Vector2.zero, new Vector2(0, 1), 0, 0, -360, 0);
-            var keeper = UiKit.Rect("Column", left.transform).Fill();
-            keeper.Stack<VerticalLayoutGroup>(10, new RectOffset(26, 26, 24, 22));
-            UiKit.Label(shop.Keeper, keeper, 24, UiKit.GoldLit, TextAnchor.MiddleLeft, FontStyle.Bold).Size(34);
-            UiKit.Caps(shop.Title, keeper, 12, UiKit.Muted).Size(40);
-            UiKit.Label($"«{shop.Hello}»", keeper, 18, UiKit.Text, TextAnchor.UpperLeft, FontStyle.Italic).Size(118);
-            UiKit.Image("Rule", keeper, UiKit.Line).Size(2);
-            Stat(keeper, "Положение в клане", $"{host.Quests.Standing} · вклад {host.Quests.Merit}");
-
-            if (!shop.ForMerit)
-            {
-                Stat(keeper, "Скидка", discount > 0 ? $"{discount * 100:0}%" : "нет (растёт с вкладом)");
+                tabs.Add(("Продать", null, shopSelling, () => { shopSelling = true; shopScroll = 0; Show(Page.Shop); }));
             }
 
-            UiKit.Label(shop.ForMerit
-                    ? "Платят вкладом: его дают поручения клана (у распорядительницы) и побочные задания. Товар пополняется в полночь."
-                    : shop.GuADay > 0
-                        ? $"Покупает за половину цены. Товар пополняется в полночь; из Гу каждый день выставлены только {shop.GuADay}, и цены на них гуляют."
-                        : "Лавка покупает вещи за половину своей цены. Товар пополняется в полночь.", keeper, 15, UiKit.Muted).Size(62);
-            UiKit.Image("Rule", keeper, UiKit.Line).Size(2);
-            Goods(keeper, ItemBook.Find(shopChosen ?? (shop.Goods.Length > 0 ? shop.Goods[0].Item : null)));
-
-            // The goods (or the bag, selling).
-            var centre = UiKit.Panel("Goods", body);
-            centre.rectTransform.Place(Vector2.zero, Vector2.one, 400, 0, 520, 0);
-            var column = UiKit.Rect("Column", centre.transform).Fill();
-            column.Stack<VerticalLayoutGroup>(8, new RectOffset(24, 24, 20, 20));
-            UiKit.Choices(column, new[] { "Все", "Гу", "Корм и еда", "Материалы" }, shopFilter + 1, i =>
+            UiKit.Header(stage, "coin", "Лавка", $"{shop.Keeper} · деревня Гу Юэ", tabs, host.Resume, right =>
             {
-                shopFilter = i - 1;
-                shopScroll = 0;
-                Show(Page.Shop);
-            }, 15);
-            var header = UiKit.Rect("Header", column);
-            header.Stack<HorizontalLayoutGroup>(10, new RectOffset(70, 10, 0, 0), TextAnchor.MiddleLeft).childForceExpandWidth = false;
-            header.Size(26);
-            UiKit.Caps("Товар", header, 12, UiKit.Muted).Size(-1, -1, 1);
-            UiKit.Caps(shopSelling ? "В сумке" : "В наличии", header, 12, UiKit.Muted).Size(-1, 120, 0);
-            UiKit.Caps("Цена", header, 12, UiKit.Muted).Size(-1, 150, 0);
-            UiKit.Label("", header, 12).Size(-1, 150, 0);
-            var rows = Scroll(column, shopScroll, v => shopScroll = v);
+                var mark = UiKit.Icon(shop.ForMerit ? "jade" : "stone", right, 16, shop.ForMerit ? UiKit.Gold : UiKit.EssenceLit);
+                mark.Size(20, 16, 0);
+                var count = UiKit.Label(shop.ForMerit ? $"{purseNow} вклада" : $"{purseNow}", right, 15, UiKit.Text, TextAnchor.MiddleLeft, FontStyle.Bold);
+                count.horizontalOverflow = HorizontalWrapMode.Overflow;
+                count.Size(40, count.preferredWidth + 4, 0);
+            });
+
+            if (shop.Buys)
+            {
+                var keys = stage.gameObject.AddComponent<PageKeys>();
+                UnityEngine.InputSystem.Key[] toggles = { UnityEngine.InputSystem.Key.Tab, UnityEngine.InputSystem.Key.Q, UnityEngine.InputSystem.Key.E };
+
+                foreach (var key in toggles)
+                {
+                    keys.On(key, () =>
+                    {
+                        shopSelling = !shopSelling;
+                        shopScroll = 0;
+                        Show(Page.Shop);
+                    });
+                }
+            }
+
+            var body = UiKit.Rect("Body", stage).Place(Vector2.zero, Vector2.one, 56, 76, 56, 108);
+
+            // The keeper, at the left.
+            var left = UiKit.Rect("Keeper", body);
+            left.Place(Vector2.zero, new Vector2(0, 1), 0, 0, -300, 0);
+            left.Stack<VerticalLayoutGroup>(14);
+            var portrait = UiKit.Rect("Portrait", left);
+            portrait.Size(190);
+            var glow = UiKit.Image("Glow", portrait, new Color(1, 190 / 255f, 110 / 255f, 0.28f), UiKit.Radial);
+            glow.rectTransform.At(new Vector2(0.5f, 0.5f), Vector2.zero, new Vector2(320, 320));
+            var flicker = glow.gameObject.AddComponent<Pulse>();
+            flicker.Period = 4;
+            flicker.Low = 0.7f;
+            flicker.High = 1;
+            UiKit.Orbit(portrait, 170, UiKit.Gold.A(0.2f), 90, 6);
+            var seal = UiKit.Zh("商", portrait, 96, UiKit.Gold.A(0.8f), TextAnchor.MiddleCenter);
+            seal.rectTransform.Fill();
+            UiKit.Disp(shop.Keeper, left, 28).Size(30);
+            UiKit.Lbl($"{shop.Title} · {host.Quests.Standing}", left, 11, UiKit.Muted, 0.24f).Size(14);
+            var hello = UiKit.Disp($"«{shop.Hello}»", left, 19, UiKit.Hex(0xE2D9C6), TextAnchor.UpperLeft);
+            hello.lineSpacing = 1.05f;
+            UiKit.Rect("Space", left).Size(-1).flexibleHeight = 1;
+            var chosenBox = UiKit.Rect("Chosen", left);
+            chosenBox.Stack<VerticalLayoutGroup>(6, new RectOffset(0, 0, 14, 0));
+            UiKit.Image("Rule", chosenBox, UiKit.Gold.A(0.18f), UiKit.Plain).rectTransform.Place(new Vector2(0, 1), Vector2.one, 0, -1, 0, 0);
+            chosenBox.GetChild(0).gameObject.AddComponent<LayoutElement>().ignoreLayout = true;
+            Goods(chosenBox, ItemBook.Find(shopChosen ?? (shop.Goods.Length > 0 ? shop.Goods[0].Item : null)));
+
+            // The goods (or the bag, selling), in the middle.
+            var centre = UiKit.Rect("Goods", body);
+            centre.Place(Vector2.zero, Vector2.one, 334, 0, 360, 0);
+            centre.Stack<VerticalLayoutGroup>(10);
+            var filters = UiKit.Rect("Filters", centre);
+            var filterRow = filters.Stack<HorizontalLayoutGroup>(6, null, TextAnchor.MiddleLeft);
+            filterRow.childForceExpandWidth = false;
+            filters.Size(34);
+            var names = new[] { "Все", "Гу", "Корм и еда", "Материалы" };
+
+            for (var i = 0; i < names.Length; i++)
+            {
+                var index = i;
+                var tb = UiKit.Tb(names[i], filters, shopFilter + 1 == i, () =>
+                {
+                    shopFilter = index - 1;
+                    shopScroll = 0;
+                    Show(Page.Shop);
+                });
+                tb.Size(34, tb.Words.preferredWidth + names[i].Length * 12 * 0.16f + 30, 0);
+            }
+
+            var header = UiKit.Rect("Header", centre);
+            var headerRow = header.Stack<HorizontalLayoutGroup>(16, new RectOffset(66, 6, 0, 0), TextAnchor.MiddleLeft);
+            headerRow.childForceExpandWidth = false;
+            header.Size(32);
+            var headerRule = UiKit.Image("Rule", header, new Color(234 / 255f, 240 / 255f, 242 / 255f, 0.12f), UiKit.Plain);
+            headerRule.rectTransform.Place(Vector2.zero, new Vector2(1, 0), 0, 0, 0, -1);
+            headerRule.gameObject.AddComponent<LayoutElement>().ignoreLayout = true;
+            UiKit.Lbl("Товар", header, 10, UiKit.Muted, 0.28f).Size(32, -1, 1);
+            UiKit.Lbl(shopSelling ? "В сумке" : "Есть", header, 10, UiKit.Muted, 0.28f).Size(32, 70, 0);
+            UiKit.Lbl("Цена", header, 10, UiKit.Muted, 0.28f).Size(32, 110, 0);
+            UiKit.Lbl("", header, 10).Size(32, 110, 0);
+            var rows = Scroll(centre, shopScroll, v => shopScroll = v);
+            rows.GetComponent<VerticalLayoutGroup>().spacing = 0;
 
             if (!shopSelling)
             {
@@ -152,12 +184,12 @@ namespace GuWorld.UI
 
                 if (!any)
                 {
-                    UiKit.Label("Продать нечего: лавка берёт только то, что сама продаёт по цене не меньше камня за лот.", rows, 16, UiKit.Muted).Size(50);
+                    UiKit.Label("Продать нечего: лавка берёт только то, что сама продаёт по цене не меньше камня за лот.", rows, 14, UiKit.Muted, TextAnchor.UpperLeft).Size(50);
                 }
                 else
                 {
                     // All the spoils of the hunt (fangs, bones, meat…) into the deal at once.
-                    UiKit.Button("Вся добыча в сделку", rows, () =>
+                    UiKit.Tb("Вся добыча в сделку", rows, false, () =>
                     {
                         for (var cell = 0; cell < Bag.Cells; cell++)
                         {
@@ -171,16 +203,16 @@ namespace GuWorld.UI
                         }
 
                         Show(Page.Shop);
-                    }, ButtonKind.Plain, 15).Size(44);
+                    }, 11).Size(40);
                 }
             }
 
-            // The deal.
+            // The deal, on a panel at the right.
             var right = UiKit.Panel("Deal", body);
-            right.rectTransform.Place(new Vector2(1, 0), Vector2.one, -480, 0, 0, 0);
+            right.rectTransform.Place(new Vector2(1, 0), Vector2.one, -320, 0, 0, 0);
             var deal = UiKit.Rect("Column", right.transform).Fill();
-            deal.Stack<VerticalLayoutGroup>(8, new RectOffset(26, 26, 22, 22));
-            UiKit.Caps("Сделка", deal, 14).Size(24);
+            deal.Stack<VerticalLayoutGroup>(10, new RectOffset(24, 24, 24, 24));
+            UiKit.Lbl("Сделка", deal).Size(14);
             var total = 0;
             var empty = true;
 
@@ -214,17 +246,25 @@ namespace GuWorld.UI
 
             if (empty)
             {
-                UiKit.Label("Нажмите «+» у товара, чтобы добавить его в сделку.", deal, 16, UiKit.Muted).Size(50);
+                UiKit.Label("Нажмите «+» у товара — он попадёт в сделку.", deal, 14, UiKit.Muted, TextAnchor.UpperLeft).Size(40);
             }
 
-            var space = UiKit.Rect("Space", deal);
-            space.Size(-1).flexibleHeight = 1;
-            UiKit.Image("Rule", deal, UiKit.Line).Size(2);
+            UiKit.Rect("Space", deal).Size(-1).flexibleHeight = 1;
+            UiKit.Image("Rule", deal, UiKit.Gold.A(0.2f), UiKit.Plain).Size(1);
             var left2 = shopSelling ? purseNow + total : purseNow - total;
             string Money(int n) => shop.ForMerit ? $"{n} вклада" : ItemBook.Price(n);
-            Stat(deal, shopSelling ? "Получите" : "Итого", Money(total));
-            Stat(deal, "Останется", left2 >= 0 ? Money(left2) : $"<color=#C2413A>не хватает {Money(-left2)}</color>");
-            UiKit.Button(UiKit.Spaced(shopSelling ? "Продать" : "Купить"), deal, () =>
+            var sum = UiKit.Rect("Total", deal);
+            sum.Size(46);
+            UiKit.Label(shopSelling ? "Получите" : "Итого", sum, 13, UiKit.Muted, TextAnchor.LowerLeft).rectTransform.Fill(4);
+            UiKit.Disp(Money(total), sum, 36, UiKit.GoldLit, TextAnchor.LowerRight).rectTransform.Fill();
+
+            if (!shop.ForMerit && !shopSelling)
+            {
+                Stat(deal, "Скидка клана", discount > 0 ? $"−{discount * 100:0}%" : "нет · растёт с вкладом", discount > 0 ? UiKit.Ok : (Color?)null);
+            }
+
+            Stat(deal, "Останется", left2 >= 0 ? Money(left2) : $"не хватает {Money(-left2)}", left2 >= 0 ? (Color?)null : UiKit.Danger);
+            UiKit.HexButton(shopSelling ? "Продать" : "Купить", deal, () =>
             {
                 if (shopSelling)
                 {
@@ -236,7 +276,15 @@ namespace GuWorld.UI
                 }
 
                 Show(Page.Shop);
-            }, ButtonKind.Gold, 18).Size(56);
+            }, empty || left2 < 0 ? UiKit.HexKind.Off : UiKit.HexKind.Main, 13, 52).Size(52);
+            UiKit.Label(shop.ForMerit
+                    ? "Платят вкладом: его дают поручения клана и побочные задания. Товар пополняется в полночь."
+                    : shop.GuADay > 0
+                        ? $"Покупает за половину цены. Товар — в полночь; Гу в день выставлено {shop.GuADay}, цены на них гуляют."
+                        : "Покупает за половину своей цены. Товар пополняется в полночь.", deal, 11, UiKit.Muted, TextAnchor.UpperLeft).Size(30);
+
+            UiKit.Footer(stage, shop.Buys ? new[] { ("ЛКМ", "Товар"), ("+", "Больше"), ("−", "Меньше"), ("Tab", "Купить / продать"), ("Esc", "Уйти") }
+                : new[] { ("ЛКМ", "Товар"), ("+", "Больше"), ("−", "Меньше"), ("Esc", "Уйти") });
         }
 
         bool Shows(ItemKind kind) => shopFilter switch
@@ -247,7 +295,7 @@ namespace GuWorld.UI
             _ => true,
         };
 
-        /// <summary>The chosen thing: its cell, name and kind, a few lines about it, and what it gives.</summary>
+        /// <summary>The chosen thing under the keeper: what kind it is, its name, a few lines about it, and what it gives.</summary>
         static void Goods(Transform parent, ItemKind kind)
         {
             if (kind == null)
@@ -255,47 +303,27 @@ namespace GuWorld.UI
                 return;
             }
 
-            var head = UiKit.Rect("Head", parent);
-            head.Size(76);
-            var big = UiKit.Cell(head, 68);
-            big.Back.rectTransform.anchorMin = big.Back.rectTransform.anchorMax = new Vector2(0, 0.5f);
-            big.Back.rectTransform.anchoredPosition = new Vector2(34, 0);
-            big.SetIcon(kind.Icon);
-            big.Mark.color = Icons.Tint(kind.Icon);
-            big.Corner.text = kind.Rank > 0 ? Aperture.RankNumeral(kind.Rank) : "";
-            big.Corner.color = Aperture.RankColour(kind.Rank);
-            big.SetRim(kind.Rank > 0 ? Aperture.RankColour(kind.Rank) : UiKit.GoldDeep);
-            var title = UiKit.Rect("Title", head).Place(Vector2.zero, Vector2.one, 82, 0, 0, 0);
-            title.Stack<VerticalLayoutGroup>(2, null, TextAnchor.MiddleLeft);
-            UiKit.Label(kind.Name, title, 18, UiKit.Text, TextAnchor.MiddleLeft, FontStyle.Bold).Size(44);
-            UiKit.Caps((kind.Rank > 0 ? $"Ранг {kind.Rank} · " : "") + kind.Kind, title, 11, kind.Rank > 0 ? Aperture.RankColour(kind.Rank) : UiKit.Muted).Size(18);
-            UiKit.Label(kind.About, parent, 15).Size(104);
+            UiKit.Lbl((kind.Rank > 0 ? $"{kind.Kind} · ранг {Aperture.RankNumeral(kind.Rank)}" : kind.Kind) ?? "", parent, 11,
+                kind.Rank > 0 ? Aperture.RankColour(kind.Rank) : UiKit.LabelGold, 0.3f).Size(14);
+            UiKit.Disp(kind.Name, parent, 22);
+            var about = UiKit.Label(kind.About, parent, 13, UiKit.Hex(0xA8B6B8), TextAnchor.UpperLeft);
+            about.lineSpacing = 1.1f;
             var gives = kind.Use switch
             {
                 ItemUse.Eat when kind.Heal > 0 => $"+{kind.Heal:0} здоровья",
                 ItemUse.Feed when kind.AnyGu => "порция корма любому Гу",
                 ItemUse.Feed => "корм для Гу",
-                ItemUse.Refine => $"очистка за {GuBook.Find(kind.Gu)?.RefineCost:0}% эссенции (мастеру его ранга)",
+                ItemUse.Refine => $"очистка за {GuBook.Find(kind.Gu)?.RefineCost:0}% эссенции",
                 ItemUse.Activate => GuBook.Find(kind.Gu)?.SkillName,
                 _ => null,
             };
 
-            void Line(string name, string value)
-            {
-                var row = UiKit.Rect(name, parent);
-                row.Stack<HorizontalLayoutGroup>(8, null, TextAnchor.MiddleLeft).childForceExpandWidth = false;
-                row.Size(26);
-                UiKit.Label(name, row, 15, UiKit.Muted).Size(-1, 92, 0);
-                UiKit.Label(value, row, 15, UiKit.Text, TextAnchor.MiddleLeft, FontStyle.Bold).Size(-1, -1, 1);
-            }
-
             if (gives != null)
             {
-                Line("Даёт", gives);
+                Stat(parent, "Даёт", gives);
             }
 
-            Line("Хранится", kind.Keeps > 0 ? Span(kind.Keeps) : "не портится");
-            Line("Вес", $"{kind.Weight:0.##}");
+            Stat(parent, "Хранится", kind.Keeps > 0 ? Span(kind.Keeps) : "не портится");
         }
 
         void BuyRow(Transform parent, Shop shop, Goods goods, ItemKind kind, double now, float discount)
@@ -309,8 +337,8 @@ namespace GuWorld.UI
                 shopChosen = kind.Id;
                 Show(Page.Shop);
             });
-            UiKit.Label(left > 0 ? (kind.Bundle > 1 ? $"{left * kind.Bundle} шт." : $"{left}") : "нет", row, 16, left > 0 ? UiKit.Text : UiKit.Danger).Size(-1, 120, 0);
-            UiKit.Label(kind.Bundle > 1 ? $"{priceText}\n<size=13><color=#7E9093>за {kind.Bundle} шт.</color></size>" : priceText, row, 16, UiKit.Text).Size(-1, 150, 0);
+            UiKit.Label(left > 0 ? (kind.Bundle > 1 ? $"{left * kind.Bundle} шт." : $"{left}") : "нет", row, 14, left > 0 ? UiKit.Hex(0xA8B6B8) : UiKit.Danger).Size(-1, 70, 0);
+            UiKit.Label(kind.Bundle > 1 ? $"{priceText}\n<size=11><color=#7E9093>за {kind.Bundle} шт.</color></size>" : priceText, row, 14, UiKit.Text).Size(-1, 110, 0);
             Counter(row, kind.Bundle > 1 ? $"{lots * kind.Bundle}" : $"{lots}", lots > 0, () =>
             {
                 shopLots[kind.Id] = Mathf.Max(0, lots - 1);
@@ -331,8 +359,8 @@ namespace GuWorld.UI
                 shopChosen = kind.Id;
                 Show(Page.Shop);
             });
-            UiKit.Label($"{stack.count}", row, 16, UiKit.Text).Size(-1, 120, 0);
-            UiKit.Label($"{ItemBook.Price(Trade.SellPrice(kind, kind.Bundle))}" + (kind.Bundle > 1 ? $"\n<size=13><color=#7E9093>за {kind.Bundle} шт.</color></size>" : ""), row, 15, UiKit.Text).Size(-1, 150, 0);
+            UiKit.Label($"{stack.count}", row, 14, UiKit.Hex(0xA8B6B8)).Size(-1, 70, 0);
+            UiKit.Label($"{ItemBook.Price(Trade.SellPrice(kind, kind.Bundle))}" + (kind.Bundle > 1 ? $"\n<size=11><color=#7E9093>за {kind.Bundle} шт.</color></size>" : ""), row, 14, UiKit.Text).Size(-1, 110, 0);
             var step = kind.Bundle;
             Counter(row, $"{count}", count > 0, () =>
             {
@@ -352,25 +380,26 @@ namespace GuWorld.UI
             });
         }
 
-        /// <summary>A row of the goods: the thing's cell, its name and what it is; a click on it shows it under the keeper.</summary>
+        /// <summary>A row of the goods (.gr): the thing's mark, its name and what it is; in the deal, it is lit; a click on it shows it under the keeper.</summary>
         RectTransform Row(Transform parent, ItemKind kind, bool inDeal, System.Action choose)
         {
             var chosen = kind.Id == shopChosen;
-            var resting = inDeal ? new Color(0.79f, 0.65f, 0.39f, 0.07f) : chosen ? new Color(1, 1, 1, 0.04f) : new Color(0, 0, 0, 0);
-            var image = UiKit.Image(kind.Name, parent, resting, UiKit.Chamfer);
-            image.raycastTarget = true;
-            image.gameObject.AddComponent<Hover>().Set(image, resting, new Color(0.79f, 0.65f, 0.39f, 0.12f), choose);
-            var row = image.rectTransform;
-            row.Stack<HorizontalLayoutGroup>(10, new RectOffset(4, 6, 4, 4), TextAnchor.MiddleLeft).childForceExpandWidth = false;
-            row.Size(64);
-            var cell = UiKit.Cell(row, 56);
-            cell.Size(56, 56, 0);
-            cell.SetIcon(kind.Icon);
-            cell.Mark.color = Icons.Tint(kind.Icon);
-            cell.Corner.text = kind.Rank > 0 ? Aperture.RankNumeral(kind.Rank) : "";
-            cell.Corner.color = Aperture.RankColour(kind.Rank);
-            cell.SetRim(kind.Rank > 0 ? Aperture.RankColour(kind.Rank) : UiKit.GoldDeep);
-            UiKit.Label($"<b>{kind.Name}</b>\n<size=13><color=#7E9093>{kind.Kind}</color></size>", row, 17).Size(-1, -1, 1);
+            var (row, _) = UiKit.ListRow(parent, 66, chosen || inDeal, choose);
+            var line = row.Stack<HorizontalLayoutGroup>(16, new RectOffset(18, 6, 0, 0), TextAnchor.MiddleLeft);
+            line.childForceExpandWidth = false;
+            var rule = UiKit.Image("Rule", row, new Color(234 / 255f, 240 / 255f, 242 / 255f, 0.06f), UiKit.Plain);
+            rule.rectTransform.Place(Vector2.zero, new Vector2(1, 0), 0, 0, 0, -1);
+            rule.gameObject.AddComponent<LayoutElement>().ignoreLayout = true;
+            var mark = UiKit.Icon(kind.Icon, row, 44, Icons.Tint(kind.Icon));
+            mark.Size(44, 48, 0);
+            var words = UiKit.Rect("Words", row);
+            words.Stack<VerticalLayoutGroup>(3, null, TextAnchor.MiddleLeft);
+            words.Size(66, -1, 1);
+            var name = UiKit.Disp(kind.Name, words, 19, chosen ? Color.white : UiKit.Text);
+            name.horizontalOverflow = HorizontalWrapMode.Overflow;
+            name.Size(22);
+            UiKit.Lbl((kind.Rank > 0 ? $"ранг {Aperture.RankNumeral(kind.Rank)} · " : "") + (kind.Kind ?? ""), words, 10,
+                kind.Rank > 0 ? Aperture.RankColour(kind.Rank) : UiKit.Muted, 0.14f).Size(12);
 
             return row;
         }
@@ -378,20 +407,36 @@ namespace GuWorld.UI
         static void Counter(Transform row, string value, bool lit, System.Action minus, System.Action plus)
         {
             var box = UiKit.Rect("Counter", row);
-            box.Stack<HorizontalLayoutGroup>(4, null, TextAnchor.MiddleCenter).childForceExpandWidth = false;
-            box.Size(44, 150, 0);
-            UiKit.Button("−", box, minus, ButtonKind.Plain, 20).Size(40, 40, 0);
-            UiKit.Label(value, box, 17, lit ? UiKit.GoldLit : UiKit.Hex(0x6E655A), TextAnchor.MiddleCenter, FontStyle.Bold).Size(40, 54, 0);
-            UiKit.Button("+", box, plus, ButtonKind.Plain, 20).Size(40, 40, 0);
+            var group = box.Stack<HorizontalLayoutGroup>(8, null, TextAnchor.MiddleRight);
+            group.childForceExpandWidth = false;
+            box.Size(66, 110, 0);
+            QuantityButton(box, "−", minus, false);
+            UiKit.Disp(value, box, 22, lit ? UiKit.GoldLit : UiKit.Muted, TextAnchor.MiddleCenter).Size(30, 30, 0);
+            QuantityButton(box, "+", plus, true);
+        }
+
+        /// <summary>A small square button to take one more or one less (.qb): the plus is gold.</summary>
+        static void QuantityButton(Transform parent, string sign, System.Action click, bool gold)
+        {
+            var box = UiKit.Image(sign, parent, gold ? UiKit.GoldLit.A(0.08f) : new Color(0, 0, 0, 0.01f), UiKit.Plain);
+            box.raycastTarget = true;
+            var edge = UiKit.Frame(box.transform, gold ? UiKit.Gold.A(0.5f) : new Color(234 / 255f, 240 / 255f, 242 / 255f, 0.2f));
+            var mark = UiKit.Label(sign, box.transform, 16, gold ? UiKit.GoldLit : UiKit.Text2, TextAnchor.MiddleCenter);
+            mark.rectTransform.Fill();
+            box.Size(28, 28, 0);
+            var clickable = box.gameObject.AddComponent<Clickable>();
+            clickable.Click = click;
+            clickable.Pointed = over => edge.color = over ? UiKit.GoldLit : gold ? UiKit.Gold.A(0.5f) : new Color(234 / 255f, 240 / 255f, 242 / 255f, 0.2f);
         }
 
         static void DealLine(Transform parent, string what, int price, bool merit = false)
         {
             var row = UiKit.Rect(what, parent);
-            row.Stack<HorizontalLayoutGroup>(8, null, TextAnchor.MiddleLeft).childForceExpandWidth = false;
-            row.Size(28);
-            UiKit.Label(what, row, 16).Size(-1, -1, 1);
-            UiKit.Label(merit ? $"{price} вклада" : ItemBook.Price(price), row, 16, UiKit.GoldLit, TextAnchor.MiddleRight).Size(-1, 120, 0);
+            row.Size(34);
+            UiKit.Label(what, row, 14, UiKit.Text).rectTransform.Fill();
+            UiKit.Disp(merit ? $"{price} вклада" : ItemBook.Price(price), row, 18, UiKit.Text, TextAnchor.MiddleRight).rectTransform.Fill();
+            var rule = UiKit.Image("Rule", row, new Color(234 / 255f, 240 / 255f, 242 / 255f, 0.06f), UiKit.Plain);
+            rule.rectTransform.Place(Vector2.zero, new Vector2(1, 0), 0, 0, 0, -1);
         }
 
         /// <summary>Sells what is in the deal, pile by pile (each checked to be what it was).</summary>
