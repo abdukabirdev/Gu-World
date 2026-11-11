@@ -408,39 +408,56 @@ namespace GuWorld.UI
                 return mapTexture;
             }
 
-            const int size = 256;
+            const int size = 384;
+            var half = Ground.Half;
             mapTexture = new Texture2D(size, size, TextureFormat.RGB24, false) { wrapMode = TextureWrapMode.Clamp, name = "Map" };
             var pixels = new Color[size * size];
-            var grass = UiKit.Hex(0x1C2A26);
-            var wood = UiKit.Hex(0x12201C);
-            var rock = UiKit.Hex(0x343A40);
-            var road = UiKit.Hex(0x8C6A3A);
+            var plan = Ground.Plan;
+            var weights = new float[Core.Gen.Surface.Layers];
             var water = UiKit.Hex(0x2E6E8C);
-            var stone = UiKit.Hex(0x4A4E52);
-            var forest = Valley.Place("forest");
-            var grove = Valley.Place("grove");
-            var village = Valley.Place("village");
+            var road = UiKit.Hex(0x8C6A3A);
 
             for (var j = 0; j < size; j++)
             {
-                var z = -Valley.Half + Valley.Half * 2 * (j + 0.5f) / size;
+                var z = -half + half * 2 * (j + 0.5f) / size;
 
                 for (var i = 0; i < size; i++)
                 {
-                    var x = -Valley.Half + Valley.Half * 2 * (i + 0.5f) / size;
+                    var x = -half + half * 2 * (i + 0.5f) / size;
+                    var cell = half * 2 / size;
                     var height = Ground.HeightAt(x, z);
-                    var slope = Mathf.Abs(Ground.HeightAt(x + 4, z) - height) + Mathf.Abs(Ground.HeightAt(x, z + 4) - height);
-                    var point = new MapPoint(x, z);
-                    var colour = Color.Lerp(grass, wood, Mathf.Max(1 - Mathf.Clamp01((forest.At.DistanceTo(point) - forest.Radius) / 40), 1 - Mathf.Clamp01((grove.At.DistanceTo(point) - grove.Radius) / 30)));
-                    colour = Color.Lerp(colour, rock, Mathf.Clamp01((slope - 2.5f) / 4));
-                    colour = Color.Lerp(colour, stone, 1 - Mathf.Clamp01((village.At.DistanceTo(point) - 60) / 8));
-                    colour *= 0.8f + Mathf.Clamp01(height / 80) * 0.7f;
+                    var dx = Ground.HeightAt(x + cell, z) - height;
+                    var dz = Ground.HeightAt(x, z + cell) - height;
+                    Color colour;
 
-                    if (Ground.DistanceTo(Valley.River, x, z, out _) < 7)
+                    if (plan != null)
+                    {
+                        var p = new Core.Gen.Vec2(x, z);
+                        plan.Surface.Paint(p, height, Mathf.Sqrt(dx * dx + dz * dz) / cell, weights);
+                        float r = 0, g = 0, b = 0;
+
+                        for (var k = 0; k < weights.Length; k++)
+                        {
+                            r += Core.Gen.Shapes.FarColours[k * 3] * weights[k];
+                            g += Core.Gen.Shapes.FarColours[k * 3 + 1] * weights[k];
+                            b += Core.Gen.Shapes.FarColours[k * 3 + 2] * weights[k];
+                        }
+
+                        colour = new Color(r, g, b) * 0.6f;
+                    }
+                    else
+                    {
+                        colour = Color.Lerp(UiKit.Hex(0x1C2A26), UiKit.Hex(0x343A40), Mathf.Clamp01((Mathf.Abs(dx) + Mathf.Abs(dz)) / cell * 0.8f));
+                    }
+
+                    // Lit from the north-west, so the mountain reads.
+                    colour *= Mathf.Clamp(1 + (-dx + dz) / cell * 0.7f, 0.5f, 1.45f) * (0.85f + Mathf.Clamp01(height / 700) * 0.4f);
+
+                    if (Ground.RiverDistance(x, z) < cell * 0.8f)
                     {
                         colour = water;
                     }
-                    else if (Ground.RoadDistance(x, z) < 3)
+                    else if (Ground.RoadDistance(x, z) < cell * 0.45f)
                     {
                         colour = road;
                     }
@@ -471,17 +488,34 @@ namespace GuWorld.UI
             var over = UiKit.Rect("Marks", frame.transform);
             over.Fill(8);
 
-            Vector2 On(MapPoint point) => new Vector2((point.X + Valley.Half) / (Valley.Half * 2), (point.Z + Valley.Half) / (Valley.Half * 2));
+            Vector2 On(MapPoint point) => new Vector2((point.X + Ground.Half) / (Ground.Half * 2), (point.Z + Ground.Half) / (Ground.Half * 2));
 
             foreach (var place in Valley.Places)
             {
-                if (place.Id == "yard" || place.Id == "forest_edge" || (place.Cave && !session.Has(place.Id == "hermit_cave" ? "hermit_open" : "blood_open")))
+                if (place.Id == "yard" || place.Id == "forest_edge" || (place.Cave && !session.Has(place.Id == "hermit_cave" ? "hermit_open" : "blood_open")) || (Ground.Big && place.Radius < 30))
                 {
                     continue;
                 }
 
                 var label = UiKit.Lbl(place.Name, over, 10, UiKit.Hex(place.Colour), 0.1f, TextAnchor.MiddleCenter).Shadowed();
                 label.rectTransform.At(On(place.At), new Vector2(0, 12), new Vector2(220, 16));
+            }
+
+            if (Ground.Big)
+            {
+                foreach (var settlement in Core.Regions.Settlements)
+                {
+                    var label = UiKit.Lbl(settlement.Name, over, 10, UiKit.Hex(settlement.Colour), 0.1f, TextAnchor.MiddleCenter).Shadowed();
+                    label.rectTransform.At(On(settlement.At), new Vector2(0, 10), new Vector2(220, 16));
+                    var dot = UiKit.Image("Settlement", over, UiKit.Hex(settlement.Colour), UiKit.Diamond);
+                    dot.rectTransform.At(On(settlement.At), Vector2.zero, new Vector2(8, 8));
+                }
+
+                foreach (var place in Core.Regions.Places)
+                {
+                    var label = UiKit.Lbl(place.Name, over, 9, UiKit.Hex(place.Colour).A(0.8f), 0.1f, TextAnchor.MiddleCenter).Shadowed();
+                    label.rectTransform.At(On(place.At), new Vector2(0, 10), new Vector2(220, 14));
+                }
             }
 
             foreach (var thing in Valley.Things)

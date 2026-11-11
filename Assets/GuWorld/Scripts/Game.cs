@@ -47,6 +47,16 @@ namespace GuWorld
     }
 
     /// <summary>
+    /// Which world the game runs on: the whole mountain (8 × 8 km, generated, streamed round the
+    /// hero) or the small valley of the first rewrite (one terrain, everything loaded). The big one
+    /// is the game; the small one stays as a fallback (`-smallworld` on the command line).
+    /// </summary>
+    public static class WorldMode
+    {
+        public static bool Big = System.Array.IndexOf(System.Environment.GetCommandLineArgs(), "-smallworld") < 0;
+    }
+
+    /// <summary>
     /// The game itself: it starts with the application (no scene objects are needed), shows the
     /// title, builds the valley when a game begins, and holds what everything else asks for —
     /// the session (the rules), the hero, the camera, the interface.
@@ -187,7 +197,39 @@ namespace GuWorld
             Session.FlagSet += flag => spawns?.Refresh();
 
             world = new GameObject("World");
-            World.Ground.Build(world.transform);
+
+            if (WorldMode.Big)
+            {
+                // The mountain's plan is made on a worker thread (a few seconds the first time); the loading screen waits.
+                var making = System.Threading.Tasks.Task.Run(() => Core.Gen.WorldPlan.Get());
+
+                while (!making.IsCompleted)
+                {
+                    yield return null;
+                }
+
+                if (making.Exception != null)
+                {
+                    Debug.LogError("GU World: the world could not be made, falling back to the valley: " + making.Exception);
+                    WorldMode.Big = false;
+                }
+                else
+                {
+                    var plan = making.Result;
+                    Debug.Log("GU World: " + plan.Report());
+                    World.Ground.Plan = plan;
+                    Streamer.Make(world.transform, plan);
+                    Forest.Make(world.transform, plan);
+                    Places.Make(world.transform, plan);
+                }
+            }
+
+            if (!WorldMode.Big)
+            {
+                World.Ground.Plan = null;
+                World.Ground.Build(world.transform);
+            }
+
             yield return null;
             Scenery.Build(world.transform);
             yield return null;
@@ -196,6 +238,8 @@ namespace GuWorld
 
             var lantern = Valley.Thing(Session.State.Lantern) ?? Valley.Thing("lantern_village");
             var at = fresh || state == null ? new Vector3(0, 0, -16) : new Vector3(lantern.At.X, 0, lantern.At.Z - 2.5f);
+            // The ground under the hero must be there before they stand on it.
+            Streamer.Instance?.LoadNow(at);
             Hero = Hero.Spawn(at, 0);
             Rig.Follow(Hero, 0);
             Playing = true;
@@ -227,7 +271,7 @@ namespace GuWorld
                 Destroy(world);
             }
 
-            foreach (var loose in FindObjectsByType<Fade>())
+            foreach (var loose in Engine.FindAll<Fade>())
             {
                 Destroy(loose.gameObject);
             }
@@ -287,7 +331,7 @@ namespace GuWorld
 
             // The edge of the world.
             var p = Hero.transform.position;
-            var limit = Valley.Half - 8;
+            var limit = World.Ground.Half - 8;
 
             if (Mathf.Abs(p.x) > limit || Mathf.Abs(p.z) > limit || p.y < -20)
             {
@@ -408,6 +452,7 @@ namespace GuWorld
         public static void Wake()
         {
             var lantern = Valley.Thing(Session.State.Lantern) ?? Valley.Thing("lantern_village");
+            Streamer.Instance?.LoadNow(new Vector3(lantern.At.X, 0, lantern.At.Z - 2.5f));
             Hero.Revive(new Vector3(lantern.At.X, 0, lantern.At.Z - 2.5f));
             Rig.Follow(Hero, 0);
             Ui.Show(Ui.Page.None);
@@ -423,6 +468,7 @@ namespace GuWorld
         IEnumerator Travelling(MapPoint to)
         {
             yield return Ui.FadeOut(0.35f);
+            Streamer.Instance?.LoadNow(new Vector3(to.X, 0, to.Z));
             Hero.Teleport(Ground(new Vector3(to.X, 0, to.Z)) + Vector3.up * 0.15f);
             Rig.Follow(Hero, Hero.transform.eulerAngles.y);
             spawns?.Refresh();

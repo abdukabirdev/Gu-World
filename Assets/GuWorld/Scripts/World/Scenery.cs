@@ -22,8 +22,12 @@ namespace GuWorld.World
                 Models.Prefab(building.Model, built, Game.Ground(new Vector3(building.At.X, 0, building.At.Z)), building.Facing, building.Scale);
             }
 
-            Strew(parent);
-            Water(parent);
+            // On the big world the woods, the water and the bridges are the plan's (Forest, Places).
+            if (!Ground.Big)
+            {
+                Strew(parent);
+                Water(parent);
+            }
 
             var things = new GameObject("Things").transform;
             things.SetParent(parent, false);
@@ -56,7 +60,7 @@ namespace GuWorld.World
 
         static bool Clear(float x, float z, float margin)
         {
-            if (Mathf.Abs(x) > Valley.Half - 30 || Mathf.Abs(z) > Valley.Half - 30 || Ground.RoadDistance(x, z) < margin + 2 || Ground.DistanceTo(Valley.River, x, z, out _) < margin + 9)
+            if (Mathf.Abs(x) > Ground.Half - 30 || Mathf.Abs(z) > Ground.Half - 30 || Ground.RoadDistance(x, z) < margin + 2 || Ground.DistanceTo(Valley.River, x, z, out _) < margin + 9)
             {
                 return false;
             }

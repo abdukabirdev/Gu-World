@@ -113,6 +113,11 @@ namespace GuWorld.World
                 {
                     var enemy = Bestiary.Get(def.Enemy);
 
+                    if (!Ground.Ready(new Vector3(def.At.X, 0, def.At.Z)))
+                    {
+                        continue;
+                    }
+
                     for (var i = 0; i < def.Count; i++)
                     {
                         Enemy.Spawn(enemy, Around(def.At, 0, def.Radius, hero.transform.position), Random.Range(0, 360f), def.Id);

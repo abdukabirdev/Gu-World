@@ -95,6 +95,14 @@ namespace GuWorld.Actors
                 return;
             }
 
+            // On the big world, the ground under the hero may not be there yet: they wait for it, without falling.
+            if (!World.Ground.Ready(transform.position))
+            {
+                fallSpeed = 0;
+                Session.Tick(dt);
+                return;
+            }
+
             if (Target != null && (!Target.Alive || FlatDistance(Target.transform.position) > 34))
             {
                 Target = null;

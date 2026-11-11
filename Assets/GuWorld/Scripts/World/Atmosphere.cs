@@ -176,8 +176,10 @@ namespace GuWorld.World
             var horizon = Color.Lerp(key.Horizon, Color.Lerp(new Color(0.01f, 0.012f, 0.02f), tint, 0.12f), cave);
             var top = Color.Lerp(key.Top, new Color(0.004f, 0.005f, 0.01f), cave);
             RenderSettings.fogColor = horizon;
-            RenderSettings.fogStartDistance = Mathf.Lerp(Quality.Level == 0 ? 50 : 80, 14, cave);
-            RenderSettings.fogEndDistance = Mathf.Lerp(Quality.Level == 0 ? 420 : 620, 90, cave);
+            // On the whole mountain the fog lies farther (the far land and woods are drawn out to it).
+            var fogEnd = Ground.Big ? (Quality.Level == 0 ? 480 : Quality.Level == 1 ? 880 : 1400) : (Quality.Level == 0 ? 420 : 620);
+            RenderSettings.fogStartDistance = Mathf.Lerp(Quality.Level == 0 ? 50 : 90, 14, cave);
+            RenderSettings.fogEndDistance = Mathf.Lerp(fogEnd, 90, cave);
             var camera = Game.Rig != null ? Game.Rig.Camera : null;
 
             if (camera != null)

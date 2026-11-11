@@ -47,10 +47,36 @@ namespace GuWorld.Actors
             return material;
         }
 
+        static readonly Dictionary<string, Material> vertexLit = new Dictionary<string, Material>();
+
+        /// <summary>A lit material that takes its colour from the mesh's vertices (shapes made in code), swaying in the wind by `sway`.</summary>
+        public static Material VertexLit(Color tint, float sway)
+        {
+            var key = ColorUtility.ToHtmlStringRGBA(tint) + sway;
+
+            if (!vertexLit.TryGetValue(key, out var material))
+            {
+                var shader = Resources.Load<Shader>("Shaders/VertexLit");
+                material = shader != null ? new Material(shader) : Lit(tint);
+                material.name = "Vertex lit " + key;
+                material.enableInstancing = true;
+
+                if (material.HasProperty("_Sway"))
+                {
+                    material.SetFloat("_Sway", sway);
+                    material.SetColor("_BaseColor", tint);
+                }
+
+                vertexLit[key] = material;
+            }
+
+            return material;
+        }
+
         /// <summary>An unlit see-through material for light: additive (a glow) or blended (a veil).</summary>
         public static Material Glow(Color colour, bool additive = true, Texture texture = null)
         {
-            var key = ColorUtility.ToHtmlStringRGBA(colour) + additive + (texture != null ? texture.GetEntityId().ToString() : "0");
+            var key = ColorUtility.ToHtmlStringRGBA(colour) + additive + Engine.Key(texture);
 
             if (!glow.TryGetValue(key, out var material))
             {

@@ -19,6 +19,10 @@ namespace GuWorld.World
 
         public static Terrain Terrain { get; private set; }
 
+        /// <summary>The generated 8 × 8 km world, when the game runs on it (null on the small valley).</summary>
+        public static Core.Gen.WorldPlan Plan { get; set; }
+        public static bool Big => Plan != null;
+
         static float Smooth(float from, float to, float x) => Mathf.SmoothStep(0, 1, Mathf.InverseLerp(from, to, x));
 
         static float Noise(float x, float z, float scale, float seed) => Mathf.PerlinNoise(x * scale + seed, z * scale + seed * 1.7f) * 2 - 1;
@@ -51,6 +55,11 @@ namespace GuWorld.World
 
         public static float RoadDistance(float x, float z)
         {
+            if (Plan != null)
+            {
+                return Plan.Roads.Distance(new Core.Gen.Vec2(x, z));
+            }
+
             var best = float.MaxValue;
 
             foreach (var road in Valley.Roads)
@@ -64,6 +73,11 @@ namespace GuWorld.World
         /// <summary>The ground's height at a point of the map, metres.</summary>
         public static float HeightAt(float x, float z)
         {
+            if (Plan != null)
+            {
+                return Plan.Land.Height(x, z);
+            }
+
             var h = 15 + 9 * Noise(x, z, 0.0055f, 11) + 3.5f * Noise(x, z, 0.021f, 37) + 0.6f * Noise(x, z, 0.09f, 71);
             // The land climbs to the ridge in the north and dips a little to the south.
             h += Smooth(180, 430, z) * 44 - Smooth(-150, -400, z) * 4;
@@ -115,7 +129,24 @@ namespace GuWorld.World
         /// <summary>The river's water level at a latitude: high on the plateau, low below the fall.</summary>
         public static float WaterLevelAt(float z) => z > Valley.PlateauZ ? Valley.WaterfallTop : Valley.WaterfallFoot;
 
-        public static float SampleHeight(Vector3 at) => Terrain != null ? Terrain.SampleHeight(at) + Terrain.transform.position.y : HeightAt(at.x, at.z);
+        public static float SampleHeight(Vector3 at)
+        {
+            if (Plan != null)
+            {
+                return Streamer.Instance != null ? Streamer.Instance.Height(at) : Plan.Land.Height(at.x, at.z);
+            }
+
+            return Terrain != null ? Terrain.SampleHeight(at) + Terrain.transform.position.y : HeightAt(at.x, at.z);
+        }
+
+        /// <summary>The distance to the nearest river's middle (the big world's rivers, or the valley's one).</summary>
+        public static float RiverDistance(float x, float z) => Plan != null ? Plan.Waters.Distance(new Core.Gen.Vec2(x, z)) : DistanceTo(Valley.River, x, z, out _);
+
+        /// <summary>True if the solid ground under a point is there (on the big world, its tile is loaded).</summary>
+        public static bool Ready(Vector3 at) => Plan == null || (Streamer.Instance != null && Streamer.Instance.Ready(at));
+
+        /// <summary>The map's half size: the valley's or the whole mountain's.</summary>
+        public static float Half => Plan != null ? Core.Regions.Half : Valley.Half;
 
         public static Terrain Build(Transform parent)
         {

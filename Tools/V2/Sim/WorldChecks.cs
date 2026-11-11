@@ -143,6 +143,38 @@ static class WorldChecks
         check(bad == 0, $"world: nothing strewn on a road or in the water ({bad})");
         check(trees > 300, "world: the mountain has woods");
 
+        // The shapes made in code face outwards (their normals point away from their middle) and are the same for the same seed.
+        foreach (var (name, shape) in new[] { ("boulder", Shapes.Boulder(7, 2)), ("shrub", Shapes.Shrub(3)), ("sphere", Shapes.Icosphere(2)) })
+        {
+            float sx = 0, sy = 0, sz = 0;
+
+            for (var i = 0; i < shape.VertexCount; i++)
+            {
+                sx += shape.Positions[i * 3];
+                sy += shape.Positions[i * 3 + 1];
+                sz += shape.Positions[i * 3 + 2];
+            }
+
+            sx /= shape.VertexCount;
+            sy /= shape.VertexCount;
+            sz /= shape.VertexCount;
+            var outward = 0;
+
+            for (var i = 0; i < shape.VertexCount; i++)
+            {
+                var dot = (shape.Positions[i * 3] - sx) * shape.Normals[i * 3] + (shape.Positions[i * 3 + 1] - sy) * shape.Normals[i * 3 + 1] + (shape.Positions[i * 3 + 2] - sz) * shape.Normals[i * 3 + 2];
+                outward += dot > 0 ? 1 : 0;
+            }
+
+            check(outward > shape.VertexCount * 0.85f, $"world: the {name}'s faces point outwards ({outward} of {shape.VertexCount})");
+        }
+
+        check(Shapes.Boulder(5, 2).Positions.SequenceEqual(Shapes.Boulder(5, 2).Positions), "world: a boulder is the same for the same seed");
+        var deck = Shapes.Bridge(12, 5, 4, 1);
+        check(deck.TriangleCount > 100, "world: a bridge has planks, rails and piers");
+        var farLand = Shapes.FarLand(plan, 32, 4);
+        check(farLand.VertexCount == 33 * 33 && Enumerable.Range(0, farLand.VertexCount).All(i => farLand.Normals[i * 3 + 1] > 0), "world: the far land faces up");
+
         Picture(plan, Path.Combine(outDir, "world.png"), 1024, -Regions.Half, -Regions.Half, Regions.Half * 2, true);
         Picture(plan, Path.Combine(outDir, "valley.png"), 768, -520, -520, 1040, true);
 

@@ -25,7 +25,7 @@ namespace GuWorld.World
             var rig = root.AddComponent<CameraRig>();
             rig.view = root.AddComponent<Camera>();
             rig.view.nearClipPlane = 0.15f;
-            rig.view.farClipPlane = 1400;
+            rig.view.farClipPlane = 3200;
             rig.view.fieldOfView = 58;
             rig.view.clearFlags = CameraClearFlags.SolidColor;
             root.AddComponent<AudioListener>();
