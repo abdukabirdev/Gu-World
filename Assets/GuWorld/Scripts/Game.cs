@@ -95,6 +95,7 @@ namespace GuWorld
 
         void Awake()
         {
+            AutoTest.Detect();
             Quality.Load();
             runner = new GameObject("Runner").AddComponent<Runner>();
             runner.transform.SetParent(transform, false);
@@ -104,6 +105,11 @@ namespace GuWorld
             Ui = new GameObject("Interface").AddComponent<Ui>();
             Ui.transform.SetParent(transform, false);
             Ui.Show(Ui.Page.Title);
+
+            if (AutoTest.On)
+            {
+                AutoTest.Start(this);
+            }
         }
 
         // ------------------------------------------------------------------ Beginning and ending a game
@@ -112,7 +118,7 @@ namespace GuWorld
         {
             try
             {
-                return HasSave ? JsonUtility.FromJson<SaveData>(File.ReadAllText(SavePath)) : null;
+                return HasSave && !AutoTest.On ? JsonUtility.FromJson<SaveData>(File.ReadAllText(SavePath)) : null;
             }
             catch (System.Exception error)
             {
@@ -124,7 +130,7 @@ namespace GuWorld
 
         public static void Save()
         {
-            if (Session == null || !Playing || Session.Dead)
+            if (AutoTest.On || Session == null || !Playing || Session.Dead)
             {
                 return;
             }

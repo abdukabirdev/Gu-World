@@ -155,7 +155,8 @@ namespace GuWorld.World
             Terrain.heightmapPixelError = Quality.Level >= 2 ? 5 : 9;
             Terrain.basemapDistance = Quality.Level >= 2 ? 180 : 90;
             Terrain.shadowCastingMode = UnityEngine.Rendering.ShadowCastingMode.On;
-            Terrain.drawInstanced = true;
+            // Instanced drawing leaves the terrain invisible in the player (Unity 6 / URP 17.6 on D3D11), so it is off.
+            Terrain.drawInstanced = false;
 
             return Terrain;
         }

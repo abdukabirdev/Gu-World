@@ -112,3 +112,4 @@ bash Tools/V2/check.sh unity    # компиляция Unity-слоя
 - [x] 4. Редактор: пустая сцена, проверка контента, билд; `Tools/V2/build.ps1`.
 - [x] 5a. Компиляция в Unity 6000.6.5f1 (11.11.2026): одна ошибка (`GetInstanceID` устарел → `GetEntityId`), исправлена; ошибок нет.
 - [x] 5b. Проверка контента (11.11.2026): «all 57 models, 20 looks and the rest are in place». Дальше — Play-тест у автора (список «не проверено» выше).
+- [x] 5c. Сборка и автотест (11.11.2026). Сборка в batch падала на `BuildPlayerDataGenerator` (GetLastError 5) — помогает удалить `Library\BuildPlayerData\Player` перед сборкой. `AutoTest.cs` (`GuWorld.exe -autotest [-quality N]`): телепорты по местам, волк, страницы, кадры и FPS в `Logsutotest\`, ошибки в `errors.txt`, сохранение не трогает. Найдено по кадрам: `Terrain.drawInstanced = true` делало землю невидимой — выключено.
