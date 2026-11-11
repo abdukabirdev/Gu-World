@@ -120,7 +120,7 @@ namespace GuWorld.Core
                         },
                         Gives = new[] { "stones:15" }
                     },
-                    new StepDef { Kind = StepKind.Cultivate, Count = 1, Text = "Медитируйте у Духовного источника (T) до средней ступени", Marker = "spring" },
+                    new StepDef { Kind = StepKind.Cultivate, Count = 2, Text = "Медитируйте у Духовного источника (T): сожгите камни и дойдите до высшей ступени", Marker = "spring" },
                 },
                 Reward = new Reward { Insight = 0, Stones = 10, Flags = new[] { "ch2" } }
             },
@@ -201,7 +201,7 @@ namespace GuWorld.Core
                             L("", "Он улыбается, как всегда. Но жетон в вашей ладони дрожит и тянет на восток."),
                         }
                     },
-                    new StepDef { Kind = StepKind.Cultivate, Count = 2, Text = "Достигните высшей ступени: печать не откроется слабому", Marker = "spring" },
+                    new StepDef { Kind = StepKind.Cultivate, Count = 3, Text = "Достигните пиковой ступени: печать не откроется слабому", Marker = "spring" },
                 },
                 Reward = new Reward { Insight = 100, Flags = new[] { "hermit_open" } }
             },

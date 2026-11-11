@@ -22,12 +22,12 @@ namespace GuWorld.Core
             new PlaceDef { Id = "forest", Name = "Лес Цинмао", At = new MapPoint(5, 240), Radius = 100, Colour = 0x7E9093 },
             new PlaceDef { Id = "knoll", Name = "Волчий холм", At = new MapPoint(70, 300), Radius = 24, Level = 34, Colour = 0xF08A74 },
             new PlaceDef { Id = "river", Name = "Речной брод", At = new MapPoint(236, 70), Radius = 36, Colour = 0x6FB8FF },
-            new PlaceDef { Id = "waterfall", Name = "Водопад", At = new MapPoint(268, 128), Radius = 20, Level = 12, Colour = 0x6FB8FF },
+            new PlaceDef { Id = "waterfall", Name = "Водопад", At = new MapPoint(268, 128), Radius = 18, Level = 12, Blend = 5, Colour = 0x6FB8FF },
             new PlaceDef { Id = "hermit_cave", Name = "Пещера Отшельника", At = new MapPoint(395, 398), Radius = 46, Level = 6, Cave = true, Colour = 0x7FE0C8 },
             new PlaceDef { Id = "camp", Name = "Разбойничий стан", At = new MapPoint(40, -268), Radius = 52, Level = 9, Colour = 0xF08A74 },
             new PlaceDef { Id = "border_stone", Name = "Пограничный камень", At = new MapPoint(236, -178), Radius = 28, Level = 14, Colour = 0xE8C98A },
             new PlaceDef { Id = "ridge", Name = "Волчий гребень", At = new MapPoint(0, 352), Radius = 62, Colour = 0xC0A8FF },
-            new PlaceDef { Id = "den", Name = "Логово Громовой Короны", At = new MapPoint(0, 428), Radius = 30, Level = 58, Colour = 0xD0B8FF },
+            new PlaceDef { Id = "den", Name = "Логово Громовой Короны", At = new MapPoint(0, 404), Radius = 26, Level = 58, Colour = 0xD0B8FF },
             new PlaceDef { Id = "blood_cave", Name = "Кровавая пещера", At = new MapPoint(-395, 398), Radius = 48, Level = 4, Cave = true, Colour = 0xF05A4A },
         };
 
@@ -131,7 +131,7 @@ namespace GuWorld.Core
             new ThingDef { Id = "chest_river", Name = "Сундук на отмели", Kind = ThingKind.Chest, At = new MapPoint(262, 16), Content = "chest_river" },
             new ThingDef { Id = "chest_hermit", Name = "Ларец Отшельника", Kind = ThingKind.Chest, At = new MapPoint(416, 418), Content = "chest_hermit" },
             new ThingDef { Id = "chest_camp", Name = "Сундук атамана", Kind = ThingKind.Chest, At = new MapPoint(52, -306), Content = "chest_camp", Needs = "crooked_fang_dead", Locked = "Сундук окован. Ключ, должно быть, у атамана." },
-            new ThingDef { Id = "chest_ridge", Name = "Тайник на гребне", Kind = ThingKind.Chest, At = new MapPoint(-46, 392), Content = "chest_ridge" },
+            new ThingDef { Id = "chest_ridge", Name = "Тайник на гребне", Kind = ThingKind.Chest, At = new MapPoint(-52, 388), Content = "chest_ridge" },
             new ThingDef { Id = "chest_blood", Name = "Ларец старейшины", Kind = ThingKind.Chest, At = new MapPoint(-424, 420), Content = "chest_blood" },
 
             new ThingDef { Id = "scout_body", Name = "Тело дозорного", Kind = ThingKind.QuestObject, At = new MapPoint(244, 104) },
@@ -146,7 +146,7 @@ namespace GuWorld.Core
             new ThingDef { Id = "blood_altar_1", Name = "Кровавый алтарь", Kind = ThingKind.QuestObject, At = new MapPoint(-66, 348), Model = "prop_bronze_ding" },
             new ThingDef { Id = "blood_altar_2", Name = "Кровавый алтарь", Kind = ThingKind.QuestObject, At = new MapPoint(62, 356), Model = "prop_bronze_ding" },
             new ThingDef { Id = "blood_altar_3", Name = "Кровавый алтарь", Kind = ThingKind.QuestObject, At = new MapPoint(-6, 334), Model = "prop_bronze_ding" },
-            new ThingDef { Id = "den_lure", Name = "Приманка в логове", Kind = ThingKind.QuestObject, At = new MapPoint(0, 446), Needs = "thunder_crown_wolf_dead", Locked = "Громовая Корона ещё жива." },
+            new ThingDef { Id = "den_lure", Name = "Приманка в логове", Kind = ThingKind.QuestObject, At = new MapPoint(0, 422), Needs = "thunder_crown_wolf_dead", Locked = "Громовая Корона ещё жива." },
 
             new ThingDef
             {
@@ -185,7 +185,7 @@ namespace GuWorld.Core
             new SpawnDef { Id = "ridge_a", Enemy = "storm_wolf", Count = 3, At = new MapPoint(-64, 352), Radius = 12, Respawn = 200 },
             new SpawnDef { Id = "ridge_b", Enemy = "storm_wolf", Count = 3, At = new MapPoint(60, 360), Radius = 12, Respawn = 200 },
             new SpawnDef { Id = "ridge_c", Enemy = "wolf", Count = 4, At = new MapPoint(-4, 338), Radius = 14, Respawn = 200 },
-            new SpawnDef { Id = "ridge_d", Enemy = "storm_wolf", Count = 2, At = new MapPoint(-30, 388), Radius = 12, Respawn = 200 },
+            new SpawnDef { Id = "ridge_d", Enemy = "storm_wolf", Count = 2, At = new MapPoint(-44, 372), Radius = 10, Respawn = 200 },
 
             new SpawnDef { Id = "blood_a", Enemy = "blood_puppet", Count = 3, At = new MapPoint(-395, 380), Radius = 9, Respawn = 300 },
             new SpawnDef { Id = "blood_b", Enemy = "blood_wolf", Count = 4, At = new MapPoint(-414, 400), Radius = 10, Respawn = 300 },
@@ -216,7 +216,7 @@ namespace GuWorld.Core
             },
             new EncounterDef
             {
-                Id = "den", Name = "Логово", At = new MapPoint(0, 428), Radius = 28, Waves = new[]
+                Id = "den", Name = "Логово", At = new MapPoint(0, 404), Radius = 24, Waves = new[]
                 {
                     new WaveDef { Enemies = new[] { ("storm_wolf", 4) }, Shout = "Стража логова." },
                     new WaveDef { Enemies = new[] { ("thunder_crown_wolf", 1) }, Shout = "Над логовом гремит. Громовая Корона встаёт." },
@@ -351,13 +351,18 @@ namespace GuWorld.Core
             new MapPoint(238, 0), new MapPoint(262, -90), new MapPoint(296, -200), new MapPoint(330, -330), new MapPoint(350, -470),
         };
 
-        public const float WaterfallTop = 30;
-        public const float WaterfallFoot = 11;
+        /// <summary>The water's level above the fall (on the north-east plateau) and below it.</summary>
+        public const float WaterfallTop = 28;
+        public const float WaterfallFoot = 11.4f;
+        /// <summary>The plateau's southern edge (the cliff the river falls from) and its western edge.</summary>
+        public const float PlateauZ = 152;
+        public const float PlateauX = 212;
+        public const float PlateauRise = 17;
 
         /// <summary>The roads: beaten earth from the village to everywhere the story goes.</summary>
         public static readonly MapPoint[][] Roads =
         {
-            new[] { new MapPoint(0, 0), new MapPoint(0, 96), new MapPoint(6, 130), new MapPoint(12, 160), new MapPoint(8, 230), new MapPoint(30, 280), new MapPoint(8, 304), new MapPoint(0, 352), new MapPoint(0, 410) },
+            new[] { new MapPoint(0, 0), new MapPoint(0, 96), new MapPoint(6, 130), new MapPoint(12, 160), new MapPoint(8, 230), new MapPoint(30, 280), new MapPoint(8, 304), new MapPoint(0, 352), new MapPoint(0, 384) },
             new[] { new MapPoint(30, 280), new MapPoint(70, 300) },
             new[] { new MapPoint(0, 0), new MapPoint(-84, 12), new MapPoint(-128, 20), new MapPoint(-195, 30) },
             new[] { new MapPoint(0, 0), new MapPoint(84, 20), new MapPoint(150, 50), new MapPoint(214, 72), new MapPoint(244, 66), new MapPoint(258, 100), new MapPoint(268, 124) },

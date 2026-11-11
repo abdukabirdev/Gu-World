@@ -8,22 +8,22 @@ namespace GuWorld.Core
         public static readonly ItemDef[] All =
         {
             new ItemDef { Id = "fox_pelt", Name = "Лисья шкура", Seal = "皮", Kind = ItemKind.Material, Price = 6, Description = "Рыжая шкура горного лиса. Берут скорняки и мастера слияния." },
-            new ItemDef { Id = "bamboo_shoot", Name = "Побег бамбука", Seal = "筍", Kind = ItemKind.Material, Price = 4, Description = "Молодой побег из западной рощи. Тётушка Хуа кладёт их в лапшу." },
-            new ItemDef { Id = "wolf_fang", Name = "Волчий клык", Seal = "牙", Kind = ItemKind.Material, Price = 10, Description = "Клык серого волка. Твёрже железа, годится в слияние." },
-            new ItemDef { Id = "wolf_pelt", Name = "Волчья шкура", Seal = "裘", Kind = ItemKind.Material, Price = 14, Description = "Густая серая шкура." },
-            new ItemDef { Id = "storm_core", Name = "Грозовое ядро", Seal = "核", Kind = ItemKind.Material, Price = 40, Colour = 0xC0A8FF, Description = "Сгусток молнии из тела молниевого волка. Покалывает пальцы." },
-            new ItemDef { Id = "moon_orchid", Name = "Лунная орхидея", Seal = "蘭", Kind = ItemKind.Material, Price = 8, Colour = 0xA0D2FF, Description = "Цветёт на опушке леса Цинмао и светится в сумерках. Корм Гу Лунного света." },
+            new ItemDef { Id = "bamboo_shoot", Name = "Побег бамбука", Seal = "木", Kind = ItemKind.Material, Price = 4, Description = "Молодой побег из западной рощи. Тётушка Хуа кладёт их в лапшу." },
+            new ItemDef { Id = "wolf_fang", Name = "Волчий клык", Seal = "骨", Kind = ItemKind.Material, Price = 10, Description = "Клык серого волка. Твёрже железа, годится в слияние." },
+            new ItemDef { Id = "wolf_pelt", Name = "Волчья шкура", Seal = "狼", Kind = ItemKind.Material, Price = 14, Description = "Густая серая шкура." },
+            new ItemDef { Id = "storm_core", Name = "Грозовое ядро", Seal = "珠", Kind = ItemKind.Material, Price = 40, Colour = 0xC0A8FF, Description = "Сгусток молнии из тела молниевого волка. Покалывает пальцы." },
+            new ItemDef { Id = "moon_orchid", Name = "Лунная орхидея", Seal = "兰", Kind = ItemKind.Material, Price = 8, Colour = 0xA0D2FF, Description = "Цветёт на опушке леса Цинмао и светится в сумерках. Корм Гу Лунного света." },
             new ItemDef { Id = "wine_jar", Name = "Кувшин вина", Seal = "酒", Kind = ItemKind.Material, Price = 20, Description = "Бамбуковое вино. Его любят и люди, и Винный червь." },
-            new ItemDef { Id = "blood_crystal", Name = "Кристалл крови", Seal = "晶", Kind = ItemKind.Material, Price = 60, Colour = 0xF05A4A, Description = "Застывшая кровь, из которой вытянули жизнь. Тёплый на ощупь." },
+            new ItemDef { Id = "blood_crystal", Name = "Кристалл крови", Seal = "红", Kind = ItemKind.Material, Price = 60, Colour = 0xF05A4A, Description = "Застывшая кровь, из которой вытянули жизнь. Тёплый на ощупь." },
             new ItemDef { Id = "king_core", Name = "Сердцевина короля зверей", Seal = "王", Kind = ItemKind.Material, Price = 200, Colour = 0xFFE08A, Description = "Ядро сотенного вожака. За такое слияние платят золотом." },
             new ItemDef { Id = "crown_core", Name = "Сердцевина Громовой Короны", Seal = "冠", Kind = ItemKind.Material, Price = 500, Colour = 0xD0B8FF, Description = "Ядро тысячного короля. В нём до сих пор гремит." },
 
-            new ItemDef { Id = "heal_pill", Name = "Пилюля заживления", Seal = "丹", Kind = ItemKind.Consumable, Price = 12, Heal = 50, Colour = 0xF08A74, Description = "Возвращает 50 здоровья. Клавиша H." },
+            new ItemDef { Id = "heal_pill", Name = "Пилюля заживления", Seal = "药", Kind = ItemKind.Consumable, Price = 12, Heal = 50, Colour = 0xF08A74, Description = "Возвращает 50 здоровья. Клавиша H." },
             new ItemDef { Id = "essence_pill", Name = "Пилюля эссенции", Seal = "元", Kind = ItemKind.Consumable, Price = 15, Essence = 0.6f, Colour = 0x7FE0C8, Description = "Наполняет апертуру на 60%." },
 
-            new ItemDef { Id = "rock_1", Name = "Самородок с прожилкой", Seal = "礦", Kind = ItemKind.Rock, Tier = 1, Price = 25, Description = "Что внутри — не знает и продавец. Расколите в сумке." },
-            new ItemDef { Id = "rock_2", Name = "Самородок с пятном", Seal = "礦", Kind = ItemKind.Rock, Tier = 2, Price = 90, Colour = 0x6FB8FF, Description = "Знатоки говорят: пятно — к Гу. Знатоки часто нищие." },
-            new ItemDef { Id = "rock_3", Name = "Самородок с глазом", Seal = "礦", Kind = ItemKind.Rock, Tier = 3, Price = 300, Colour = 0xE8C98A, Description = "На сколе что-то шевелится. Или кажется." },
+            new ItemDef { Id = "rock_1", Name = "Самородок с прожилкой", Seal = "石", Kind = ItemKind.Rock, Tier = 1, Price = 25, Description = "Что внутри — не знает и продавец. Расколите в сумке." },
+            new ItemDef { Id = "rock_2", Name = "Самородок с пятном", Seal = "石", Kind = ItemKind.Rock, Tier = 2, Price = 90, Colour = 0x6FB8FF, Description = "Знатоки говорят: пятно — к Гу. Знатоки часто нищие." },
+            new ItemDef { Id = "rock_3", Name = "Самородок с глазом", Seal = "石", Kind = ItemKind.Rock, Tier = 3, Price = 300, Colour = 0xE8C98A, Description = "На сколе что-то шевелится. Или кажется." },
 
             new ItemDef { Id = "scroll_moonglow", Name = "Свиток: Гу Лунного сияния", Seal = "卷", Kind = ItemKind.Scroll, Teaches = "moonglow", Price = 50, Description = "Рецепт слияния. Прочтите в сумке." },
             new ItemDef { Id = "scroll_four_wines", Name = "Свиток: Червь Четырёх вин", Seal = "卷", Kind = ItemKind.Scroll, Teaches = "four_wines", Price = 120, Description = "Рецепт слияния. Прочтите в сумке." },
@@ -34,10 +34,10 @@ namespace GuWorld.Core
             new ItemDef { Id = "scroll_thunder_crown", Name = "Свиток: Гу Громовой короны", Seal = "卷", Kind = ItemKind.Scroll, Teaches = "thunder_crown", Price = 400, Description = "Рецепт, выжженный молнией на волчьей шкуре." },
             new ItemDef { Id = "scroll_sky_canopy", Name = "Свиток: Гу Небесного покрова", Seal = "卷", Kind = ItemKind.Scroll, Teaches = "sky_canopy", Price = 300, Description = "Рецепт слияния. Прочтите в сумке." },
 
-            new ItemDef { Id = "scout_token", Name = "Жетон дозорного", Seal = "令", Kind = ItemKind.Quest, Description = "Нефритовый жетон Гу Юэ Тяня. Расколот надвое." },
-            new ItemDef { Id = "hermit_will", Name = "Завещание Отшельника", Seal = "遺", Kind = ItemKind.Quest, Description = "«Тому, кого клан счёл слабым. Значит, ты ещё жив»." },
-            new ItemDef { Id = "unsealed_letter", Name = "Письмо без печати", Seal = "信", Kind = ItemKind.Quest, Description = "«Сорок камней за луну, пока тракт закрыт. Учеников со слабой апертурой не трогать — они нужны»." },
-            new ItemDef { Id = "blood_lure", Name = "Приманка пути крови", Seal = "餌", Kind = ItemKind.Quest, Description = "Мёртвый Гу в воске. На воске — лунная печать академии." },
+            new ItemDef { Id = "scout_token", Name = "Жетон дозорного", Seal = "守", Kind = ItemKind.Quest, Description = "Нефритовый жетон Гу Юэ Тяня. Расколот надвое." },
+            new ItemDef { Id = "hermit_will", Name = "Завещание Отшельника", Seal = "书", Kind = ItemKind.Quest, Description = "«Тому, кого клан счёл слабым. Значит, ты ещё жив»." },
+            new ItemDef { Id = "unsealed_letter", Name = "Письмо без печати", Seal = "录", Kind = ItemKind.Quest, Description = "«Сорок камней за луну, пока тракт закрыт. Учеников со слабой апертурой не трогать — они нужны»." },
+            new ItemDef { Id = "blood_lure", Name = "Приманка пути крови", Seal = "蛊", Kind = ItemKind.Quest, Description = "Мёртвый Гу в воске. На воске — лунная печать академии." },
         };
 
         static Dictionary<string, ItemDef> byId;

@@ -22,7 +22,7 @@ namespace GuWorld.Core
             },
             new GuDef
             {
-                Id = "tailwind", Name = "Гу Попутного ветра", Seal = "風", Rank = 1, Path = GuPath.Wind, Kind = GuKind.Active, Colour = 0xBFEFE0, Price = 40,
+                Id = "tailwind", Name = "Гу Попутного ветра", Seal = "风", Rank = 1, Path = GuPath.Wind, Kind = GuKind.Active, Colour = 0xBFEFE0, Price = 40,
                 Description = "Рывок на семь шагов сквозь врагов. В рывке вас не задеть.",
                 Skill = new SkillDef { Shape = SkillShape.Dash, Power = 12, Range = 7, Radius = 1.2f, Cost = 12, Cooldown = 4 }
             },
@@ -40,7 +40,7 @@ namespace GuWorld.Core
             },
             new GuDef
             {
-                Id = "spark", Name = "Гу Искры", Seal = "電", Rank = 1, Path = GuPath.Lightning, Kind = GuKind.Active, Colour = 0xB8A0FF, Price = 45,
+                Id = "spark", Name = "Гу Искры", Seal = "电", Rank = 1, Path = GuPath.Lightning, Kind = GuKind.Active, Colour = 0xB8A0FF, Price = 45,
                 Description = "Молния бьёт в цель и перескакивает ещё на двоих.",
                 Skill = new SkillDef { Shape = SkillShape.Chain, Power = 17, Range = 13, Radius = 6, Count = 3, Cost = 14, Cooldown = 3 }
             },
@@ -78,7 +78,7 @@ namespace GuWorld.Core
             },
             new GuDef
             {
-                Id = "rock_skin", Name = "Гу Каменной кожи", Seal = "岩", Rank = 2, Path = GuPath.Earth, Kind = GuKind.Active, Colour = 0xB8B0A0, Price = 150,
+                Id = "rock_skin", Name = "Гу Каменной кожи", Seal = "盾", Rank = 2, Path = GuPath.Earth, Kind = GuKind.Active, Colour = 0xB8B0A0, Price = 150,
                 Description = "Восемь секунд вы — скала: урон вдвое меньше, с ног не сбить.",
                 Skill = new SkillDef { Shape = SkillShape.Buff, Buff = BuffKind.Unstoppable, BuffValue = 0.55f, Duration = 8, Cost = 30, Cooldown = 18 }
             },
@@ -90,7 +90,7 @@ namespace GuWorld.Core
             },
             new GuDef
             {
-                Id = "whirl", Name = "Гу Вихря", Seal = "旋", Rank = 2, Path = GuPath.Wind, Kind = GuKind.Active, Colour = 0xA8F0DC, Price = 130,
+                Id = "whirl", Name = "Гу Вихря", Seal = "转", Rank = 2, Path = GuPath.Wind, Kind = GuKind.Active, Colour = 0xA8F0DC, Price = 130,
                 Description = "Вихрь в точке прицела стягивает врагов в кучу и держит две секунды.",
                 Skill = new SkillDef { Shape = SkillShape.Pull, Power = 18, Range = 14, Radius = 7, Duration = 2, Cost = 24, Cooldown = 11, Status = StatusKind.Slow, StatusPower = 0.6f, StatusTime = 2 }
             },
@@ -102,7 +102,7 @@ namespace GuWorld.Core
             },
             new GuDef
             {
-                Id = "four_wines", Name = "Червь Четырёх вин", Seal = "醇", Rank = 2, Path = GuPath.Wine, Kind = GuKind.Passive, Colour = 0xFFC870, Price = 500,
+                Id = "four_wines", Name = "Червь Четырёх вин", Seal = "香", Rank = 2, Path = GuPath.Wine, Kind = GuKind.Passive, Colour = 0xFFC870, Price = 500,
                 Description = "Винный червь, вскормленный четырьмя винами. Эссенция восстанавливается вдвое быстрее, Гу берут её меньше.",
                 Passive = new[] { new StatBonus(StatKind.EssenceRegen, 1f), new StatBonus(StatKind.Cost, -0.15f) }
             },

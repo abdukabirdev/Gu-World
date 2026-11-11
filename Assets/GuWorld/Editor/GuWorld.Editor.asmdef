@@ -2,6 +2,7 @@
     "name": "GuWorld.Editor",
     "rootNamespace": "GuWorld.Editor",
     "references": [
+        "GuWorld.Core",
         "GuWorld",
         "Unity.RenderPipelines.Core.Runtime",
         "Unity.RenderPipelines.Universal.Runtime"

@@ -410,6 +410,8 @@ namespace GuWorld.Core
         public float Radius;
         /// <summary>The ground is levelled here, to this height (metres); NaN to leave the hills alone.</summary>
         public float Level = float.NaN;
+        /// <summary>How far past its radius the levelled ground eases back into the hills, metres.</summary>
+        public float Blend = 30;
         /// <summary>A pocket shut in by cliffs (a cave): dark, with its own light.</summary>
         public bool Cave;
         public int Colour = 0x7E9093;
