@@ -12,13 +12,13 @@ namespace GuWorld.Actors
     /// notices the hero, closes in its own way, warns before every blow (a glint or a red
     /// shape on the ground, so the blow can be dodged), strikes, and waits before the next.
     /// </summary>
-    public class Enemy : Actor
+    public partial class Enemy : Actor
     {
         public static readonly List<Enemy> Living = new List<Enemy>();
 
         public EnemyDef Def { get; private set; }
         public float Health { get; private set; }
-        public float MaxHealth => Def.Health;
+        public float MaxHealth => maxHealth;
         /// <summary>The spawn group or encounter it belongs to.</summary>
         public string Group;
         public event Action<Enemy> Died;
@@ -61,7 +61,9 @@ namespace GuWorld.Actors
         {
             Def = def;
             Group = group;
-            Health = def.Health;
+            // The difficulty makes them tougher or softer.
+            maxHealth = def.Health * (Game.Session != null ? DifficultyRules.EnemyHealth(Game.Session.State.Settings.Difficulty) : 1);
+            Health = maxHealth;
             home = transform.position;
             colour = Models.Rgb(def.Colour);
             orbit = UnityEngine.Random.value < 0.5f ? 1 : -1;
@@ -72,18 +74,38 @@ namespace GuWorld.Actors
                 case EnemyBody.Canid:
                     model = Models.Canid(transform, def.Look, def.Scale, out rig).transform;
                     MakeBody(0.34f * def.Scale, 0.75f * def.Scale);
+
+                    // Looks the canid's textures do not have are tinted (a bear, a boar, a snow wolf).
+                    if (Creatures.Tint(def.Look, out var tint))
+                    {
+                        foreach (var renderer in model.GetComponentsInChildren<Renderer>())
+                        {
+                            foreach (var material in renderer.materials)
+                            {
+                                material.color = material.color * tint;
+                            }
+                        }
+                    }
+
                     break;
                 case EnemyBody.Human:
                     model = Models.Human(transform, def.Look, false, false, out rig).transform;
                     model.localScale = Vector3.one * def.Scale;
                     MakeBody(0.36f * def.Scale, 1.78f * def.Scale);
                     break;
-                case EnemyBody.Bug:
-                    model = Models.Bug(transform, colour, def.Scale).transform;
-                    hover = 1.3f;
-                    MakeBody(0.3f, 0.6f);
-                    Height = 2.2f;
+                case EnemyBody.Serpent:
+                    model = Serpent.Make(transform, colour, def.Look, def.Scale).transform;
+                    MakeBody(0.38f * def.Scale, 0.6f * def.Scale);
                     break;
+                case EnemyBody.Bug:
+                {
+                    model = Creatures.Make(transform, colour, def.Look, def.Scale).transform;
+                    var walks = def.Look == "spider" || def.Look == "spider_queen" || def.Look == "toad";
+                    hover = walks ? 0 : def.Look == "eagle" ? 2.2f : 1.3f;
+                    MakeBody(walks ? 0.45f * def.Scale : 0.3f, walks ? 0.7f * def.Scale : 0.6f);
+                    Height = walks ? 0.9f * def.Scale : 2.2f;
+                    break;
+                }
                 default:
                     model = Models.Dummy(transform).transform;
                     MakeBody(0.4f, 1.9f);
@@ -92,6 +114,11 @@ namespace GuWorld.Actors
 
             rig?.Play("idle", 0);
             Living.Add(this);
+
+            if (def.Mind == EnemyMind.Caster)
+            {
+                caster = new CasterMind(def.Gu);
+            }
         }
 
         protected override void OnDisable()
@@ -102,7 +129,7 @@ namespace GuWorld.Actors
 
         // ------------------------------------------------------------------ Thinking
 
-        float SpeedNow => Def.Speed * (slowTime > 0 ? 1 - slowPower : 1);
+        float SpeedNow => Def.Speed * (slowTime > 0 ? 1 - slowPower : 1) * statuses.SpeedFactor;
         Hero Hero => Game.Hero;
         bool HeroInReach(float reach) => Hero != null && Hero.Alive && FlatDistance(Hero.transform.position) <= reach + Hero.Radius;
 
@@ -126,6 +153,11 @@ namespace GuWorld.Actors
             else if (lift != 0 || model.localPosition.y != 0)
             {
                 model.localPosition = new Vector3(0, lift, 0);
+            }
+
+            if (!TickStatuses(dt))
+            {
+                return;
             }
 
             if (stunTime > 0)
@@ -161,9 +193,22 @@ namespace GuWorld.Actors
             var hero = Hero;
             var distance = hero != null ? FlatDistance(hero.transform.position) : 999;
 
+            // A stealthed hero is not seen until they are all but touching; the night and the weather shorten sight.
+            var sight = Def.Boss ? Def.Sight : Def.Sight * Weather.SightFactor(World.Atmosphere.Sky, World.Atmosphere.Night) * (Def.Nocturnal && World.Atmosphere.Night ? 1.5f : 1);
+
+            if (Game.Session != null && Game.Session.Stealthed)
+            {
+                sight = 1.6f;
+
+                if (aware && distance > 4 && !Def.Boss)
+                {
+                    aware = false;
+                }
+            }
+
             if (!aware)
             {
-                if (hero != null && hero.Alive && distance < Def.Sight && !Game.Talking)
+                if (hero != null && hero.Alive && distance < sight && !Game.Talking)
                 {
                     aware = true;
                     Alert();
@@ -192,6 +237,7 @@ namespace GuWorld.Actors
                 case EnemyMind.Shooter: KeepAway(hero, distance, dt); break;
                 case EnemyMind.Brawler: Close(hero, distance, dt, Def.AttackRange + 0.5f, 0, UnityEngine.Random.value < 0.25f ? Slam(2.8f, 0.9f, 1.4f) : Swing()); break;
                 case EnemyMind.Boss: Boss(hero, distance, dt); break;
+                case EnemyMind.Caster: Caster(hero, distance, dt); break;
             }
         }
 
@@ -402,7 +448,7 @@ namespace GuWorld.Actors
         {
             if (HeroInReach(reach))
             {
-                Hero.TakeHit(Def.Damage * power, transform.position);
+                HitHero(Def.Damage * power, transform.position);
             }
         }
 
@@ -470,7 +516,7 @@ namespace GuWorld.Actors
 
             if (HeroInReach(Def.AttackRange + 0.5f) && Vector3.Angle(transform.forward, Hero.transform.position - transform.position) < 70)
             {
-                Hero.TakeHit(Def.Damage * power, transform.position);
+                HitHero(Def.Damage * power, transform.position);
             }
 
             yield return Still(heavy ? 0.6f : 0.45f, false);
@@ -498,7 +544,7 @@ namespace GuWorld.Actors
 
             if (HeroInReach(radius) && !Hero.Airborne)
             {
-                Hero.TakeHit(Def.Damage * power, transform.position);
+                HitHero(Def.Damage * power, transform.position);
             }
 
             yield return Still(0.55f, false);
@@ -519,7 +565,7 @@ namespace GuWorld.Actors
                 {
                     if (actor is Hero hero)
                     {
-                        hero.TakeHit(Def.Damage, transform.position);
+                        HitHero(Def.Damage, transform.position);
                     }
                 });
                 yield return Still(0.25f);
@@ -544,7 +590,7 @@ namespace GuWorld.Actors
                 {
                     if (actor is Hero hero)
                     {
-                        hero.TakeHit(Def.Damage, transform.position);
+                        HitHero(Def.Damage, transform.position);
                     }
                 });
             }
@@ -573,7 +619,7 @@ namespace GuWorld.Actors
                 if (!struck && HeroInReach(Def.AttackRange))
                 {
                     struck = true;
-                    Hero.TakeHit(Def.Damage * 1.5f, transform.position);
+                    HitHero(Def.Damage * 1.5f, transform.position);
                 }
 
                 yield return null;
@@ -599,7 +645,7 @@ namespace GuWorld.Actors
 
             if (HeroInReach(radius) && !Hero.Airborne)
             {
-                Hero.TakeHit(Def.Damage * 1.4f, transform.position);
+                HitHero(Def.Damage * 1.4f, transform.position);
             }
 
             yield return Still(0.6f);
@@ -643,7 +689,7 @@ namespace GuWorld.Actors
                     if (Mathf.Abs(away.magnitude - radius) < 0.7f)
                     {
                         hit = true;
-                        hero.TakeHit(Def.Damage * 0.9f, centre);
+                        HitHero(Def.Damage * 0.9f, centre);
                     }
                 }
 
@@ -713,7 +759,7 @@ namespace GuWorld.Actors
 
                 if (Hero != null && Hero.Alive && (Hero.transform.position - spot).magnitude < 4 + Hero.Radius)
                 {
-                    Hero.TakeHit(Def.Damage * 1.3f, spot);
+                    HitHero(Def.Damage * 1.3f, spot);
                 }
             }
 
@@ -757,7 +803,11 @@ namespace GuWorld.Actors
                 return;
             }
 
-            if (status == StatusKind.Slow)
+            if (status == StatusKind.Poison || status == StatusKind.Burn || status == StatusKind.Bleed || status == StatusKind.Chill)
+            {
+                Afflict(status, statusPower, statusTime);
+            }
+            else if (status == StatusKind.Slow)
             {
                 slowTime = Def.Boss ? statusTime * 0.5f : statusTime;
                 slowPower = Def.Boss ? statusPower * 0.5f : statusPower;

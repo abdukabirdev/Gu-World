@@ -103,6 +103,8 @@ namespace GuWorld.UI
             stones = UiKit.Label("", purse, 16, UiKit.GoldText).Shadowed();
             stones.Size(24, 80, 0);
             effects = UiKit.Label("", purse, 13, UiKit.Essence).Shadowed();
+            effects.supportRichText = true;
+            effects.horizontalOverflow = HorizontalWrapMode.Overflow;
             effects.Size(24, 300, 0);
 
             // The Gu in the slots.
@@ -243,6 +245,54 @@ namespace GuWorld.UI
             return screen.z > 0.1f && screen.x > -50 && screen.x < Screen.width + 50 && screen.y > -50 && screen.y < Screen.height + 50;
         }
 
+        /// <summary>The line of what lasts on the hero: buffs with their seconds, statuses, pills and blessings, hungry Gu.</summary>
+        static string EffectsLine(Session session)
+        {
+            var parts = new System.Collections.Generic.List<string>();
+
+            foreach (BuffKind kind in System.Enum.GetValues(typeof(BuffKind)))
+            {
+                var left = session.BuffLeft(kind);
+
+                if (kind != BuffKind.None && left > 0)
+                {
+                    parts.Add($"{Session.BuffName(kind).ToLowerInvariant()} {left:0}с");
+                }
+            }
+
+            foreach (var status in session.Statuses)
+            {
+                parts.Add($"<color=#F08A74>{Session.StatusName(status.Kind).ToLowerInvariant()} {status.Seconds:0}с</color>");
+            }
+
+            foreach (var effect in session.Effects)
+            {
+                if (effect.IsStat)
+                {
+                    parts.Add($"<color=#A0D2FF>{effect.Name.ToLowerInvariant()} {Mathf.CeilToInt(effect.Seconds / 60)}м</color>");
+                }
+            }
+
+            if (session.WardReady)
+            {
+                parts.Add("покров");
+            }
+
+            var hungry = 0;
+
+            foreach (var gu in session.Slotted())
+            {
+                hungry += session.IsStarving(gu) ? 1 : 0;
+            }
+
+            if (hungry > 0)
+            {
+                parts.Add($"<color=#F0B060>голодных Гу: {hungry}</color>");
+            }
+
+            return string.Join("  ", parts);
+        }
+
         void TickHud()
         {
             var dt = Time.unscaledDeltaTime;
@@ -296,7 +346,7 @@ namespace GuWorld.UI
             insight.Set(session.InsightShare, state.Step >= Cultivation.MaxStep ? "вершина" : ready ? "прорыв у источника" : $"прорыв {(int)state.Insight} / {session.InsightNeeded}");
             stones.text = state.Stones.ToString();
             pills.text = session.Count("heal_pill").ToString();
-            effects.text = (session.Shielded ? $"щит {session.ShieldLeft:0}с  " : "") + (session.MeleeUp ? $"сила {session.MeleeLeft:0}с  " : "") + (session.WardReady ? "покров" : "");
+            effects.text = EffectsLine(session);
 
             for (var i = 0; i < 4; i++)
             {
@@ -402,6 +452,8 @@ namespace GuWorld.UI
                 bar.Root.gameObject.SetActive(true);
                 bar.Root.position = new Vector2(screen.x, screen.y);
                 bar.Fill.anchorMax = new Vector2(Mathf.Clamp01(enemy.Health / enemy.MaxHealth), 1);
+                // The bar takes the colour of what weighs on it (venom green, fire orange, ice blue).
+                bar.Fill.GetComponent<Image>().color = enemy.Status == StatusKind.None ? UiKit.Danger : Enemy.StatusColour(enemy.Status);
             }
 
             for (var i = used; i < overBars.Count; i++)

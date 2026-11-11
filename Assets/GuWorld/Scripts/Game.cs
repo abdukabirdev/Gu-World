@@ -195,6 +195,11 @@ namespace GuWorld
                 }
             };
             Session.FlagSet += flag => spawns?.Refresh();
+            Session.Requested += Requested;
+            Session.ClockSet += hour => Atmosphere.Hour = hour;
+            Session.Dawn += day => Ui.Toast($"Рассвет · день {day}");
+            Session.Achieved += achievement => Ui.Banner("Достижение", achievement.Name);
+            Session.StandingChanged += (clan, standing) => spawns?.Refresh();
 
             world = new GameObject("World");
 
@@ -221,6 +226,7 @@ namespace GuWorld
                     Streamer.Make(world.transform, plan);
                     Forest.Make(world.transform, plan);
                     Places.Make(world.transform, plan);
+                    Population.Make(world.transform);
                 }
             }
 
@@ -232,11 +238,12 @@ namespace GuWorld
 
             yield return null;
             Scenery.Build(world.transform);
+            WeatherFx.Make(world.transform);
             yield return null;
             spawns = world.AddComponent<Spawns>();
             Atmosphere.Hour = Session.State.Hour;
 
-            var lantern = Valley.Thing(Session.State.Lantern) ?? Valley.Thing("lantern_village");
+            var lantern = Atlas.Thing(Session.State.Lantern) ?? Valley.Thing("lantern_village");
             var at = fresh || state == null ? new Vector3(0, 0, -16) : new Vector3(lantern.At.X, 0, lantern.At.Z - 2.5f);
             // The ground under the hero must be there before they stand on it.
             Streamer.Instance?.LoadNow(at);
@@ -313,6 +320,10 @@ namespace GuWorld
                 return;
             }
 
+            // The rules keep the clock, the sky and whether the hero is moving.
+            Session.SetClock(Atmosphere.Hour);
+            Session.SetSky(Atmosphere.Sky);
+            Session.SetMoving(Hero.Moving);
             saveWait -= Time.deltaTime;
 
             if (saveWait <= 0)
@@ -451,12 +462,73 @@ namespace GuWorld
         /// <summary>After death: the hero wakes at their lantern.</summary>
         public static void Wake()
         {
-            var lantern = Valley.Thing(Session.State.Lantern) ?? Valley.Thing("lantern_village");
+            var lantern = Atlas.Thing(Session.State.Lantern) ?? Valley.Thing("lantern_village");
             Streamer.Instance?.LoadNow(new Vector3(lantern.At.X, 0, lantern.At.Z - 2.5f));
             Hero.Revive(new Vector3(lantern.At.X, 0, lantern.At.Z - 2.5f));
             Rig.Follow(Hero, 0);
             Ui.Show(Ui.Page.None);
             Save();
+        }
+
+        /// <summary>True while an enemy close by is after the hero (no travel, no sleep).</summary>
+        public static bool Fighting
+        {
+            get
+            {
+                if (Hero == null)
+                {
+                    return false;
+                }
+
+                foreach (var enemy in Enemy.Living)
+                {
+                    if (enemy.Aware && enemy.Def.Mind != EnemyMind.Still && (enemy.transform.position - Hero.transform.position).sqrMagnitude < 30 * 30)
+                    {
+                        return true;
+                    }
+                }
+
+                return false;
+            }
+        }
+
+        /// <summary>To a lantern the rules let the hero travel to: dark, then there.</summary>
+        public void TravelTo(ThingDef lantern)
+        {
+            Travel(new MapPoint(lantern.At.X, lantern.At.Z - 2.5f));
+        }
+
+        /// <summary>What a conversation's effect asks of the game: a shop, a fight, a page.</summary>
+        void Requested(string what, string argument)
+        {
+            var npc = Atlas.Npc(argument);
+
+            switch (what)
+            {
+                case "shop":
+                case "gamble":
+                    if (npc != null)
+                    {
+                        Ui.OpenShop(what == "gamble" ? "gamble" : npc.Shop, npc.Title, npc.Clan);
+                    }
+
+                    break;
+                case "board":
+                    Ui.OpenBoard(npc != null ? npc.Home : argument);
+                    break;
+                case "alchemy":
+                    Ui.Show(Ui.Page.Alchemy);
+                    break;
+                case "travel":
+                    Ui.Show(Ui.Page.Travel);
+                    break;
+                case "inn":
+                    Ui.OpenInn(npc);
+                    break;
+                case "fight":
+                    spawns?.Begin(argument);
+                    break;
+            }
         }
 
         /// <summary>Through a door: the screen goes dark, the hero is elsewhere.</summary>

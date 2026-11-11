@@ -97,6 +97,7 @@ namespace GuWorld.UI
             var keys = middle.gameObject.AddComponent<MenuKeys>();
             keys.Add(UiKit.Entry("Продолжить", null, middle, Close).Centre());
             keys.Add(UiKit.Entry("Управление", null, middle, () => Show(Page.Help)).Centre());
+            keys.Add(UiKit.Entry("Настройки игры", $"{DifficultyRules.Name(S.State.Settings.Difficulty)} · голод Гу: {(S.State.Settings.Hunger == HungerRule.Off ? "нет" : S.State.Settings.Hunger == HungerRule.Soft ? "мягкий" : "канон")}", middle, () => Show(Page.Settings)).Centre());
             keys.Add(UiKit.Entry($"Качество: {Quality.Names[Quality.Level]}", "Деревья и модель героя сменятся при следующем входе в игру", middle, () =>
             {
                 Quality.Set((Quality.Level + 1) % 3);
@@ -130,7 +131,7 @@ namespace GuWorld.UI
 
             UiKit.Lbl("Страницы", right, 11, UiKit.LabelGold).Size(22);
 
-            foreach (var (key, what) in new[] { ("K", "Апертура: Гу и слоты"), ("I", "Сумка"), ("J", "Журнал заданий"), ("M", "Карта"), ("Esc", "Пауза") })
+            foreach (var (key, what) in new[] { ("K", "Апертура: Гу и слоты"), ("I", "Сумка"), ("J", "Журнал заданий"), ("M", "Карта"), ("B", "Кодекс"), ("L", "Кланы"), ("Esc", "Пауза") })
             {
                 Fact(right, what, key, UiKit.GoldText);
             }

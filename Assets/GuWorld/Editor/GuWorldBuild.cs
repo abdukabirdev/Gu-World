@@ -79,18 +79,18 @@ namespace GuWorld.Editor
 
             var looks = new HashSet<string> { "canid_fox" };
 
-            foreach (var npc in Valley.Npcs)
+            foreach (var npc in Atlas.AllNpcs)
             {
-                looks.Add(npc.Look);
+                looks.Add(Wardrobe.Dress(npc.Look).texture);
             }
 
             foreach (var enemy in Bestiary.All)
             {
                 if (enemy.Body == EnemyBody.Human)
                 {
-                    looks.Add(enemy.Look);
+                    looks.Add(Wardrobe.Dress(enemy.Look).texture);
                 }
-                else if (enemy.Body == EnemyBody.Canid)
+                else if (enemy.Body == EnemyBody.Canid && Wardrobe.CanidHasTexture(enemy.Look))
                 {
                     looks.Add("canid_" + enemy.Look);
                 }
@@ -105,7 +105,7 @@ namespace GuWorld.Editor
 
             foreach (var building in Valley.Buildings) { models.Add(building.Model); }
             foreach (var patch in Valley.Scatter) { models.Add(patch.Model); }
-            foreach (var thing in Valley.Things) { if (thing.Model != "") { models.Add(thing.Model); } }
+            foreach (var thing in Atlas.AllThings) { if (thing.Model != "") { models.Add(thing.Model); } }
 
             foreach (var model in models)
             {

@@ -15,6 +15,11 @@ namespace GuWorld.World
         /// <summary>The hour of the day, 0–24.</summary>
         public static float Hour = 9;
         const float SecondsPerHour = 60;
+        /// <summary>The sky over the hero now (from the day, the hour and the hero's height: the same on every machine).</summary>
+        public static Sky Sky { get; private set; } = Sky.Clear;
+        /// <summary>How much of the weather is in the picture, 0 clear – 1 full (it eases from one sky to the next).</summary>
+        public static float Gloom { get; private set; }
+        float flash;
 
         Light sun;
         Mesh dome;
@@ -160,7 +165,23 @@ namespace GuWorld.World
 
             // In a cave the sky's light does not reach: the place's own colour instead.
             var hero = Game.Hero;
-            var place = hero != null ? Valley.PlaceAt(new MapPoint(hero.transform.position.x, hero.transform.position.z)) : null;
+            var place = hero != null ? Atlas.PlaceAt(new MapPoint(hero.transform.position.x, hero.transform.position.z)) : null;
+
+            if (Game.Session != null && hero != null)
+            {
+                Sky = Weather.At(Game.Session.State.Day, Hour, hero.transform.position.y);
+            }
+
+            var gloomWanted = Sky == Sky.Storm ? 1f : Sky == Sky.Rain || Sky == Sky.Snow ? 0.7f : Sky == Sky.Fog ? 0.6f : Sky == Sky.Cloudy ? 0.35f : 0f;
+            Gloom = Mathf.MoveTowards(Gloom, gloomWanted, Time.unscaledDeltaTime * 0.05f);
+
+            // Lightning now and then in a storm: a flash of the whole sky.
+            if (Sky == Sky.Storm && Game.Playing && !Game.Frozen && Random.value < Time.deltaTime * 0.08f)
+            {
+                flash = 1;
+            }
+
+            flash = Mathf.MoveTowards(flash, 0, Time.unscaledDeltaTime * 3.5f);
             var inCave = place != null && place.Cave;
             cave = Mathf.MoveTowards(cave, inCave ? 1 : 0, Time.unscaledDeltaTime * 1.5f);
             var tint = inCave ? Models.Rgb(place.Colour) : Color.black;
@@ -170,16 +191,19 @@ namespace GuWorld.World
             var height = night ? Mathf.Repeat(angle - 180, 360) : angle;
             sun.transform.rotation = Quaternion.Euler(Mathf.Clamp(Mathf.Sin(height * Mathf.Deg2Rad) * 62, 9, 62), 115 + (night ? 180 : 0) + height * 0.35f, 0);
             sun.color = Color.Lerp(key.Sun, tint * 0.8f + Color.white * 0.1f, cave * 0.7f);
-            sun.intensity = Mathf.Lerp(key.Strength, 0.35f, cave);
+            sun.intensity = Mathf.Lerp(key.Strength * (1 - 0.5f * Gloom), 0.35f, cave) + flash * 2.2f * (1 - cave);
             var ambient = Color.Lerp(key.Ambient, Color.Lerp(new Color(0.05f, 0.06f, 0.08f), tint, 0.3f), cave);
             RenderSettings.ambientLight = ambient * 1.15f;
             var horizon = Color.Lerp(key.Horizon, Color.Lerp(new Color(0.01f, 0.012f, 0.02f), tint, 0.12f), cave);
             var top = Color.Lerp(key.Top, new Color(0.004f, 0.005f, 0.01f), cave);
+            // Weather greys the horizon; fog brings it close.
+            horizon = Color.Lerp(horizon, new Color(0.42f, 0.46f, 0.5f) * (key.Strength * 0.6f + 0.1f), Gloom * 0.55f) + new Color(0.5f, 0.55f, 0.7f) * flash * 0.3f;
             RenderSettings.fogColor = horizon;
             // On the whole mountain the fog lies farther (the far land and woods are drawn out to it).
             var fogEnd = Ground.Big ? (Quality.Level == 0 ? 480 : Quality.Level == 1 ? 880 : 1400) : (Quality.Level == 0 ? 420 : 620);
             RenderSettings.fogStartDistance = Mathf.Lerp(Quality.Level == 0 ? 50 : 90, 14, cave);
-            RenderSettings.fogEndDistance = Mathf.Lerp(fogEnd, 90, cave);
+            var weatherFog = Sky == Sky.Fog ? 0.22f : Sky == Sky.Rain || Sky == Sky.Snow ? 0.55f : Sky == Sky.Storm ? 0.45f : 1f;
+            RenderSettings.fogEndDistance = Mathf.Lerp(fogEnd * Mathf.Lerp(1, weatherFog, Gloom / Mathf.Max(0.01f, gloomWanted == 0 ? 1 : gloomWanted)), 90, cave);
             var camera = Game.Rig != null ? Game.Rig.Camera : null;
 
             if (camera != null)

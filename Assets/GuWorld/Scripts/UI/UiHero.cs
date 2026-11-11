@@ -166,6 +166,32 @@ namespace GuWorld.UI
                 Fact(column, GuBook.AffixName(affix.Kind), GuBook.AffixText(affix).Split(':')[1].Trim(), UiKit.SystemBlue);
             }
 
+            // What it eats and how hungry it is.
+            if (def.Food != "" && session.State.Settings.Hunger != HungerRule.Off && session.FindGu(gu.Uid) != null)
+            {
+                var food = ItemBook.Get(def.Food);
+                var starving = session.IsStarving(gu);
+                var hungry = session.IsHungry(gu);
+                var days = session.DaysToStarve(gu);
+                Fact(column, "Корм", $"{food?.Name} раз в {def.Appetite} дн. · в сумке {session.Count(def.Food)}", starving ? UiKit.Danger : hungry ? UiKit.Hunger : UiKit.Text2);
+
+                if (starving)
+                {
+                    Fact(column, "Голоден", days >= 0 ? $"слабее на треть · умрёт через {days} дн." : "слабее на треть", UiKit.Danger);
+                }
+
+                if (gu.Hunger > 0 && session.Count(def.Food) > 0)
+                {
+                    var uid = gu.Uid;
+                    UiKit.HexButton("Покормить", column, () => { session.Feed(uid); Redraw(); }, hungry ? UiKit.HexKind.Main : UiKit.HexKind.Ghost, 12, 40);
+                }
+            }
+
+            if (def.Clan != "")
+            {
+                Fact(column, "Гу клана", Clans.Get(def.Clan)?.Name ?? def.Clan, UiKit.Hex(Clans.Get(def.Clan)?.Colour ?? 0xC9D3D5));
+            }
+
             if (def.Kind == GuKind.Active)
             {
                 Gap(column, 4);
@@ -251,6 +277,10 @@ namespace GuWorld.UI
                 case ItemKind.Scroll: return "Свиток рецепта";
                 case ItemKind.Quest: return "Сюжетный предмет";
                 case ItemKind.Rock: return "Самородок";
+                case ItemKind.Food: return "Корм для Гу";
+                case ItemKind.Herb: return "Трава";
+                case ItemKind.Book: return "Книга";
+                case ItemKind.Key: return "Ключ";
                 default: return "Камень";
             }
         }
@@ -318,6 +348,27 @@ namespace GuWorld.UI
                     session.ReadScroll(item);
                     Redraw();
                 }, known ? UiKit.HexKind.Off : UiKit.HexKind.Main, 13, 52);
+            }
+            else if (picked.Kind == ItemKind.Book)
+            {
+                var read = session.InCodex(picked.Lore);
+                UiKit.HexButton(read ? "Прочитано (в кодексе)" : "Прочесть", right, () =>
+                {
+                    session.ReadBook(item);
+                    Redraw();
+                }, read ? UiKit.HexKind.Off : UiKit.HexKind.Main, 13, 52);
+            }
+            else if (picked.Kind == ItemKind.Food && picked.Heal > 0)
+            {
+                UiKit.HexButton("Съесть", right, () =>
+                {
+                    if (!session.UseConsumable(item))
+                    {
+                        Toast("Вы не голодны");
+                    }
+
+                    Redraw();
+                }, UiKit.HexKind.Ghost, 12, 44);
             }
             else if (picked.Kind == ItemKind.Rock)
             {
@@ -476,7 +527,7 @@ namespace GuWorld.UI
         {
             var session = S;
             var hero = Game.Hero;
-            var here = Valley.PlaceAt(new MapPoint(hero.transform.position.x, hero.transform.position.z));
+            var here = Atlas.PlaceAt(new MapPoint(hero.transform.position.x, hero.transform.position.z));
             var body = Frame("图", "Карта", here != null ? here.Name : "Долина Цинмао", true, null, null, new[] { ("Q E", "Страницы"), ("Esc", "Закрыть") });
             const float side = 700;
             var frame = UiKit.Panel("Map", body, UiKit.Ink, UiKit.Gold.A(0.25f));
@@ -503,8 +554,16 @@ namespace GuWorld.UI
 
             if (Ground.Big)
             {
+                // What the hero has not been to is not on their map — until the peak shows them the whole mountain.
+                var revealed = session.Has("map_revealed");
+
                 foreach (var settlement in Core.Regions.Settlements)
                 {
+                    if (!revealed && !session.InCodex("place:" + settlement.Id))
+                    {
+                        continue;
+                    }
+
                     var label = UiKit.Lbl(settlement.Name, over, 10, UiKit.Hex(settlement.Colour), 0.1f, TextAnchor.MiddleCenter).Shadowed();
                     label.rectTransform.At(On(settlement.At), new Vector2(0, 10), new Vector2(220, 16));
                     var dot = UiKit.Image("Settlement", over, UiKit.Hex(settlement.Colour), UiKit.Diamond);
@@ -513,17 +572,32 @@ namespace GuWorld.UI
 
                 foreach (var place in Core.Regions.Places)
                 {
+                    if (!revealed && !session.InCodex("place:" + place.Id))
+                    {
+                        continue;
+                    }
+
                     var label = UiKit.Lbl(place.Name, over, 9, UiKit.Hex(place.Colour).A(0.8f), 0.1f, TextAnchor.MiddleCenter).Shadowed();
                     label.rectTransform.At(On(place.At), new Vector2(0, 10), new Vector2(220, 14));
                 }
             }
 
-            foreach (var thing in Valley.Things)
+            foreach (var thing in Atlas.Things)
             {
-                if (thing.Kind == ThingKind.Lantern)
+                if (thing.Kind == ThingKind.Lantern && (Atlas.InValley(thing) || session.Lit(thing.Id)))
                 {
-                    var dot = UiKit.Image("Lantern", over, thing.Id == session.State.Lantern ? UiKit.Moon : UiKit.Moon.A(0.45f), UiKit.Disc);
+                    var dot = UiKit.Image("Lantern", over, thing.Id == session.State.Lantern ? UiKit.Moon : session.Lit(thing.Id) ? UiKit.Moon.A(0.8f) : UiKit.Moon.A(0.3f), UiKit.Disc);
                     dot.rectTransform.At(On(thing.At), Vector2.zero, new Vector2(7, 7));
+                }
+            }
+
+            // The side quests taken: small rings where their steps lead.
+            foreach (var taken in session.ActiveQuests())
+            {
+                if (taken != session.MainQuest && session.MarkerOf(taken, out var at))
+                {
+                    var small = UiKit.Image("Side", over, UiKit.Essence.A(0.8f), UiKit.Ring);
+                    small.rectTransform.At(On(at), Vector2.zero, new Vector2(14, 14));
                 }
             }
 
@@ -561,7 +635,18 @@ namespace GuWorld.UI
             Fact(right, "Золотое кольцо", "куда ведёт задание", UiKit.GoldText);
             Fact(right, "Бирюзовый ромб", "вы", UiKit.Essence);
             Fact(right, "Голубые точки", "лунные фонари", UiKit.Moon);
+            Fact(right, "Бирюзовые кольца", "поручения", UiKit.Essence);
             Gap(right, 8);
+
+            if (session.State.Lanterns.Count > 1)
+            {
+                UiKit.HexButton("Перейти к фонарю", right, () => Show(Page.Travel), UiKit.HexKind.Ghost, 12, 44);
+                Gap(right, 6);
+            }
+
+            var sky = Weather.At(session.State.Day, session.State.Hour, hero.transform.position.y);
+            Fact(right, "День", $"{session.State.Day} · {(int)session.State.Hour}:{(int)(session.State.Hour % 1 * 60):00}");
+            Fact(right, "Погода", Weather.Name(sky));
             Para("Дороги ведут из деревни: на север — к воротам, опушке и Волчьему гребню; на запад — в бамбуковую рощу; на восток — к броду и водопаду; на юг — к тракту и пограничному камню.", right, 14, UiKit.Muted);
         }
     }

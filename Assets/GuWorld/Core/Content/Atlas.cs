@@ -45,6 +45,7 @@ namespace GuWorld.Core
         public static bool InValley(ThingDef thing) => valleyThings.Contains(thing.Id);
         public static bool InValley(SpawnDef spawn) => valleySpawns.Contains(spawn.Id);
         public static bool InValley(EncounterDef encounter) => valleyEncounters.Contains(encounter.Id);
+        public static bool InValleyPlace(PlaceDef place) => Valley.Place(place.Id) != null;
 
         static HashSet<string> Ids<T>(IEnumerable<T> items, Func<T, string> id)
         {

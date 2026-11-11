@@ -6,7 +6,11 @@ using UnityEngine;
 
 namespace GuWorld.World
 {
-    /// <summary>One of the valley's people, standing where the plan puts them: turns to the hero, talks, and shows a mark when they have something to say.</summary>
+    /// <summary>
+    /// One of the mountain's people, standing where the plan puts them: turns to the hero, talks, and
+    /// shows a mark when they have something to say. Those with a day of their own walk between the
+    /// spots of their settlement as the hours pass (and step there at once when no one is watching).
+    /// </summary>
     public class Npc : MonoBehaviour
     {
         public static readonly List<Npc> All = new List<Npc>();
@@ -16,6 +20,9 @@ namespace GuWorld.World
         GameObject mark;
         Quaternion home;
         float wait;
+        float dayWait;
+        Vector3 goal;
+        bool walking;
 
         public static Npc Make(NpcDef def, Transform parent)
         {
@@ -26,6 +33,7 @@ namespace GuWorld.World
             var npc = root.AddComponent<Npc>();
             npc.Def = def;
             npc.home = root.transform.rotation;
+            npc.goal = root.transform.position;
             Models.Human(root.transform, def.Look, false, false, out npc.rig);
             npc.rig?.Play("idle", 0);
             var solid = root.AddComponent<CapsuleCollider>();
@@ -70,11 +78,61 @@ namespace GuWorld.World
                 mark.SetActive(session.HasBusiness(Def.Id));
             }
 
+            if (Def.Day.Length > 0)
+            {
+                GoAboutTheDay(hero);
+            }
+
+            if (walking)
+            {
+                return;
+            }
+
             // Turns to whoever comes close; back to their work when left alone.
             var to = hero.transform.position - transform.position;
             to.y = 0;
             var want = to.magnitude < 7 && to.sqrMagnitude > 0.1f ? Quaternion.LookRotation(to) : home;
             transform.rotation = Quaternion.RotateTowards(transform.rotation, want, 200 * Time.deltaTime);
+        }
+
+        /// <summary>Walks to where their day has them now; stops to talk when the hero is close.</summary>
+        void GoAboutTheDay(Hero hero)
+        {
+            dayWait -= Time.deltaTime;
+
+            if (dayWait <= 0)
+            {
+                dayWait = 2;
+                var at = Atlas.WhereAt(Def, Atmosphere.Hour, out var facing);
+                goal = Game.Ground(new Vector3(at.X, 0, at.Z));
+                home = Quaternion.Euler(0, facing, 0);
+
+                // Far from the hero's eyes they are simply there.
+                if ((goal - transform.position).sqrMagnitude > 4 && (hero.transform.position - transform.position).sqrMagnitude > 70 * 70)
+                {
+                    transform.position = goal;
+                    transform.rotation = home;
+                }
+            }
+
+            var away = goal - transform.position;
+            away.y = 0;
+            var near = (hero.transform.position - transform.position).sqrMagnitude < 9;
+
+            if (away.magnitude > 0.6f && !near && !Game.Busy)
+            {
+                walking = true;
+                var step = away.normalized * Mathf.Min(away.magnitude, 1.7f * Time.deltaTime);
+                var next = transform.position + step;
+                transform.position = new Vector3(next.x, Ground.SampleHeight(next), next.z);
+                transform.rotation = Quaternion.RotateTowards(transform.rotation, Quaternion.LookRotation(away), 360 * Time.deltaTime);
+                rig?.Play("walk", 0.2f);
+            }
+            else if (walking)
+            {
+                walking = false;
+                rig?.Play("idle", 0.3f);
+            }
         }
 
         void LateUpdate()
@@ -94,6 +152,12 @@ namespace GuWorld.World
                 return;
             }
 
+            if (talk.Dialogue != null)
+            {
+                Game.Ui.Converse(talk.Dialogue, null);
+                return;
+            }
+
             var service = talk.Service;
             Game.Ui.Talk(talk.Lines, () =>
             {
@@ -101,9 +165,21 @@ namespace GuWorld.World
 
                 switch (service)
                 {
-                    case "shop": Game.Ui.Show(Ui.Page.Shop); break;
+                    case "shop": Game.Ui.OpenShop(talk.Shop, Def.Title, talk.Clan); break;
                     case "gamble": Game.Ui.Show(Ui.Page.Gamble); break;
-                    case "board": Game.Ui.Show(Ui.Page.Board); break;
+                    // The valley's scribe keeps the clan's errands; a settlement's scribe its board.
+                    case "board":
+                        if (Def.Home != "")
+                        {
+                            Game.Ui.OpenBoard(Def.Home);
+                        }
+                        else
+                        {
+                            Game.Ui.Show(Ui.Page.Board);
+                        }
+
+                        break;
+                    case "inn": Game.Ui.OpenInn(Def); break;
                 }
             });
         }

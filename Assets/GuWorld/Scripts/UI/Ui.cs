@@ -16,7 +16,7 @@ namespace GuWorld.UI
     /// </summary>
     public partial class Ui : MonoBehaviour
     {
-        public enum Page { None, Title, Loading, Talk, Aperture, Bag, Journal, Map, Shop, Gamble, Board, Fusion, Spring, Pause, Help, Death, Ending, Choice }
+        public enum Page { None, Title, Loading, Talk, Aperture, Bag, Journal, Map, Shop, Gamble, Board, Fusion, Spring, Pause, Help, Death, Ending, Choice, Dialogue, Alchemy, Bounties, Codex, Clans, Travel, Inn, Settings }
 
         public Page Open { get; private set; } = Page.Title;
 
@@ -28,8 +28,8 @@ namespace GuWorld.UI
         int lostStones;
         Session S => Game.Session;
 
-        static readonly Page[] HeroPages = { Page.Aperture, Page.Bag, Page.Journal, Page.Map };
-        static readonly (string name, string key)[] HeroTabs = { ("Апертура", "K"), ("Сумка", "I"), ("Журнал", "J"), ("Карта", "M") };
+        static readonly Page[] HeroPages = { Page.Aperture, Page.Bag, Page.Journal, Page.Map, Page.Codex, Page.Clans };
+        static readonly (string name, string key)[] HeroTabs = { ("Апертура", "K"), ("Сумка", "I"), ("Журнал", "J"), ("Карта", "M"), ("Кодекс", "B"), ("Кланы", "L") };
 
         void Awake()
         {
@@ -53,7 +53,7 @@ namespace GuWorld.UI
 
         // ------------------------------------------------------------------ Pages
 
-        static bool Stops(Page page) => page != Page.None && page != Page.Talk && page != Page.Spring && page != Page.Title && page != Page.Loading;
+        static bool Stops(Page page) => page != Page.None && page != Page.Talk && page != Page.Dialogue && page != Page.Spring && page != Page.Title && page != Page.Loading;
 
         public void Show(Page page)
         {
@@ -76,7 +76,7 @@ namespace GuWorld.UI
                 Game.Hero.Sit(page == Page.Spring);
             }
 
-            hudRoot.gameObject.SetActive(Game.Playing && (page == Page.None || page == Page.Talk || page == Page.Spring));
+            hudRoot.gameObject.SetActive(Game.Playing && (page == Page.None || page == Page.Talk || page == Page.Dialogue || page == Page.Spring));
 
             switch (page)
             {
@@ -87,8 +87,16 @@ namespace GuWorld.UI
                 case Page.Bag: BagPage(); break;
                 case Page.Journal: JournalPage(); break;
                 case Page.Map: MapPage(); break;
-                case Page.Shop: ShopPage(Shops.Shop, "Лавка Баошаня", "商", Page.Shop); break;
+                case Page.Shop: ShopPage(Markets.Get(shopShelf), shopTitle, "商", Page.Shop); break;
                 case Page.Gamble: ShopPage(Shops.Gamble, "Игорный шатёр", "运", Page.Gamble); break;
+                case Page.Dialogue: DialoguePage(); break;
+                case Page.Alchemy: AlchemyPage(); break;
+                case Page.Bounties: BountyPage(); break;
+                case Page.Codex: CodexPage(); break;
+                case Page.Clans: ClansPage(); break;
+                case Page.Travel: TravelPage(); break;
+                case Page.Inn: InnPage(); break;
+                case Page.Settings: SettingsPage(); break;
                 case Page.Board: BoardPage(); break;
                 case Page.Fusion: FusionPage(); break;
                 case Page.Spring: SpringPage(); break;
@@ -139,11 +147,13 @@ namespace GuWorld.UI
                 else if (Keys.Down(Key.I)) { Show(Page.Bag); }
                 else if (Keys.Down(Key.J)) { Show(Page.Journal); }
                 else if (Keys.Down(Key.M)) { Show(Page.Map); }
+                else if (Keys.Down(Key.B)) { Show(Page.Codex); }
+                else if (Keys.Down(Key.L)) { Show(Page.Clans); }
                 else if (Keys.Down(Key.Escape)) { Show(Page.Pause); }
             }
             else if (hero >= 0)
             {
-                var own = new[] { Key.K, Key.I, Key.J, Key.M };
+                var own = new[] { Key.K, Key.I, Key.J, Key.M, Key.B, Key.L };
 
                 if (Keys.Down(Key.Escape) || Keys.Down(own[hero]))
                 {
@@ -177,6 +187,17 @@ namespace GuWorld.UI
                 else if (Keys.Down(Key.Escape))
                 {
                     EndTalk();
+                }
+            }
+            else if (Open == Page.Dialogue)
+            {
+                DialogueKeys();
+            }
+            else if (Open == Page.Settings)
+            {
+                if (Keys.Down(Key.Escape))
+                {
+                    Show(Page.Pause);
                 }
             }
             else if (Open == Page.Help)
@@ -371,7 +392,7 @@ namespace GuWorld.UI
             var shade = UiKit.Image("Shade", stage, Color.white, UiKit.Plain);
             shade.rectTransform.Fill();
             shade.Gradient(new Color(3 / 255f, 4 / 255f, 10 / 255f, 0), new Color(3 / 255f, 4 / 255f, 10 / 255f, 0.96f), false, new Color(3 / 255f, 4 / 255f, 10 / 255f, 0.1f), 0.45f);
-            var npc = Valley.Npc(line.Who);
+            var npc = Atlas.Npc(line.Who);
             var name = line.Who == "hero" ? "Гу Юэ " + S.State.HeroName : npc != null ? npc.Name : null;
             var words = UiKit.Rect("Words", stage);
             words.Place(new Vector2(0.5f, 0), new Vector2(0.5f, 0), -460, 70, -460, -300);

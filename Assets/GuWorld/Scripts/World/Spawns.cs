@@ -27,13 +27,48 @@ namespace GuWorld.World
 
         void Awake()
         {
-            foreach (var spawn in Valley.Spawns)
+            foreach (var spawn in Atlas.Spawns)
             {
                 groups.Add(new Group { Def = spawn });
             }
         }
 
         public void Refresh() => wait = 0;
+
+        /// <summary>Begins a staged fight at once (a conversation asked for it: a duel).</summary>
+        public void Begin(string id)
+        {
+            var encounter = Atlas.Encounter(id);
+
+            if (encounter == null || fight != null)
+            {
+                return;
+            }
+
+            fight = encounter;
+            wave = -1;
+            waveWait = 0.8f;
+        }
+
+        /// <summary>Whether a group may be out now: its conditions, and night for the beasts of the night (in caves it is always night).</summary>
+        static bool Allowed(Session session, SpawnDef def)
+        {
+            if (!session.Meets(def.Needs) || (def.GoneAfter != "" && session.Meets(def.GoneAfter)))
+            {
+                return false;
+            }
+
+            var enemy = Bestiary.Get(def.Enemy);
+
+            if (enemy != null && enemy.Nocturnal && !session.Night)
+            {
+                var place = Atlas.PlaceAt(def.At);
+
+                return place != null && place.Cave;
+            }
+
+            return true;
+        }
 
         static int Alive(string group)
         {
@@ -108,7 +143,7 @@ namespace GuWorld.World
                     group.BackAt = def.Respawn > 0 ? Time.time + def.Respawn : float.MaxValue;
                 }
 
-                if (!group.Out && alive == 0 && distance < 120 && Time.time >= group.BackAt && session.Has(def.Needs) && (def.GoneAfter == "" || !session.Has(def.GoneAfter))
+                if (!group.Out && alive == 0 && distance < 120 && Time.time >= group.BackAt && Allowed(session, def)
                     && (distance > 30 || group.BackAt == 0 || def.Enemy == "dummy"))
                 {
                     var enemy = Bestiary.Get(def.Enemy);
@@ -125,7 +160,7 @@ namespace GuWorld.World
 
                     group.Out = true;
                 }
-                else if (group.Out && distance > 190)
+                else if (group.Out && (distance > 190 || (!Allowed(session, def) && distance > 40)))
                 {
                     Remove(def.Id);
                     group.Out = false;
@@ -139,9 +174,9 @@ namespace GuWorld.World
         {
             if (fight == null)
             {
-                foreach (var encounter in Valley.Encounters)
+                foreach (var encounter in Atlas.Encounters)
                 {
-                    if (session.WantsEncounter(encounter.Id) && encounter.At.DistanceTo(here) < encounter.Radius && hero.Alive)
+                    if (session.WantsEncounter(encounter.Id) && session.Meets(encounter.Needs) && encounter.At.DistanceTo(here) < encounter.Radius && hero.Alive)
                     {
                         fight = encounter;
                         wave = -1;

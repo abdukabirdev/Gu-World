@@ -34,6 +34,9 @@ namespace GuWorld.Actors
         Session Session => Game.Session;
 
         public override bool Alive => mode != Mode.Dead;
+        /// <summary>The hero is moving under their own legs (the rules: a wound bleeds more).</summary>
+        public bool Moving { get; private set; }
+        public bool Rolling => mode == Mode.Rolling;
         public bool Airborne => !Grounded && transform.position.y - Game.Ground(transform.position).y > 0.45f;
         public bool Sprinting { get; private set; }
         public bool Sitting => mode == Mode.Sitting;
@@ -115,6 +118,18 @@ namespace GuWorld.Actors
                 WatchPlace(dt);
             }
 
+            // Stunned or frozen: the hero stands where they are.
+            if (Session.Held && mode != Mode.Dead)
+            {
+                Walk(Vector3.zero, dt);
+                Animate("hit", 0.1f);
+                Session.Tick(dt);
+                Moving = false;
+                return;
+            }
+
+            Aura(dt);
+
             switch (mode)
             {
                 case Mode.Sitting:
@@ -164,6 +179,36 @@ namespace GuWorld.Actors
             Session.Tick(dt, Sprinting);
         }
 
+        float auraWait;
+
+        /// <summary>A burning (or freezing) aura harms everything close, twice a second.</summary>
+        void Aura(float dt)
+        {
+            if (!Session.AuraActive)
+            {
+                return;
+            }
+
+            auraWait -= dt;
+
+            if (auraWait > 0)
+            {
+                return;
+            }
+
+            auraWait = 0.5f;
+            var colour = Session.AuraStatus == StatusKind.Chill ? new Color(0.7f, 0.92f, 1f) : new Color(1f, 0.55f, 0.25f);
+            Effects.Wave(transform.position, colour, Session.AuraRadius, 0.4f);
+
+            foreach (var enemy in new System.Collections.Generic.List<Enemy>(Enemy.Living))
+            {
+                if (enemy.Alive && FlatDistance(enemy.transform.position) <= Session.AuraRadius + enemy.Radius)
+                {
+                    enemy.TakeHit(Session.AuraDamage * 0.5f * Session.Stats.Power, false, transform.position, 0, Session.AuraStatus, Session.AuraStatusPower, 2);
+                }
+            }
+        }
+
         void LateUpdate()
         {
             if (rig != null && !Game.Frozen)
@@ -210,8 +255,10 @@ namespace GuWorld.Actors
         {
             var wish = free ? MoveWish() : Vector3.zero;
             var moving = wish.sqrMagnitude > 0.01f;
+            Moving = moving;
             Sprinting = moving && free && Keys.Held(Key.LeftShift) && Session.Stamina > 1 && Grounded;
-            var speed = Sprinting ? SprintSpeed : RunSpeed;
+            // Cold and slowness drag, wind hastens.
+            var speed = (Sprinting ? SprintSpeed : RunSpeed) * Session.SpeedFactor;
             Walk(wish * speed, dt);
 
             if (moving)
@@ -847,11 +894,12 @@ namespace GuWorld.Actors
 
         // ------------------------------------------------------------------ Being hit, dying, coming back
 
-        public void TakeHit(float raw, Vector3 from)
+        /// <summary>A blow on the hero: what of it landed (0 if it was dodged, swallowed by the ward, or the hero is out of reach of blows).</summary>
+        public float TakeHit(float raw, Vector3 from)
         {
             if (mode == Mode.Dead || invulnerable > 0 || Game.Busy)
             {
-                return;
+                return 0;
             }
 
             var damage = Session.TakeDamage(raw);
@@ -860,7 +908,7 @@ namespace GuWorld.Actors
             if (damage <= 0)
             {
                 Effects.Aura(transform, Color.white, 0.4f, 2.6f);
-                return;
+                return 0;
             }
 
             Game.Ui?.DamageNumber(transform.position + Vector3.up * 2, damage, false, true);
@@ -875,7 +923,7 @@ namespace GuWorld.Actors
                 Target = null;
                 Animate("death", 0.1f, 1, true);
                 Game.HeroDied();
-                return;
+                return damage;
             }
 
             // A heavy blow breaks what the hero was doing; a light one does not, so a pack cannot lock them down.
@@ -887,6 +935,8 @@ namespace GuWorld.Actors
                 away.y = 0;
                 body.Move(away.normalized * 0.4f);
             }
+
+            return damage;
         }
 
         public void Revive(Vector3 at)
@@ -918,26 +968,33 @@ namespace GuWorld.Actors
             }
 
             placeWait = 0.5f;
-            var here = Valley.PlaceAt(new MapPoint(transform.position.x, transform.position.z));
-            var id = here?.Id;
+            var point = new MapPoint(transform.position.x, transform.position.z);
+            var settlement = Atlas.SettlementAt(point);
+            var here = Atlas.PlaceAt(point);
+            var id = settlement != null ? settlement.Id : here?.Id;
 
             if (id != place)
             {
                 place = id;
 
-                if (here != null)
+                if (settlement != null || here != null)
                 {
-                    Game.Ui?.Place(here.Name);
+                    Game.Ui?.Place(settlement != null ? settlement.Name : here.Name);
                 }
             }
 
-            // Every place the hero stands in counts as reached (a small one inside a large one too).
-            foreach (var one in Valley.Places)
+            // Every place the hero stands in counts as reached (a small one inside a large one too), and opens its page of the codex.
+            foreach (var one in Atlas.Places)
             {
-                if (one.At.DistanceTo(new MapPoint(transform.position.x, transform.position.z)) <= one.Radius)
+                if ((Atlas.Big || Atlas.InValleyPlace(one)) && one.At.DistanceTo(point) <= one.Radius)
                 {
-                    Session.Reached(one.Id);
+                    Session.Entered(one.Id);
                 }
+            }
+
+            if (settlement != null)
+            {
+                Session.Entered(settlement.Id);
             }
         }
     }

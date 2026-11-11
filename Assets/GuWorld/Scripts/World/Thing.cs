@@ -30,6 +30,10 @@ namespace GuWorld.World
                     case ThingKind.Chest: return "Открыть";
                     case ThingKind.Herb: return "Собрать";
                     case ThingKind.Door: return "Войти";
+                    case ThingKind.Furnace: return "Варить пилюли";
+                    case ThingKind.Board: return "Прочесть поручения";
+                    case ThingKind.Lore: return "Прочесть";
+                    case ThingKind.Shrine: return "Помолиться";
                     default: return "Осмотреть";
                 }
             }
@@ -51,6 +55,7 @@ namespace GuWorld.World
                     case ThingKind.Chest: return !session.IsUsed(Def.Id);
                     case ThingKind.Herb: return regrow <= 0;
                     case ThingKind.QuestObject: return session.IsWanted(Def);
+                    case ThingKind.Lore: return true;
                     default: return true;
                 }
             }
@@ -65,6 +70,13 @@ namespace GuWorld.World
             var thing = root.AddComponent<Thing>();
             thing.Def = def;
             thing.Dress();
+
+            // A herb picked before it was taken out of the world is still bare.
+            if (def.Kind == ThingKind.Herb && Population.RegrowLeft(def.Id) > 0)
+            {
+                thing.regrow = Population.RegrowLeft(def.Id);
+                thing.body?.SetActive(false);
+            }
 
             return thing;
         }
@@ -180,6 +192,51 @@ namespace GuWorld.World
                     break;
                 }
 
+                case ThingKind.Furnace:
+                    Reach = 1.6f;
+                    Lamp(t, new Color(1f, 0.5f, 0.2f), 1.2f, 8, 2.4f);
+                    glow = Halo(new Color(1f, 0.55f, 0.25f, 0.45f), 1.1f, 1.8f);
+                    glow.AddComponent<Fx.Hover>();
+                    break;
+
+                case ThingKind.Board:
+                {
+                    Reach = 1;
+                    var wood = Models.Lit(new Color(0.34f, 0.24f, 0.15f));
+                    var paper = Models.Lit(new Color(0.86f, 0.8f, 0.66f));
+                    Models.Shape("Post L", t, PrimitiveType.Cube, wood, new Vector3(-0.9f, 1, 0), new Vector3(0.12f, 2, 0.12f)).AddComponent<BoxCollider>();
+                    Models.Shape("Post R", t, PrimitiveType.Cube, wood, new Vector3(0.9f, 1, 0), new Vector3(0.12f, 2, 0.12f)).AddComponent<BoxCollider>();
+                    Models.Shape("Board", t, PrimitiveType.Cube, wood, new Vector3(0, 1.45f, 0), new Vector3(1.9f, 1, 0.06f));
+                    Models.Shape("Roof", t, PrimitiveType.Cube, wood, new Vector3(0, 2.05f, 0), new Vector3(2.2f, 0.08f, 0.5f), Quaternion.Euler(8, 0, 0));
+
+                    for (var i = 0; i < 4; i++)
+                    {
+                        Models.Shape("Note", t, PrimitiveType.Cube, paper, new Vector3(-0.6f + i * 0.4f, 1.4f + (i % 2) * 0.15f, 0.04f), new Vector3(0.3f, 0.4f, 0.01f), Quaternion.Euler(0, 0, (i - 1.5f) * 4));
+                    }
+
+                    glow = Halo(gold, 1.5f, 2.2f);
+                    break;
+                }
+
+                case ThingKind.Lore:
+                    Reach = string.IsNullOrEmpty(Def.Model) ? 0.6f : 1.2f;
+
+                    if (string.IsNullOrEmpty(Def.Model))
+                    {
+                        Models.GroundGlow("Script", t, new Color(0.75f, 0.68f, 1f, 0.7f), 1.4f, false);
+                    }
+
+                    glow = Halo(new Color(0.75f, 0.68f, 1f, 0.5f), 1.6f, 1.6f);
+                    glow.AddComponent<Fx.Hover>();
+                    break;
+
+                case ThingKind.Shrine:
+                    Reach = string.IsNullOrEmpty(Def.Model) ? 0.8f : 1.6f;
+                    Lamp(t, new Color(0.9f, 0.95f, 1f), 2, 10, 1.8f);
+                    glow = Halo(new Color(0.95f, 0.95f, 1f, 0.5f), 2, 2.6f);
+                    Models.GroundGlow("Ring", t, new Color(0.9f, 0.95f, 1f, 0.6f), 2.4f, true).AddComponent<Fx.Hover>().Spin = 12;
+                    break;
+
                 case ThingKind.QuestObject:
                     Reach = string.IsNullOrEmpty(Def.Model) ? 0 : 1.2f;
 
@@ -257,10 +314,17 @@ namespace GuWorld.World
 
                     break;
                 case ThingKind.Door:
-                    glow.SetActive(session.Has(Def.Needs));
+                    glow.SetActive(session.Meets(Def.Needs));
                     break;
                 case ThingKind.Lantern:
-                    glow.transform.localScale = Vector3.one * (session.State.Lantern == Def.Id ? 3.4f : 2.2f);
+                    // The lantern the hero wakes at is brightest; lit ones glow; unlit ones are dim until touched.
+                    glow.transform.localScale = Vector3.one * (session.State.Lantern == Def.Id ? 3.4f : session.Lit(Def.Id) || Atlas.InValley(Def) ? 2.2f : 1.2f);
+                    break;
+                case ThingKind.Lore:
+                    glow.SetActive(session.IsWanted(Def));
+                    break;
+                case ThingKind.Shrine:
+                    glow.SetActive(!session.PrayedToday(Def.Id));
                     break;
             }
         }
@@ -286,6 +350,19 @@ namespace GuWorld.World
                     Game.Say(use.Message);
                     Effects.Pillar(transform.position, new Color(0.6f, 0.8f, 1f), 1.6f, 14, 0.8f);
                     Game.Save();
+
+                    // On the mountain, a lantern is also a way to the others.
+                    if (Atlas.Big && session.State.Lanterns.Count > 1)
+                    {
+                        Game.Ui.Show(Ui.Page.Travel);
+                    }
+
+                    break;
+                case "alchemy":
+                    Game.Ui.Show(Ui.Page.Alchemy);
+                    break;
+                case "board":
+                    Game.Ui.OpenBoard(use.Message);
                     break;
                 case "spring":
                     Game.Ui.Show(Ui.Page.Spring);
@@ -307,8 +384,15 @@ namespace GuWorld.World
                     else if (Def.Kind == ThingKind.Herb)
                     {
                         regrow = Def.Regrow > 0 ? Def.Regrow : 99999;
+                        Population.Picked(Def.Id, regrow);
                         body.SetActive(false);
                         Effects.Burst(transform.position + Vector3.up * 0.5f, new Color(0.7f, 1f, 0.8f), 1.2f, 0.3f);
+                    }
+                    else if (Def.Kind == ThingKind.Shrine)
+                    {
+                        Game.Say(use.Message);
+                        Effects.Pillar(transform.position, new Color(0.95f, 0.95f, 1f), 2, 16, 1f);
+                        use.Finish?.Invoke();
                     }
                     else if (use.Lines.Length > 0)
                     {

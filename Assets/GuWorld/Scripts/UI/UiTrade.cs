@@ -41,8 +41,9 @@ namespace GuWorld.UI
                     var index = i;
                     var gu = entry.Gu != null ? GuBook.Get(entry.Gu) : null;
                     var item = entry.Item != null ? ItemBook.Get(entry.Item) : null;
-                    var afford = session.State.Stones >= entry.Price;
-                    ListLine(list, gu != null ? gu.Seal : item.Seal, gu != null ? gu.Name : item.Name, $"{entry.Price} камней", gu != null ? UiKit.Hex(gu.Colour) : UiKit.Hex(item.Colour), i == pickedGoods,
+                    var price = session.PriceFor(entry, shopClan);
+                    var afford = session.State.Stones >= price;
+                    ListLine(list, gu != null ? gu.Seal : item.Seal, gu != null ? gu.Name : item.Name, $"{price} камней", gu != null ? UiKit.Hex(gu.Colour) : UiKit.Hex(item.Colour), i == pickedGoods,
                         () => { pickedGoods = index; Redraw(); }, afford ? UiKit.GoldText : UiKit.Danger);
                 }
 
@@ -68,10 +69,11 @@ namespace GuWorld.UI
                 }
 
                 Gap(right, 12);
-                var can = session.State.Stones >= picked.Price;
-                UiKit.HexButton($"Купить · {picked.Price} камней", right, () =>
+                var cost = session.PriceFor(picked, shopClan);
+                var can = session.State.Stones >= cost;
+                UiKit.HexButton($"Купить · {cost} камней", right, () =>
                 {
-                    session.Buy(picked);
+                    session.Buy(picked, shopClan);
                     Redraw();
                 }, can ? UiKit.HexKind.Main : UiKit.HexKind.Off, 13, 54);
 

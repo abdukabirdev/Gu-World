@@ -1,4 +1,5 @@
 using System.Collections.Generic;
+using GuWorld.Core;
 using UnityEngine;
 using UnityEngine.Rendering;
 
@@ -331,7 +332,9 @@ namespace GuWorld.Actors
                 model.transform.localRotation = Quaternion.Euler(0, 180, 0);
             }
 
-            var texture = string.IsNullOrEmpty(look) || look == "hero" ? null : Look(look);
+            // A look of the wider mountain borrows a texture and dyes it.
+            var (textureName, dye) = Wardrobe.Dress(look);
+            var texture = string.IsNullOrEmpty(look) || look == "hero" ? null : Look(textureName);
 
             foreach (var renderer in model.GetComponentsInChildren<SkinnedMeshRenderer>(true))
             {
@@ -342,6 +345,11 @@ namespace GuWorld.Actors
                 if (renderer.name.Contains("Body") && texture != null)
                 {
                     SetTexture(renderer.material, texture);
+
+                    if (dye != 0xFFFFFF)
+                    {
+                        SetColour(renderer.material, Rgb(dye));
+                    }
                 }
                 else if (renderer.name.Contains("Hands") && (look == "stone" || look == "blood" || look == "bai"))
                 {
