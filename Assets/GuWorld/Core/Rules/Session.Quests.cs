@@ -1,0 +1,606 @@
+using System;
+using System.Collections.Generic;
+
+namespace GuWorld.Core
+{
+    /// <summary>What comes of walking up to someone and pressing the key.</summary>
+    public class Talk
+    {
+        public NpcDef Npc;
+        public Line[] Lines = new Line[0];
+        /// <summary>"shop", "gamble" or "board" to open once the lines are said, or "".</summary>
+        public string Service = "";
+        /// <summary>Called when the last line has been read.</summary>
+        public Action Finish;
+    }
+
+    /// <summary>What comes of using a thing in the world.</summary>
+    public class Use
+    {
+        public bool Ok;
+        /// <summary>Why not, or what happened.</summary>
+        public string Message = "";
+        public Line[] Lines = new Line[0];
+        public Loot Loot;
+        /// <summary>"spring", "fusion", "door", "lantern", "choose", or "".</summary>
+        public string Service = "";
+        public Action Finish;
+    }
+
+    public partial class Session
+    {
+        // ------------------------------------------------------------------ The log
+
+        public QuestState StateOf(string quest) => State.Quests.Find(q => q.Quest == quest);
+
+        public bool IsActive(string quest)
+        {
+            var state = StateOf(quest);
+
+            return state != null && !state.Done;
+        }
+
+        public bool IsDone(string quest) => Has(quest + "_done");
+
+        public IEnumerable<QuestState> ActiveQuests()
+        {
+            foreach (var quest in State.Quests)
+            {
+                if (!quest.Done)
+                {
+                    yield return quest;
+                }
+            }
+        }
+
+        /// <summary>The main quest in hand (null once the story is told).</summary>
+        public QuestState MainQuest
+        {
+            get
+            {
+                foreach (var quest in State.Quests)
+                {
+                    if (!quest.Done && Story.Get(quest.Quest).Main)
+                    {
+                        return quest;
+                    }
+                }
+
+                return null;
+            }
+        }
+
+        public StepDef StepOf(QuestState quest)
+        {
+            var def = Story.Get(quest.Quest);
+
+            return def != null && quest.Step < def.Steps.Length ? def.Steps[quest.Step] : null;
+        }
+
+        /// <summary>The step's line with its count: "Убейте серых волков 3 / 6".</summary>
+        public string StepText(QuestState quest)
+        {
+            var step = StepOf(quest);
+
+            if (step == null)
+            {
+                return "";
+            }
+
+            if (step.Kind == StepKind.Have)
+            {
+                return step.Count > 1 ? $"{step.Text} · {Math.Min(Count(step.Target), step.Count)} / {step.Count}" : step.Text;
+            }
+
+            return step.Count > 1 && step.Kind != StepKind.Cultivate ? $"{step.Text} · {quest.Progress} / {step.Count}" : step.Text;
+        }
+
+        /// <summary>Where the compass should point for a quest's step.</summary>
+        public bool MarkerOf(QuestState quest, out MapPoint at)
+        {
+            var step = StepOf(quest);
+            at = default;
+
+            if (step == null)
+            {
+                return false;
+            }
+
+            var marker = string.IsNullOrEmpty(step.Marker) ? step.Target : step.Marker;
+
+            return Valley.Locate(marker, out at);
+        }
+
+        public void StartQuest(string id)
+        {
+            var def = Story.Get(id);
+
+            if (def == null || IsActive(id))
+            {
+                return;
+            }
+
+            State.Quests.RemoveAll(q => q.Quest == id);
+            State.Quests.Add(new QuestState { Quest = id });
+            Recompute();
+            QuestStarted?.Invoke(def);
+            RefreshQuests();
+            Touch();
+        }
+
+        static bool Matches(string pattern, string id)
+        {
+            if (string.IsNullOrEmpty(pattern))
+            {
+                return true;
+            }
+
+            return pattern.EndsWith("*") ? id != null && id.StartsWith(pattern.Substring(0, pattern.Length - 1)) : pattern == id;
+        }
+
+        /// <summary>Something happened that a quest may be waiting for.</summary>
+        public void Notify(StepKind kind, string id, int count = 1)
+        {
+            var changed = false;
+
+            foreach (var quest in new List<QuestState>(State.Quests))
+            {
+                if (quest.Done)
+                {
+                    continue;
+                }
+
+                var step = StepOf(quest);
+
+                if (step == null || step.Kind != kind || !Matches(step.Target, id))
+                {
+                    continue;
+                }
+
+                quest.Progress += count;
+                changed = true;
+
+                if (quest.Progress >= step.Count)
+                {
+                    CompleteStep(quest);
+                }
+            }
+
+            if (changed)
+            {
+                // The step that follows may already be met (the pelts are in the bag).
+                RefreshQuests();
+                Touch();
+            }
+        }
+
+        /// <summary>Steps that wait on a state of things (the bag, the slots, the step) rather than on an event.</summary>
+        public void RefreshQuests()
+        {
+            for (var guard = 0; guard < 40; guard++)
+            {
+                var again = false;
+
+                foreach (var quest in new List<QuestState>(State.Quests))
+                {
+                    if (quest.Done)
+                    {
+                        continue;
+                    }
+
+                    var step = StepOf(quest);
+
+                    if (step == null)
+                    {
+                        continue;
+                    }
+
+                    var met = false;
+
+                    switch (step.Kind)
+                    {
+                        case StepKind.Have:
+                            met = Count(step.Target) >= step.Count;
+                            break;
+                        case StepKind.Equip:
+                            foreach (var gu in Slotted())
+                            {
+                                met |= Matches(step.Target, gu.Def);
+                            }
+
+                            break;
+                        case StepKind.Cultivate:
+                            met = State.Step >= step.Count;
+                            break;
+                    }
+
+                    if (met)
+                    {
+                        CompleteStep(quest);
+                        again = true;
+                    }
+                }
+
+                if (!again)
+                {
+                    break;
+                }
+            }
+        }
+
+        void CompleteStep(QuestState quest)
+        {
+            var def = Story.Get(quest.Quest);
+            var step = def.Steps[quest.Step];
+
+            if (step.Kind == StepKind.Have && step.Takes)
+            {
+                RemoveItem(step.Target, step.Count);
+            }
+
+            foreach (var gift in step.Gives)
+            {
+                Give(gift, false);
+            }
+
+            quest.Step++;
+            quest.Progress = 0;
+
+            if (quest.Step >= def.Steps.Length)
+            {
+                CompleteQuest(quest, def);
+            }
+
+            Touch();
+        }
+
+        void Give(string what, bool refined)
+        {
+            if (what.StartsWith("stones:"))
+            {
+                AddStones(int.Parse(what.Substring(7)));
+            }
+            else if (GuBook.Get(what) != null)
+            {
+                AddGu(MakeGu(what, 0, refined));
+            }
+            else
+            {
+                AddItem(what);
+            }
+        }
+
+        void CompleteQuest(QuestState quest, QuestDef def)
+        {
+            quest.Done = true;
+            var reward = def.Reward;
+            Say($"Задание выполнено: {def.Title}");
+            AddStones(reward.Stones);
+
+            foreach (var (item, count) in reward.Items)
+            {
+                AddItem(item, count);
+            }
+
+            foreach (var gu in reward.Gu)
+            {
+                Give(gu, true);
+            }
+
+            if (reward.Talent > State.Talent)
+            {
+                State.Talent = reward.Talent;
+                Say($"Талант вырос: {Cultivation.TalentName(State.Talent)} ({(int)Math.Round(State.Talent * 100)}%)");
+            }
+
+            SetFlag(def.Id + "_done");
+
+            foreach (var flag in reward.Flags)
+            {
+                SetFlag(flag);
+            }
+
+            if (def.Id == "m21")
+            {
+                if (Has("ending_demonic"))
+                {
+                    AddGu(MakeGu("blood_moon", 2, true));
+                }
+                else
+                {
+                    State.Talent = 1f;
+                    AddStones(500);
+                    AddItem("scroll_sky_canopy");
+                    Say("Источник одарил вас: талант S (100%)");
+                }
+            }
+
+            if (def.Repeatable)
+            {
+                State.Quests.Remove(quest);
+            }
+
+            Recompute();
+            QuestDone?.Invoke(def);
+            GainInsight(reward.Insight);
+
+            if (def.Next != null)
+            {
+                StartQuest(def.Next);
+            }
+        }
+
+        // ------------------------------------------------------------------ People
+
+        public bool IsGone(NpcDef npc) => !string.IsNullOrEmpty(npc.GoneAfter) && Has(npc.GoneAfter);
+
+        /// <summary>The side quests someone has to offer now.</summary>
+        public List<QuestDef> Offers(string npc)
+        {
+            var offers = new List<QuestDef>();
+
+            foreach (var quest in Story.All)
+            {
+                if (quest.Giver == npc && Has(quest.Needs) && !IsActive(quest.Id) && (quest.Repeatable || !IsDone(quest.Id)))
+                {
+                    offers.Add(quest);
+                }
+            }
+
+            return offers;
+        }
+
+        /// <summary>True if talking to someone would move a quest on or start one (a mark over their head).</summary>
+        public bool HasBusiness(string npc)
+        {
+            foreach (var quest in ActiveQuests())
+            {
+                var step = StepOf(quest);
+
+                if (step != null && step.Kind == StepKind.Talk && step.Target == npc)
+                {
+                    return true;
+                }
+            }
+
+            var def = Valley.Npc(npc);
+
+            return def != null && def.Service != "board" && Offers(npc).Count > 0;
+        }
+
+        public Talk TalkTo(string npcId)
+        {
+            var npc = Valley.Npc(npcId);
+
+            if (npc == null || IsGone(npc))
+            {
+                return null;
+            }
+
+            // A quest step that waits for this talk.
+            foreach (var quest in ActiveQuests())
+            {
+                var step = StepOf(quest);
+
+                if (step != null && step.Kind == StepKind.Talk && step.Target == npcId)
+                {
+                    return new Talk { Npc = npc, Lines = step.Lines, Finish = () => Notify(StepKind.Talk, npcId) };
+                }
+            }
+
+            // A side quest to offer (the board's errands are taken from its own page).
+            if (npc.Service != "board")
+            {
+                var offers = Offers(npcId);
+
+                if (offers.Count > 0)
+                {
+                    var quest = offers[0];
+
+                    return new Talk { Npc = npc, Lines = quest.Offer, Finish = () => StartQuest(quest.Id) };
+                }
+            }
+
+            var bark = npc.Barks.Length > 0 ? npc.Barks[Random.Next(npc.Barks.Length)] : "…";
+
+            return new Talk { Npc = npc, Lines = new[] { new Line(npcId, bark) }, Service = npc.Service };
+        }
+
+        // ------------------------------------------------------------------ Things
+
+        public bool IsUsed(string thing) => State.Used.Contains(thing);
+
+        public Use UseThing(string id)
+        {
+            var thing = Valley.Thing(id);
+
+            if (thing == null)
+            {
+                return new Use { Message = "" };
+            }
+
+            if (!Has(thing.Needs))
+            {
+                return new Use { Message = thing.Locked };
+            }
+
+            switch (thing.Kind)
+            {
+                case ThingKind.Lantern:
+                    State.Lantern = thing.Id;
+                    Restore();
+                    Touch();
+                    return new Use { Ok = true, Service = "lantern", Message = "Лунный фонарь запомнил вас. Здоровье и эссенция восстановлены." };
+
+                case ThingKind.Spring:
+                    return new Use { Ok = true, Service = "spring" };
+
+                case ThingKind.FusionAltar:
+                    return new Use { Ok = true, Service = "fusion" };
+
+                case ThingKind.Door:
+                    return new Use { Ok = true, Service = "door" };
+
+                case ThingKind.Chest:
+                    if (IsUsed(id))
+                    {
+                        return new Use { Message = "Пусто." };
+                    }
+
+                    State.Used.Add(id);
+                    var loot = RollLoot(thing.Content);
+                    Collect(loot);
+                    return new Use { Ok = true, Loot = loot, Message = thing.Name };
+
+                case ThingKind.Herb:
+                    AddItem(thing.Content);
+                    return new Use { Ok = true };
+
+                default:
+                    return UseQuestObject(thing);
+            }
+        }
+
+        Use UseQuestObject(ThingDef thing)
+        {
+            foreach (var quest in ActiveQuests())
+            {
+                var step = StepOf(quest);
+
+                if (step == null || !Matches(step.Target, thing.Id))
+                {
+                    continue;
+                }
+
+                if (step.Kind == StepKind.Use)
+                {
+                    if (step.Count > 1)
+                    {
+                        if (IsUsed(thing.Id))
+                        {
+                            continue;
+                        }
+
+                        State.Used.Add(thing.Id);
+                    }
+
+                    var id = thing.Id;
+
+                    return new Use { Ok = true, Lines = step.Lines, Finish = () => Notify(StepKind.Use, id) };
+                }
+            }
+
+            // The last choice is made at the bowl.
+            foreach (var quest in ActiveQuests())
+            {
+                var step = StepOf(quest);
+
+                if (step != null && step.Kind == StepKind.Choose && thing.Id == "blood_gu")
+                {
+                    return new Use { Ok = true, Service = "choose" };
+                }
+            }
+
+            return new Use { Message = IsUsed(thing.Id) ? "Здесь больше нечего делать." : "Сейчас это ни к чему." };
+        }
+
+        /// <summary>The answers of the step that waits for a choice (null if none does).</summary>
+        public StepDef PendingChoice()
+        {
+            foreach (var quest in ActiveQuests())
+            {
+                var step = StepOf(quest);
+
+                if (step != null && step.Kind == StepKind.Choose)
+                {
+                    return step;
+                }
+            }
+
+            return null;
+        }
+
+        public void Choose(string flag)
+        {
+            var step = PendingChoice();
+
+            if (step == null)
+            {
+                return;
+            }
+
+            SetFlag(flag);
+            Notify(StepKind.Choose, step.Target);
+        }
+
+        /// <summary>True if a thing can be used for something right now (it glows).</summary>
+        public bool IsWanted(ThingDef thing)
+        {
+            if (thing.Kind != ThingKind.QuestObject)
+            {
+                return thing.Kind != ThingKind.Chest || !IsUsed(thing.Id);
+            }
+
+            foreach (var quest in ActiveQuests())
+            {
+                var step = StepOf(quest);
+
+                if (step != null && (step.Kind == StepKind.Use || step.Kind == StepKind.Choose) && (Matches(step.Target, thing.Id) || (step.Kind == StepKind.Choose && thing.Id == "blood_gu")))
+                {
+                    return step.Count <= 1 || !IsUsed(thing.Id);
+                }
+            }
+
+            return false;
+        }
+
+        // ------------------------------------------------------------------ Fights
+
+        /// <summary>An enemy died by the hero's hand: insight, the quests' counts, the loot it leaves.</summary>
+        public Loot Killed(string enemyId)
+        {
+            var def = Bestiary.Get(enemyId);
+
+            if (def == null)
+            {
+                return new Loot();
+            }
+
+            State.Kills++;
+
+            if (def.Boss)
+            {
+                SetFlag(enemyId + "_dead");
+            }
+
+            Notify(StepKind.Kill, enemyId);
+            GainInsight(def.Insight);
+
+            return RollLoot(def.Loot);
+        }
+
+        /// <summary>The encounter whose turn it is in the story, if the hero is to fight it now.</summary>
+        public bool WantsEncounter(string id)
+        {
+            foreach (var quest in ActiveQuests())
+            {
+                var step = StepOf(quest);
+
+                if (step != null && step.Kind == StepKind.Encounter && step.Target == id)
+                {
+                    return true;
+                }
+            }
+
+            return false;
+        }
+
+        public void EncounterWon(string id)
+        {
+            SetFlag(id + "_won");
+            Notify(StepKind.Encounter, id);
+        }
+
+        public void Reached(string place) => Notify(StepKind.Reach, place);
+    }
+}
