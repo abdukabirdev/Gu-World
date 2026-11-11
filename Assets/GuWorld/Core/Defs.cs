@@ -407,6 +407,8 @@ namespace GuWorld.Core
         public Line[] Offer = new Line[0];
         public StepDef[] Steps = new StepDef[0];
         public Reward Reward = new Reward();
+        /// <summary>Items (or Gu) given when the quest is taken (a key, a letter to carry).</summary>
+        public string[] Gives = new string[0];
         /// <summary>The main quest that follows by itself.</summary>
         public string Next;
         public bool Repeatable;

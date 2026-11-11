@@ -22,7 +22,7 @@ namespace GuWorld.Core
 
         static StepDef Fight(string encounter, string text) => new StepDef { Kind = StepKind.Encounter, Target = encounter, Text = text };
 
-        /// <summary>The step with items given when it begins (what the previous step found).</summary>
+        /// <summary>The step with items given when it is done (what was found there).</summary>
         static StepDef Giving(StepDef step, params string[] items)
         {
             step.Gives = items;
@@ -69,11 +69,11 @@ namespace GuWorld.Core
                 Offer = new[] { L("bai_mei", "Вы же мастер Гу! Вы не боитесь змея?"), L("bai_mei", "Я уронила мамину шпильку. С камня над омутом. Она блестит на дне, у самого края. Папа узнает — убьёт.") },
                 Steps = new[]
                 {
-                    Use("hairpin_pool", 1, "Достаньте шпильку со дна омута", "hairpin_pool"),
-                    Giving(Talk("bai_mei", "Верните шпильку Бай Мэй",
+                    Giving(Use("hairpin_pool", 1, "Достаньте шпильку со дна омута", "hairpin_pool"), "lost_hairpin"),
+                    Talk("bai_mei", "Верните шпильку Бай Мэй",
                         L("bai_mei", "Вы её достали! А змея видели?"),
                         L("hero", "Видел. Он сказал, что ты ему должна."),
-                        L("bai_mei", "…Вы шутите. Вы шутите же?")), "lost_hairpin"),
+                        L("bai_mei", "…Вы шутите. Вы шутите же?")),
                 },
                 Reward = new Reward { Insight = 80, Gu = new[] { "water_shield" }, Reputation = Rep(("bai", 8)) }
             },
@@ -104,7 +104,8 @@ namespace GuWorld.Core
                 Id = "q_bai_vault", Title = "Хранилище у водопада", Chapter = 4, Giver = "bai_yun", Needs = "bai_friend", NeedsReputation = 50, Clan = "bai",
                 Summary = "Бай Юнь доверяет вам ключ от хранилища клана. Возьмите то, что вам предназначено, — и только это.",
                 Offer = new[] { L("bai_yun", "Ключ от хранилища. В нём рецепт Ледяного лотоса — наше сокровище. Возьми его. Мы считаем, что долг надо отдавать, пока жив.") },
-                Steps = new[] { new StepDef { Kind = StepKind.Use, Target = "chest_bai_vault", Text = "Откройте хранилище Бай", Gives = new[] { "bai_vault_key" } } },
+                Gives = new[] { "bai_vault_key" },
+                Steps = new[] { new StepDef { Kind = StepKind.Use, Target = "chest_bai_vault", Text = "Откройте хранилище Бай" } },
                 Reward = new Reward { Insight = 300, Reputation = Rep(("bai", 10), ("gu_yue", -5)) }
             },
 
@@ -184,7 +185,7 @@ namespace GuWorld.Core
                 Id = "q_mill_stone", Title = "Жернов", Chapter = 3, Giver = "mill_head", Needs = "m12_done", Clan = "mortal",
                 Summary = "Чёрный Хвост увёз жернов мельницы к руднику — на нём точат ножи. Без жернова хутор без хлеба.",
                 Offer = new[] { L("mill_head", "Они увезли мой жернов. Мой! Телега стоит у входа в рудник, я видел. Верни его — я буду молоть тебе бесплатно до самой смерти. Моей.") },
-                Steps = new[] { Use("millstone_cart", 1, "Заберите жернов с телеги у рудника", "millstone_cart"), Giving(Have("mill_stone", 1, "Принесите жернов мельнику", "mill"), "mill_stone") },
+                Steps = new[] { Giving(Use("millstone_cart", 1, "Заберите жернов с телеги у рудника", "millstone_cart"), "mill_stone"), Have("mill_stone", 1, "Принесите жернов мельнику", "mill") },
                 Reward = new Reward { Insight = 200, Stones = 60, Items = new[] { ("bitter_root", 4) }, Reputation = Rep(("mortal", 12), ("bandit", -5)) }
             },
             new QuestDef
@@ -247,7 +248,7 @@ namespace GuWorld.Core
                 Id = "q_misty_egg", Title = "Орлиное яйцо", Chapter = 4, Giver = "misty_head", Needs = "m15_done", Clan = "mortal",
                 Summary = "Орлы с Орлиных скал уносят ягнят. Охотник У хочет вырастить своего орла — и отогнать чужих.",
                 Offer = new[] { L("misty_head", "Орёл, которого вырастил человек, не подпустит к стаду чужих. Мне нужно яйцо из гнезда на скалах. Лезть туда — смерть. Вам — прогулка.") },
-                Steps = new[] { Use("eagle_nest", 1, "Достаньте яйцо из гнезда на Орлиных скалах", "eagle_nest"), Giving(Have("eagle_egg", 1, "Отнесите яйцо охотнику У", "misty"), "eagle_egg") },
+                Steps = new[] { Giving(Use("eagle_nest", 1, "Достаньте яйцо из гнезда на Орлиных скалах", "eagle_nest"), "eagle_egg"), Have("eagle_egg", 1, "Отнесите яйцо охотнику У", "misty") },
                 Reward = new Reward { Insight = 250, Stones = 70, Items = new[] { ("wind_pill", 2) }, Reputation = Rep(("mortal", 10)) }
             },
             new QuestDef
@@ -332,8 +333,8 @@ namespace GuWorld.Core
                 Steps = new[]
                 {
                     Fight("spider_queen", "Победите Паучью мать в паучьих пещерах"),
-                    Use("spider_egg", 1, "Заберите семя из светящегося кокона", "spider_egg"),
-                    Giving(Use("tree_roots", 1, "Посадите семя в корни Великого древа", "tree_roots"), "spirit_seed"),
+                    Giving(Use("spider_egg", 1, "Заберите семя из светящегося кокона", "spider_egg"), "spirit_seed"),
+                    Use("tree_roots", 1, "Посадите семя в корни Великого древа", "tree_roots"),
                     Talk("old_witch", "Поговорите с бабушкой Гуй", L("old_witch", "Слышишь? Корни пьют. Сто лет не пили."), L("old_witch", "Древо помнит добро. Дупло открыто — возьми, что оно копило.")),
                 },
                 Reward = new Reward { Insight = 800, Stones = 150, Reputation = Rep(("mortal", 20)), Flags = new[] { "tree_healed" } }
@@ -351,12 +352,12 @@ namespace GuWorld.Core
 
             new QuestDef
             {
-                Id = "q_treaty", Title = "Договор о водах", Chapter = 5, Giver = "pass_monk", Needs = "black_tail_beaten", Clan = "wanderers",
+                Id = "q_treaty", Title = "Договор о водах", Gives = new[] { "peace_treaty" }, Chapter = 5, Giver = "pass_monk", Needs = "black_tail_beaten", Clan = "wanderers",
                 Summary = "Сорок лет три клана спорят из-за источника. Монах перевала держит договор, на котором не хватает трёх печатей.",
                 Offer = new[] { L("pass_monk", "Этот договор написали сорок лет назад. Ни один клан его не подписал. Ты — друг всем трём. Почти."), L("pass_monk", "Принеси три печати. Если хоть один клан откажет — порви бумагу. Так тоже будет честно.") },
                 Steps = new[]
                 {
-                    new StepDef { Kind = StepKind.Talk, Target = "bai_yun", Text = "Получите печать Бай (нужна дружба с Бай)", Gives = new[] { "peace_treaty" }, Needs = "rep:bai>=20",
+                    new StepDef { Kind = StepKind.Talk, Target = "bai_yun", Text = "Получите печать Бай (нужна дружба с Бай)", Needs = "rep:bai>=20",
                         Lines = new[] { L("bai_yun", "Договор. Монах ещё жив? Удивительно."), L("bai_yun", "Бай подпишут. Не ради Гу Юэ — ради тебя. Надеюсь, ты понимаешь разницу.") } },
                     Needing(Talk("xiong_jian", "Получите печать Сюн (нужна дружба с Сюн)", L("xiong_jian", "Вода общая? Как мёд? Ха! Ладно."), L("xiong_jian", "Сюн подпишут. Но если Гу Юэ нарушат — я сам приду. С медведем.")), "rep:xiong>=20"),
                     Talk("instructor", "Получите печать Гу Юэ у наставника Тэ", L("instructor", "Старейшины не подпишут. Старейшины… уже не старейшины, ты же знаешь."), L("instructor", "Подпишу я. Как глава академии. Пусть попробуют возразить.")),

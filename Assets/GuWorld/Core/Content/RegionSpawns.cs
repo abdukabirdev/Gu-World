@@ -125,7 +125,7 @@ namespace GuWorld.Core
             E("storm_eagle", "Царь Орлиных скал", P("eagle_cliffs", 0, 0.2f), 40, "",
                 W("Небо темнеет крыльями.", ("mountain_eagle", 3)),
                 W("Гром. Над скалами кружит грозовой орёл.", ("storm_eagle", 1))),
-            E("ancient_shade", "Саркофаг Древнего мастера", P("tomb", 0, 0.3f), 30, "tomb_gate_open",
+            E("ancient_shade", "Саркофаг Древнего мастера", P("tomb", 0, 0.3f), 30, "tomb_gate_used",
                 W("Нефритовые врата открываются. Внутри шевелится терракота.", ("tomb_guardian", 3)),
                 W("Над саркофагом поднимается тень. Она помнит своё имя.", ("ancient_shade", 1))),
             E("fort_assault", "Штурм логова", P("bandit_fort", 0, 0.1f), 50, "",

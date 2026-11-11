@@ -38,6 +38,7 @@ static partial class Program
             WorldChecks.Run(repo, Check, report);
         }
 
+        RegionPlay(report);
         Playthrough("ending_righteous", 11, report, true);
         Playthrough("ending_demonic", 23, null, false);
         Balance(report);
@@ -238,7 +239,7 @@ static partial class Program
             if (needs.StartsWith("item:"))
             {
                 var item = needs.Substring(5);
-                var got = Bestiary.Tables.Any(t => t.Items.Any(i => i.Item == item)) || Story.All.Any(q => q.Steps.Any(st => st.Gives.Contains(item)) || q.Reward.Items.Any(i => i.item == item));
+                var got = Bestiary.Tables.Any(t => t.Items.Any(i => i.Item == item)) || Story.All.Any(q => q.Gives.Contains(item) || q.Steps.Any(st => st.Gives.Contains(item)) || q.Reward.Items.Any(i => i.item == item));
                 Check(ItemBook.Get(item) != null && got, $"thing {thing.Id}: the key {item} can be found");
                 continue;
             }

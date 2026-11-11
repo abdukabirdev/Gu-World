@@ -127,6 +127,11 @@ namespace GuWorld.Core
 
             State.Quests.RemoveAll(q => q.Quest == id);
             State.Quests.Add(new QuestState { Quest = id });
+
+            foreach (var gift in def.Gives)
+            {
+                Give(gift, true);
+            }
             Recompute();
             QuestStarted?.Invoke(def);
             RefreshQuests();
@@ -561,7 +566,8 @@ namespace GuWorld.Core
 
                     var id = thing.Id;
 
-                    return new Use { Ok = true, Lines = step.Lines, Finish = () => Notify(StepKind.Use, id) };
+                    // A used thing is remembered (an opened gate lets a fight begin: "<id>_used").
+                    return new Use { Ok = true, Lines = step.Lines, Finish = () => { SetFlag(id + "_used"); Notify(StepKind.Use, id); } };
                 }
             }
 
