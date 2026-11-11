@@ -14,7 +14,7 @@ namespace GuWorld.Core
 
         static Line L(string who, string text) => new Line(who, text);
 
-        public static readonly QuestDef[] All =
+        static readonly QuestDef[] Valley =
         {
             // ---------------------------------------------------------------- Chapter I
             new QuestDef
@@ -584,6 +584,9 @@ namespace GuWorld.Core
                 "Конец. Долина остаётся вашей — пока вас не нашли.",
             },
         };
+
+        /// <summary>Every quest: the valley's story and errands, and the wider mountain's (RegionQuests).</summary>
+        public static readonly QuestDef[] All = Lists.Join(Valley, RegionQuests.All);
 
         static Dictionary<string, QuestDef> byId;
 

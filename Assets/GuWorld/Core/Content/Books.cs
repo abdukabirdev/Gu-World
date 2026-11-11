@@ -5,7 +5,7 @@ namespace GuWorld.Core
     /// <summary>Every item: materials, pills, scrolls, quest things, rocks to gamble on.</summary>
     public static class ItemBook
     {
-        public static readonly ItemDef[] All =
+        static readonly ItemDef[] First =
         {
             new ItemDef { Id = "fox_pelt", Name = "Лисья шкура", Seal = "皮", Kind = ItemKind.Material, Price = 6, Description = "Рыжая шкура горного лиса. Берут скорняки и мастера слияния." },
             new ItemDef { Id = "bamboo_shoot", Name = "Побег бамбука", Seal = "木", Kind = ItemKind.Material, Price = 4, Description = "Молодой побег из западной рощи. Тётушка Хуа кладёт их в лапшу." },
@@ -40,6 +40,9 @@ namespace GuWorld.Core
             new ItemDef { Id = "blood_lure", Name = "Приманка пути крови", Seal = "蛊", Kind = ItemKind.Quest, Description = "Мёртвый Гу в воске. На воске — лунная печать академии." },
         };
 
+        /// <summary>Every item: the valley's and the wider world's (MoreItems).</summary>
+        public static readonly ItemDef[] All = Lists.Join(First, MoreItems.All);
+
         static Dictionary<string, ItemDef> byId;
 
         public static ItemDef Get(string id)
@@ -61,7 +64,7 @@ namespace GuWorld.Core
     /// <summary>Every enemy and what it drops.</summary>
     public static class Bestiary
     {
-        public static readonly EnemyDef[] All =
+        static readonly EnemyDef[] First =
         {
             new EnemyDef { Id = "dummy", Name = "Манекен", Body = EnemyBody.Dummy, Mind = EnemyMind.Still, Health = 60, Damage = 0, Speed = 0, Insight = 2, Sight = 0, Poise = 999 },
 
@@ -120,7 +123,10 @@ namespace GuWorld.Core
             },
         };
 
-        public static readonly LootTable[] Tables =
+        /// <summary>Every enemy: the valley's and the wider world's (MoreEnemies).</summary>
+        public static readonly EnemyDef[] All = Lists.Join(First, MoreEnemies.All);
+
+        static readonly LootTable[] FirstTables =
         {
             new LootTable { Id = "fox", StonesMin = 1, StonesMax = 3, Items = new[] { new LootEntry { Item = "fox_pelt", Chance = 0.7f } }, GuChance = 0.03f, GuPool = new[] { "tailwind", "little_light" } },
             new LootTable { Id = "wolf", StonesMin = 2, StonesMax = 6, Items = new[] { new LootEntry { Item = "wolf_fang", Chance = 0.6f }, new LootEntry { Item = "wolf_pelt", Chance = 0.35f } }, GuChance = 0.06f, GuPool = new[] { "tailwind", "stone_beetle", "life_grass", "little_light", "jade_skin" } },
@@ -167,6 +173,8 @@ namespace GuWorld.Core
             new LootTable { Id = "chest_blood", StonesMin = 150, StonesMax = 200, Items = new[] { new LootEntry { Item = "blood_crystal", Min = 2, Max = 3 }, new LootEntry { Item = "rock_3" } }, GuChance = 1, GuPool = new[] { "frost_demon" }, GuMinQuality = 1 },
         };
 
+        public static readonly LootTable[] Tables = Lists.Join(FirstTables, MoreEnemies.Tables);
+
         static Dictionary<string, EnemyDef> byId;
         static Dictionary<string, LootTable> tables;
 
@@ -204,7 +212,7 @@ namespace GuWorld.Core
     /// <summary>What can be fused from what, and what the shops keep.</summary>
     public static class Recipes
     {
-        public static readonly RecipeDef[] All =
+        static readonly RecipeDef[] First =
         {
             new RecipeDef { Id = "moonglow", Result = "moonglow", Gu = new[] { "moonlight", "little_light" }, Items = new[] { ("moon_orchid", 3) }, Stones = 30 },
             new RecipeDef { Id = "four_wines", Result = "four_wines", Gu = new[] { "liquor_worm" }, Items = new[] { ("wine_jar", 4) }, Stones = 80 },
@@ -215,6 +223,8 @@ namespace GuWorld.Core
             new RecipeDef { Id = "thunder_crown", Result = "thunder_crown", Gu = new[] { "spark", "storm_step" }, Items = new[] { ("crown_core", 1) }, Stones = 250 },
             new RecipeDef { Id = "sky_canopy", Result = "sky_canopy", Gu = new[] { "rock_skin", "white_jade" }, Items = new[] { ("blood_crystal", 3) }, Stones = 250 },
         };
+
+        public static readonly RecipeDef[] All = Lists.Join(First, MoreGu.Recipes);
 
         public static RecipeDef Get(string id)
         {
@@ -252,6 +262,9 @@ namespace GuWorld.Core
             new ShopEntry { Gu = "whirl", Price = 220, Chapter = 3 },
             new ShopEntry { Gu = "ice_spike", Price = 220, Chapter = 4 },
             new ShopEntry { Item = "scroll_sky_canopy", Price = 300, Chapter = 5 },
+            new ShopEntry { Item = "scroll_moon_shadow", Price = 140, Chapter = 4 },
+            new ShopEntry { Item = "scroll_moon_lake", Price = 480, Chapter = 5 },
+            new ShopEntry { Gu = "moon_shadow", Price = 260, Chapter = 5 },
         };
 
         /// <summary>The gambling tent's rocks.</summary>

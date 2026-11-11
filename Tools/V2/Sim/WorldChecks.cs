@@ -175,6 +175,7 @@ static class WorldChecks
         var farLand = Shapes.FarLand(plan, 32, 4);
         check(farLand.VertexCount == 33 * 33 && Enumerable.Range(0, farLand.VertexCount).All(i => farLand.Normals[i * 3 + 1] > 0), "world: the far land faces up");
 
+        Atlas(plan, check, report);
         Picture(plan, Path.Combine(outDir, "world.png"), 1024, -Regions.Half, -Regions.Half, Regions.Half * 2, true);
         Picture(plan, Path.Combine(outDir, "valley.png"), 768, -520, -520, 1040, true);
 
@@ -185,6 +186,62 @@ static class WorldChecks
         }
 
         report.Add($"  pictures in {outDir}");
+    }
+
+    /// <summary>The wider world's people and things are placed where they can be reached: on dry, walkable ground, out of the buildings.</summary>
+    static void Atlas(WorldPlan plan, Action<bool, string> check, List<string> report)
+    {
+        check(GuWorld.Core.Atlas.Big, "world: the atlas is resolved once the world is laid out");
+        var land = plan.Land;
+
+        bool InBuilding(SettlementPlan settlement, Vec2 p) => settlement.Buildings.Any(b => b.Role != "lamp" && b.Footprint.Contains(p));
+
+        foreach (var npc in RegionPeople.All.Where(n => n.Home != ""))
+        {
+            var settlement = plan.Settlement(npc.Home);
+            check(Vec2.Distance(npc.At, settlement.Centre) <= settlement.Def.Radius + 12, $"world: {npc.Id} lives in {npc.Home}");
+            check(!InBuilding(settlement, npc.At), $"world: {npc.Id} does not stand inside a building ({string.Join(",", settlement.Buildings.Where(b => b.Footprint.Contains(npc.At)).Select(b => b.Model + "/" + b.Role))})");
+        }
+
+        var stacked = RegionPeople.All.Where(n => n.Home != "").GroupBy(n => (Math.Round(n.At.X), Math.Round(n.At.Z))).Where(g => g.Count() > 1).ToList();
+        check(stacked.Count == 0, $"world: no two people stand on one spot ({string.Join(", ", stacked.Select(g => string.Join("+", g.Select(n => n.Id))))})");
+
+        foreach (var thing in RegionThings.All)
+        {
+            var at = (Vec2)thing.At;
+            // Herbs may grow in the shallows (reeds), knee-deep at most; nothing else stands in water.
+            check(!plan.Waters.Wet(at, out var level) || level - land.Height(at) < (thing.Kind == ThingKind.Herb ? 1f : 0.4f), $"world: {thing.Id} is not under water");
+
+            if (thing.Home != "")
+            {
+                var settlement = plan.Settlement(thing.Home);
+                check(!InBuilding(settlement, at), $"world: {thing.Id} does not stand inside a building");
+            }
+            else if (thing.Kind != ThingKind.Herb)
+            {
+                check(land.Slope(at.X, at.Z) < 0.75f, $"world: {thing.Id} stands on ground that can be walked ({land.Slope(at.X, at.Z):0.00})");
+            }
+        }
+
+        foreach (var spawn in RegionSpawns.All)
+        {
+            var at = (Vec2)spawn.At;
+            check(Math.Abs(at.X) < Regions.Half - 60 && Math.Abs(at.Z) < Regions.Half - 60, $"world: {spawn.Id} is inside the walls");
+            check(!plan.Waters.Wet(at, out var level) || level - land.Height(at) < 0.6f, $"world: {spawn.Id} is not in deep water");
+        }
+
+        // A day's schedule moves people between real spots.
+        var moved = 0;
+
+        foreach (var npc in RegionPeople.All.Where(n => n.Day.Length > 0))
+        {
+            var morning = GuWorld.Core.Atlas.WhereAt(npc, 7, out _);
+            var night = GuWorld.Core.Atlas.WhereAt(npc, 23, out _);
+            moved += morning.DistanceTo(night) > 3 ? 1 : 0;
+        }
+
+        check(moved >= 8, $"world: people go about their day ({moved} move between morning and night)");
+        report.Add($"  atlas: {RegionPeople.All.Length} people, {RegionThings.All.Length} things, {RegionSpawns.All.Length} spawns of the regions placed; {moved} with a day of their own");
     }
 
     static readonly int[] LayerColours = { 0x5A7A3C, 0x2F4A2A, 0x8A8A86, 0xA08A5C, 0x6E6A66, 0x9A9488, 0x4A6A3A, 0x7A5E40, 0x4A3E30, 0x8A7050 };

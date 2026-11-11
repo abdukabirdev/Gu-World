@@ -75,6 +75,8 @@ namespace GuWorld.Core.Gen
             Surface = new Surface(this);
             Scatter = new Scatter(this);
             Stage("surface");
+            Atlas.Resolve(this);
+            Stage("atlas");
         }
 
         /// <summary>The directions (yaw) the roads come into a settlement from, the main road's first.</summary>

@@ -27,7 +27,7 @@ namespace GuWorld.Core
         public override string ToString() => $"({X:0}, {Z:0})";
     }
 
-    public enum GuPath { Moon, Earth, Wind, Wood, Lightning, Light, Wine, Ice, Strength, Blood }
+    public enum GuPath { Moon, Earth, Wind, Wood, Lightning, Light, Wine, Ice, Strength, Blood, Fire, Water, Poison, Sound, Dark, Bone }
 
     /// <summary>Where a Gu can sit: an active slot (a skill on a key) or a passive one (a standing bonus).</summary>
     public enum GuKind { Active, Passive }
@@ -59,9 +59,31 @@ namespace GuWorld.Core
         Chain
     }
 
-    public enum StatusKind { None, Slow, Stun, Freeze }
+    public enum StatusKind
+    {
+        None, Slow, Stun, Freeze,
+        /// <summary>Damage over time that armour does not stop (a snake's venom, a poison cloud). Cured by an antidote.</summary>
+        Poison,
+        /// <summary>Fire: damage over time, and it spreads to what stands close.</summary>
+        Burn,
+        /// <summary>A wound: damage over time, more while moving.</summary>
+        Bleed,
+        /// <summary>Cold: slower, and the next blow of ice freezes.</summary>
+        Chill,
+    }
 
-    public enum BuffKind { None, Shield, MeleeUp, Unstoppable }
+    public enum BuffKind
+    {
+        None, Shield, MeleeUp, Unstoppable,
+        /// <summary>Unseen: enemies lose the hero and do not notice them until struck.</summary>
+        Stealth,
+        /// <summary>A burning (or freezing) ring round the hero that harms everything close, every second.</summary>
+        Aura,
+        /// <summary>Faster on the feet.</summary>
+        Haste,
+        /// <summary>Health back every second.</summary>
+        Regen,
+    }
 
     public enum StatKind
     {
@@ -141,9 +163,25 @@ namespace GuWorld.Core
         public int Colour = 0xA0D2FF;
         /// <summary>What a shop pays for it, primeval stones.</summary>
         public int Price;
+        /// <summary>What it eats (an item id; "" for a Gu that needs no feeding), and how many days a meal lasts.</summary>
+        public string Food = "";
+        public int Appetite = 3;
+        /// <summary>Only the clan that keeps it sells it ("" anyone).</summary>
+        public string Clan = "";
     }
 
-    public enum ItemKind { Currency, Material, Consumable, Scroll, Quest, Rock }
+    public enum ItemKind
+    {
+        Currency, Material, Consumable, Scroll, Quest, Rock,
+        /// <summary>What Gu eat.</summary>
+        Food,
+        /// <summary>A herb to gather and to refine pills from.</summary>
+        Herb,
+        /// <summary>A book or a note: reading it adds to the codex.</summary>
+        Book,
+        /// <summary>Opens something (a door, a chest).</summary>
+        Key,
+    }
 
     public class ItemDef
     {
@@ -162,13 +200,31 @@ namespace GuWorld.Core
         public string Teaches;
         /// <summary>A rock's tier, for the gamble.</summary>
         public int Tier;
+        /// <summary>A pill's lasting effect: a buff for some seconds (Buff, its value), or a stat (BoostStat, its value).</summary>
+        public BuffKind Buff;
+        public StatKind BoostStat;
+        public float BoostValue;
+        public float BoostSeconds;
+        /// <summary>The statuses it ends (an antidote: poison).</summary>
+        public StatusKind Cures;
+        /// <summary>Insight it gives when swallowed (a clarity pill).</summary>
+        public float Insight;
+        /// <summary>A book's codex entry.</summary>
+        public string Lore = "";
         public int Colour = 0xE8C98A;
     }
 
-    public enum EnemyBody { Dummy, Canid, Human, Bug }
+    public enum EnemyBody
+    {
+        Dummy, Canid, Human, Bug,
+        /// <summary>A snake or a centipede: a long body of segments (made in code).</summary>
+        Serpent,
+    }
 
     public enum EnemyMind
     {
+        /// <summary>A Gu master: casts the Gu it carries (EnemyDef.Gu), keeps the distance they want.</summary>
+        Caster,
         /// <summary>Stands still.</summary>
         Still,
         /// <summary>Bites and hops back.</summary>
@@ -217,6 +273,17 @@ namespace GuWorld.Core
         /// <summary>Whom a howl or a summon calls.</summary>
         public string Summons;
         public int Colour = 0xFFFFFF;
+        /// <summary>The Gu a Gu master casts (ids of GuBook), in turn.</summary>
+        public string[] Gu = new string[0];
+        /// <summary>What its blows leave on the hero, how often, how strong (damage a second or share), for how long.</summary>
+        public StatusKind Inflicts;
+        public float InflictChance;
+        public float InflictPower;
+        public float InflictTime;
+        /// <summary>The clan it belongs to ("" a beast): killing it angers that clan and pleases its enemies.</summary>
+        public string Clan = "";
+        /// <summary>It is about only at night (or stronger then).</summary>
+        public bool Nocturnal;
     }
 
     public class LootEntry
@@ -303,12 +370,16 @@ namespace GuWorld.Core
         public string[] Gives = new string[0];
         /// <summary>Items taken from the bag when the step is done (for Have steps).</summary>
         public bool Takes;
+        /// <summary>A condition (as in dialogues) the step waits on besides its own: a talk counts only when it holds.</summary>
+        public string Needs = "";
         /// <summary>A Choose step's answers: what is said and the flag it sets.</summary>
         public (string text, string flag)[] Choices = new (string, string)[0];
     }
 
     public class Reward
     {
+        /// <summary>How each clan thinks of the hero after: (clan, change).</summary>
+        public (string clan, int change)[] Reputation = new (string, int)[0];
         public int Stones;
         public int Insight;
         public (string item, int count)[] Items = new (string, int)[0];
@@ -320,6 +391,10 @@ namespace GuWorld.Core
 
     public class QuestDef
     {
+        /// <summary>The clan the quest is for (its reputation gains), "" none.</summary>
+        public string Clan = "";
+        /// <summary>The reputation with that clan a side quest asks for before it is offered.</summary>
+        public int NeedsReputation = -100;
         public string Id;
         public string Title;
         public int Chapter;
@@ -339,6 +414,20 @@ namespace GuWorld.Core
 
     public class NpcDef
     {
+        /// <summary>The settlement they live in (their place is one of its spots, found when the world is made), or "".</summary>
+        public string Home = "";
+        /// <summary>The spot of the settlement they stand at: "hall", "shop", "inn", "smithy", "herbalist", "nursery", "plaza", "house", "gate".</summary>
+        public string Role = "";
+        /// <summary>A conversation (DialogueBook) they hold besides their barks, "" none.</summary>
+        public string Dialogue = "";
+        /// <summary>Their clan: it decides who they are kind to.</summary>
+        public string Clan = "gu_yue";
+        /// <summary>The shelf they sell from (Markets), when their service is "shop" or "gamble".</summary>
+        public string Shop = "";
+        /// <summary>The pill recipes they teach (Alchemy), for stones, once friendly enough.</summary>
+        public string[] Teaches = new string[0];
+        /// <summary>Their day: (from hour, role of the spot) — where they go at that hour; empty to stay put.</summary>
+        public (float hour, string role)[] Day = new (float, string)[0];
         public string Id;
         public string Name;
         public string Title;
@@ -354,11 +443,25 @@ namespace GuWorld.Core
         public string GoneAfter = "";
     }
 
-    public enum ThingKind { Lantern, Spring, FusionAltar, Chest, Herb, Door, QuestObject, Dummy }
+    public enum ThingKind
+    {
+        Lantern, Spring, FusionAltar, Chest, Herb, Door, QuestObject, Dummy,
+        /// <summary>A furnace for refining pills.</summary>
+        Furnace,
+        /// <summary>A notice board of a settlement's errands.</summary>
+        Board,
+        /// <summary>A book, a stele, an inscription: read for the codex.</summary>
+        Lore,
+        /// <summary>A shrine: a prayer gives a blessing for a while (once a day).</summary>
+        Shrine,
+    }
 
     /// <summary>A thing in the world the hero can use.</summary>
     public class ThingDef
     {
+        /// <summary>The settlement it stands in and the spot it takes (its place is found when the world is made), or "".</summary>
+        public string Home = "";
+        public string Role = "";
         public string Id;
         public string Name;
         public ThingKind Kind;
@@ -447,6 +550,8 @@ namespace GuWorld.Core
         public string Name;
         public MapPoint At;
         public float Radius = 30;
+        /// <summary>What must hold for it to begin (a condition, as in dialogues), "" always.</summary>
+        public string Needs = "";
         public WaveDef[] Waves = new WaveDef[0];
     }
 

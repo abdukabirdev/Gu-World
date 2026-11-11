@@ -137,6 +137,7 @@ namespace GuWorld.Core
                 }
             }
 
+            EffectStats(stats, ref regen);
             stats.WardPeriod = ward;
             stats.Cost = Math.Max(0.4f, stats.Cost);
             stats.Cooldown = Math.Max(0.4f, stats.Cooldown);
@@ -214,6 +215,7 @@ namespace GuWorld.Core
             meleeTime = Math.Max(0, meleeTime - dt);
             unstoppableTime = Math.Max(0, unstoppableTime - dt);
             wardWait = Math.Max(0, wardWait - dt);
+            TickEffects(dt);
 
             if (healTime > 0)
             {
@@ -277,7 +279,13 @@ namespace GuWorld.Core
 
         float CooldownOf(GuInstance gu) => GuBook.Get(gu.Def).Skill.Cooldown * Stats.Cooldown * (1 - AffixOf(gu, AffixKind.Quick));
 
-        public float CostOf(GuInstance gu) => GuBook.Get(gu.Def).Skill.Cost * Stats.Cost * (1 - AffixOf(gu, AffixKind.Thrifty));
+        /// <summary>A Gu's essence cost: a starving Gu takes a third more.</summary>
+        public float CostOf(GuInstance gu) => GuBook.Get(gu.Def).Skill.Cost * Stats.Cost * (1 - AffixOf(gu, AffixKind.Thrifty)) * (IsStarving(gu) ? 1.3f : 1);
+
+        /// <summary>The sky over the hero (the interface tells it from the weather and the hero's height).</summary>
+        public Sky Sky { get; private set; } = Sky.Clear;
+
+        public void SetSky(Sky sky) => Sky = sky;
 
         public static float AffixOf(GuInstance gu, AffixKind kind)
         {
@@ -314,6 +322,10 @@ namespace GuWorld.Core
                 power *= Stats.MoonPower;
             }
 
+            // Hunger weakens; the hour and the sky favour some paths.
+            power *= HungerFactor(gu);
+            power *= Weather.PathFactor(def.Path, Sky, Night);
+
             return power;
         }
 
@@ -330,6 +342,11 @@ namespace GuWorld.Core
             if (cooldowns.ContainsKey(gu.Uid))
             {
                 return "Гу ещё не готов";
+            }
+
+            if (Held)
+            {
+                return "Вы не можете пошевелиться";
             }
 
             return State.Essence < CostOf(gu) ? "Не хватает эссенции" : null;
@@ -374,6 +391,9 @@ namespace GuWorld.Core
                         meleeTime = time;
                         meleeValue = skill.BuffValue;
                         break;
+                    default:
+                        ApplyBuff(skill.Buff, skill.BuffValue, time, skill.Radius, skill.Status, skill.StatusPower);
+                        break;
                 }
 
                 GainMastery(gu, 3);
@@ -383,6 +403,11 @@ namespace GuWorld.Core
                 healLeft += cast.Power;
                 healTime = Math.Max(0.1f, skill.Duration);
                 GainMastery(gu, 3);
+            }
+            else
+            {
+                // A strike from the shadows is stronger, and ends the stealth.
+                cast.Power *= BreakStealth();
             }
 
             return cast;
@@ -408,7 +433,7 @@ namespace GuWorld.Core
         public Hit MeleeHit(int combo, EnemyDef target)
         {
             var critical = Random.NextDouble() < 0.1;
-            var damage = HeroStats.ComboDamage[Math.Max(0, Math.Min(2, combo))] * Stats.Melee * (MeleeUp ? 1 + meleeValue : 1);
+            var damage = HeroStats.ComboDamage[Math.Max(0, Math.Min(2, combo))] * Stats.Melee * (MeleeUp ? 1 + meleeValue : 1) * BreakStealth();
             damage *= (critical ? 1.5f : 1) * (1 - (target?.Armour ?? 0)) * (0.92f + 0.16f * (float)Random.NextDouble());
             State.Essence = Math.Min(Stats.MaxEssence, State.Essence + Stats.EssencePerHit);
 
@@ -451,7 +476,7 @@ namespace GuWorld.Core
                 return 0;
             }
 
-            var damage = raw * Stats.DamageTaken * (shieldTime > 0 ? 1 - shieldValue : 1);
+            var damage = raw * Stats.DamageTaken * (shieldTime > 0 ? 1 - shieldValue : 1) * DifficultyRules.DamageTaken(State.Settings.Difficulty);
             State.Health = Math.Max(0, State.Health - damage);
 
             return damage;
@@ -470,7 +495,9 @@ namespace GuWorld.Core
         /// <summary>The hero fell: a tenth of the stones is lost, and they wake whole at their lantern. The stones lost.</summary>
         public int Die()
         {
-            var lost = State.Stones / 10;
+            var lost = (int)(State.Stones * DifficultyRules.DeathLoss(State.Settings.Difficulty));
+            statuses.Clear();
+            State.Effects.RemoveAll(e => !e.Source.StartsWith("blessing"));
             State.Stones -= lost;
             State.Deaths++;
             Restore();
@@ -500,7 +527,7 @@ namespace GuWorld.Core
                 return;
             }
 
-            State.Insight += amount;
+            State.Insight += amount * DifficultyRules.Insight(State.Settings.Difficulty);
             AdvanceStages();
         }
 

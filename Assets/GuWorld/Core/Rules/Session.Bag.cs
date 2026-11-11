@@ -43,6 +43,11 @@ namespace GuWorld.Core
                 Say($"+{count} {ItemBook.Get(item).Name}");
             }
 
+            if (ItemBook.Get(item).Kind == ItemKind.Herb)
+            {
+                OpenCodex("herb:" + item);
+            }
+
             RefreshQuests();
             Touch();
         }
@@ -90,9 +95,15 @@ namespace GuWorld.Core
         {
             var def = ItemBook.Get(item);
 
-            if (def == null || def.Kind != ItemKind.Consumable || Count(item) <= 0 || Dead)
+            if (def == null || def.Kind != ItemKind.Consumable && !(def.Kind == ItemKind.Food && def.Heal > 0) || Count(item) <= 0 || Dead)
             {
                 return false;
+            }
+
+            // The wider world's pills: cures, buffs, boosts, insight.
+            if (def.Cures != StatusKind.None || def.Buff != BuffKind.None || def.BoostSeconds > 0 || def.Insight > 0)
+            {
+                return UsePill(def);
             }
 
             var useful = (def.Heal > 0 && State.Health < Stats.MaxHealth - 0.5f) || (def.Essence > 0 && State.Essence < Stats.MaxEssence - 0.5f);
@@ -192,6 +203,7 @@ namespace GuWorld.Core
         {
             gu.Uid = State.NextUid++;
             State.Gu.Add(gu);
+            OpenCodex("gu:" + gu.Def);
 
             if (!quiet)
             {
@@ -570,6 +582,8 @@ namespace GuWorld.Core
                 Equip(result.Uid, passive, slot);
             }
 
+            State.Fusions++;
+            Achieve();
             Notify(StepKind.Fuse, recipe.Result);
             Touch();
 

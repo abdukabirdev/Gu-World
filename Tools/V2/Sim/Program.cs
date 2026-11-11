@@ -10,7 +10,7 @@ using GuWorld.Core;
 /// resolves, the rules do what the design says, and a bot can play the story from the first
 /// quest to an ending. Exit code 0 if all is well.
 /// </summary>
-static class Program
+static partial class Program
 {
     static int failures;
     static readonly List<string> notes = new List<string>();
@@ -29,6 +29,7 @@ static class Program
         var repo = args.Length > 0 && Directory.Exists(args[0]) ? args[0] : FindRepo();
         Content(repo);
         Rules();
+        MoreRules();
         SaveRoundTrip();
         var report = new List<string>();
 
@@ -75,7 +76,10 @@ static class Program
         Check(ItemBook.All.Select(g => g.Id).Distinct().Count() == ItemBook.All.Length, "item ids are unique");
         Check(Bestiary.All.Select(g => g.Id).Distinct().Count() == Bestiary.All.Length, "enemy ids are unique");
         Check(Story.All.Select(g => g.Id).Distinct().Count() == Story.All.Length, "quest ids are unique");
-        Check(Valley.Things.Select(g => g.Id).Distinct().Count() == Valley.Things.Length, "thing ids are unique");
+        Check(Atlas.AllThings.Select(g => g.Id).Distinct().Count() == Atlas.AllThings.Length, "thing ids are unique");
+        Check(Atlas.AllNpcs.Select(g => g.Id).Distinct().Count() == Atlas.AllNpcs.Length, "npc ids are unique");
+        Check(Atlas.AllSpawns.Select(g => g.Id).Distinct().Count() == Atlas.AllSpawns.Length, "spawn ids are unique");
+        Check(Atlas.AllEncounters.Select(g => g.Id).Distinct().Count() == Atlas.AllEncounters.Length, "encounter ids are unique");
 
         foreach (var gu in GuBook.All)
         {
@@ -114,28 +118,28 @@ static class Program
         foreach (var item in ItemBook.All.Where(i => i.Kind == ItemKind.Scroll))
         {
             Check(Recipes.Get(item.Teaches) != null, $"scroll {item.Id} teaches a recipe");
-            var obtainable = Shops.Shop.Any(s => s.Item == item.Id) || Bestiary.Tables.Any(t => t.Items.Any(e => e.Item == item.Id)) || Story.All.Any(q => q.Reward.Items.Any(r => r.item == item.Id));
+            var obtainable = Markets.Ids.SelectMany(Markets.Get).Any(s => s.Item == item.Id) || Bestiary.Tables.Any(t => t.Items.Any(e => e.Item == item.Id)) || Story.All.Any(q => q.Reward.Items.Any(r => r.item == item.Id));
             Check(obtainable, $"scroll {item.Id} can be got somewhere");
         }
 
-        foreach (var entry in Shops.Shop.Concat(Shops.Gamble))
+        foreach (var entry in Markets.Ids.SelectMany(Markets.Get))
         {
             Check(entry.Gu != null ? GuBook.Get(entry.Gu) != null : ItemBook.Get(entry.Item) != null, $"shop entry {entry.Gu ?? entry.Item}");
         }
 
-        foreach (var spawn in Valley.Spawns)
+        foreach (var spawn in Atlas.AllSpawns)
         {
             Check(Bestiary.Get(spawn.Enemy) != null, $"spawn {spawn.Id}: enemy");
             Check(InWorld(spawn.At), $"spawn {spawn.Id} is in the world");
         }
 
-        foreach (var encounter in Valley.Encounters)
+        foreach (var encounter in Atlas.AllEncounters)
         {
             Check(InWorld(encounter.At), $"encounter {encounter.Id} is in the world");
             Check(encounter.Waves.All(w => w.Enemies.All(e => Bestiary.Get(e.enemy) != null)), $"encounter {encounter.Id}: enemies");
         }
 
-        foreach (var thing in Valley.Things)
+        foreach (var thing in Atlas.AllThings)
         {
             Check(InWorld(thing.At), $"thing {thing.Id} is in the world");
             Check(Model(thing.Model), $"thing {thing.Id}: model {thing.Model}");
@@ -165,11 +169,11 @@ static class Program
             Check(Model(scatter.Model), $"scatter model {scatter.Model}");
         }
 
-        foreach (var npc in Valley.Npcs)
+        foreach (var npc in Atlas.AllNpcs)
         {
             Check(InWorld(npc.At), $"npc {npc.Id} is in the world");
 
-            foreach (var building in Valley.Buildings.Where(b => !b.Model.StartsWith("prop_b") && !b.Model.StartsWith("tree") && b.Model != "prop_market_goods"))
+            foreach (var building in Valley.Buildings.Where(b => Atlas.InValley(npc) && !b.Model.StartsWith("prop_b") && !b.Model.StartsWith("tree") && b.Model != "prop_market_goods"))
             {
                 Check(building.At.DistanceTo(npc.At) > 2.5f, $"npc {npc.Id} does not stand inside {building.Model} at {building.At}");
             }
@@ -189,7 +193,7 @@ static class Program
         foreach (var quest in Story.All)
         {
             Check(quest.Steps.Length > 0, $"quest {quest.Id} has steps");
-            Check(quest.Main || Valley.Npc(quest.Giver) != null, $"quest {quest.Id}: giver");
+            Check(quest.Main || Atlas.Npc(quest.Giver) != null, $"quest {quest.Id}: giver");
             Check(quest.Main || quest.Offer.Length > 0, $"quest {quest.Id}: the giver says something");
             Check(quest.Reward.Items.All(i => ItemBook.Get(i.item) != null) && quest.Reward.Gu.All(g => GuBook.Get(g) != null), $"quest {quest.Id}: reward");
 
@@ -200,20 +204,20 @@ static class Program
                 bool Any<T>(IEnumerable<T> all, Func<T, string> key) => all.Any(x => wild ? key(x).StartsWith(target) : key(x) == target);
                 var ok = step.Kind switch
                 {
-                    StepKind.Talk => Valley.Npc(target) != null && step.Lines.Length > 0,
+                    StepKind.Talk => Atlas.Npc(target) != null && step.Lines.Length > 0,
                     StepKind.Kill => Any(Bestiary.All, e => e.Id),
                     StepKind.Have => ItemBook.Get(target) != null,
-                    StepKind.Reach => Valley.Place(target) != null,
-                    StepKind.Use => Any(Valley.Things, t => t.Id) && (!wild || Valley.Things.Count(t => t.Id.StartsWith(target)) >= step.Count),
+                    StepKind.Reach => Atlas.Place(target) != null || Regions.Settlement(target) != null,
+                    StepKind.Use => Any(Atlas.AllThings, t => t.Id) && (!wild || Atlas.AllThings.Count(t => t.Id.StartsWith(target)) >= step.Count),
                     StepKind.Equip => target == "" || GuBook.Get(target) != null,
                     StepKind.Cultivate => step.Count >= 1 && step.Count <= Cultivation.MaxStep,
-                    StepKind.Encounter => Valley.Encounter(target) != null,
+                    StepKind.Encounter => Atlas.Encounter(target) != null,
                     StepKind.Choose => step.Choices.Length >= 2 && step.Choices.All(c => Story.Endings.ContainsKey(c.flag)),
                     _ => true
                 };
                 Check(ok, $"quest {quest.Id}: step «{step.Text}» has a real target ({step.Kind} {step.Target})");
                 var marker = string.IsNullOrEmpty(step.Marker) ? step.Target : step.Marker;
-                Check(step.Kind == StepKind.Equip || step.Kind == StepKind.Fuse || Valley.Locate(marker, out _), $"quest {quest.Id}: step «{step.Text}» has a marker ({marker})");
+                Check(step.Kind == StepKind.Equip || step.Kind == StepKind.Fuse || Atlas.Locate(marker, out _), $"quest {quest.Id}: step «{step.Text}» has a marker ({marker})");
 
                 foreach (var gift in step.Gives)
                 {
@@ -222,16 +226,29 @@ static class Program
 
                 foreach (var line in step.Lines)
                 {
-                    Check(line.Who == "" || line.Who == "hero" || Valley.Npc(line.Who) != null, $"quest {quest.Id}: speaker {line.Who}");
+                    Check(line.Who == "" || line.Who == "hero" || Atlas.Npc(line.Who) != null, $"quest {quest.Id}: speaker {line.Who}");
                 }
             }
         }
 
-        foreach (var thing in Valley.Things.Where(t => t.Needs != ""))
+        foreach (var thing in Atlas.AllThings.Where(t => t.Needs != ""))
         {
-            var set = Story.All.Any(q => q.Reward.Flags.Contains(thing.Needs)) || Bestiary.All.Any(e => e.Boss && e.Id + "_dead" == thing.Needs);
-            Check(set, $"thing {thing.Id}: something sets the flag {thing.Needs}");
+            var needs = thing.Needs.StartsWith("flag:") ? thing.Needs.Substring(5) : thing.Needs;
+
+            if (needs.StartsWith("item:"))
+            {
+                var item = needs.Substring(5);
+                var got = Bestiary.Tables.Any(t => t.Items.Any(i => i.Item == item)) || Story.All.Any(q => q.Steps.Any(st => st.Gives.Contains(item)) || q.Reward.Items.Any(i => i.item == item));
+                Check(ItemBook.Get(item) != null && got, $"thing {thing.Id}: the key {item} can be found");
+                continue;
+            }
+
+            var set = Story.All.Any(q => q.Reward.Flags.Contains(needs) || q.Id + "_done" == needs) || Bestiary.All.Any(e => e.Boss && e.Id + "_dead" == needs)
+                || needs == "peak_blessed" || Atlas.AllEncounters.Any(e => e.Id + "_won" == needs);
+            Check(set, $"thing {thing.Id}: something sets the flag {needs}");
         }
+
+        MoreContent();
     }
 
     // ---------------------------------------------------------------------- Rules
@@ -560,7 +577,8 @@ static class Program
             Check(grind < 140, $"the story does not ask for much farming ({grind} extra kills)");
 
             // Side quests can all be taken and done by the end.
-            foreach (var side in Story.All.Where(q => !q.Main))
+            // (Those that open with the story itself; the chains of the wider world are walked by the regions' playthrough.)
+            foreach (var side in Story.All.Where(q => !q.Main && (q.Needs == "" || System.Text.RegularExpressions.Regex.IsMatch(q.Needs, "^m\\d+_done$")) && (q.Clan == "" || s.ReputationOf(q.Clan) >= q.NeedsReputation)))
             {
                 Check(s.Offers(side.Giver).Contains(side), $"side quest {side.Id} is on offer by the end");
             }

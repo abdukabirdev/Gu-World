@@ -8,8 +8,13 @@ namespace GuWorld.Core
     {
         public NpcDef Npc;
         public Line[] Lines = new Line[0];
-        /// <summary>"shop", "gamble" or "board" to open once the lines are said, or "".</summary>
+        /// <summary>"shop", "gamble", "board", "inn" to open once the lines are said, or "".</summary>
         public string Service = "";
+        /// <summary>The shelf a shop opens (Markets), and the clan whose prices it asks.</summary>
+        public string Shop = "";
+        public string Clan = "";
+        /// <summary>A conversation to hold after the lines (or instead of them), or null.</summary>
+        public DialogueRun Dialogue;
         /// <summary>Called when the last line has been read.</summary>
         public Action Finish;
     }
@@ -22,7 +27,7 @@ namespace GuWorld.Core
         public string Message = "";
         public Line[] Lines = new Line[0];
         public Loot Loot;
-        /// <summary>"spring", "fusion", "door", "lantern", "choose", or "".</summary>
+        /// <summary>"spring", "fusion", "door", "lantern", "choose", "alchemy", "board", "travel", or "".</summary>
         public string Service = "";
         public Action Finish;
     }
@@ -108,7 +113,7 @@ namespace GuWorld.Core
 
             var marker = string.IsNullOrEmpty(step.Marker) ? step.Target : step.Marker;
 
-            return Valley.Locate(marker, out at);
+            return Atlas.Locate(marker, out at);
         }
 
         public void StartQuest(string id)
@@ -152,7 +157,7 @@ namespace GuWorld.Core
 
                 var step = StepOf(quest);
 
-                if (step == null || step.Kind != kind || !Matches(step.Target, id))
+                if (step == null || step.Kind != kind || !Matches(step.Target, id) || !Meets(step.Needs))
                 {
                     continue;
                 }
@@ -287,6 +292,11 @@ namespace GuWorld.Core
                 Give(gu, true);
             }
 
+            foreach (var (clan, change) in reward.Reputation)
+            {
+                ChangeReputation(clan, change, false);
+            }
+
             if (reward.Talent > State.Talent)
             {
                 State.Talent = reward.Talent;
@@ -323,6 +333,7 @@ namespace GuWorld.Core
             Recompute();
             QuestDone?.Invoke(def);
             GainInsight(reward.Insight);
+            Achieve();
 
             if (def.Next != null)
             {
@@ -341,7 +352,8 @@ namespace GuWorld.Core
 
             foreach (var quest in Story.All)
             {
-                if (quest.Giver == npc && Has(quest.Needs) && !IsActive(quest.Id) && (quest.Repeatable || !IsDone(quest.Id)))
+                if (quest.Giver == npc && Meets(quest.Needs) && !IsActive(quest.Id) && (quest.Repeatable || !IsDone(quest.Id))
+                    && (quest.Clan == "" || ReputationOf(quest.Clan) >= quest.NeedsReputation))
                 {
                     offers.Add(quest);
                 }
@@ -357,24 +369,32 @@ namespace GuWorld.Core
             {
                 var step = StepOf(quest);
 
-                if (step != null && step.Kind == StepKind.Talk && step.Target == npc)
+                if (step != null && step.Kind == StepKind.Talk && step.Target == npc && Meets(step.Needs))
                 {
                     return true;
                 }
             }
 
-            var def = Valley.Npc(npc);
+            var def = Atlas.Npc(npc);
 
             return def != null && def.Service != "board" && Offers(npc).Count > 0;
         }
 
         public Talk TalkTo(string npcId)
         {
-            var npc = Valley.Npc(npcId);
+            var npc = Atlas.Npc(npcId);
 
             if (npc == null || IsGone(npc))
             {
                 return null;
+            }
+
+            OpenCodex("person:" + npc.Id);
+
+            // Those whose clan hates the hero say nothing useful.
+            if (Hostile(npc.Clan))
+            {
+                return new Talk { Npc = npc, Lines = new[] { new Line(npcId, "Убирайся, пока цел.") } };
             }
 
             // A quest step that waits for this talk.
@@ -382,7 +402,7 @@ namespace GuWorld.Core
             {
                 var step = StepOf(quest);
 
-                if (step != null && step.Kind == StepKind.Talk && step.Target == npcId)
+                if (step != null && step.Kind == StepKind.Talk && step.Target == npcId && Meets(step.Needs))
                 {
                     return new Talk { Npc = npc, Lines = step.Lines, Finish = () => Notify(StepKind.Talk, npcId) };
                 }
@@ -401,9 +421,24 @@ namespace GuWorld.Core
                 }
             }
 
-            var bark = npc.Barks.Length > 0 ? npc.Barks[Random.Next(npc.Barks.Length)] : "…";
+            // A conversation of their own.
+            var dialogue = Converse(npcId);
 
-            return new Talk { Npc = npc, Lines = new[] { new Line(npcId, bark) }, Service = npc.Service };
+            if (dialogue != null)
+            {
+                return new Talk { Npc = npc, Dialogue = dialogue, Service = "", Shop = npc.Shop, Clan = npc.Clan };
+            }
+
+            var bark = npc.Barks.Length > 0 ? npc.Barks[Random.Next(npc.Barks.Length)] : "…";
+            var service = npc.Service;
+
+            if ((service == "shop" || service == "gamble") && !WillTrade(npc))
+            {
+                service = "";
+                bark = "Тебе я ничего не продам.";
+            }
+
+            return new Talk { Npc = npc, Lines = new[] { new Line(npcId, bark) }, Service = service, Shop = npc.Shop, Clan = npc.Clan };
         }
 
         // ------------------------------------------------------------------ Things
@@ -412,25 +447,63 @@ namespace GuWorld.Core
 
         public Use UseThing(string id)
         {
-            var thing = Valley.Thing(id);
+            var thing = Atlas.Thing(id);
 
             if (thing == null)
             {
                 return new Use { Message = "" };
             }
 
-            if (!Has(thing.Needs))
+            if (!Meets(thing.Needs))
             {
-                return new Use { Message = thing.Locked };
+                return new Use { Message = thing.Locked != "" ? thing.Locked : Explain(thing.Needs) };
             }
 
             switch (thing.Kind)
             {
                 case ThingKind.Lantern:
-                    State.Lantern = thing.Id;
+                    LightLantern(thing.Id);
                     Restore();
+                    CureAll();
                     Touch();
                     return new Use { Ok = true, Service = "lantern", Message = "Лунный фонарь запомнил вас. Здоровье и эссенция восстановлены." };
+
+                case ThingKind.Furnace:
+                    return new Use { Ok = true, Service = "alchemy", Message = thing.Name };
+
+                case ThingKind.Board:
+                    return new Use { Ok = true, Service = "board", Message = thing.Content };
+
+                case ThingKind.Lore:
+                {
+                    var entry = Codex.LoreEntry(thing.Content);
+                    var opened = OpenCodex(thing.Content);
+                    var quest = UseQuestObject(thing);
+
+                    if (quest.Ok)
+                    {
+                        quest.Lines = entry != null ? new[] { new Line("", entry.Text) } : quest.Lines;
+
+                        return quest;
+                    }
+
+                    return new Use { Ok = true, Lines = entry != null ? new[] { new Line("", entry.Text) } : new Line[0], Message = opened ? "" : "Вы перечитали надпись." };
+                }
+
+                case ThingKind.Shrine:
+                {
+                    var message = Pray(thing);
+                    var quest = UseQuestObject(thing);
+
+                    if (quest.Ok)
+                    {
+                        quest.Message = message;
+
+                        return quest;
+                    }
+
+                    return new Use { Ok = message != "" && !message.StartsWith("Сегодня"), Message = message };
+                }
 
                 case ThingKind.Spring:
                     return new Use { Ok = true, Service = "spring" };
@@ -450,10 +523,12 @@ namespace GuWorld.Core
                     State.Used.Add(id);
                     var loot = RollLoot(thing.Content);
                     Collect(loot);
+                    Notify(StepKind.Use, id);
                     return new Use { Ok = true, Loot = loot, Message = thing.Name };
 
                 case ThingKind.Herb:
                     AddItem(thing.Content);
+                    Notify(StepKind.Use, id);
                     return new Use { Ok = true };
 
                 default:
@@ -536,9 +611,14 @@ namespace GuWorld.Core
         /// <summary>True if a thing can be used for something right now (it glows).</summary>
         public bool IsWanted(ThingDef thing)
         {
-            if (thing.Kind != ThingKind.QuestObject)
+            switch (thing.Kind)
             {
-                return thing.Kind != ThingKind.Chest || !IsUsed(thing.Id);
+                case ThingKind.Chest: return !IsUsed(thing.Id);
+                case ThingKind.Lore: return !InCodex(thing.Content) || WantsUse(thing.Id);
+                case ThingKind.Shrine: return !PrayedToday(thing.Id);
+                case ThingKind.Lantern: return !Lit(thing.Id);
+                case ThingKind.QuestObject: break;
+                default: return true;
             }
 
             foreach (var quest in ActiveQuests())
@@ -567,14 +647,24 @@ namespace GuWorld.Core
             }
 
             State.Kills++;
+            Tally(enemyId);
+            OpenCodex("beast:" + enemyId);
 
             if (def.Boss)
             {
                 SetFlag(enemyId + "_dead");
+                State.Bosses++;
             }
 
+            if (!string.IsNullOrEmpty(def.Clan))
+            {
+                KilledOf(def.Clan, def.Boss);
+            }
+
+            BountyKill(enemyId);
             Notify(StepKind.Kill, enemyId);
             GainInsight(def.Insight);
+            Achieve();
 
             return RollLoot(def.Loot);
         }
@@ -582,6 +672,14 @@ namespace GuWorld.Core
         /// <summary>The encounter whose turn it is in the story, if the hero is to fight it now.</summary>
         public bool WantsEncounter(string id)
         {
+            // The wider world's bosses can be fought whenever the hero comes, once (duels only when asked for).
+            var def = Atlas.Encounter(id);
+
+            if (def != null && !Atlas.InValley(def) && !id.StartsWith("duel_") && !Has(id + "_won") && Meets(def.Needs))
+            {
+                return true;
+            }
+
             foreach (var quest in ActiveQuests())
             {
                 var step = StepOf(quest);
@@ -602,5 +700,21 @@ namespace GuWorld.Core
         }
 
         public void Reached(string place) => Notify(StepKind.Reach, place);
+
+        /// <summary>True if a quest's step waits for this thing to be used.</summary>
+        bool WantsUse(string thing)
+        {
+            foreach (var quest in ActiveQuests())
+            {
+                var step = StepOf(quest);
+
+                if (step != null && step.Kind == StepKind.Use && Matches(step.Target, thing) && (step.Count <= 1 || !IsUsed(thing)))
+                {
+                    return true;
+                }
+            }
+
+            return false;
+        }
     }
 }

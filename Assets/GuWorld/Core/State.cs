@@ -25,6 +25,10 @@ namespace GuWorld.Core
         public int MasteryXp;
         /// <summary>A wild Gu obeys only once refined.</summary>
         public bool Refined;
+        /// <summary>Days since it last ate (0: fed today).</summary>
+        public int Hunger;
+        /// <summary>A name the hero gave it, or "".</summary>
+        public string Name = "";
     }
 
     [Serializable]
@@ -46,7 +50,7 @@ namespace GuWorld.Core
     [Serializable]
     public class SaveData
     {
-        public int Version = 1;
+        public int Version = 2;
         public string HeroName = "Лань";
         /// <summary>Cultivation step: 0–3 rank 1, 4–7 rank 2, 8–11 rank 3.</summary>
         public int Step;
@@ -75,6 +79,96 @@ namespace GuWorld.Core
         public int Deaths;
         /// <summary>The hour of the day, 0–24.</summary>
         public float Hour = 9;
+
+        // ---------------------------------------------------------------- The wider world (version 2)
+
+        /// <summary>The day of the game, from 1: Gu get hungry, boards change their errands, shrines bless again.</summary>
+        public int Day = 1;
+        /// <summary>What each clan thinks of the hero.</summary>
+        public List<Reputation> Reputation = new List<Reputation>();
+        /// <summary>The pages of the codex opened.</summary>
+        public List<string> Codex = new List<string>();
+        public List<string> Achievements = new List<string>();
+        /// <summary>The lanterns lit (the hero can travel between them).</summary>
+        public List<string> Lanterns = new List<string>();
+        /// <summary>The pill recipes known.</summary>
+        public List<string> Pills = new List<string>();
+        /// <summary>The refiner's skill (1–5) and the batches made towards the next level.</summary>
+        public int Refining = 1;
+        public int Refined;
+        public int PillsMade;
+        public int Fusions;
+        public int Bosses;
+        public List<Tally> KillsBy = new List<Tally>();
+        public List<BountyState> Bounties = new List<BountyState>();
+        /// <summary>Lasting effects of pills and blessings, with the seconds left.</summary>
+        public List<Effect> Effects = new List<Effect>();
+        /// <summary>The shrines prayed at today ("shrine_id").</summary>
+        public List<string> Prayed = new List<string>();
+        public Settings Settings = new Settings();
+    }
+
+    [Serializable]
+    public class Reputation
+    {
+        public string Clan;
+        public int Value;
+    }
+
+    [Serializable]
+    public class Tally
+    {
+        public string Id;
+        public int Count;
+    }
+
+    /// <summary>A lasting effect on the hero: a buff (pills) or a stat (pills, blessings), with its value and the seconds left.</summary>
+    [Serializable]
+    public class Effect
+    {
+        public string Source;
+        public string Name;
+        public BuffKind Buff;
+        public StatKind Stat;
+        /// <summary>Set when the effect changes a stat (otherwise it is a buff).</summary>
+        public bool IsStat;
+        public float Value;
+        public float Seconds;
+    }
+
+    /// <summary>An errand from a settlement's board, made from the day and the settlement (so the same day gives the same errands).</summary>
+    [Serializable]
+    public class BountyState
+    {
+        /// <summary>"bounty:settlement:day:n".</summary>
+        public string Id;
+        public string Settlement;
+        public string Kind;
+        public string Target;
+        public int Count;
+        public int Progress;
+        public int Stones;
+        public int Insight;
+        public int Reputation;
+        public bool Taken;
+        public bool Done;
+        public int Day;
+    }
+
+    public enum HungerRule { Off, Soft, Canon }
+
+    public enum Difficulty { Story, Normal, Hard, Demonic }
+
+    /// <summary>The player's choices for how the game plays.</summary>
+    [Serializable]
+    public class Settings
+    {
+        public HungerRule Hunger = HungerRule.Soft;
+        public Difficulty Difficulty = Difficulty.Normal;
+        /// <summary>Gu eat from the bag by themselves at dawn.</summary>
+        public bool AutoFeed = true;
+        /// <summary>Travelling between lanterns costs primeval stones.</summary>
+        public bool TravelCosts = true;
     }
 
     /// <summary>What a kill or a chest gives.</summary>

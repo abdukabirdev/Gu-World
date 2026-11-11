@@ -57,17 +57,24 @@ namespace GuWorld.Core.Gen
         {
             this.world = world;
 
-            foreach (var thing in Valley.Things)
+            // Everything placed by hand (the settlements' own people and things are inside them, and the settlements are kept clear anyway).
+            foreach (var thing in Atlas.AllThings)
             {
-                keepClear.Add(thing.At, 5, thing.At);
+                if (thing.Home == "")
+                {
+                    keepClear.Add(thing.At, 5, thing.At);
+                }
             }
 
-            foreach (var npc in Valley.Npcs)
+            foreach (var npc in Atlas.AllNpcs)
             {
-                keepClear.Add(npc.At, 4, npc.At);
+                if (npc.Home == "")
+                {
+                    keepClear.Add(npc.At, 4, npc.At);
+                }
             }
 
-            foreach (var spawn in Valley.Spawns)
+            foreach (var spawn in Atlas.AllSpawns)
             {
                 keepClear.Add(spawn.At, spawn.Radius * 0.5f, spawn.At);
             }

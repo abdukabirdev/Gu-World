@@ -48,6 +48,20 @@ namespace GuWorld.Core.Gen
         public readonly List<(Vec2 at, float yaw)> Gates = new List<(Vec2, float)>();
 
         public Placed Find(string role) => Buildings.Find(b => b.Role == role);
+
+        /// <summary>True if a point is at least this far from every building's footprint (people and lanterns stand there).</summary>
+        public bool Clear(Vec2 at, float margin)
+        {
+            foreach (var building in Buildings)
+            {
+                if (building.Role != "lamp" && building.Footprint.Distance(at) < margin)
+                {
+                    return false;
+                }
+            }
+
+            return true;
+        }
     }
 
     /// <summary>
@@ -272,14 +286,28 @@ namespace GuWorld.Core.Gen
                 }
             }
 
+            // Three spots on the plaza, each turned a little until it is clear of the well and the stalls.
             for (var i = 0; i < 3; i++)
             {
                 var angle = axis + 120 * i + 60;
-                plan.Spots.Add(new Spot { At = plan.Centre + Vec2.FromYaw(angle) * (plan.PlazaRadius * 0.6f), Facing = Mod(angle + 180, 360), Role = "plaza" });
+
+                for (var turn = 0; turn < 12; turn++)
+                {
+                    var tried = angle + (turn % 2 == 0 ? 1 : -1) * 12 * ((turn + 1) / 2);
+                    var at = plan.Centre + Vec2.FromYaw(tried) * (plan.PlazaRadius * 0.6f);
+
+                    if (plan.Clear(at, 0.7f) || turn == 11)
+                    {
+                        plan.Spots.Add(new Spot { At = at, Facing = Mod(tried + 180, 360), Role = "plaza" });
+                        break;
+                    }
+                }
             }
 
             return plan;
         }
+
+
 
         static float Mod(float a, float m) => ((a % m) + m) % m;
 
