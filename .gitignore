@@ -119,3 +119,4 @@ InitTestScene*.unity*
 
 # The artist's original models (heavy; the game uses optimized copies under Assets/GuWorld/Models)
 /GLB/
+/Logs/

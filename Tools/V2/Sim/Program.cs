@@ -26,11 +26,17 @@ static class Program
 
     static int Main(string[] args)
     {
-        var repo = args.Length > 0 ? args[0] : FindRepo();
+        var repo = args.Length > 0 && Directory.Exists(args[0]) ? args[0] : FindRepo();
         Content(repo);
         Rules();
         SaveRoundTrip();
         var report = new List<string>();
+
+        if (Array.IndexOf(args, "world") >= 0 || Array.IndexOf(args, "all") >= 0)
+        {
+            WorldChecks.Run(repo, Check, report);
+        }
+
         Playthrough("ending_righteous", 11, report, true);
         Playthrough("ending_demonic", 23, null, false);
         Balance(report);
@@ -63,7 +69,7 @@ static class Program
     {
         var build = Path.Combine(repo, "Assets", "GuWorld", "Resources", "Build");
         bool Model(string id) => string.IsNullOrEmpty(id) || !Directory.Exists(build) || File.Exists(Path.Combine(build, id + ".prefab"));
-        bool InWorld(MapPoint p) => Math.Abs(p.X) < Valley.Half - 10 && Math.Abs(p.Z) < Valley.Half - 10;
+        bool InWorld(MapPoint p) => Math.Abs(p.X) < Regions.Half - 10 && Math.Abs(p.Z) < Regions.Half - 10;
 
         Check(GuBook.All.Select(g => g.Id).Distinct().Count() == GuBook.All.Length, "Gu ids are unique");
         Check(ItemBook.All.Select(g => g.Id).Distinct().Count() == ItemBook.All.Length, "item ids are unique");

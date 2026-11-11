@@ -412,6 +412,10 @@ namespace GuWorld.Core
         public float Level = float.NaN;
         /// <summary>How far past its radius the levelled ground eases back into the hills, metres.</summary>
         public float Blend = 30;
+        /// <summary>Levelled to the land's own height round it (when no Level is given).</summary>
+        public bool Flatten;
+        /// <summary>A cave's mouth: the way (yaw) its ring of rock opens to a ramp down; NaN for a pit entered by a door.</summary>
+        public float Mouth = float.NaN;
         /// <summary>A pocket shut in by cliffs (a cave): dark, with its own light.</summary>
         public bool Cave;
         public int Colour = 0x7E9093;

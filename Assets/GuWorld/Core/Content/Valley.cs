@@ -362,7 +362,7 @@ namespace GuWorld.Core
         /// <summary>The roads: beaten earth from the village to everywhere the story goes.</summary>
         public static readonly MapPoint[][] Roads =
         {
-            new[] { new MapPoint(0, 0), new MapPoint(10, 12), new MapPoint(11, 44), new MapPoint(12, 74), new MapPoint(0, 92), new MapPoint(0, 100), new MapPoint(6, 130), new MapPoint(12, 160), new MapPoint(8, 230), new MapPoint(30, 280), new MapPoint(8, 304), new MapPoint(0, 352), new MapPoint(0, 384) },
+            new[] { new MapPoint(0, 0), new MapPoint(10, 12), new MapPoint(11, 44), new MapPoint(12, 74), new MapPoint(0, 92), new MapPoint(0, 100), new MapPoint(6, 130), new MapPoint(12, 160), new MapPoint(8, 230), new MapPoint(30, 280), new MapPoint(8, 304), new MapPoint(0, 352) },
             new[] { new MapPoint(30, 280), new MapPoint(70, 300) },
             new[] { new MapPoint(0, 0), new MapPoint(-84, 12), new MapPoint(-128, 20), new MapPoint(-195, 30) },
             new[] { new MapPoint(0, 0), new MapPoint(40, -8), new MapPoint(72, -15), new MapPoint(100, -6), new MapPoint(150, 50), new MapPoint(214, 72), new MapPoint(244, 66), new MapPoint(258, 100), new MapPoint(268, 124) },
