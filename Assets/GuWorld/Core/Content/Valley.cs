@@ -97,13 +97,13 @@ namespace GuWorld.Core
 
         public static readonly ThingDef[] Things =
         {
-            new ThingDef { Id = "lantern_village", Name = "Лунный фонарь деревни", Kind = ThingKind.Lantern, At = new MapPoint(0, -12), Model = "prop_moon_lantern_post" },
-            new ThingDef { Id = "lantern_grove", Name = "Лунный фонарь рощи", Kind = ThingKind.Lantern, At = new MapPoint(-128, 22), Model = "prop_moon_lantern_post" },
+            new ThingDef { Id = "lantern_village", Name = "Лунный фонарь деревни", Kind = ThingKind.Lantern, At = new MapPoint(6, -14), Model = "prop_moon_lantern_post" },
+            new ThingDef { Id = "lantern_grove", Name = "Лунный фонарь рощи", Kind = ThingKind.Lantern, At = new MapPoint(-128, 27), Model = "prop_moon_lantern_post" },
             new ThingDef { Id = "lantern_forest", Name = "Лунный фонарь опушки", Kind = ThingKind.Lantern, At = new MapPoint(18, 142), Model = "prop_moon_lantern_post" },
-            new ThingDef { Id = "lantern_river", Name = "Лунный фонарь брода", Kind = ThingKind.Lantern, At = new MapPoint(214, 74), Model = "prop_moon_lantern_post" },
-            new ThingDef { Id = "lantern_camp", Name = "Лунный фонарь тракта", Kind = ThingKind.Lantern, At = new MapPoint(24, -196), Model = "prop_moon_lantern_post" },
+            new ThingDef { Id = "lantern_river", Name = "Лунный фонарь брода", Kind = ThingKind.Lantern, At = new MapPoint(214, 79), Model = "prop_moon_lantern_post" },
+            new ThingDef { Id = "lantern_camp", Name = "Лунный фонарь тракта", Kind = ThingKind.Lantern, At = new MapPoint(31, -198), Model = "prop_moon_lantern_post" },
             new ThingDef { Id = "lantern_stone", Name = "Лунный фонарь у камня", Kind = ThingKind.Lantern, At = new MapPoint(214, -160), Model = "prop_moon_lantern_post" },
-            new ThingDef { Id = "lantern_ridge", Name = "Лунный фонарь гребня", Kind = ThingKind.Lantern, At = new MapPoint(8, 302), Model = "prop_moon_lantern_post" },
+            new ThingDef { Id = "lantern_ridge", Name = "Лунный фонарь гребня", Kind = ThingKind.Lantern, At = new MapPoint(17, 300), Model = "prop_moon_lantern_post" },
             new ThingDef { Id = "lantern_hermit", Name = "Лунный фонарь пещеры", Kind = ThingKind.Lantern, At = new MapPoint(401, 366), Model = "prop_moon_lantern_post" },
             new ThingDef { Id = "lantern_blood", Name = "Погасший фонарь", Kind = ThingKind.Lantern, At = new MapPoint(-401, 364), Model = "prop_moon_lantern_post" },
 
@@ -173,7 +173,7 @@ namespace GuWorld.Core
             new SpawnDef { Id = "river_a", Enemy = "fox", Count = 3, At = new MapPoint(206, 26), Radius = 18, Respawn = 150 },
             new SpawnDef { Id = "river_b", Enemy = "wolf", Count = 3, At = new MapPoint(250, 176), Radius = 16, Respawn = 150 },
 
-            new SpawnDef { Id = "hermit_a", Enemy = "cave_gu", Count = 5, At = new MapPoint(395, 384), Radius = 9, Respawn = 240 },
+            new SpawnDef { Id = "hermit_a", Enemy = "cave_gu", Count = 5, At = new MapPoint(395, 390), Radius = 7, Respawn = 240 },
             new SpawnDef { Id = "hermit_b", Enemy = "cave_gu", Count = 6, At = new MapPoint(380, 404), Radius = 9, Respawn = 240 },
             new SpawnDef { Id = "hermit_c", Enemy = "cave_gu", Count = 4, At = new MapPoint(412, 402), Radius = 8, Respawn = 240 },
 
@@ -187,7 +187,7 @@ namespace GuWorld.Core
             new SpawnDef { Id = "ridge_c", Enemy = "wolf", Count = 4, At = new MapPoint(-4, 338), Radius = 14, Respawn = 200 },
             new SpawnDef { Id = "ridge_d", Enemy = "storm_wolf", Count = 2, At = new MapPoint(-44, 372), Radius = 10, Respawn = 200 },
 
-            new SpawnDef { Id = "blood_a", Enemy = "blood_puppet", Count = 3, At = new MapPoint(-395, 380), Radius = 9, Respawn = 300 },
+            new SpawnDef { Id = "blood_a", Enemy = "blood_puppet", Count = 3, At = new MapPoint(-390, 392), Radius = 6, Respawn = 300 },
             new SpawnDef { Id = "blood_b", Enemy = "blood_wolf", Count = 4, At = new MapPoint(-414, 400), Radius = 10, Respawn = 300 },
             new SpawnDef { Id = "blood_c", Enemy = "blood_puppet", Count = 3, At = new MapPoint(-376, 408), Radius = 9, Respawn = 300 },
         };
@@ -247,7 +247,7 @@ namespace GuWorld.Core
             new BuildingDef("kit_courtyard", -74, -2, 90),
             new BuildingDef("kit_two_storey", -64, -46, 45),
             new BuildingDef("kit_artisan", -44, -66, 0),
-            new BuildingDef("kit_l_kitchen", -2, -74, 0),
+            new BuildingDef("kit_l_kitchen", -26, -80, 0),
             new BuildingDef("kit_shop_house", 40, -66, 0),
             new BuildingDef("kit_two_storey_stone", 68, -30, 270),
             new BuildingDef("kit_courtyard_blue", 72, 2, 270),
@@ -260,7 +260,7 @@ namespace GuWorld.Core
             new BuildingDef("prop_market_goods", 12, -10, 0),
             new BuildingDef("prop_market_goods", -12, -10, 180),
             new BuildingDef("prop_barrels", 30, 14, 0),
-            new BuildingDef("prop_bench_wood", 7, 7, 45),
+            new BuildingDef("prop_bench_wood", 8, -6, 135),
             new BuildingDef("prop_bench_wood", -7, 7, 315),
             new BuildingDef("prop_go_table", 22, 54, 0),
             new BuildingDef("prop_weapon_rack", -66, 12, 90),
@@ -362,10 +362,10 @@ namespace GuWorld.Core
         /// <summary>The roads: beaten earth from the village to everywhere the story goes.</summary>
         public static readonly MapPoint[][] Roads =
         {
-            new[] { new MapPoint(0, 0), new MapPoint(0, 96), new MapPoint(6, 130), new MapPoint(12, 160), new MapPoint(8, 230), new MapPoint(30, 280), new MapPoint(8, 304), new MapPoint(0, 352), new MapPoint(0, 384) },
+            new[] { new MapPoint(0, 0), new MapPoint(10, 12), new MapPoint(11, 44), new MapPoint(12, 74), new MapPoint(0, 92), new MapPoint(0, 100), new MapPoint(6, 130), new MapPoint(12, 160), new MapPoint(8, 230), new MapPoint(30, 280), new MapPoint(8, 304), new MapPoint(0, 352), new MapPoint(0, 384) },
             new[] { new MapPoint(30, 280), new MapPoint(70, 300) },
             new[] { new MapPoint(0, 0), new MapPoint(-84, 12), new MapPoint(-128, 20), new MapPoint(-195, 30) },
-            new[] { new MapPoint(0, 0), new MapPoint(84, 20), new MapPoint(150, 50), new MapPoint(214, 72), new MapPoint(244, 66), new MapPoint(258, 100), new MapPoint(268, 124) },
+            new[] { new MapPoint(0, 0), new MapPoint(40, -8), new MapPoint(72, -15), new MapPoint(100, -6), new MapPoint(150, 50), new MapPoint(214, 72), new MapPoint(244, 66), new MapPoint(258, 100), new MapPoint(268, 124) },
             new[] { new MapPoint(0, 0), new MapPoint(0, -84), new MapPoint(14, -150), new MapPoint(24, -196), new MapPoint(40, -240) },
             new[] { new MapPoint(24, -196), new MapPoint(110, -190), new MapPoint(180, -170), new MapPoint(214, -164), new MapPoint(236, -178) },
         };

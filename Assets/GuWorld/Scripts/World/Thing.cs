@@ -312,7 +312,16 @@ namespace GuWorld.World
                     }
                     else if (use.Lines.Length > 0)
                     {
-                        Game.Ui.Talk(use.Lines, use.Finish);
+                        Game.Ui.Talk(use.Lines, () =>
+                        {
+                            use.Finish?.Invoke();
+
+                            // What was read may ask for an answer at once (the bowl under the hall).
+                            if (Game.Session.PendingChoice() != null)
+                            {
+                                Game.Ui.Show(Ui.Page.Choice);
+                            }
+                        });
                     }
                     else
                     {

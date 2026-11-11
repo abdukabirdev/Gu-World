@@ -108,6 +108,13 @@ namespace GuWorld.World
             domeRoot = Models.Part("Sky", transform, dome, skyMaterial, Vector3.zero, Vector3.one * 1200).transform;
             moonMaterial = new Material(Models.Glow(new Color(0.75f, 0.86f, 1f, 1f))) { name = "Moon", renderQueue = 2410 };
             moon = Models.Part("Moon", transform, Models.Quad, moonMaterial, Vector3.zero, Vector3.one * 150).transform;
+
+            foreach (var drawn in new[] { domeRoot, moon })
+            {
+                var renderer = drawn.GetComponent<MeshRenderer>();
+                renderer.shadowCastingMode = ShadowCastingMode.Off;
+                renderer.receiveShadows = false;
+            }
             Apply();
         }
 

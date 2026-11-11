@@ -788,6 +788,33 @@ namespace GuWorld.Actors
             var to = Target != null && FlatDistance(Target.transform.position) <= cast.Range + 3
                 ? Target.transform.position - aim * (Target.Radius + 1.2f)
                 : from + aim * cast.Range;
+
+            // Not up a cliff or through a wall: the leap stops where the ground turns too steep or something solid stands.
+            var path = to - from;
+            path.y = 0;
+            var reach = path.magnitude;
+
+            if (Physics.SphereCast(from + Vector3.up, 0.3f, path.normalized, out var wall, reach, ~0, QueryTriggerInteraction.Ignore) && wall.collider.GetComponentInParent<Actor>() == null)
+            {
+                reach = Mathf.Max(0, wall.distance - 0.4f);
+            }
+
+            var last = Game.Ground(from).y;
+
+            for (var gone = 1f; gone <= reach; gone += 1)
+            {
+                var here = Game.Ground(from + path.normalized * gone).y;
+
+                if (Mathf.Abs(here - last) > 1.3f)
+                {
+                    reach = gone - 1;
+                    break;
+                }
+
+                last = here;
+            }
+
+            to = from + path.normalized * reach;
             yield return new WaitForSeconds(0.08f);
             Teleport(Game.Ground(to) + Vector3.up * 0.1f);
             Effects.Bolt(from + Vector3.up, transform.position + Vector3.up, colour, 0.25f);
