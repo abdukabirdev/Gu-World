@@ -221,7 +221,7 @@ namespace GuWorld
                 Destroy(world);
             }
 
-            foreach (var loose in FindObjectsByType<Fade>(FindObjectsSortMode.None))
+            foreach (var loose in FindObjectsByType<Fade>())
             {
                 Destroy(loose.gameObject);
             }

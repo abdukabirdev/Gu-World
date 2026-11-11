@@ -50,7 +50,7 @@ namespace GuWorld.Actors
         /// <summary>An unlit see-through material for light: additive (a glow) or blended (a veil).</summary>
         public static Material Glow(Color colour, bool additive = true, Texture texture = null)
         {
-            var key = ColorUtility.ToHtmlStringRGBA(colour) + additive + (texture != null ? texture.GetInstanceID() : 0);
+            var key = ColorUtility.ToHtmlStringRGBA(colour) + additive + (texture != null ? texture.GetEntityId().ToString() : "0");
 
             if (!glow.TryGetValue(key, out var material))
             {
