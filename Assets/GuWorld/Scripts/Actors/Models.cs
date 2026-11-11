@@ -311,7 +311,7 @@ namespace GuWorld.Actors
             {
                 renderer.updateWhenOffscreen = false;
                 // Bounds that hold every pose, so nothing is culled mid-roll.
-                renderer.localBounds = new Bounds(new Vector3(0, 0.9f, 0), new Vector3(2.6f, 2.6f, 2.6f));
+                renderer.localBounds = new Bounds(new Vector3(0, 0.4f, 0), new Vector3(3.6f, 3.6f, 3.6f));
 
                 if (renderer.name.Contains("Body") && texture != null)
                 {
