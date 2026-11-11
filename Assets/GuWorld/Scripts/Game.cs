@@ -112,6 +112,7 @@ namespace GuWorld
             Rig = CameraRig.Make();
             DontDestroyOnLoad(Rig.gameObject);
             Atmosphere.Make(transform);
+            Sound.AudioDirector.Make(transform);
             Ui = new GameObject("Interface").AddComponent<Ui>();
             Ui.transform.SetParent(transform, false);
             Ui.Show(Ui.Page.Title);
@@ -179,15 +180,21 @@ namespace GuWorld
             var state = fresh ? null : ReadSave();
             Session = new Session(state ?? Session.NewGame("Лань"));
             Session.Toast += line => Ui.Toast(line);
-            Session.QuestStarted += quest => Ui.Banner(quest.Main ? "Новое задание" : "Поручение", quest.Title);
+            Session.QuestStarted += quest =>
+            {
+                Ui.Banner(quest.Main ? "Новое задание" : "Поручение", quest.Title);
+                Sound.AudioDirector.Play("quest", null, 0.7f, 0);
+            };
             Session.QuestDone += quest =>
             {
                 Ui.Banner("Задание выполнено", quest.Title);
+                Sound.AudioDirector.Play("quest_done", null, 0.8f, 0);
                 Save();
             };
             Session.Advanced += step =>
             {
                 Ui.Banner("Прорыв", Cultivation.Name(step));
+                Sound.AudioDirector.Play("breakthrough", null, 1, 0);
 
                 if (Hero != null)
                 {

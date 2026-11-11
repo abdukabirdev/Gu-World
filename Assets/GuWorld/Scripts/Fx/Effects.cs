@@ -312,6 +312,7 @@ namespace GuWorld.Fx
             if ((transform.position - target).sqrMagnitude < 0.3f)
             {
                 arrive?.Invoke();
+                Sound.AudioDirector.Play("coin", null, 0.35f, 0.15f);
                 Destroy(gameObject);
             }
         }

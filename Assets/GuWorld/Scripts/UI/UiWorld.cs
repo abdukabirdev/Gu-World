@@ -107,8 +107,11 @@ namespace GuWorld.UI
         {
             if (dialogue == null || !dialogue.Choose(index))
             {
+                Sound.AudioDirector.Play("error", null, 0.4f);
                 return;
             }
+
+            Sound.AudioDirector.Play("click", null, 0.4f);
 
             if (Open != Page.Dialogue)
             {
@@ -270,6 +273,8 @@ namespace GuWorld.UI
                 {
                     lastBatch = session.Brew(picked.Id);
                 }
+
+                Sound.AudioDirector.Play("brew", null, 0.7f);
 
                 Redraw();
             }
@@ -709,6 +714,22 @@ namespace GuWorld.UI
             var travelToggle = UiKit.Toggle(travel, settings.TravelCosts, on => { settings.TravelCosts = on; Redraw(); });
             travelToggle.anchorMin = travelToggle.anchorMax = new Vector2(1, 0.5f);
             travelToggle.anchoredPosition = new Vector2(-20, 0);
+
+            UiKit.Lbl("Звук", left, 11, UiKit.LabelGold).Size(18);
+            Volume(left, "Общая громкость", Sound.AudioDirector.Master, v => Sound.AudioDirector.SetVolumes(v, Sound.AudioDirector.Effects, Sound.AudioDirector.MusicVolume, Sound.AudioDirector.Beds));
+            Volume(left, "Музыка", Sound.AudioDirector.MusicVolume, v => Sound.AudioDirector.SetVolumes(Sound.AudioDirector.Master, Sound.AudioDirector.Effects, v, Sound.AudioDirector.Beds));
+            Volume(left, "Удары и Гу", Sound.AudioDirector.Effects, v => Sound.AudioDirector.SetVolumes(Sound.AudioDirector.Master, v, Sound.AudioDirector.MusicVolume, Sound.AudioDirector.Beds));
+            Volume(left, "Ветер, вода, лес", Sound.AudioDirector.Beds, v => Sound.AudioDirector.SetVolumes(Sound.AudioDirector.Master, Sound.AudioDirector.Effects, Sound.AudioDirector.MusicVolume, v));
+        }
+
+        static void Volume(RectTransform parent, string name, float value, Action<float> change)
+        {
+            var row = UiKit.Rect(name, parent);
+            row.Size(30);
+            UiKit.Label(name, row, 15, UiKit.Text).rectTransform.Place(Vector2.zero, new Vector2(0.4f, 1));
+            var slider = UiKit.Rect("Slider", row);
+            slider.Place(new Vector2(0.42f, 0), Vector2.one);
+            UiKit.Slider(slider, 0, 1, value, v => $"{Mathf.RoundToInt(v * 100)}%", change);
         }
     }
 }

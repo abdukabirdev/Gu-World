@@ -252,6 +252,12 @@ namespace GuWorld.Actors
         /// <summary>The pack hears one of its own.</summary>
         void Alert()
         {
+            // A beast that sees the hero calls out (not every one of a pack).
+            if (UnityEngine.Random.value < (Def.Boss ? 1 : 0.4f))
+            {
+                Sound.AudioDirector.Play(Core.Audio.Sounds.VoiceOf(Def), transform.position, Def.Boss ? 1 : 0.7f, 0.12f);
+            }
+
             foreach (var other in Living)
             {
                 if (other != this && other.alive && !other.aware && other.Group == Group && other.FlatDistance(transform.position) < 30)
@@ -888,6 +894,7 @@ namespace GuWorld.Actors
             body.enabled = false;
             Died?.Invoke(this);
             Game.EnemyKilled(this);
+            Sound.AudioDirector.Play("enemy_die", transform.position, Def.Boss ? 1 : 0.6f);
 
             if (rig != null && rig.Has("death"))
             {

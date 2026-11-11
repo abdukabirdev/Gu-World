@@ -33,6 +33,11 @@ static partial class Program
         SaveRoundTrip();
         var report = new List<string>();
 
+        if (Array.IndexOf(args, "audio") >= 0 || Array.IndexOf(args, "all") >= 0)
+        {
+            AudioChecks(repo, report);
+        }
+
         if (Array.IndexOf(args, "world") >= 0 || Array.IndexOf(args, "all") >= 0)
         {
             WorldChecks.Run(repo, Check, report);

@@ -19,7 +19,10 @@ namespace GuWorld.World
         public static Sky Sky { get; private set; } = Sky.Clear;
         /// <summary>How much of the weather is in the picture, 0 clear – 1 full (it eases from one sky to the next).</summary>
         public static float Gloom { get; private set; }
-        float flash;
+        static float flash;
+
+        /// <summary>The lightning's flash now, 0–1 (the thunder follows it).</summary>
+        public static float Flash => flash;
 
         Light sun;
         Mesh dome;

@@ -142,6 +142,80 @@ namespace GuWorld.World
         /// <summary>The distance to the nearest river's middle (the big world's rivers, or the valley's one).</summary>
         public static float RiverDistance(float x, float z) => Plan != null ? Plan.Waters.Distance(new Core.Gen.Vec2(x, z)) : DistanceTo(Valley.River, x, z, out _);
 
+        static readonly float[] stepWeights = new float[Core.Gen.Surface.Layers];
+
+        /// <summary>The sound of a step at a point: water, a bridge's planks, paving and paths, gravel and rock, mud, or grass.</summary>
+        public static string StepSound(Vector3 at)
+        {
+            if (Plan == null)
+            {
+                return RoadDistance(at.x, at.z) < 2.2f ? "step_stone" : "step_grass";
+            }
+
+            var p = new Core.Gen.Vec2(at.x, at.z);
+
+            if (Plan.Waters.Wet(p, out var level) && level > at.y - 0.2f)
+            {
+                return "step_water";
+            }
+
+            // On a bridge: higher than the ground under it, near the road over water.
+            if (at.y > HeightAt(at.x, at.z) + 0.6f)
+            {
+                return "step_wood";
+            }
+
+            var height = HeightAt(at.x, at.z);
+            System.Array.Clear(stepWeights, 0, stepWeights.Length);
+            Plan.Surface.Paint(p, height, Plan.Land.Slope(at.x, at.z), stepWeights);
+            var best = 0;
+
+            for (var i = 1; i < stepWeights.Length; i++)
+            {
+                if (stepWeights[i] > stepWeights[best])
+                {
+                    best = i;
+                }
+            }
+
+            switch (Core.Gen.Surface.LayerNames[best])
+            {
+                case "Flagstone":
+                case "Path": return "step_stone";
+                case "Rock":
+                case "Gravel": return "step_gravel";
+                case "Mud": return "step_mud";
+                case "Dirt":
+                case "Earth": return "step_gravel";
+                default: return "step_grass";
+            }
+        }
+
+        /// <summary>How far a point is from the nearest waterfall's foot (the valley's own fall on the small world).</summary>
+        public static float FallDistance(float x, float z)
+        {
+            var best = float.MaxValue;
+
+            if (Plan != null)
+            {
+                foreach (var fall in Plan.Waters.Falls)
+                {
+                    best = Mathf.Min(best, Vector2.Distance(new Vector2(x, z), new Vector2(fall.Foot.X, fall.Foot.Z)));
+                }
+            }
+            else
+            {
+                var place = Valley.Place("waterfall");
+
+                if (place != null)
+                {
+                    best = Vector2.Distance(new Vector2(x, z), new Vector2(place.At.X, place.At.Z));
+                }
+            }
+
+            return best;
+        }
+
         /// <summary>True if the solid ground under a point is there (on the big world, its tile is loaded).</summary>
         public static bool Ready(Vector3 at) => Plan == null || (Streamer.Instance != null && Streamer.Instance.Ready(at));
 

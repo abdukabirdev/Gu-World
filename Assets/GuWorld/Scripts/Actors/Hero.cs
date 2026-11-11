@@ -180,6 +180,26 @@ namespace GuWorld.Actors
         }
 
         float auraWait;
+        float stepWait;
+
+        /// <summary>A footstep now and then while running, by what is underfoot.</summary>
+        void Steps(float dt)
+        {
+            if (!Grounded)
+            {
+                return;
+            }
+
+            stepWait -= dt * (Sprinting ? 1.35f : 1) * Session.SpeedFactor;
+
+            if (stepWait > 0)
+            {
+                return;
+            }
+
+            stepWait = 0.36f;
+            Sound.AudioDirector.Play(World.Ground.StepSound(transform.position), transform.position, Sprinting ? 0.55f : 0.4f, 0.1f);
+        }
 
         /// <summary>A burning (or freezing) aura harms everything close, twice a second.</summary>
         void Aura(float dt)
@@ -264,6 +284,7 @@ namespace GuWorld.Actors
             if (moving)
             {
                 Face(wish, 720, dt);
+                Steps(dt);
             }
             else if (Target != null && sinceStrike < 2)
             {
@@ -371,6 +392,7 @@ namespace GuWorld.Actors
             invulnerable = 0.36f;
             SetMode(Mode.Rolling);
             Animate("roll", 0.06f, 1.1f, true);
+            Sound.AudioDirector.Play("roll", transform.position, 0.6f);
         }
 
         // ------------------------------------------------------------------ The palm
@@ -462,6 +484,8 @@ namespace GuWorld.Actors
                 Effects.Burst(enemy.Centre - to.normalized * enemy.Radius, new Color(1f, 0.95f, 0.8f), combo == 2 ? 1.8f : 1.1f, 0.18f);
                 hit = true;
             }
+
+            Sound.AudioDirector.Play(hit ? (combo == 2 ? "palm_heavy" : "palm") : "whoosh", transform.position + transform.forward, hit ? 1 : 0.5f);
 
             if (hit)
             {
@@ -557,6 +581,8 @@ namespace GuWorld.Actors
             {
                 return;
             }
+
+            Sound.AudioDirector.Play(cast.Skill.Shape == SkillShape.Heal ? "heal" : cast.Skill.Shape == SkillShape.Buff ? "buff" : Core.Audio.Sounds.CastOf(cast.Def.Path), transform.position, 0.9f);
 
             sinceStrike = 0;
             SinceFight = 0;
@@ -908,8 +934,11 @@ namespace GuWorld.Actors
             if (damage <= 0)
             {
                 Effects.Aura(transform, Color.white, 0.4f, 2.6f);
+                Sound.AudioDirector.Play("ward", transform.position, 0.8f);
                 return 0;
             }
+
+            Sound.AudioDirector.Play("hurt", transform.position, Mathf.Clamp(0.5f + damage / Session.Stats.MaxHealth * 3, 0.5f, 1));
 
             Game.Ui?.DamageNumber(transform.position + Vector3.up * 2, damage, false, true);
             Game.Ui?.Hurt();
@@ -922,6 +951,7 @@ namespace GuWorld.Actors
                 SetMode(Mode.Dead);
                 Target = null;
                 Animate("death", 0.1f, 1, true);
+                Sound.AudioDirector.Play("death", null, 1, 0);
                 Game.HeroDied();
                 return damage;
             }

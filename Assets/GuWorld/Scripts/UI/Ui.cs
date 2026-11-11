@@ -64,6 +64,18 @@ namespace GuWorld.UI
 
             var was = Open;
             Open = page;
+
+            if (Game.Playing && page != Page.Talk && page != Page.Dialogue)
+            {
+                if (was == Page.None && page != Page.None)
+                {
+                    Sound.AudioDirector.Play("open", null, 0.5f);
+                }
+                else if (was != Page.None && page == Page.None && was != Page.Talk && was != Page.Dialogue)
+                {
+                    Sound.AudioDirector.Play("close", null, 0.45f);
+                }
+            }
             born = Time.frameCount;
 
             if (Game.Playing || page == Page.None)

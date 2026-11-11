@@ -347,6 +347,7 @@ namespace GuWorld.World
             switch (use.Service)
             {
                 case "lantern":
+                    Sound.AudioDirector.Play("lantern", transform.position);
                     Game.Say(use.Message);
                     Effects.Pillar(transform.position, new Color(0.6f, 0.8f, 1f), 1.6f, 14, 0.8f);
                     Game.Save();
@@ -371,6 +372,7 @@ namespace GuWorld.World
                     Game.Ui.Show(Ui.Page.Fusion);
                     break;
                 case "door":
+                    Sound.AudioDirector.Play("door", null);
                     Game.Travel(Def.To);
                     break;
                 case "choose":
@@ -379,10 +381,12 @@ namespace GuWorld.World
                 default:
                     if (Def.Kind == ThingKind.Chest)
                     {
+                        Sound.AudioDirector.Play("chest", transform.position);
                         Effects.Pillar(transform.position, new Color(1f, 0.82f, 0.45f), 1.4f, 8, 0.8f);
                     }
                     else if (Def.Kind == ThingKind.Herb)
                     {
+                        Sound.AudioDirector.Play("pick", transform.position);
                         regrow = Def.Regrow > 0 ? Def.Regrow : 99999;
                         Population.Picked(Def.Id, regrow);
                         body.SetActive(false);
@@ -390,6 +394,7 @@ namespace GuWorld.World
                     }
                     else if (Def.Kind == ThingKind.Shrine)
                     {
+                        Sound.AudioDirector.Play("pray", null);
                         Game.Say(use.Message);
                         Effects.Pillar(transform.position, new Color(0.95f, 0.95f, 1f), 2, 16, 1f);
                         use.Finish?.Invoke();
