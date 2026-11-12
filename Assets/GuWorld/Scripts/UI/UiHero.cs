@@ -1,3 +1,4 @@
+using GuWorld.Actors;
 using System.Collections.Generic;
 using GuWorld.Core;
 using GuWorld.World;
@@ -13,7 +14,8 @@ namespace GuWorld.UI
         string pickedItem;
         string pickedQuest;
         static Texture2D mapTexture;
-        static readonly string[] SlotKeys = { "Q", "E", "R", "F", "Z", "C" };
+        /// <summary>The keys of the six active slots, as bound now.</summary>
+        static string[] SlotKeys => new[] { Bindings.LabelOf("slot1"), Bindings.LabelOf("slot2"), Bindings.LabelOf("slot3"), Bindings.LabelOf("slot4"), Bindings.LabelOf("slot5"), Bindings.LabelOf("slot6") };
 
         // ------------------------------------------------------------------ Aperture
 

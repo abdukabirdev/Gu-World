@@ -281,10 +281,10 @@ namespace GuWorld.Actors
             var moving = wish.sqrMagnitude > 0.01f;
             Moving = moving;
             // The guard (Ctrl held): slower, no sprint, a parry in its first instant.
-            var guarding = free && Grounded && (Keys.Held(Key.LeftCtrl) || Keys.Held(Key.RightCtrl));
+            var guarding = free && Grounded && Bindings.Held("guard");
             guardSince = guarding ? (Guarding ? guardSince + dt : 0) : 0;
             Guarding = guarding;
-            Sprinting = moving && free && !guarding && Keys.Held(Key.LeftShift) && Session.Stamina > 1 && Grounded;
+            Sprinting = moving && free && !guarding && Bindings.Held("sprint") && Session.Stamina > 1 && Grounded;
             // Cold and slowness drag, wind hastens.
             var speed = (Sprinting ? SprintSpeed : RunSpeed) * Session.SpeedFactor * (guarding ? 0.45f : 1);
             Walk(wish * speed, dt);
@@ -321,13 +321,13 @@ namespace GuWorld.Actors
                 return;
             }
 
-            if (Keys.Down(Key.Space) && Grounded)
+            if (Bindings.Down("jump") && Grounded)
             {
                 fallSpeed = 7.2f;
                 Animate("jump", 0.08f, 1, true);
             }
 
-            if ((Keys.RightDown || Keys.Down(Key.LeftAlt)) && Grounded)
+            if ((Keys.RightDown || Bindings.Down("roll")) && Grounded)
             {
                 TryRoll(wish);
                 return;
@@ -339,24 +339,24 @@ namespace GuWorld.Actors
                 return;
             }
 
-            if (Keys.Down(Key.Tab) || Keys.MiddleDown)
+            if (Bindings.Down("target") || Keys.MiddleDown)
             {
                 PickTarget();
             }
 
-            if (Keys.Down(Key.Q)) { TryCast(0); }
-            else if (Keys.Down(Key.E)) { TryCast(1); }
-            else if (Keys.Down(Key.R)) { TryCast(2); }
-            else if (Keys.Down(Key.F)) { TryCast(3); }
+            if (Bindings.Down("slot1")) { TryCast(0); }
+            else if (Bindings.Down("slot2")) { TryCast(1); }
+            else if (Bindings.Down("slot3")) { TryCast(2); }
+            else if (Bindings.Down("slot4")) { TryCast(3); }
             // The fourth and fifth ranks open two more slots.
-            else if (Keys.Down(Key.Z)) { TryCast(4); }
-            else if (Keys.Down(Key.C)) { TryCast(5); }
+            else if (Bindings.Down("slot5")) { TryCast(4); }
+            else if (Bindings.Down("slot6")) { TryCast(5); }
             // A killer move of the Gu slotted together.
-            else if (Keys.Down(Key.V)) { TryKillerMove(); }
+            else if (Bindings.Down("move")) { TryKillerMove(); }
             // The next killer move ready.
-            else if (Keys.Down(Key.X)) { NextKillerMove(); }
+            else if (Bindings.Down("next_move")) { NextKillerMove(); }
 
-            if (Keys.Down(Key.H))
+            if (Bindings.Down("heal"))
             {
                 if (Session.UseConsumable("heal_pill"))
                 {
@@ -370,7 +370,7 @@ namespace GuWorld.Actors
 
             absorbWait -= dt;
 
-            if (Keys.Held(Key.G) && absorbWait <= 0)
+            if (Bindings.Held("absorb") && absorbWait <= 0)
             {
                 absorbWait = 0.45f;
 
@@ -378,13 +378,13 @@ namespace GuWorld.Actors
                 {
                     Effects.Aura(transform, new Color(0.5f, 0.88f, 0.78f), 0.5f, 1.6f);
                 }
-                else if (Keys.Down(Key.G))
+                else if (Bindings.Down("absorb"))
                 {
                     Note(Session.State.Stones > 0 ? "Апертура полна" : "Первобытных камней нет");
                 }
             }
 
-            if (Keys.Down(Key.T))
+            if (Bindings.Down("use"))
             {
                 Game.Interact();
             }
@@ -456,7 +456,7 @@ namespace GuWorld.Actors
                 comboQueued = true;
             }
 
-            if (free && (Keys.RightDown || Keys.Down(Key.LeftAlt)) && t > StrikeAt[combo])
+            if (free && (Keys.RightDown || Bindings.Down("roll")) && t > StrikeAt[combo])
             {
                 TryRoll(MoveWish());
                 return;

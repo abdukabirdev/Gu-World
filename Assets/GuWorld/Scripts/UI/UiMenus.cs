@@ -110,6 +110,7 @@ namespace GuWorld.UI
             var keys = middle.gameObject.AddComponent<MenuKeys>();
             keys.Add(UiKit.Entry("Продолжить", null, middle, Close).Centre());
             keys.Add(UiKit.Entry("Управление", null, middle, () => Show(Page.Help)).Centre());
+            keys.Add(UiKit.Entry("Клавиши", "Сменить клавиши действий", middle, () => Show(Page.Controls)).Centre());
             keys.Add(World.Aperture.Inside
                 ? UiKit.Entry("Покинуть апертуру", "Всё вернётся, как было", middle, () => { Close(); World.Aperture.Leave(); }).Centre()
                 : UiKit.Entry("Апертура бессмертного", "Полигон: любые Гу, ранги и приёмы, ничего не считается", middle, () => { Close(); World.Aperture.Enter(); }).Centre());

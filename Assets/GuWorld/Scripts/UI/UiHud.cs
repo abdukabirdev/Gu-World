@@ -114,7 +114,7 @@ namespace GuWorld.UI
             slots.At(new Vector2(0.5f, 0), new Vector2(0, 64), new Vector2(680, 72));
             var slotRow = slots.Stack<HorizontalLayoutGroup>(14, null, TextAnchor.MiddleCenter);
             slotRow.childForceExpandWidth = false;
-            var keys = new[] { "Q", "E", "R", "F", "Z", "C" };
+            var keys = new[] { Bindings.LabelOf("slot1"), Bindings.LabelOf("slot2"), Bindings.LabelOf("slot3"), Bindings.LabelOf("slot4"), Bindings.LabelOf("slot5"), Bindings.LabelOf("slot6") };
 
             for (var i = 0; i < keys.Length; i++)
             {
@@ -130,7 +130,7 @@ namespace GuWorld.UI
             // The killer move on V (shown once one is known).
             moveCell = UiKit.Cell(slots, 60);
             moveCell.Size(60, 60, 0);
-            moveCell.Key.text = "V";
+            moveCell.Key.text = Bindings.LabelOf("move");
             moveCell.Mark.enabled = false;
             moveSeal = UiKit.Zh("", moveCell.transform, 30, UiKit.Gold, TextAnchor.MiddleCenter);
             moveSeal.rectTransform.Fill();
