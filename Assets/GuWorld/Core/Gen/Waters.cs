@@ -96,7 +96,7 @@ namespace GuWorld.Core.Gen
                     free *= Noise.Smooth(60, 260, Vec2.Distance(pin, points[i]));
                 }
 
-                var push = noise.Fbm(gone / 260f, def.Id.GetHashCode() % 997 * 0.37f, 3) * def.Meander * 2.2f * free;
+                var push = noise.Fbm(gone / 260f, Noise.Stable(def.Id) % 997 * 0.37f, 3) * def.Meander * 2.2f * free;
                 river.Points.Add(points[i] + forward.Right * push);
             }
 

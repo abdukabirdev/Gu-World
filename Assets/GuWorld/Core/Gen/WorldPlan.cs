@@ -12,7 +12,7 @@ namespace GuWorld.Core.Gen
     public sealed class WorldPlan
     {
         /// <summary>Changes whenever the generator's results would change (a save of generated data made by another version is not trusted).</summary>
-        public const string Version = "gw2-world-2";
+        public const string Version = "gw2-world-3";
 
         public readonly Land Land;
         public readonly Waters Waters;

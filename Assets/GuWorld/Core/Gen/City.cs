@@ -378,6 +378,10 @@ namespace GuWorld.Core.Gen
                 }
             }
 
+            // ---------------------------------------------------------------- Things made in code
+
+            CodeThings(plan, placed, index, streets, ground, waters, ref rng);
+
             // ---------------------------------------------------------------- Fields beyond the outskirts
 
             for (var i = 0; i < 90; i++)
@@ -417,6 +421,153 @@ namespace GuWorld.Core.Gen
 
             return plan;
         }
+
+        /// <summary>
+        /// The town's furniture made in code: memorial archways where the avenues enter the clan's middle and
+        /// leave the town, a ring of market stalls round the square and more at the crossings (each a spot
+        /// for a trader), strings of lanterns across the lanes of the inner districts, hand carts by the
+        /// granaries and the shops, a pagoda and a drum tower among the halls.
+        /// </summary>
+        static void CodeThings(SettlementPlan plan, List<Box> placed, ShapeIndex<Box> index, SegmentIndex streets, IGround ground, Waters waters, ref Rng rng)
+        {
+            var def = plan.Def;
+
+            // Archways over the avenues: one where each enters the middle, one where it leaves the town.
+            foreach (var street in plan.Streets)
+            {
+                if (!street.Main)
+                {
+                    continue;
+                }
+
+                var length = Lines.Length(street.Points);
+
+                foreach (var wanted in new[] { def.Core + 16, def.Radius - 40 })
+                {
+                    // Walk the avenue for the point nearest the wanted distance from the middle.
+                    var best = -1f;
+                    var bestError = float.MaxValue;
+
+                    for (var along = 4f; along < length - 4; along += 4)
+                    {
+                        var error = Math.Abs(Vec2.Distance(Lines.At(street.Points, along, out _), plan.Centre) - wanted);
+
+                        if (error < bestError)
+                        {
+                            bestError = error;
+                            best = along;
+                        }
+                    }
+
+                    if (best < 0 || bestError > 12)
+                    {
+                        continue;
+                    }
+
+                    var p = Lines.At(street.Points, best, out var direction);
+                    var big = wanted < def.Radius * 0.5f;
+                    Place(plan, placed, index, streets, ground, waters, Code(big ? "paifang:0" : "paifang:1"), p, direction.Yaw, "prop", 0.2f, false, true);
+                }
+            }
+
+            // Stalls in a ring round the square, facing in.
+            var ringRadius = def.Core + 11;
+            var stalls = 0;
+
+            for (var i = 0; i < 48; i++)
+            {
+                var angle = i * 7.5f + rng.Range(-1.5f, 1.5f);
+                var at = plan.Centre + Vec2.FromYaw(angle) * ringRadius;
+                var yaw = (plan.Centre - at).Yaw;
+
+                if (Place(plan, placed, index, streets, ground, waters, Code("stall:" + rng.Range(0, 6)), at, yaw, "stall", 0.4f, false))
+                {
+                    stalls++;
+                }
+            }
+
+            // Stalls at the crossings of the town (two or three round each, facing the crossing).
+            foreach (var street in plan.Streets)
+            {
+                foreach (var end in new[] { street.Points[0], street.Points[street.Points.Count - 1] })
+                {
+                    var fromMiddle = Vec2.Distance(end, plan.Centre);
+
+                    if (fromMiddle < def.Core + 30 || fromMiddle > 300 || !rng.Chance(0.3f))
+                    {
+                        continue;
+                    }
+
+                    for (var k = 0; k < 3; k++)
+                    {
+                        var at = end + Vec2.FromYaw(rng.Range(0f, 360f)) * rng.Range(7f, 10f);
+
+                        if (Place(plan, placed, index, streets, ground, waters, Code("stall:" + rng.Range(0, 6)), at, (end - at).Yaw, "stall", 0.4f, false))
+                        {
+                            stalls++;
+                        }
+                    }
+                }
+            }
+
+            // Lanterns across the lanes of the clan's and the town's districts.
+            foreach (var street in plan.Streets)
+            {
+                if (street.Main)
+                {
+                    continue;
+                }
+
+                var length = Lines.Length(street.Points);
+
+                for (var along = 10f; along < length - 10; along += rng.Range(26f, 44f))
+                {
+                    var p = Lines.At(street.Points, along, out var direction);
+
+                    if (Vec2.Distance(p, plan.Centre) > 300)
+                    {
+                        continue;
+                    }
+
+                    var variant = street.HalfWidth > 3 ? 1 : 0;
+                    Place(plan, placed, index, streets, ground, waters, Code("lanterns:" + variant), p, direction.Yaw + 90, "prop", 0.05f, false, true);
+                }
+            }
+
+            // Carts by the granaries and some shops.
+            foreach (var building in plan.Buildings.ToArray())
+            {
+                var granary = building.Model == "prop_granary";
+                var shop = building.Role == "shop";
+
+                if (!(granary || shop && rng.Chance(0.25f)))
+                {
+                    continue;
+                }
+
+                var side = Vec2.FromYaw(building.Yaw + 90) * (building.Footprint.Half.X + 2.2f) * (rng.Chance(0.5f) ? 1 : -1);
+                Place(plan, placed, index, streets, ground, waters, Code("cart:" + rng.Range(0, 3)), building.Footprint.Centre + side, building.Yaw + rng.Range(-20f, 20f), "prop", 0.3f, false);
+            }
+
+            // A pagoda and a drum tower among the halls.
+            foreach (var (model, from, to) in new[] { ("pagoda:1", def.Core + 60, def.Core + 160f), ("drum_tower:0", def.Core + 25, def.Core + 70f) })
+            {
+                for (var attempt = 0; attempt < 120; attempt++)
+                {
+                    var at = plan.Centre + Vec2.FromYaw(rng.Range(0f, 360f)) * rng.Range(from, to);
+
+                    if (Place(plan, placed, index, streets, ground, waters, Code(model), at, (plan.Centre - at).Yaw, "landmark", 1.5f))
+                    {
+                        break;
+                    }
+                }
+            }
+
+            plan.Stalls = stalls;
+        }
+
+        /// <summary>The name of a model made in code ("code:kind:variant").</summary>
+        static string Code(string kindAndVariant) => "code:" + kindAndVariant;
 
         /// <summary>True if a street passes under a box: its corners, the middles of its sides, its middle and (for a big one) a grid inside.</summary>
         static bool OnStreet(SettlementPlan plan, SegmentIndex streets, Box box)

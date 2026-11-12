@@ -246,6 +246,20 @@ namespace GuWorld.World
 
             parts = new List<Batch>();
             farParts[model] = parts;
+
+            // A model made in code is one mesh with one material.
+            if (CodeProp.Is(model))
+            {
+                var mesh = CodeProp.Mesh(model);
+
+                if (mesh != null)
+                {
+                    parts.Add(new Batch { Mesh = mesh, Submesh = 0, Material = CodeProp.Material, Local = Matrix4x4.identity });
+                }
+
+                return parts;
+            }
+
             var prefab = Resources.Load<GameObject>("Build/" + model);
 
             if (prefab == null)

@@ -39,6 +39,11 @@ static partial class Program
             AudioChecks(repo, report);
         }
 
+        if (Array.IndexOf(args, "props") >= 0 || Array.IndexOf(args, "world") >= 0 || Array.IndexOf(args, "all") >= 0)
+        {
+            PropChecks.Run(repo, Check, report);
+        }
+
         if (Array.IndexOf(args, "world") >= 0 || Array.IndexOf(args, "all") >= 0)
         {
             WorldChecks.Run(repo, Check, report);

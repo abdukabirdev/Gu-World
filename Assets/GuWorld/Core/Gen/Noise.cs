@@ -195,6 +195,25 @@ namespace GuWorld.Core.Gen
         public static float SmoothMax(float a, float b, float k) => -SmoothMin(-a, -b, k);
 
         /// <summary>A well-mixed 32-bit hash of two integers and a seed.</summary>
+        /// <summary>
+        /// A hash of a name that is the same in every run and every runtime (the framework's string hash is
+        /// randomised per process in .NET and differs between runtimes, so the world must not hang on it).
+        /// </summary>
+        public static int Stable(string text)
+        {
+            unchecked
+            {
+                var hash = 2166136261u;
+
+                foreach (var c in text ?? "")
+                {
+                    hash = (hash ^ c) * 16777619u;
+                }
+
+                return (int)(hash & 0x7FFFFFFF);
+            }
+        }
+
         public static int Hash(int x, int z, int seed)
         {
             unchecked

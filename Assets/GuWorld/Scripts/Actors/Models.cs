@@ -437,6 +437,11 @@ namespace GuWorld.Actors
         /// <summary>One of the artist's models (Resources/Build), with its colliders and its levels of detail.</summary>
         public static GameObject Prefab(string model, Transform parent, Vector3 at, float yaw, float scale = 1)
         {
+            if (CodeProp.Is(model))
+            {
+                return CodeProp.Make(model, parent, at, yaw, scale);
+            }
+
             var prefab = Resources.Load<GameObject>("Build/" + model);
 
             if (prefab == null)

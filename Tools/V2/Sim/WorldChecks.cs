@@ -125,7 +125,11 @@ static class WorldChecks
                 check(settlement.Population >= 3000 && settlement.Population <= 6500, $"world: {settlement.Def.Id} houses 3–6 thousand people ({settlement.Population})");
                 check(settlement.Buildings.Select(b => b.Model).Distinct().Count() >= 30, $"world: {settlement.Def.Id} is built of many models ({settlement.Buildings.Select(b => b.Model).Distinct().Count()})");
                 report.Add($"  town {settlement.Def.Id}: {settlement.Buildings.Count} buildings ({houses} houses), {settlement.Population} people, {settlement.Streets.Count} streets, {settlement.Fields.Count} fields, " +
-                           string.Join(", ", settlement.Buildings.Where(b => b.Footprint.Radius > 15).Select(b => b.Model).Distinct()));
+                           string.Join(", ", settlement.Buildings.Where(b => b.Footprint.Radius > 15 && !b.Model.StartsWith("code:")).Select(b => b.Model).Distinct()));
+                var made = settlement.Buildings.Where(b => b.Model.StartsWith("code:")).GroupBy(b => b.Model.Split(':')[1]).OrderBy(g => g.Key).Select(g => $"{g.Key} {g.Count()}");
+                report.Add($"  town {settlement.Def.Id}, made in code: " + string.Join(", ", made));
+                check(settlement.Stalls >= 20, $"world: {settlement.Def.Id} has a market ({settlement.Stalls} stalls)");
+                check(settlement.Buildings.Count(b => b.Model.StartsWith("code:paifang")) >= 2, $"world: {settlement.Def.Id} has archways over its avenues");
                 continue;
             }
 

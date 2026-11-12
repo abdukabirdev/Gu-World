@@ -133,7 +133,28 @@ namespace GuWorld.Core
                 }
             }
 
-            return byId.TryGetValue(id ?? "", out footprint);
+            if (byId.TryGetValue(id ?? "", out footprint))
+            {
+                return true;
+            }
+
+            // A model made in code ("code:kind:variant"): its footprint from the kit, kept once asked.
+            if (id != null && id.StartsWith("code:", System.StringComparison.Ordinal))
+            {
+                var parts = id.Substring(5).Split(':');
+                var variant = parts.Length > 1 && int.TryParse(parts[1], out var v) ? v : 0;
+
+                if (System.Array.Exists(Gen.Props.Kinds, k => k.id == parts[0]))
+                {
+                    var (width, depth) = Gen.Props.Footprint(parts[0], variant);
+                    footprint = new Footprint(id, parts[0], width, depth, Gen.Props.Height(parts[0], variant), 0, 0);
+                    byId[id] = footprint;
+
+                    return true;
+                }
+            }
+
+            return false;
         }
 
         public static Footprint Get(string id) => TryGet(id, out var footprint) ? footprint : new Footprint(id, id, 4, 4, 4, 0, 0);

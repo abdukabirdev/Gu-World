@@ -45,6 +45,8 @@ namespace GuWorld.Core.Gen
         public readonly List<Placed> Buildings = new List<Placed>();
         public readonly List<Box> Fields = new List<Box>();
         public readonly List<Spot> Spots = new List<Spot>();
+        /// <summary>Market stalls made in code (each a spot with the role "stall" for a trader).</summary>
+        public int Stalls;
         public readonly List<(Vec2 at, float yaw)> Gates = new List<(Vec2, float)>();
 
         /// <summary>The ground under a town's houses, each levelled to its own height (none for a village, which is levelled whole).</summary>
