@@ -528,6 +528,7 @@ static partial class Program
 
         var lent2 = hm.SandboxGive("moonglow", 0);
         Check(hm.WhyNoTemper(lent2) != null && hm.WhyNoReforge(lent2, 0) != null && hm.TwinsOf(lent2).Count == 0, "a lent Gu is not tempered, reforged or fed");
+        Check(!hm.SellGu(lent2.Uid) && Recipes.All.All(rc => hm.FusionInputs(rc, out _) == null), "a lent Gu is not sold, and nothing is fused in the aperture");
         hm.LeaveSandbox();
 
         // ------------------------------------------------------------------ Reactions of statuses

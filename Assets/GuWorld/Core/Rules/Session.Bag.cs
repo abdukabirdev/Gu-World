@@ -541,6 +541,13 @@ namespace GuWorld.Core
                 return null;
             }
 
+            // What is made in the aperture would outlive it, and what is spent there would be gone for good.
+            if (InSandbox)
+            {
+                why = "В апертуре бессмертного не сливают";
+                return null;
+            }
+
             if (GuBook.Get(recipe.Result).Rank > Rank)
             {
                 why = $"Нужен ранг {GuBook.RankNumerals[GuBook.Get(recipe.Result).Rank]}";
@@ -720,7 +727,7 @@ namespace GuWorld.Core
         {
             var gu = FindGu(uid);
 
-            if (gu == null || GuBook.Get(gu.Def).Price <= 0)
+            if (gu == null || gu.Borrowed || GuBook.Get(gu.Def).Price <= 0)
             {
                 return false;
             }

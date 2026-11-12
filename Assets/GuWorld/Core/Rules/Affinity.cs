@@ -15,8 +15,6 @@ namespace GuWorld.Core
         public const float Weak = 1.35f;
         public const float Strong = 0.65f;
 
-        static readonly Dictionary<string, (GuPath[] weak, GuPath[] strong)> cache = new Dictionary<string, (GuPath[], GuPath[])>();
-
         public static (GuPath[] weak, GuPath[] strong) Of(EnemyDef enemy)
         {
             if (enemy == null)
@@ -24,14 +22,11 @@ namespace GuWorld.Core
                 return (new GuPath[0], new GuPath[0]);
             }
 
-            var key = enemy.Id + "|" + enemy.Elite;
+            var known = enemy.AffinityCache;
 
-            lock (cache)
+            if (known != null)
             {
-                if (cache.TryGetValue(key, out var known))
-                {
-                    return known;
-                }
+                return (known.Item1, known.Item2);
             }
 
             var weak = new List<GuPath>();
@@ -144,14 +139,9 @@ namespace GuWorld.Core
                 case "stone": S(GuPath.Wind, GuPath.Moon); W(GuPath.Strength); break;
             }
 
-            var result = (weak.ToArray(), strong.ToArray());
+            enemy.AffinityCache = Tuple.Create(weak.ToArray(), strong.ToArray());
 
-            lock (cache)
-            {
-                cache[key] = result;
-            }
-
-            return result;
+            return (enemy.AffinityCache.Item1, enemy.AffinityCache.Item2);
         }
 
         /// <summary>The factor a blow of a path makes against a creature (and +1 weak, −1 strong, 0).</summary>

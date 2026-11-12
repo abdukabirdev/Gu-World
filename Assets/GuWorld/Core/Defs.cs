@@ -251,7 +251,16 @@ namespace GuWorld.Core
     public class EnemyDef
     {
         /// <summary>A copy to make an elite of (the arrays are shared: they are not changed).</summary>
-        public EnemyDef Clone() => (EnemyDef)MemberwiseClone();
+        public EnemyDef Clone()
+        {
+            var copy = (EnemyDef)MemberwiseClone();
+            copy.AffinityCache = null;
+
+            return copy;
+        }
+
+        /// <summary>What it fears and shrugs off, worked out once by <see cref="Affinity"/>.</summary>
+        internal Tuple<GuPath[], GuPath[]> AffinityCache;
 
         /// <summary>The elite this is ("" for an ordinary one; see Elites).</summary>
         public string Elite = "";

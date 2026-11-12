@@ -134,7 +134,7 @@ namespace GuWorld.Core
         {
             var gu = FindGu(uid);
 
-            if (!OwnsAnyHome || gu == null || InNursery(uid) || State.Nursery.Count >= NurserySize)
+            if (!OwnsAnyHome || gu == null || gu.Borrowed || InNursery(uid) || State.Nursery.Count >= NurserySize)
             {
                 return false;
             }
