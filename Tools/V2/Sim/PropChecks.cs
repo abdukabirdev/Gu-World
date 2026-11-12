@@ -1,6 +1,7 @@
 using System;
 using System.Collections.Generic;
 using System.IO;
+using GuWorld.Core;
 using GuWorld.Core.Gen;
 
 /// <summary>
@@ -47,6 +48,39 @@ static class PropChecks
             }
         }
 
+        // The rooms' shells (seen from inside, so a share of their faces turn away from a camera outside: not counted).
+        foreach (var room in Interiors.All)
+        {
+            var shell = Props.Room(room.Width, room.Depth, room.Height, room.Style);
+            check(shell.TriangleCount > 0 && shell.TriangleCount < 24000, $"room {room.Id}: {shell.TriangleCount} triangles");
+
+            foreach (var (model, x, z, yaw) in room.Furniture)
+            {
+                check(Catalog.TryGet(model, out var footprint), $"room {room.Id}: {model} is a model");
+                var turned = Math.Abs(Math.Abs(yaw) - 90) < 1;
+                var across = turned ? footprint.Deep : footprint.Across;
+                var deep = turned ? footprint.Across : footprint.Deep;
+                check(Math.Abs(x) + across * 0.5f <= room.Width / 2 + 0.2f && Math.Abs(z) + deep * 0.5f <= room.Depth / 2 + 0.2f, $"room {room.Id}: {model} stands inside");
+            }
+        }
+
+        // The rooms seen from inside, from the door: a sheet of their own.
+        var roomsRgb = new byte[Tile * 2 * Tile * 2 * 3];
+        var roomWrong = 0;
+        var roomTotal = 0;
+
+        for (var i = 0; i < Interiors.All.Length && i < 4; i++)
+        {
+            var room = Interiors.All[i];
+            var shell = Props.Room(room.Width, room.Depth, room.Height, room.Style);
+            var (w, t) = Draw(shell, roomsRgb, Tile * 2, (i % 2) * Tile, (i / 2) * Tile, new V3(0, 0, 1), true, new V3(room.Width * 0.3f, 1.7f, -room.Depth / 2 + 1.2f), new V3(-room.Width * 0.1f, room.Height * 0.45f, room.Depth / 2));
+            roomWrong += w;
+            roomTotal += t;
+        }
+
+        WorldChecks.WritePng(Path.Combine(repo, "Logs", "V2", "rooms.png"), Tile * 2, Tile * 2, roomsRgb);
+        check(roomWrong < roomTotal * 0.02f, $"rooms: seen from inside, their faces turn the right way ({roomWrong} of {roomTotal})");
+
         // The ground's growth too (not checked against footprints: they are tufts).
         for (var kind = 0; kind < Grass.Kinds; kind++)
         {
@@ -85,7 +119,7 @@ static class PropChecks
     }
 
     /// <summary>Draws a mesh into its tile; returns the pixels drawn by back faces and all pixels drawn.</summary>
-    static (int wrong, int total) Draw(MeshData mesh, byte[] rgb, int stride, int ox, int oy, V3 view, bool paint)
+    static (int wrong, int total) Draw(MeshData mesh, byte[] rgb, int stride, int ox, int oy, V3 view, bool paint, V3? eyeAt = null, V3? lookAt = null)
     {
         var depth = new float[Tile * Tile];
         var back = new bool[Tile * Tile];
@@ -107,11 +141,11 @@ static class PropChecks
         var centre = new V3((minX + maxX) / 2, (minY + maxY) / 2, (minZ + maxZ) / 2);
         var radius = Math.Max(0.5f, new V3(maxX - minX, maxY - minY, maxZ - minZ).Length / 2);
         // The camera before the model (it faces +z), to its right and above.
-        var eye = centre + view.Normalized * (radius * 2.6f);
-        var forward = (centre - eye).Normalized;
+        var eye = eyeAt ?? centre + view.Normalized * (radius * 2.6f);
+        var forward = ((lookAt ?? centre) - eye).Normalized;
+        var focal = Tile * (eyeAt != null ? 0.5f : 1.05f);
         var right = V3.Cross(V3.Up, forward).Normalized;
         var up = V3.Cross(forward, right);
-        var focal = Tile * 1.05f;
         var sun = new V3(0.45f, 0.8f, 0.35f).Normalized;
 
         (float x, float y, float z) Project(int v)

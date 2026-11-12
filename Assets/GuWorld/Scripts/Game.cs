@@ -172,7 +172,7 @@ namespace GuWorld
         public static void Save()
         {
             // Nothing of the immortal aperture is kept: the save waits until the hero is back.
-            if (AutoTest.On || Session == null || !Playing || Session.Dead || Session.InSandbox)
+            if (AutoTest.On || Session == null || !Playing || Session.Dead || Session.InSandbox || World.Rooms.Inside)
             {
                 return;
             }
@@ -475,6 +475,13 @@ namespace GuWorld
                 nearby = World.Aperture.Instance;
                 Prompt = World.Aperture.Prompt;
             }
+
+            // The way out of a room.
+            if (World.Rooms.Prompt != null)
+            {
+                nearby = Ui;
+                Prompt = World.Rooms.Prompt;
+            }
         }
 
         public static void Interact()
@@ -497,6 +504,10 @@ namespace GuWorld
                 var stall = folk.AtStall(walker) ? Core.Chatter.ShelfOf(walker.Stall) : null;
                 var (name, _) = Core.Chatter.Who(walker);
                 Ui.Talk(lines, stall == null ? (System.Action)null : () => Ui.OpenShop(stall, "Лоток · " + name, "gu_yue"));
+            }
+            else if (World.Rooms.Prompt != null)
+            {
+                World.Rooms.Leave();
             }
             else if (Instance.nearby is World.Aperture)
             {

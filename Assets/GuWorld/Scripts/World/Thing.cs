@@ -29,7 +29,7 @@ namespace GuWorld.World
                     case ThingKind.FusionAltar: return "Слияние";
                     case ThingKind.Chest: return "Открыть";
                     case ThingKind.Herb: return "Собрать";
-                    case ThingKind.Door: return "Войти";
+                    case ThingKind.Door: return Def.Content.StartsWith("interior:") ? "Войти внутрь" : "Войти";
                     case ThingKind.Furnace: return "Варить пилюли";
                     case ThingKind.Board: return "Прочесть поручения";
                     case ThingKind.Lore: return "Прочесть";
@@ -182,6 +182,12 @@ namespace GuWorld.World
                     glow.AddComponent<Billboard>();
                     break;
                 }
+
+                case ThingKind.Door when Def.Content.StartsWith("interior:"):
+                    // A building's door: only a warm light over the step.
+                    Reach = 1.2f;
+                    Lamp(t, new Color(1f, 0.75f, 0.45f), 2.6f, 6, 1.4f);
+                    break;
 
                 case ThingKind.Door:
                 {
@@ -390,6 +396,13 @@ namespace GuWorld.World
                     Game.Ui.Show(Ui.Page.Fusion);
                     break;
                 case "door":
+                    // A door into a building's room, or a door to elsewhere in the world.
+                    if (Def.Content.StartsWith("interior:"))
+                    {
+                        Rooms.Enter(Def.Content.Substring(9), transform.position, transform.eulerAngles.y);
+                        break;
+                    }
+
                     Sound.AudioDirector.Play("door", null);
                     Game.Travel(Def.To);
                     break;

@@ -119,6 +119,12 @@ namespace GuWorld.Core
                 Chest("heart_tree", "Сердце под корнями", "heart_tree", "great_tree", 80, 0.3f, "rank>=4", "Под корнями светится зелёным. Корни не пускают того, кто не мастер."),
                 new ThingDef { Id = "chest_fort", Name = "Погреб атамана", Kind = ThingKind.Chest, Content = "chest_fort", Home = "bandit_fort", Role = "plaza", At = Regions.Settlement("bandit_fort").At, Needs = "item:fort_key", Locked = "Погреб на замке. Ключ у атамана." },
                 new ThingDef { Id = "chest_bai_vault", Name = "Хранилище Бай", Kind = ThingKind.Chest, Content = "chest_bai_vault", Home = "bai_village", Role = "nursery", At = Regions.Settlement("bai_village").At, Needs = "item:bai_vault_key", Locked = "Хранилище клана. Чужим нельзя." },
+                // The doors into the great buildings' rooms (Content: the room).
+                new ThingDef { Id = "door_clan_hall", Name = "Двери главного зала", Kind = ThingKind.Door, Content = "interior:clan_hall", Home = "gu_yue", Role = "hall", At = Regions.Settlement("gu_yue").At },
+                new ThingDef { Id = "door_academy", Name = "Двери академии", Kind = ThingKind.Door, Content = "interior:academy", Home = "gu_yue", Role = "academy", At = Regions.Settlement("gu_yue").At },
+                new ThingDef { Id = "door_inn_room", Name = "Двери постоялого двора", Kind = ThingKind.Door, Content = "interior:inn_room", Home = "gu_yue", Role = "inn", At = Regions.Settlement("gu_yue").At },
+                new ThingDef { Id = "door_nursery_hall", Name = "Двери питомника", Kind = ThingKind.Door, Content = "interior:nursery_hall", Home = "gu_yue", Role = "nursery", At = Regions.Settlement("gu_yue").At },
+
                 // Houses for sale: the price is in Content.
                 new ThingDef { Id = "home_gu_yue", Name = "Дом во дворе у академии", Kind = ThingKind.Home, Content = "900", Home = "gu_yue", Role = "house", At = Regions.Settlement("gu_yue").At },
                 new ThingDef { Id = "home_bai", Name = "Дом у белого пруда", Kind = ThingKind.Home, Content = "1400", Home = "bai_village", Role = "house", At = Regions.Settlement("bai_village").At, Needs = "standing:bai=friendly", Locked = "Бай не продают дома тем, кого не знают." },

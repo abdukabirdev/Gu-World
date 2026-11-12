@@ -166,7 +166,8 @@ static partial class Program
             }
             else if (thing.Kind == ThingKind.Door)
             {
-                Check(InWorld(thing.To) && thing.To.DistanceTo(thing.At) > 30, $"door {thing.Id} leads somewhere");
+                // A door into a room leads to that room; any other to a place of the world.
+                Check(thing.Content.StartsWith("interior:") ? Interiors.Get(thing.Content.Substring(9)) != null : InWorld(thing.To) && thing.To.DistanceTo(thing.At) > 30, $"door {thing.Id} leads somewhere");
             }
         }
 

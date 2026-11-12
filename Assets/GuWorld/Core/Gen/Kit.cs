@@ -161,6 +161,32 @@ namespace GuWorld.Core.Gen
             Quad(new V3(x1, y0, z0), new V3(x1, y1, z0), new V3(x1, y1, z1), new V3(x1, y0, z1), side);
         }
 
+        /// <summary>
+        /// A box cut into tiles of about `tile` metres along its two long sides (for a big surface lit by
+        /// lights near it: the light is worked out at the corners, so a wall of one piece would be dark).
+        /// </summary>
+        public void Tiled(float x, float y, float z, float width, float height, float depth, float tile, Tint? tint = null)
+        {
+            var nx = Math.Max(1, (int)Math.Round(width / tile));
+            var ny = Math.Max(1, (int)Math.Round(height / tile));
+            var nz = Math.Max(1, (int)Math.Round(depth / tile));
+
+            // Only along the dimensions that are long (a wall is thin one way).
+            if (width < tile * 0.5f) nx = 1;
+            if (depth < tile * 0.5f) nz = 1;
+
+            for (var i = 0; i < nx; i++)
+            {
+                for (var j = 0; j < ny; j++)
+                {
+                    for (var l = 0; l < nz; l++)
+                    {
+                        Box(x - width / 2 + (i + 0.5f) * width / nx, y + j * height / ny, z - depth / 2 + (l + 0.5f) * depth / nz, width / nx, height / ny, depth / nz, tint);
+                    }
+                }
+            }
+        }
+
         /// <summary>A beam of a square section `thick` × `deep` from one point to another (its "up" kept as near the vertical as it can be).</summary>
         public void Beam(V3 from, V3 to, float thick, float deep, Tint? tint = null)
         {

@@ -678,6 +678,96 @@ namespace GuWorld.Core.Gen
             return k.Mesh;
         }
 
+        // ------------------------------------------------------------------ Rooms
+
+        /// <summary>
+        /// A room's shell seen from inside: a floor of planks (flagstones in a hall), walls of plaster
+        /// framed in timber (lacquer in a hall), lattice windows glowing with the day, pillars along the
+        /// walls, beams across, a ceiling, and a door in the middle of the −z wall. Its origin is the
+        /// floor's middle.
+        /// </summary>
+        public static MeshData Room(float width, float depth, float height, string style)
+        {
+            var k = new Kit();
+            var hall = style == "hall";
+            var floor = hall ? Stone.Times(0.85f) : WoodLight.Times(0.85f);
+            var frame = hall ? Lacquer : Wood;
+            var wall = style == "nursery" ? Tint.Hex(0xD8E4D8) : Plaster.Times(0.93f);
+            var w = width / 2;
+            var d = depth / 2;
+
+            // The floor in boards (or slabs), each a shade from the next.
+            var boards = Math.Max(4, (int)(width / (hall ? 2f : 0.8f)));
+
+            for (var i = 0; i < boards; i++)
+            {
+                var x = -w + (i + 0.5f) * width / boards;
+                k.Tiled(x, -0.3f, 0, width / boards - 0.02f, 0.3f, depth, 2.5f, floor.Times(0.92f + 0.08f * (i % 3) / 2));
+            }
+
+            // The walls: thin boxes (seen from both sides), the front one with a door.
+            const float thick = 0.3f;
+            k.Tiled(0, 0, d + thick / 2, width + thick * 2, height, thick, 2.5f, wall);
+            k.Tiled(-w - thick / 2, 0, 0, thick, height, depth, 2.5f, wall);
+            k.Tiled(w + thick / 2, 0, 0, thick, height, depth, 2.5f, wall);
+            var door = 1.6f;
+            k.Box(-(w + door) / 2 - thick / 2, 0, -d - thick / 2, w - door + thick, height, thick, wall);
+            k.Box((w + door) / 2 + thick / 2, 0, -d - thick / 2, w - door + thick, height, thick, wall);
+            k.Box(0, 2.6f, -d - thick / 2, door * 2, height - 2.6f, thick, wall);
+            // The door's frame and its two leaves, shut (the way out is by the step before them).
+            k.Box(-door, 0, -d, 0.2f, 2.7f, 0.4f, frame);
+            k.Box(door, 0, -d, 0.2f, 2.7f, 0.4f, frame);
+            k.Box(0, 2.6f, -d, door * 2 + 0.4f, 0.25f, 0.4f, frame);
+            k.Box(-door / 2, 0, -d - 0.05f, door - 0.05f, 2.55f, 0.1f, frame.Times(0.7f));
+            k.Box(door / 2, 0, -d - 0.05f, door - 0.05f, 2.55f, 0.1f, frame.Times(0.7f));
+
+            // Timber framing on the walls: a skirting, a rail, posts every few metres.
+            k.Box(0, 0, d - 0.02f, width, 0.35f, 0.12f, frame);
+            k.Box(0, height - 0.5f, d - 0.02f, width, 0.3f, 0.12f, frame);
+            k.Box(-w + 0.02f, 0, 0, 0.12f, 0.35f, depth, frame);
+            k.Box(w - 0.02f, 0, 0, 0.12f, 0.35f, depth, frame);
+            var bays = Math.Max(2, (int)(depth / 4));
+
+            for (var i = 0; i <= bays; i++)
+            {
+                var z = -d + i * depth / bays;
+
+                foreach (var side in new[] { -1, 1 })
+                {
+                    var x = side * (w - 0.25f);
+                    k.Post(x, 0, z, hall ? 0.32f : 0.16f, hall ? 0.3f : 0.15f, height, 8, frame, false);
+
+                    // Lattice windows between the posts, lit by the day outside.
+                    if (i < bays && (i % 2 == 1 || !hall))
+                    {
+                        var mid = z + depth / bays / 2;
+                        var light = Tint.Hex(0xF4E8C8);
+                        k.Box(side * (w - 0.02f), 1.4f, mid, 0.06f, 1.6f, 1.8f, light);
+
+                        for (var b = -2; b <= 2; b++)
+                        {
+                            k.Box(side * (w - 0.08f), 1.4f, mid + b * 0.36f, 0.06f, 1.6f, 0.05f, frame.Times(0.8f));
+                            k.Box(side * (w - 0.08f), 2.2f + b * 0.32f, mid, 0.06f, 0.05f, 1.8f, frame.Times(0.8f));
+                        }
+                    }
+                }
+
+                // A beam across at each bay.
+                k.Beam(new V3(-w, height - 0.3f, z), new V3(w, height - 0.3f, z), 0.28f, 0.34f, frame.Times(0.85f));
+            }
+
+            // The ceiling: boards, and in a hall a raised middle with a painted panel.
+            k.Tiled(0, height, 0, width + thick * 2, 0.2f, depth + thick * 2, 3f, Wood.Times(0.6f));
+
+            if (hall)
+            {
+                k.Box(0, height - 0.1f, 0, width * 0.5f, 0.1f, depth * 0.5f, Tint.Hex(0x2E4E5A));
+                k.Ring(0, height - 0.16f, 0, width * 0.12f, width * 0.15f, 24, Gold);
+            }
+
+            return k.Mesh;
+        }
+
         // ------------------------------------------------------------------ The town's wall
 
         /// <summary>
