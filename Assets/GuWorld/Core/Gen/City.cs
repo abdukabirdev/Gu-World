@@ -399,6 +399,10 @@ namespace GuWorld.Core.Gen
                 index.Add(box.Centre, box.Radius, box);
             }
 
+            // ---------------------------------------------------------------- The wall round it all
+
+            Wall(plan, index, roads, ground, waters);
+
             // ---------------------------------------------------------------- People and their spots
 
             var doors = 0;
@@ -565,6 +569,101 @@ namespace GuWorld.Core.Gen
 
             plan.Stalls = stalls;
         }
+
+        /// <summary>
+        /// The town's wall: pieces of rammed earth on stone set round the fields, a gate tower where each road
+        /// crosses the ring, a corner tower every so often, and gaps where the ground will not take a wall
+        /// (water, a cliff, a place of the valley).
+        /// </summary>
+        static void Wall(SettlementPlan plan, ShapeIndex<Box> index, IList<List<Vec2>> roads, IGround ground, Waters waters)
+        {
+            var radius = plan.Def.Radius + 66;
+            var piece = Props.Footprint("town_wall").width;
+            var pieces = (int)(2 * Math.PI * radius / piece);
+            var gates = new List<float>();
+
+            // Where the roads cross the ring.
+            foreach (var road in roads)
+            {
+                for (var i = 1; i < road.Count; i++)
+                {
+                    var a = Vec2.Distance(road[i - 1], plan.Centre) - radius;
+                    var b = Vec2.Distance(road[i], plan.Centre) - radius;
+
+                    if (a * b <= 0 && Math.Abs(a - b) > 1e-3f)
+                    {
+                        var t = a / (a - b);
+                        var at = road[i - 1] + (road[i] - road[i - 1]) * t;
+                        var angle = (at - plan.Centre).Yaw;
+
+                        if (!gates.Exists(g => Math.Abs(Mod(g - angle + 180, 360) - 180) < 6))
+                        {
+                            gates.Add(angle);
+                        }
+                    }
+                }
+            }
+
+            foreach (var angle in gates)
+            {
+                var at = plan.Centre + Vec2.FromYaw(angle) * radius;
+                var (width, depth) = Props.Footprint("town_gate");
+                // The gate faces out along the road (its +z outward).
+                plan.Buildings.Add(new Placed { Model = "code:town_gate:0", At = at, Yaw = angle, Footprint = new Box(at, new Vec2(width * 0.5f, depth * 0.5f), angle), Role = "gate" });
+                plan.Gates.Add((at, angle));
+            }
+
+            var built = new List<Box>();
+            var gateHalf = (float)(Math.Atan2(Props.Footprint("town_gate").width * 0.5f + 1, radius) * 180 / Math.PI);
+
+            for (var i = 0; i < pieces; i++)
+            {
+                var angle = (i + 0.5f) * 360f / pieces;
+
+                if (gates.Exists(g => Math.Abs(Mod(g - angle + 180, 360) - 180) < gateHalf))
+                {
+                    continue;
+                }
+
+                var at = plan.Centre + Vec2.FromYaw(angle) * radius;
+                // Its length along the ring (its own x), its outer face (−z) outward: it faces the middle.
+                var yaw = angle + 180;
+                var corner = i % 24 == 0;
+                var model = corner ? "code:corner_tower:0" : "code:town_wall:0";
+                var (w, d) = Props.Footprint(corner ? "corner_tower" : "town_wall");
+                var box = new Box(at, new Vec2(w * 0.5f, d * 0.5f), yaw);
+                var blocked = false;
+
+                foreach (var p in box.Corners())
+                {
+                    if (ground.Blocked(p, 1) || waters != null && waters.Nearest(p, out var toWater, out _, out var width, out _) && toWater < width * 0.5f + 2)
+                    {
+                        blocked = true;
+                        break;
+                    }
+                }
+
+                // A wall does not climb a cliff: more than a few metres of fall along it and it stops.
+                var fall = Math.Abs(ground.Height(box.Corners()[0].X, box.Corners()[0].Z) - ground.Height(box.Corners()[2].X, box.Corners()[2].Z));
+
+                if (blocked || fall > 6f || Crowded(index, box))
+                {
+                    continue;
+                }
+
+                // (The pieces touch at their ends round the curve; they are kept from the rest, not from each other.)
+                plan.Buildings.Add(new Placed { Model = model, At = at, Yaw = yaw, Footprint = box, Role = "wall" });
+                built.Add(box);
+                plan.WallPieces++;
+            }
+
+            foreach (var box in built)
+            {
+                index.Add(box.Centre, box.Radius, box);
+            }
+        }
+
+        static float Mod(float a, float m) => ((a % m) + m) % m;
 
         /// <summary>The name of a model made in code ("code:kind:variant").</summary>
         static string Code(string kindAndVariant) => "code:" + kindAndVariant;

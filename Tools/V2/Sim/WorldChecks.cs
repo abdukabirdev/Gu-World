@@ -131,6 +131,8 @@ static class WorldChecks
                 var made = settlement.Buildings.Where(b => b.Model.StartsWith("code:")).GroupBy(b => b.Model.Split(':')[1]).OrderBy(g => g.Key).Select(g => $"{g.Key} {g.Count()}");
                 report.Add($"  town {settlement.Def.Id}, made in code: " + string.Join(", ", made));
                 check(settlement.Stalls >= 20, $"world: {settlement.Def.Id} has a market ({settlement.Stalls} stalls)");
+                check(settlement.WallPieces >= 150 && settlement.Gates.Count >= 2, $"world: {settlement.Def.Id} is walled ({settlement.WallPieces} pieces, {settlement.Gates.Count} gates)");
+                report.Add($"  town {settlement.Def.Id}, its wall: {settlement.WallPieces} pieces, {settlement.Gates.Count} gates");
                 CrowdChecks(settlement, check, report);
                 check(settlement.Buildings.Count(b => b.Model.StartsWith("code:paifang")) >= 2, $"world: {settlement.Def.Id} has archways over its avenues");
                 continue;

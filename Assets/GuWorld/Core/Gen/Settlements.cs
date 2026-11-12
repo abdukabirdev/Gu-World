@@ -47,6 +47,8 @@ namespace GuWorld.Core.Gen
         public readonly List<Spot> Spots = new List<Spot>();
         /// <summary>Market stalls made in code (each a spot with the role "stall" for a trader).</summary>
         public int Stalls;
+        /// <summary>Pieces of a town's wall set round it.</summary>
+        public int WallPieces;
         /// <summary>A town's people with their days (empty for a village).</summary>
         public List<Walker> Walkers = new List<Walker>();
         public readonly List<(Vec2 at, float yaw)> Gates = new List<(Vec2, float)>();

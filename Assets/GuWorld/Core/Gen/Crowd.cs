@@ -653,6 +653,15 @@ namespace GuWorld.Core.Gen
 
         static Spot GateSpot(SettlementPlan plan, ref Rng rng)
         {
+            // Inside one of the town's gates, to one side of the way.
+            if (plan.Gates.Count > 0)
+            {
+                var (gate, outward) = plan.Gates[rng.Range(0, plan.Gates.Count)];
+                var out_ = Vec2.FromYaw(outward);
+
+                return new Spot { At = gate - out_ * 8 + out_.Right * 4 * (rng.Chance(0.5f) ? 1 : -1), Facing = outward, Role = "gate" };
+            }
+
             // Where an avenue leaves the town.
             var avenues = plan.Streets.FindAll(s => s.Main);
 

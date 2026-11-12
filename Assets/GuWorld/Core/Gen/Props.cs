@@ -34,6 +34,7 @@ namespace GuWorld.Core.Gen
         {
             ("paifang", 2), ("wall", 1), ("stall", 6), ("cart", 3), ("boat", 3), ("arch_bridge", 2),
             ("lanterns", 3), ("pagoda", 2), ("drum_tower", 1), ("aperture", 1), ("dummy_post", 1), ("gu_altar", 1),
+            ("town_wall", 1), ("town_gate", 1), ("corner_tower", 1),
         };
 
         /// <summary>A model by its kind and variant (null if there is no such kind).</summary>
@@ -53,6 +54,9 @@ namespace GuWorld.Core.Gen
                 case "aperture": return Aperture();
                 case "dummy_post": return DummyPost();
                 case "gu_altar": return GuAltar();
+                case "town_wall": return TownWall(10);
+                case "town_gate": return TownGate();
+                case "corner_tower": return CornerTower();
                 default: return null;
             }
         }
@@ -74,6 +78,9 @@ namespace GuWorld.Core.Gen
                 case "aperture": return (64f, 64f);
                 case "dummy_post": return (1f, 1f);
                 case "gu_altar": return (4f, 4f);
+                case "town_wall": return (10f, 3.2f);
+                case "town_gate": return (18f, 10f);
+                case "corner_tower": return (7f, 7f);
                 default: return (1f, 1f);
             }
         }
@@ -95,6 +102,9 @@ namespace GuWorld.Core.Gen
                 case "aperture": return 9.5f;
                 case "dummy_post": return 2.2f;
                 case "gu_altar": return 1.8f;
+                case "town_wall": return 6.6f;
+                case "town_gate": return 15f;
+                case "corner_tower": return 13f;
                 default: return 2f;
             }
         }
@@ -646,6 +656,113 @@ namespace GuWorld.Core.Gen
             k.Box(0, 5.4f, 0, 0.3f, 0.6f, 1.6f, Wood);
             k.Push(new V3(0, 9.4f, 0));
             k.Roof(9.6f, 7.8f, 2.4f, 1.1f, 0.7f, true, Tiles, Tiles.Times(0.75f));
+            k.Pop();
+
+            return k.Mesh;
+        }
+
+        // ------------------------------------------------------------------ The town's wall
+
+        /// <summary>
+        /// A stretch of the town's wall `length` long: a battered stone footing, a body of rammed earth faced
+        /// with plaster, a walk on top behind crenellations on the outer side (the wall faces −z outward),
+        /// a tiled coping on the inner parapet. Long enough pieces are set end to end round the town.
+        /// </summary>
+        public static MeshData TownWall(float length)
+        {
+            var k = new Kit();
+            var half = length / 2;
+            // The footing, a little wider, and the body.
+            // (The footing reaches deep, so a piece on a slope never shows its underside.)
+            k.Box(0, -4.0f, 0, length + 0.05f, 5.0f, 3.2f, StoneDark);
+            k.Box(0, 1.0f, 0, length, 4.0f, 2.6f, Tint.Hex(0xC8B898));
+            k.Box(0, 1.0f, -1.31f, length, 0.25f, 0.02f, StoneDark);
+            // The walk.
+            k.Box(0, 5.0f, 0, length, 0.12f, 2.6f, Stone);
+            // The battlements outside: merlons with gaps.
+            var merlons = Math.Max(2, (int)(length / 2.2f));
+
+            for (var i = 0; i < merlons; i++)
+            {
+                var x = -half + (i + 0.5f) * length / merlons;
+                k.Box(x, 5.12f, -1.1f, length / merlons * 0.6f, 1.1f, 0.4f, Stone.Times(0.95f));
+                k.Box(x, 6.22f, -1.1f, length / merlons * 0.66f, 0.12f, 0.5f, StoneDark);
+            }
+
+            // The low parapet inside, under its tiles.
+            k.Box(0, 5.12f, 1.12f, length, 0.6f, 0.36f, Plaster);
+            k.Coping(new V3(-half, 5.72f, 1.12f), new V3(half, 5.72f, 1.12f), 0.8f, Tiles);
+
+            return k.Mesh;
+        }
+
+        /// <summary>The town's gate: two stone bastions with a tunnel between, red doors, and a two-tiered gate tower over them.</summary>
+        public static MeshData TownGate()
+        {
+            var k = new Kit();
+            k.Box(-6.0f, -1.2f, 0, 6.0f, 7.4f, 10f, StoneDark);
+            k.Box(6.0f, -1.2f, 0, 6.0f, 7.4f, 10f, StoneDark);
+            k.Box(0, 4.6f, 0, 6.0f, 1.6f, 10f, StoneDark.Times(0.95f));
+            // The arch of the tunnel as a frame, the doors swung open against its sides.
+            k.Box(-2.9f, 0, -2.0f, 0.3f, 4.6f, 3.2f, LacquerDark);
+            k.Box(2.9f, 0, -2.0f, 0.3f, 4.6f, 3.2f, LacquerDark);
+
+            for (var r = 0; r < 4; r++)
+            {
+                k.Ball(new V3(-2.72f, 1.0f + r * 1.0f, -2.0f), 0.08f, 1, 6, 3, Gold);
+                k.Ball(new V3(2.72f, 1.0f + r * 1.0f, -2.0f), 0.08f, 1, 6, 3, Gold);
+            }
+
+            k.Box(0, 6.2f, 0, 18.4f, 0.3f, 10.4f, Stone);
+            // The tower: a lacquered hall, its gallery, two roofs.
+            foreach (var x in new[] { -7.2f, -2.4f, 2.4f, 7.2f })
+            {
+                foreach (var z in new[] { -3.6f, 3.6f })
+                {
+                    k.Post(x, 6.5f, z, 0.3f, 0.26f, 3.6f, 8, Lacquer);
+                }
+            }
+
+            k.Box(0, 6.5f, 0, 14.0f, 3.0f, 6.4f, Plaster.Times(0.95f));
+            k.Box(0, 7.0f, -3.25f, 4f, 1.3f, 0.1f, LacquerDark);
+            k.Box(0, 7.1f, -3.31f, 3.4f, 1.0f, 0.04f, Gold);
+            k.Push(new V3(0, 10.1f, 0));
+            k.Roof(15.6f, 8.4f, 1.6f, 1.2f, 0.55f, true, Tiles, Tiles.Times(0.75f));
+            k.Pop();
+            k.Box(0, 11.5f, 0, 9.0f, 1.6f, 4.4f, Plaster);
+            k.Push(new V3(0, 13.0f, 0));
+            k.Roof(10.0f, 5.0f, 1.9f, 1.0f, 0.65f, true, Tiles, Tiles.Times(0.75f));
+            k.Pop();
+
+            return k.Mesh;
+        }
+
+        /// <summary>A corner tower of the wall: a square stone tower a storey above the walk, battlements, a small hipped roof on posts.</summary>
+        public static MeshData CornerTower()
+        {
+            var k = new Kit();
+            k.Box(0, -4.0f, 0, 7.0f, 12.0f, 7.0f, StoneDark);
+            k.Box(0, 8.0f, 0, 7.2f, 0.14f, 7.2f, Stone);
+
+            for (var side = 0; side < 4; side++)
+            {
+                k.Push(new V3(0, 0, 0), side * 90);
+
+                for (var i = 0; i < 3; i++)
+                {
+                    k.Box(-2.4f + i * 2.4f, 8.14f, -3.3f, 1.2f, 1.0f, 0.4f, Stone.Times(0.95f));
+                }
+
+                k.Pop();
+            }
+
+            foreach (var (x, z) in new[] { (-2.6f, -2.6f), (2.6f, -2.6f), (-2.6f, 2.6f), (2.6f, 2.6f) })
+            {
+                k.Post(x, 8.14f, z, 0.18f, 0.16f, 2.6f, 6, Lacquer);
+            }
+
+            k.Push(new V3(0, 10.7f, 0));
+            k.Roof(6.0f, 6.0f, 1.8f, 0.9f, 0.6f, true, Tiles, Tiles.Times(0.75f));
             k.Pop();
 
             return k.Mesh;
