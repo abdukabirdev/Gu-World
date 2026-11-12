@@ -206,6 +206,12 @@ namespace GuWorld.Core
             if (board != null)
             {
                 ChangeReputation(board.Clan, bounty.Reputation, false);
+
+                // The clan's own errands count as merit.
+                if (board.Clan == "gu_yue")
+                {
+                    GainMerit(10 + bounty.Reputation * 3);
+                }
             }
 
             SetFlag("bounties_done");

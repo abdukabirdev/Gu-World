@@ -221,6 +221,7 @@ namespace GuWorld.World
             }
         }
 
-        public void Talk() => Game.Ui.Talk(new[] { new Core.Line("~" + Name + "|" + Title, Line) }, null);
+        /// <summary>Says its line; the clan's treasurer then opens the treasury.</summary>
+        public void Talk() => Game.Ui.Talk(new[] { new Core.Line("~" + Name + "|" + Title, Line) }, Name.StartsWith("Казначей") ? () => Game.Ui.Show(UI.Ui.Page.Treasury) : (System.Action)null);
     }
 }

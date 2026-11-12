@@ -276,6 +276,16 @@ static partial class Program
             Check(given.Count >= 1 && given.Distinct().Count() == given.Count, $"then unleashes each once, and waits long for it again ({string.Join(", ", given)})");
         }
 
+        // ------------------------------------------------------------------ Merit with the clan
+
+        var m = new Session(Session.NewGame("Заслуги"), 101);
+        var relic = Session.Treasury.First(t => t.Item == "relic_r1");
+        Check(m.WhyNoTreasury(relic) != null, "the treasury gives nothing without merit and rank");
+        m.GainMerit(Session.ClanRankNeeds[1] + relic.Merit);
+        Check(m.ClanRank == 1 && m.TakeFromTreasury(relic) && m.Count("relic_r1") == 1 && m.State.Merit == Session.ClanRankNeeds[1], "merit raises the clan rank and buys from the treasury");
+        Check(m.ClanRank == 1, "spending merit does not lower the clan rank");
+        Check(Session.Treasury.All(t => (t.Item == null || ItemBook.Get(t.Item) != null) && (t.Gu == null || GuBook.Get(t.Gu) != null) && t.ClanRank < Session.ClanRanks.Length), "the treasury's goods exist");
+
         // ------------------------------------------------------------------ Hints
 
         var hs = new Session(Session.NewGame("Подсказки"), 91);

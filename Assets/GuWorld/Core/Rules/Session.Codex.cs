@@ -167,6 +167,7 @@ namespace GuWorld.Core
                 case "parries": return State.Parries;
                 case "homes": return State.Homes.Count;
                 case "tides": return State.Tides;
+                case "clan_rank": return ClanRank;
                 case "moves_cast": return State.MovesCast;
                 case "perfect": return State.Gu.FindAll(g => g.Quality >= GuBook.MaxQuality).Count;
                 case "revived": return State.CicadaDay > 0 ? 1 : 0;

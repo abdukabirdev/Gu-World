@@ -59,6 +59,7 @@ namespace GuWorld.Core
             State.Stones += stones;
             GainInsight(80 * Rank);
             ChangeReputation("gu_yue", 8, false);
+            GainMerit(40 + 20 * Rank);
             Say($"Прилив отбит. Клан благодарит: {stones} камней.");
             TideChanged?.Invoke(false);
             Achieve();

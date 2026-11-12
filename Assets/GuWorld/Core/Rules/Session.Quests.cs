@@ -350,6 +350,13 @@ namespace GuWorld.Core
             }
 
             Recompute();
+
+            // The clan's quests (and the story) are worth merit.
+            if (def.Main || def.Clan == "gu_yue")
+            {
+                GainMerit(def.Main ? 40 : 60);
+            }
+
             QuestDone?.Invoke(def);
             GainInsight(reward.Insight);
             Achieve();
@@ -679,6 +686,12 @@ namespace GuWorld.Core
 
             if (def.Boss)
             {
+                // The first fall of a great beast is worth merit to the clan.
+                if (!Has(enemyId + "_dead"))
+                {
+                    GainMerit(30 + 8 * def.Level);
+                }
+
                 SetFlag(enemyId + "_dead");
                 State.Bosses++;
             }

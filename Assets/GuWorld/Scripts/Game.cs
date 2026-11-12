@@ -255,6 +255,7 @@ namespace GuWorld
                 Ui.Banner(GuBook.PathName(path), Attainment.Grades[grade]);
                 Sound.AudioDirector.Play("breakthrough", null, 0.6f, 0);
             };
+            Session.ClanRankRose += rank => Ui.Banner("Клан Гу Юэ", Session.ClanRanks[rank]);
             Session.TideChanged += up =>
             {
                 if (up)
