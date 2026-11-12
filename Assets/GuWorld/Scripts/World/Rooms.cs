@@ -44,6 +44,57 @@ namespace GuWorld.World
 
         static Vector3 DoorStep(InteriorDef room) => OriginOf(room) + new Vector3(0, 0.15f, -room.Depth / 2 + 1.6f);
 
+        Enemy partner;
+
+        /// <summary>A bout in the academy's room: the partner steps out at the far end.</summary>
+        public static void BeginBout()
+        {
+            if (!Inside || instance.partner != null)
+            {
+                return;
+            }
+
+            var def = Game.Session.BeginBout();
+
+            if (def == null)
+            {
+                return;
+            }
+
+            var room = instance.inside;
+            var at = OriginOf(room) + new Vector3(0, 0.3f, room.Depth / 2 - 4);
+            instance.partner = Enemy.Spawn(def, at, 180, "bout");
+            Game.Ui.Banner("Учебный бой", def.Name);
+            Sound.AudioDirector.Play("quest", null, 0.8f, 0);
+        }
+
+        void Update()
+        {
+            if (partner == null && Game.Session != null && Game.Session.Sparring && !Inside)
+            {
+                Game.Session.EndBout(false);
+            }
+
+            if (partner == null)
+            {
+                return;
+            }
+
+            // Won: the partner fell. Lost: the rules ended the bout (the hero was brought low), or the hero left.
+            if (!partner.Alive)
+            {
+                Game.Session.EndBout(true);
+                Destroy(partner.gameObject, 2);
+                partner = null;
+            }
+            else if (!Game.Session.Sparring || !Inside)
+            {
+                Game.Session.EndBout(false);
+                Destroy(partner.gameObject);
+                partner = null;
+            }
+        }
+
         /// <summary>The person of the room nearest the hero, within reach.</summary>
         public static RoomPerson NearestPerson()
         {
@@ -222,6 +273,27 @@ namespace GuWorld.World
         }
 
         /// <summary>Says its line; the clan's treasurer then opens the treasury.</summary>
-        public void Talk() => Game.Ui.Talk(new[] { new Core.Line("~" + Name + "|" + Title, Line) }, Name.StartsWith("Казначей") ? () => Game.Ui.Show(UI.Ui.Page.Treasury) : (System.Action)null);
+        public void Talk()
+        {
+            System.Action then = null;
+
+            if (Name.StartsWith("Казначей"))
+            {
+                then = () => Game.Ui.Show(UI.Ui.Page.Treasury);
+            }
+            else if (Name.StartsWith("Наставник академии"))
+            {
+                // The teacher offers a bout with a partner of the hero's rank.
+                var why = Game.Session.WhyNoBout();
+                var lines = why == null
+                    ? new[] { new Core.Line("~" + Name + "|" + Title, Line), new Core.Line("~" + Name + "|" + Title, $"Хочешь проверить себя? Против тебя выйдет {Core.Sparring.For(Game.Session.Rank).Name.ToLowerInvariant()}. Боёв на сегодня: {Game.Session.BoutsLeft}.") }
+                    : new[] { new Core.Line("~" + Name + "|" + Title, why) };
+                Game.Ui.Talk(lines, why == null ? () => Rooms.BeginBout() : (System.Action)null);
+
+                return;
+            }
+
+            Game.Ui.Talk(new[] { new Core.Line("~" + Name + "|" + Title, Line) }, then);
+        }
     }
 }

@@ -287,7 +287,7 @@ namespace GuWorld.Core
         };
 
         /// <summary>The mountain's beasts and masters and the wild lands', and what they drop.</summary>
-        public static readonly EnemyDef[] All = Lists.Join(Mountain, Wilds.Enemies);
-        public static readonly LootTable[] Tables = Lists.Join(MountainTables, Wilds.Tables);
+        public static readonly EnemyDef[] All = Lists.Join(Mountain, Wilds.Enemies, Sparring.Enemies);
+        public static readonly LootTable[] Tables = Lists.Join(MountainTables, Wilds.Tables, Sparring.Tables);
     }
 }

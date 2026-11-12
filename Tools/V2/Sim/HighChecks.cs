@@ -286,6 +286,30 @@ static partial class Program
         Check(m.ClanRank == 1, "spending merit does not lower the clan rank");
         Check(Session.Treasury.All(t => (t.Item == null || ItemBook.Get(t.Item) != null) && (t.Gu == null || GuBook.Get(t.Gu) != null) && t.ClanRank < Session.ClanRanks.Length), "the treasury's goods exist");
 
+        // ------------------------------------------------------------------ Bouts at the academy
+
+        var sp = new Session(Session.NewGame("Ученик"), 111);
+        var partner = sp.BeginBout();
+        Check(partner != null && sp.Sparring && Bestiary.Get(partner.Id) != null, "a bout begins with a partner of the book");
+        sp.TakeDamage(1e6f);
+        Check(!sp.Dead && !sp.Sparring && sp.State.Health > 0, "a bout lost leaves the hero standing");
+        sp.Restore();
+        sp.BeginBout();
+        var merit0 = sp.State.MeritEarned;
+        sp.EndBout(true);
+        Check(sp.State.MeritEarned > merit0 && sp.State.SparsWon == 1, "a bout won is merit");
+        sp.BeginBout();
+        sp.EndBout(false);
+        Check(sp.BoutsLeft == 0 && sp.BeginBout() == null, "three bouts a day");
+        sp.NewDay();
+        Check(sp.BoutsLeft == Sparring.BoutsADay, "and three more the next day");
+
+        for (var pr = 1; pr <= Cultivation.MaxRank; pr++)
+        {
+            var p2 = Sparring.For(pr);
+            Check(new CasterMind(p2.Gu).Gu.Length == p2.Gu.Length, $"the partner of rank {pr} casts all its Gu");
+        }
+
         // ------------------------------------------------------------------ Hints
 
         var hs = new Session(Session.NewGame("Подсказки"), 91);

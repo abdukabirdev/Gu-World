@@ -127,6 +127,10 @@ namespace GuWorld.Core
         /// <summary>Merit with the clan: what is left to spend, and all ever earned (the clan rank).</summary>
         public int Merit;
         public int MeritEarned;
+        /// <summary>Bouts at the academy: the day of the last, how many that day, how many won in all.</summary>
+        public int SparDay;
+        public int SparsToday;
+        public int SparsWon;
         /// <summary>Hints already shown.</summary>
         public List<string> Hints = new List<string>();
         /// <summary>The houses the hero owns (thing ids), what lies in their store, the Gu kept in their nursery.</summary>

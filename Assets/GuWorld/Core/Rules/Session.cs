@@ -528,7 +528,14 @@ namespace GuWorld.Core
             }
 
             var damage = raw * Stats.DamageTaken * (shieldTime > 0 ? 1 - shieldValue : 1) * DifficultyRules.DamageTaken(State.Settings.Difficulty);
-            State.Health = Math.Max(InSandbox && SandboxUndying ? 1 : 0, State.Health - damage);
+            // In the aperture no one falls; in a bout no one falls below a tenth (the bout is lost instead).
+            var floor = InSandbox && SandboxUndying ? 1 : Sparring ? Stats.MaxHealth * 0.1f : 0;
+            State.Health = Math.Max(floor, State.Health - damage);
+
+            if (Sparring && State.Health <= floor + 0.01f)
+            {
+                EndBout(false);
+            }
 
             if (State.Health <= 0 && CicadaReady)
             {
