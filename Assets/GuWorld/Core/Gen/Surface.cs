@@ -25,6 +25,7 @@ namespace GuWorld.Core.Gen
         readonly ShapeIndex<SettlementPlan> settlements = new ShapeIndex<SettlementPlan>(Regions.Half, 256);
         readonly ShapeIndex<Box> fields = new ShapeIndex<Box>(Regions.Half, 128);
         readonly List<float> streetHalf = new List<float>();
+        readonly ShapeIndex<Placed> townBuildings = new ShapeIndex<Placed>(Regions.Half, 32);
         readonly List<bool> streetPaved = new List<bool>();
 
         public Surface(WorldPlan world)
@@ -46,6 +47,17 @@ namespace GuWorld.Core.Gen
                 foreach (var field in plan.Fields)
                 {
                     fields.Add(field.Centre, field.Radius, field);
+                }
+
+                if (plan.Def.City)
+                {
+                    foreach (var building in plan.Buildings)
+                    {
+                        if (building.Role != "lamp")
+                        {
+                            townBuildings.Add(building.Footprint.Centre, building.Footprint.Radius + 4, building);
+                        }
+                    }
                 }
             }
 
@@ -121,7 +133,15 @@ namespace GuWorld.Core.Gen
                 }
             }
 
-            if (SettlementAt(p, 4) != null || Cleared(p, out _))
+            var settlement = SettlementAt(p, 4);
+
+            // A town is gardens and grass between its houses (the earth round each house is painted by Paint).
+            if (settlement != null && settlement.Def.City && Vec2.Distance(p, settlement.Centre) > settlement.Def.Core + 8)
+            {
+                return Biome.Meadow;
+            }
+
+            if (settlement != null || Cleared(p, out _))
             {
                 return Biome.Settled;
             }
@@ -247,6 +267,14 @@ namespace GuWorld.Core.Gen
             {
                 var paved = plan.Def.Style == SettlementStyle.Bai || plan.Def.Style == SettlementStyle.GuYue;
                 Mix(weights, paved ? Flagstone : Dirt, 1 - Noise.Smooth(plan.PlazaRadius - 1, plan.PlazaRadius + 2, Vec2.Distance(p, plan.Centre)));
+            }
+
+            // A town's yards: beaten earth round each house, flagstones round the clan's.
+            foreach (var building in townBuildings.Near(p, 0))
+            {
+                var d = building.Footprint.Distance(p);
+                var clan = Vec2.Distance(building.Footprint.Centre, new Vec2(0, 0)) < 175 || building.Footprint.Radius > 15;
+                Mix(weights, clan ? Flagstone : Earth, (1 - Noise.Smooth(0.5f, 3.5f, d)) * 0.9f);
             }
 
             if (streets.Nearest(p, out var toStreet, out var segment, out _))

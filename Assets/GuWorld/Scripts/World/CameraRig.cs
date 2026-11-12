@@ -44,6 +44,8 @@ namespace GuWorld.World
             if (data != null)
             {
                 data.renderPostProcessing = Quality.Level >= 1;
+                // The water sees how deep it is through the scene's depth (the light quality goes without: the water then thins by its banks).
+                data.requiresDepthTexture = Quality.Level >= 1;
                 data.antialiasing = Quality.Level >= 2 ? AntialiasingMode.SubpixelMorphologicalAntiAliasing : AntialiasingMode.None;
             }
 

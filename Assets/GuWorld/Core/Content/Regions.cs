@@ -39,6 +39,10 @@ namespace GuWorld.Core
         public bool Fields;
         public int Seed;
         public int Colour = 0xC9D3D5;
+        /// <summary>A town (districts, ring streets, lanes, landmarks) rather than a village round a plaza; laid out by the CityPlanner.</summary>
+        public bool City;
+        /// <summary>The middle of a town that is made by hand (the valley's square): nothing generated is put inside it.</summary>
+        public float Core;
     }
 
     /// <summary>A river of the world: its course from source to mouth (the generator makes it wander and finds its water level).</summary>
@@ -82,13 +86,16 @@ namespace GuWorld.Core
     /// </summary>
     public static class Regions
     {
-        public const float Half = 4000;
+        /// <summary>Half the map's side: the world is 16 × 16 km, the mountain of the story in its middle 8 × 8.</summary>
+        public const float Half = 8000;
 
         // ---------------------------------------------------------------- The mountain's shape
 
         /// <summary>The main ridge from west to east, and the height of its crest at each point (the peak is the highest).</summary>
         public static readonly (MapPoint at, float crest)[] Ridge =
         {
+            (new MapPoint(-7300, 500), 420),
+            (new MapPoint(-5600, 950), 300),
             (new MapPoint(-3750, 1250), 230),
             (new MapPoint(-2500, 1600), 400),
             (new MapPoint(-1450, 1720), 470),
@@ -98,6 +105,8 @@ namespace GuWorld.Core
             (new MapPoint(1400, 1850), 560),
             (new MapPoint(2600, 1550), 430),
             (new MapPoint(3750, 1150), 260),
+            (new MapPoint(5500, 900), 340),
+            (new MapPoint(7300, 650), 450),
         };
 
         /// <summary>How far the ridge's slopes reach to the south (towards the Gu Yue) and to the north (towards the Bai).</summary>
@@ -130,6 +139,7 @@ namespace GuWorld.Core
                     new MapPoint(276, 150), new MapPoint(262, 120), new MapPoint(244, 66), new MapPoint(238, 0), new MapPoint(262, -90),
                     new MapPoint(296, -200), new MapPoint(330, -330), new MapPoint(350, -470), new MapPoint(420, -900), new MapPoint(560, -1400),
                     new MapPoint(420, -2100), new MapPoint(260, -2700), new MapPoint(420, -3300), new MapPoint(500, -3990),
+                    new MapPoint(700, -5100), new MapPoint(950, -6400), new MapPoint(1150, -7990),
                 },
                 // The plateau's lip and the pool below the fall, as the valley's plan has them.
                 Pins = new[] { (4, 28.6f), (5, 28.4f), (6, 11.4f) }
@@ -140,7 +150,7 @@ namespace GuWorld.Core
                 Course = new[]
                 {
                     new MapPoint(-300, 2250), new MapPoint(-560, 2700), new MapPoint(-760, 3030), new MapPoint(-790, 3110), new MapPoint(-830, 3180),
-                    new MapPoint(-640, 3420), new MapPoint(-480, 3700), new MapPoint(-300, 3990),
+                    new MapPoint(-640, 3420), new MapPoint(-480, 3700), new MapPoint(-300, 3990), new MapPoint(-80, 5200), new MapPoint(220, 6600), new MapPoint(320, 7990),
                 }
             },
             new RiverDef
@@ -154,7 +164,7 @@ namespace GuWorld.Core
                 Course = new[]
                 {
                     new MapPoint(-1700, 1450), new MapPoint(-1900, 700), new MapPoint(-2150, -200), new MapPoint(-2450, -1100), new MapPoint(-2700, -1650),
-                    new MapPoint(-3200, -2300), new MapPoint(-3990, -2600),
+                    new MapPoint(-3200, -2300), new MapPoint(-3990, -2600), new MapPoint(-5200, -3000), new MapPoint(-6500, -3250), new MapPoint(-7990, -3450),
                 }
             },
         };
@@ -167,6 +177,12 @@ namespace GuWorld.Core
 
         public static readonly SettlementDef[] Settlements =
         {
+            // The clan's village round the valley's square: a town of some thousands (its middle is the valley's own, made by hand).
+            new SettlementDef
+            {
+                Id = "gu_yue", Name = "Деревня Гу Юэ", At = new MapPoint(0, 0), Radius = 430, Core = 92, City = true, Style = SettlementStyle.GuYue, Clan = "gu_yue", Axis = 180,
+                Houses = 1100, Seed = 7, Colour = 0xE8C98A
+            },
             new SettlementDef
             {
                 Id = "bai_village", Name = "Деревня Бай", At = new MapPoint(-1120, 3330), Radius = 125, Style = SettlementStyle.Bai, Clan = "bai", Axis = 120, Houses = 34,

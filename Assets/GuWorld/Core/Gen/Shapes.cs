@@ -432,6 +432,9 @@ namespace GuWorld.Core.Gen
         /// </summary>
         public static MeshData River(IList<Vec2> points, IList<float> levels, IList<float> widths, int from, int to)
         {
+            // Five columns across: the water's flow (rg), how far from the bank (b) and how fast (a) ride in the vertex colour
+            // for the water's shader; the edges reach into the banks, where the shader thins the water out by depth.
+            const int across = 5;
             var mesh = new MeshData();
             var along = 0f;
             to = Math.Min(to, points.Count);
@@ -439,7 +442,7 @@ namespace GuWorld.Core.Gen
             for (var i = from; i < to; i++)
             {
                 var forward = (points[Math.Min(i + 1, points.Count - 1)] - points[Math.Max(i - 1, 0)]).Normalized;
-                var side = forward.Right * (widths[i] * 0.5f + 1.2f);
+                var half = widths[i] * 0.5f + 2.5f;
 
                 if (i > from)
                 {
@@ -448,13 +451,24 @@ namespace GuWorld.Core.Gen
 
                 var fall = i + 1 < levels.Count ? Math.Max(0, levels[i] - levels[i + 1]) : 0;
                 var speed = Noise.Clamp01(0.25f + fall * 0.6f);
-                var a = mesh.Vertex(points[i].X - side.X, levels[i], points[i].Z - side.Z, 0, along / 8f, 1, 1, 1, speed);
-                var b = mesh.Vertex(points[i].X + side.X, levels[i], points[i].Z + side.Z, 1, along / 8f, 1, 1, 1, speed);
+
+                for (var c = 0; c < across; c++)
+                {
+                    var k = c / (float)(across - 1);
+                    var offset = forward.Right * ((k * 2 - 1) * half);
+                    var middle = 1 - Math.Abs(k * 2 - 1);
+                    mesh.Vertex(points[i].X + offset.X, levels[i], points[i].Z + offset.Z, k, along / 8f, forward.X * 0.5f + 0.5f, forward.Z * 0.5f + 0.5f, middle, speed);
+                }
 
                 if (i > from)
                 {
-                    // Clockwise seen from above: the previous pair, then this one.
-                    mesh.Quad(a - 2, a, b, b - 2);
+                    var row = (i - from) * across;
+
+                    for (var c = 0; c < across - 1; c++)
+                    {
+                        // Clockwise seen from above.
+                        mesh.Quad(row - across + c, row + c, row + c + 1, row - across + c + 1);
+                    }
                 }
             }
 
@@ -501,14 +515,15 @@ namespace GuWorld.Core.Gen
         public static MeshData Pool(float radius, int segments = 40)
         {
             var mesh = new MeshData();
-            var centre = mesh.Vertex(0, 0, 0, 0.5f, 0.5f, 1, 1, 1, 0.15f);
+            // A pool barely moves: no flow (rg 0.5), deep in the middle (b 1), slow (a).
+            var centre = mesh.Vertex(0, 0, 0, 0.5f, 0.5f, 0.5f, 0.5f, 1, 0.1f);
 
             for (var i = 0; i <= segments; i++)
             {
                 var angle = i * Math.PI * 2 / segments;
                 var x = (float)Math.Sin(angle) * radius;
                 var z = (float)Math.Cos(angle) * radius;
-                mesh.Vertex(x, 0, z, x / radius * 0.5f + 0.5f, z / radius * 0.5f + 0.5f, 1, 1, 1, 0.15f);
+                mesh.Vertex(x, 0, z, x / radius * 0.5f + 0.5f, z / radius * 0.5f + 0.5f, 0.5f, 0.5f, 0, 0.1f);
 
                 if (i > 0)
                 {

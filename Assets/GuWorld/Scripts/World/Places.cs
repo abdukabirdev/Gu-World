@@ -32,6 +32,15 @@ namespace GuWorld.World
             places.Water();
             places.Bridges();
 
+            // The towns keep their own houses, by cells.
+            foreach (var settlement in plan.Settlements)
+            {
+                if (settlement.Def.City)
+                {
+                    Town.Make(root.transform, settlement);
+                }
+            }
+
             return places;
         }
 
@@ -49,6 +58,11 @@ namespace GuWorld.World
 
             foreach (var settlement in plan.Settlements)
             {
+                if (settlement.Def.City)
+                {
+                    continue;
+                }
+
                 var distance = Vector2.Distance(new Vector2(focus.x, focus.z), new Vector2(settlement.Centre.X, settlement.Centre.Z));
                 var up = raised.TryGetValue(settlement.Def.Id, out var made);
 
@@ -102,7 +116,9 @@ namespace GuWorld.World
 
         void Water()
         {
-            var water = Resources.Load<Material>("Mats/Water");
+            // The water's own shader (depth, waves with the current, the sky, foam); the old material if it is missing.
+            var shader = Shader.Find("GuWorld/Water");
+            var water = shader != null ? new Material(shader) { name = "Water" } : Resources.Load<Material>("Mats/Water");
             var falling = Resources.Load<Material>("Mats/Waterfall");
             water = water != null ? water : Models.Glow(new Color(0.2f, 0.4f, 0.5f, 0.7f), false, Texture2D.whiteTexture);
             falling = falling != null ? falling : water;

@@ -367,8 +367,50 @@ namespace GuWorld.Core
             new[] { new MapPoint(0, 0), new MapPoint(-84, 12), new MapPoint(-128, 20), new MapPoint(-195, 30) },
             new[] { new MapPoint(0, 0), new MapPoint(40, -8), new MapPoint(72, -15), new MapPoint(100, -6), new MapPoint(150, 50), new MapPoint(214, 72), new MapPoint(244, 66), new MapPoint(258, 100), new MapPoint(268, 124) },
             new[] { new MapPoint(0, 0), new MapPoint(0, -84), new MapPoint(14, -150), new MapPoint(24, -196), new MapPoint(40, -240) },
+            // The south road on, through the town, to where the camp now is.
+            new[] { new MapPoint(40, -240), new MapPoint(48, -320), new MapPoint(52, -400), new MapPoint(50, -455) },
             new[] { new MapPoint(24, -196), new MapPoint(110, -190), new MapPoint(180, -170), new MapPoint(214, -164), new MapPoint(236, -178) },
         };
+
+        /// <summary>
+        /// Places moved from where the valley's plan first had them (the village grew into a town and
+        /// pushed the bandits' camp down the south road): each takes along everything within its reach.
+        /// </summary>
+        static readonly (string place, MapPoint to)[] Moves =
+        {
+            ("camp", new MapPoint(50, -500)),
+        };
+
+        static Valley()
+        {
+            foreach (var (id, to) in Moves)
+            {
+                var place = Place(id);
+
+                if (place == null)
+                {
+                    continue;
+                }
+
+                var from = place.At;
+                var reach = place.Radius + 40;
+                var dx = to.X - from.X;
+                var dz = to.Z - from.Z;
+
+                MapPoint Move(MapPoint p) => p.DistanceTo(from) <= reach ? new MapPoint(p.X + dx, p.Z + dz) : p;
+
+                foreach (var npc in Npcs) npc.At = Move(npc.At);
+                foreach (var thing in Things) thing.At = Move(thing.At);
+                foreach (var spawn in Spawns) spawn.At = Move(spawn.At);
+                foreach (var encounter in Encounters) encounter.At = Move(encounter.At);
+                foreach (var building in Buildings) building.At = Move(building.At);
+                foreach (var patch in Scatter) patch.At = Move(patch.At);
+                place.At = to;
+                // The camp's ground is levelled where it now stands, to the land's own height.
+                place.Level = float.NaN;
+                place.Flatten = true;
+            }
+        }
 
         public static PlaceDef Place(string id) => Find(Places, p => p.Id == id);
         public static NpcDef Npc(string id) => Find(Npcs, n => n.Id == id);

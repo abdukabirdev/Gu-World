@@ -47,6 +47,12 @@ namespace GuWorld.Core.Gen
         public readonly List<Spot> Spots = new List<Spot>();
         public readonly List<(Vec2 at, float yaw)> Gates = new List<(Vec2, float)>();
 
+        /// <summary>The ground under a town's houses, each levelled to its own height (none for a village, which is levelled whole).</summary>
+        public readonly List<(Box box, float level)> Pads = new List<(Box, float)>();
+        /// <summary>How many live there (a town counts its houses' people).</summary>
+        public int Population;
+        public int Lanes;
+
         public Placed Find(string role) => Buildings.Find(b => b.Role == role);
 
         /// <summary>True if a point is at least this far from every building's footprint (people and lanterns stand there).</summary>

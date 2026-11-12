@@ -108,6 +108,27 @@ static class WorldChecks
                 check(settlement.Buildings.Any(b => b.Model == must), $"world: {settlement.Def.Id} has its {must}");
             }
 
+            if (settlement.Def.City)
+            {
+                // A town: each house stands on its own pad, whatever the slope round it.
+                var worst = 0f;
+
+                foreach (var (box, level) in settlement.Pads)
+                {
+                    foreach (var p in box.Corners().Append(box.Centre))
+                    {
+                        worst = Math.Max(worst, Math.Abs(land.Height(p) - level));
+                    }
+                }
+
+                check(worst < 0.6f, $"world: {settlement.Def.Id}'s houses stand on level pads (off by {worst:0.0} m)");
+                check(settlement.Population >= 3000 && settlement.Population <= 6500, $"world: {settlement.Def.Id} houses 3–6 thousand people ({settlement.Population})");
+                check(settlement.Buildings.Select(b => b.Model).Distinct().Count() >= 30, $"world: {settlement.Def.Id} is built of many models ({settlement.Buildings.Select(b => b.Model).Distinct().Count()})");
+                report.Add($"  town {settlement.Def.Id}: {settlement.Buildings.Count} buildings ({houses} houses), {settlement.Population} people, {settlement.Streets.Count} streets, {settlement.Fields.Count} fields, " +
+                           string.Join(", ", settlement.Buildings.Where(b => b.Footprint.Radius > 15).Select(b => b.Model).Distinct()));
+                continue;
+            }
+
             var h0 = land.Height(settlement.Centre);
             var flatness = solid.Max(b => Math.Abs(land.Height(b.Footprint.Centre) - h0));
             check(flatness < 2.5f, $"world: {settlement.Def.Id} is level under its buildings (off by {flatness:0.0} m)");
@@ -179,7 +200,9 @@ static class WorldChecks
         Picture(plan, Path.Combine(outDir, "world.png"), 1024, -Regions.Half, -Regions.Half, Regions.Half * 2, true);
         Picture(plan, Path.Combine(outDir, "valley.png"), 768, -520, -520, 1040, true);
 
-        foreach (var settlement in plan.Settlements.Where(s => s.Def.Radius >= 90))
+        Picture(plan, Path.Combine(outDir, "gu_yue_town.png"), 1024, -520, -560, 1040, false);
+
+        foreach (var settlement in plan.Settlements.Where(s => s.Def.Radius >= 90 && !s.Def.City))
         {
             var r = settlement.Def.Radius + 40;
             Picture(plan, Path.Combine(outDir, settlement.Def.Id + ".png"), 640, settlement.Centre.X - r, settlement.Centre.Z - r, r * 2, false);

@@ -202,6 +202,9 @@ namespace GuWorld.World
             // Weather greys the horizon; fog brings it close.
             horizon = Color.Lerp(horizon, new Color(0.42f, 0.46f, 0.5f) * (key.Strength * 0.6f + 0.1f), Gloom * 0.55f) + new Color(0.5f, 0.55f, 0.7f) * flash * 0.3f;
             RenderSettings.fogColor = horizon;
+            // The water reflects the sky.
+            Shader.SetGlobalColor("_GW_SkyTop", new Color(top.r, top.g, top.b, 1));
+            Shader.SetGlobalColor("_GW_SkyHorizon", new Color(horizon.r, horizon.g, horizon.b, 1));
             // On the whole mountain the fog lies farther (the far land and woods are drawn out to it).
             var fogEnd = Ground.Big ? (Quality.Level == 0 ? 480 : Quality.Level == 1 ? 880 : 1400) : (Quality.Level == 0 ? 420 : 620);
             RenderSettings.fogStartDistance = Mathf.Lerp(Quality.Level == 0 ? 50 : 90, 14, cave);

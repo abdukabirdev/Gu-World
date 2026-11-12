@@ -180,6 +180,8 @@ namespace UnityEngine.Rendering.Universal
         public bool renderPostProcessing { get; set; }
         public AntialiasingMode antialiasing { get; set; }
         public bool renderShadows { get; set; }
+        public bool requiresDepthTexture { get; set; }
+        public bool requiresColorTexture { get; set; }
     }
 
     public static class CameraExtensions

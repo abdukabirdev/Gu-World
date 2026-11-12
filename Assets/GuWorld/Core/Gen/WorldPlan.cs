@@ -12,7 +12,7 @@ namespace GuWorld.Core.Gen
     public sealed class WorldPlan
     {
         /// <summary>Changes whenever the generator's results would change (a save of generated data made by another version is not trusted).</summary>
-        public const string Version = "gw2-world-1";
+        public const string Version = "gw2-world-2";
 
         public readonly Land Land;
         public readonly Waters Waters;
@@ -67,6 +67,14 @@ namespace GuWorld.Core.Gen
 
             foreach (var def in Regions.Settlements)
             {
+                if (def.City)
+                {
+                    var town = CityPlanner.Plan(def, new TownGround(Land, Waters, def), Roads.All.ConvertAll(r => r.Points), Waters);
+                    Settlements.Add(town);
+                    Land.SetPads(town.Pads);
+                    continue;
+                }
+
                 var flat = Land.FlatOf(def.Id);
                 Settlements.Add(Planner.Plan(def, flat != null ? flat.Level : Land.Shaped(def.At.X, def.At.Z), RoadsInto(def), Waters));
             }
@@ -77,6 +85,60 @@ namespace GuWorld.Core.Gen
             Stage("surface");
             Atlas.Resolve(this);
             Stage("atlas");
+        }
+
+        /// <summary>What a town may be built on: not the valley's places (but its square), not the water, not cliffs, not other settlements' land.</summary>
+        sealed class TownGround : CityPlanner.IGround
+        {
+            readonly Land land;
+            readonly Waters waters;
+            readonly SettlementDef town;
+            readonly List<(Vec2 at, float radius)> keepOut = new List<(Vec2, float)>();
+
+            public TownGround(Land land, Waters waters, SettlementDef town)
+            {
+                this.land = land;
+                this.waters = waters;
+                this.town = town;
+
+                foreach (var place in Valley.Places)
+                {
+                    if (place.Id != "village" && place.Id != "yard" && place.At.DistanceTo(town.At) < town.Radius + place.Radius + 60)
+                    {
+                        // The bamboo grove, the river's ford, the border stone, the north gate and the forest beyond keep room round them.
+                        keepOut.Add((place.At, place.Radius + (place.Id == "north_gate" ? 10 : 22)));
+                    }
+                }
+
+                foreach (var place in Regions.Places)
+                {
+                    keepOut.Add((place.At, place.Radius + 30));
+                }
+
+                // The forest north of the gate stays forest: the town keeps to the south of the north road's gate.
+                keepOut.Add((new Vec2(0, 260), 150));
+            }
+
+            public float Height(float x, float z) => land.Shaped(x, z);
+
+            public bool Blocked(Vec2 p, float margin)
+            {
+                foreach (var (at, radius) in keepOut)
+                {
+                    if (Vec2.Distance(p, at) < radius + margin)
+                    {
+                        return true;
+                    }
+                }
+
+                if (waters.Nearest(p, out var toWater, out _, out var width, out _) && toWater < width * 0.5f + 4 + margin)
+                {
+                    return true;
+                }
+
+                // A cliff: the land falls more than one in one.
+                return land.Slope(p.X, p.Z, 3) > 0.9f;
+            }
         }
 
         /// <summary>The directions (yaw) the roads come into a settlement from, the main road's first.</summary>
