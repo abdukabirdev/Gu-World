@@ -40,7 +40,11 @@ namespace GuWorld.UI
         {
             public RectTransform Root;
             public RectTransform Fill;
+            public Image Paint;
         }
+
+        /// <summary>The lines of words are rewritten ten times a second, not every frame (each rewrite makes garbage).</summary>
+        float wordsIn;
 
         RectTransform hudRoot, floats;
         Meter health, essence, stamina, insight, bossBar;
@@ -252,6 +256,19 @@ namespace GuWorld.UI
             numbers.Add(new Floating { Text = text, At = at + Random.insideUnitSphere * 0.3f });
         }
 
+        /// <summary>A word rising off a creature (a reaction's name), bigger than a number and slower to fade.</summary>
+        public void FloatWord(Vector3 at, string word, Color colour)
+        {
+            if (floats == null || numbers.Count > 40)
+            {
+                return;
+            }
+
+            var text = UiKit.Label(word, floats, 22, colour, TextAnchor.MiddleCenter, FontStyle.BoldAndItalic).Shadowed();
+            text.rectTransform.sizeDelta = new Vector2(260, 30);
+            numbers.Add(new Floating { Text = text, At = at });
+        }
+
         // ------------------------------------------------------------------ Every frame
 
         static bool OnScreen(Camera camera, Vector3 world, out Vector3 screen)
@@ -381,16 +398,24 @@ namespace GuWorld.UI
 
             var state = session.State;
             var stats = session.Stats;
-            heroName.text = "Гу Юэ " + state.HeroName;
-            heroRank.text = $"{Cultivation.Name(state.Step)} · талант {Cultivation.TalentName(state.Talent)}".ToUpperInvariant();
+            wordsIn -= dt;
+            var words = wordsIn <= 0;
+
+            if (words)
+            {
+                wordsIn = 0.1f;
+                heroName.text = "Гу Юэ " + state.HeroName;
+                heroRank.text = $"{Cultivation.Name(state.Step)} · талант {Cultivation.TalentName(state.Talent)}".ToUpperInvariant();
+                stones.text = state.Stones.ToString();
+                pills.text = session.Count("heal_pill").ToString();
+                effects.text = EventsLine(session) + EffectsLine(session);
+            }
+
             health.Set(state.Health / stats.MaxHealth, $"{Mathf.CeilToInt(state.Health)} / {Mathf.RoundToInt(stats.MaxHealth)}");
             essence.Set(state.Essence / stats.MaxEssence, $"{Mathf.RoundToInt(state.Essence / Cultivation.EssenceScale(session.Rank) * 100)}%");
             stamina.Set(session.Stamina / HeroStats.MaxStamina);
             var ready = Cultivation.IsRankUp(state.Step) && state.Insight >= Cultivation.Needs[state.Step];
             insight.Set(session.InsightShare, state.Step >= Cultivation.MaxStep ? "вершина" : ready ? "прорыв у источника" : $"прорыв {(int)state.Insight} / {session.InsightNeeded}");
-            stones.text = state.Stones.ToString();
-            pills.text = session.Count("heal_pill").ToString();
-            effects.text = EventsLine(session) + EffectsLine(session);
 
             for (var i = 0; i < slotCells.Length; i++)
             {
@@ -507,7 +532,7 @@ namespace GuWorld.UI
                     root.rectTransform.sizeDelta = new Vector2(64, 5);
                     var fill = UiKit.Image("Fill", root.transform, UiKit.Danger, UiKit.Plain);
                     fill.rectTransform.Place(Vector2.zero, Vector2.one);
-                    overBars.Add(new OverBar { Root = root.rectTransform, Fill = fill.rectTransform });
+                    overBars.Add(new OverBar { Root = root.rectTransform, Fill = fill.rectTransform, Paint = fill });
                 }
 
                 var bar = overBars[used++];
@@ -515,7 +540,7 @@ namespace GuWorld.UI
                 bar.Root.position = new Vector2(screen.x, screen.y);
                 bar.Fill.anchorMax = new Vector2(Mathf.Clamp01(enemy.Health / enemy.MaxHealth), 1);
                 // The bar takes the colour of what weighs on it (venom green, fire orange, ice blue).
-                bar.Fill.GetComponent<Image>().color = enemy.Status == StatusKind.None ? UiKit.Danger : Enemy.StatusColour(enemy.Status);
+                bar.Paint.color = enemy.Status == StatusKind.None ? UiKit.Danger : Enemy.StatusColour(enemy.Status);
             }
 
             for (var i = used; i < overBars.Count; i++)

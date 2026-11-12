@@ -21,6 +21,29 @@ namespace GuWorld.Core
     /// </summary>
     public partial class Session
     {
+        /// <summary>A reaction the hero set off: counted, and the first of a kind is told.</summary>
+        public void Reacted(ReactionKind kind)
+        {
+            if (kind == ReactionKind.None || InSandbox)
+            {
+                return;
+            }
+
+            State.Reactions++;
+            var id = kind.ToString();
+
+            if (!State.ReactionsSeen.Contains(id))
+            {
+                State.ReactionsSeen.Add(id);
+                Say($"Реакция «{Reactions.Name(kind)}»: {Reactions.Text(kind)}");
+            }
+
+            if (State.Reactions % 5 == 0 || State.ReactionsSeen.Count == Reactions.All.Length - 1)
+            {
+                Achieve();
+            }
+        }
+
         public const float ParryWindow = 0.22f;
         public const float GuardShare = 0.35f;
 

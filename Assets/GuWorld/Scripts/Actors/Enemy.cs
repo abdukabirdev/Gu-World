@@ -3,6 +3,7 @@ using System.Collections;
 using System.Collections.Generic;
 using GuWorld.Core;
 using GuWorld.Fx;
+using GuWorld.UI;
 using UnityEngine;
 
 namespace GuWorld.Actors
@@ -792,6 +793,12 @@ namespace GuWorld.Actors
             SinceHurt = 0;
             Game.Ui?.DamageNumber(transform.position + Vector3.up * (Height + hover + 0.2f), damage, critical, false, affinity);
 
+            // What the blow brings meets what is on it already: steam, shatter, quench…
+            if (status != StatusKind.None && Def.Mind != EnemyMind.Still)
+            {
+                React(Reactions.Meet(statuses, status, statusPower, frozen && stunTime > 0), damage);
+            }
+
             if (!aware)
             {
                 aware = true;
@@ -844,6 +851,40 @@ namespace GuWorld.Actors
                 {
                     body.Move(away.normalized * push);
                 }
+            }
+        }
+
+        void React(Reaction reaction, float damage)
+        {
+            if (!reaction.Happened)
+            {
+                return;
+            }
+
+            var colour = UiKit.Hex(Reactions.Colour(reaction.Kind));
+            var over = transform.position + Vector3.up * (Height + hover + 0.6f);
+            var extra = damage * reaction.Bonus;
+            Health -= extra;
+
+            if (extra >= 1)
+            {
+                Game.Ui?.DamageNumber(over, extra, true, false);
+            }
+
+            Game.Ui?.FloatWord(over + Vector3.up * 0.4f, Reactions.Name(reaction.Kind), colour);
+            Effects.Burst(transform.position + Vector3.up * Height * 0.5f, colour, 1.6f * Mathf.Max(1, Def.Scale), 0.45f);
+            Game.Session?.Reacted(reaction.Kind);
+
+            if (reaction.Thawed && frozen)
+            {
+                stunTime = 0;
+                ClearStatus();
+            }
+
+            if (reaction.Hold > 0 && !Def.Boss)
+            {
+                Interrupt();
+                staggerTime = Mathf.Max(staggerTime, reaction.Hold);
             }
         }
 

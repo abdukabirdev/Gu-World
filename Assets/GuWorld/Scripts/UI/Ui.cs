@@ -365,7 +365,7 @@ namespace GuWorld.UI
 
         static void Gap(Transform parent, float height = 8) => UiKit.Rect("Gap", parent).Size(height);
 
-        static Color QualityColour(int quality) => UiKit.Hex(GuBook.QualityColours[Mathf.Clamp(quality, 0, 2)]);
+        static Color QualityColour(int quality) => UiKit.Hex(GuBook.QualityColours[Mathf.Clamp(quality, 0, GuBook.MaxQuality)]);
 
         // ------------------------------------------------------------------ Talk
 

@@ -102,6 +102,8 @@ namespace GuWorld.Core
             new AchievementDef { Id = "tide", Name = "Стена против прилива", Text = "Отбейте волчий прилив.", Counts = "tides", Goal = 1 },
             new AchievementDef { Id = "tides", Name = "Сторож деревни", Text = "Отбейте пять волчьих приливов.", Counts = "tides", Goal = 5 },
             new AchievementDef { Id = "homeowner", Name = "Свой угол", Text = "Купите дом.", Counts = "homes", Goal = 1 },
+            new AchievementDef { Id = "reactions", Name = "Пар и лёд", Text = "Вызовите тридцать реакций: огонь по холоду, раскол льда, яд с кровью…", Counts = "reactions", Goal = 30 },
+            new AchievementDef { Id = "reaction_kinds", Name = "Знаток стихий", Text = "Вызовите все шесть реакций.", Counts = "reaction_kinds", Goal = 6 },
             new AchievementDef { Id = "parry", Name = "В последний миг", Text = "Отразите двадцать ударов, поставив блок в последний миг.", Counts = "parries", Goal = 20 },
             new AchievementDef { Id = "elite_hunter", Name = "Охотник на сильных", Text = "Одолейте десять элитных врагов.", Counts = "elites", Goal = 10 },
             new AchievementDef { Id = "elite_bane", Name = "Гроза элиты", Text = "Одолейте сто элитных врагов.", Counts = "elites", Goal = 100 },

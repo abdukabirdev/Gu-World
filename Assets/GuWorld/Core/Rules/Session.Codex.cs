@@ -219,6 +219,8 @@ namespace GuWorld.Core
                 case "grade": return BestGrade();
                 case "elites": return State.Elites;
                 case "parries": return State.Parries;
+                case "reactions": return State.Reactions;
+                case "reaction_kinds": return State.ReactionsSeen.Count;
                 case "homes": return State.Homes.Count;
                 case "tides": return State.Tides;
                 case "raids": return State.Raids;

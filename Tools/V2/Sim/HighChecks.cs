@@ -530,6 +530,45 @@ static partial class Program
         Check(hm.WhyNoTemper(lent2) != null && hm.WhyNoReforge(lent2, 0) != null && hm.TwinsOf(lent2).Count == 0, "a lent Gu is not tempered, reforged or fed");
         hm.LeaveSandbox();
 
+        // ------------------------------------------------------------------ Reactions of statuses
+
+        var on = new EnemyStatuses();
+        on.Apply(StatusKind.Chill, 0, 4);
+        var steam = Reactions.Meet(on, StatusKind.Burn, 5, false);
+        Check(steam.Kind == ReactionKind.Steam && steam.Bonus > 0 && on.ChillTime <= 0, "fire on the chilled makes steam and thaws it");
+        Check(Reactions.Meet(new EnemyStatuses(), StatusKind.Stun, 0, true).Kind == ReactionKind.Shatter, "a stun on the frozen shatters it");
+        on = new EnemyStatuses();
+        on.Apply(StatusKind.Burn, 5, 4);
+        var quench = Reactions.Meet(on, StatusKind.Chill, 0, false);
+        Check(quench.Kind == ReactionKind.Quench && on.BurnTime <= 0 && quench.Hold > 0, "cold on the burning quenches it and holds it");
+        on = new EnemyStatuses();
+        on.Apply(StatusKind.Poison, 4, 4);
+        var poisonBefore = on.Poison;
+        Check(Reactions.Meet(on, StatusKind.Burn, 5, false).Kind == ReactionKind.Fume && on.Poison > poisonBefore, "fire on the poisoned boils the venom");
+        on = new EnemyStatuses();
+        on.Apply(StatusKind.Bleed, 4, 4);
+        Check(Reactions.Meet(on, StatusKind.Burn, 5, false).Kind == ReactionKind.Sear && on.BleedTime <= 0, "fire on a wound sears it");
+        on = new EnemyStatuses();
+        on.Apply(StatusKind.Bleed, 4, 4);
+        Check(Reactions.Meet(on, StatusKind.Poison, 4, false).Kind == ReactionKind.Fester && on.PoisonTime > 3, "venom in a wound festers");
+        Check(!Reactions.Meet(new EnemyStatuses(), StatusKind.Burn, 5, false).Happened, "nothing to meet, no reaction");
+
+        // Every reaction can be set off with the Gu a hero can hold.
+        var lays = GuBook.All.Where(g => g.Skill != null).Select(g => g.Skill.Status).Distinct().ToList();
+        Check(lays.Contains(StatusKind.Burn) && lays.Contains(StatusKind.Chill) && lays.Contains(StatusKind.Poison) && lays.Contains(StatusKind.Bleed) && lays.Contains(StatusKind.Stun), $"the Gu lay fire, cold, venom, wounds and stuns ({string.Join(",", lays)})");
+        var lowLays = GuBook.All.Where(g => g.Skill != null && g.Rank <= 2).Select(g => g.Skill.Status).Distinct().ToList();
+        Check(lowLays.Contains(StatusKind.Burn) && lowLays.Contains(StatusKind.Chill), $"fire and cold are had by the second rank ({string.Join(",", lowLays)})");
+
+        var rx = new Session(Session.NewGame("Стихии"), 61);
+
+        foreach (var kind in Reactions.All)
+        {
+            rx.Reacted(kind);
+            Check(kind == ReactionKind.None || Reactions.Name(kind) != "" && Reactions.Text(kind) != "", $"reaction {kind} is named and told");
+        }
+
+        Check(rx.State.Reactions == Reactions.All.Length - 1 && rx.State.ReactionsSeen.Count == Reactions.All.Length - 1, "reactions are counted and their kinds seen");
+
         notes.Add($"high: {HighGu.All.Length} Gu of ranks 4–5, {HighGu.Recipes.Length} fusions, {KillerMoves.All.Length} killer moves");
     }
 }

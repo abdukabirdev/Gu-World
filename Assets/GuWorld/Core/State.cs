@@ -122,6 +122,9 @@ namespace GuWorld.Core
         public int Elites;
         /// <summary>Blows parried.</summary>
         public int Parries;
+        /// <summary>Reactions of statuses the hero has set off, and the kinds of them seen.</summary>
+        public int Reactions;
+        public List<string> ReactionsSeen = new List<string>();
         /// <summary>Wolf tides held.</summary>
         public int Tides;
         public int Raids;
