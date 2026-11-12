@@ -276,6 +276,13 @@ static partial class Program
             Check(given.Count >= 1 && given.Distinct().Count() == given.Count, $"then unleashes each once, and waits long for it again ({string.Join(", ", given)})");
         }
 
+        // ------------------------------------------------------------------ Hints
+
+        var hs = new Session(Session.NewGame("Подсказки"), 91);
+        var firstHint = hs.NextHint();
+        Check(firstHint != null && firstHint.Id == "slots" && hs.NextHint()?.Id != "slots", "a hint is shown once");
+        Check(Hints.All.Select(x => x.Id).Distinct().Count() == Hints.All.Length, "hints are named once");
+
         // ------------------------------------------------------------------ The wolf tide
 
         var w = new Session(Session.NewGame("Прилив"), 81);

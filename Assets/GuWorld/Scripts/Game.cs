@@ -85,6 +85,7 @@ namespace GuWorld
         float saveWait = 30;
         float nearbyWait;
         Component nearby;
+        float hintWait = 8;
         Core.Gen.Walker nearbyWalker;
         public static string Prompt { get; private set; }
 
@@ -410,6 +411,20 @@ namespace GuWorld
             {
                 saveWait = 30;
                 Save();
+            }
+
+            // A hint now and then, each once, when it first matters.
+            hintWait -= Time.deltaTime;
+
+            if (hintWait <= 0 && !Busy)
+            {
+                hintWait = 25;
+                var hint = Session.NextHint();
+
+                if (hint != null)
+                {
+                    Ui.Banner("Подсказка", hint.Text);
+                }
             }
 
             nearbyWait -= Time.deltaTime;

@@ -124,6 +124,8 @@ namespace GuWorld.Core
         public int Parries;
         /// <summary>Wolf tides held.</summary>
         public int Tides;
+        /// <summary>Hints already shown.</summary>
+        public List<string> Hints = new List<string>();
         /// <summary>The houses the hero owns (thing ids), what lies in their store, the Gu kept in their nursery.</summary>
         public List<string> Homes = new List<string>();
         public List<ItemStack> Stash = new List<ItemStack>();

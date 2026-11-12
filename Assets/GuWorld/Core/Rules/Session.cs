@@ -97,6 +97,7 @@ namespace GuWorld.Core
             State.Moves = State.Moves ?? new List<string>();
             State.Attainment = State.Attainment ?? new List<Tally>();
             State.Homes = State.Homes ?? new List<string>();
+            State.Hints = State.Hints ?? new List<string>();
             State.Stash = State.Stash ?? new List<ItemStack>();
             State.Nursery = State.Nursery ?? new List<int>();
             // A game stopped inside the immortal aperture: its loans go back.
