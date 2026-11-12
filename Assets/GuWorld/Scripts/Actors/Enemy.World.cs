@@ -228,6 +228,7 @@ namespace GuWorld.Actors
                     {
                         var spread = count > 1 ? (i - (count - 1) * 0.5f) * 12 : 0;
                         var direction = Quaternion.Euler(0, spread, 0) * (target - from);
+                        Fx.PathTrail.Next = gu.Path;
                         Projectile.Launch(false, from, direction, skill.Speed * 0.75f, skill.Range + 6, Mathf.Max(0.5f, skill.Radius), hue, skill.Pierce, false, actor =>
                         {
                             if (actor is Hero struck && HitHero(GuDamage(gu), transform.position) > 0)

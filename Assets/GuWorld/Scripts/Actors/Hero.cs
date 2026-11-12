@@ -719,6 +719,7 @@ namespace GuWorld.Actors
             switch (skill.Shape)
             {
                 case SkillShape.Projectile:
+                    PathTrail.Next = cast.Def.Path;
                     Projectile.Launch(true, Hand, Lead(aim), skill.Speed, cast.Range, skill.Radius, colour, skill.Pierce, moon, actor => Strike(cast, actor as Enemy));
                     Effects.Burst(Hand, colour, 1.2f, 0.15f);
                     break;
@@ -727,6 +728,7 @@ namespace GuWorld.Actors
                     for (var i = 0; i < skill.Count; i++)
                     {
                         var spread = (i - (skill.Count - 1) * 0.5f) * 11;
+                        PathTrail.Next = cast.Def.Path;
                         Projectile.Launch(true, Hand, Quaternion.Euler(0, spread, 0) * Lead(aim), skill.Speed, cast.Range, skill.Radius, colour, skill.Pierce, moon, actor => Strike(cast, actor as Enemy));
                     }
 

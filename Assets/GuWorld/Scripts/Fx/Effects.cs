@@ -187,6 +187,7 @@ namespace GuWorld.Fx
             light.range = 6;
             light.intensity = 2.2f;
             light.shadows = LightShadows.None;
+            PathTrail.Attach(root, colour);
             var projectile = root.AddComponent<Projectile>();
             projectile.fromHero = fromHero;
             projectile.velocity = root.transform.forward * speed;
