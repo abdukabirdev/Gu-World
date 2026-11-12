@@ -36,6 +36,8 @@ namespace GuWorld.Core.Gen.Flora
         Strands,
         /// <summary>None: a dead tree.</summary>
         None,
+        /// <summary>A clump of bamboo culms with sprays of narrow leaves at their nodes.</summary>
+        Bamboo,
     }
 
     /// <summary>
@@ -203,8 +205,16 @@ namespace GuWorld.Core.Gen.Flora
             Bark = Tint.Hex(0x5c5044), BarkDark = Tint.Hex(0x241e18), Leaf = Tint.Hex(0x2e4c24), Leaf2 = Tint.Hex(0x4a6a2a), Moss = 0.5f,
         };
 
+        public static readonly TreeSpecies Bamboo = new TreeSpecies
+        {
+            // A clump of culms from one root, arching out, sprays of leaves at the upper nodes.
+            Id = "bamboo", Name = "Bamboo", MinHeight = 6, MaxHeight = 14, Girth = 0.005f, Taper = 0.4f, Flare = 0, Wander = 0.03f, Gnarl = 0,
+            CrownBase = 0.4f, Spread = 0.1f, Rise = 0, Lean = 8, MinTrunks = 7, MaxTrunks = 15, Leaves = Leafage.Bamboo, Clump = 0.06f, Density = 1f,
+            Bark = Tint.Hex(0x7a9a3a), BarkDark = Tint.Hex(0x3e5422), Leaf = Tint.Hex(0x4e7a2a), Leaf2 = Tint.Hex(0x7a9a36), Moss = 0,
+        };
+
         /// <summary>Every kind of tree, in a fixed order (variants are numbered by it).</summary>
-        public static readonly TreeSpecies[] All = { Pine, Fir, Cypress, Camphor, Maple, Plum, Willow, Birch, Deadwood, Ancient };
+        public static readonly TreeSpecies[] All = { Pine, Fir, Cypress, Camphor, Maple, Plum, Willow, Birch, Deadwood, Ancient, Bamboo };
 
         static Dictionary<string, TreeSpecies> byId;
 

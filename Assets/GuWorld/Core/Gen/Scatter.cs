@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using GuWorld.Core.Gen.Flora;
 
 namespace GuWorld.Core.Gen
 {
@@ -15,6 +16,8 @@ namespace GuWorld.Core.Gen
         Reeds,
         /// <summary>A small pine in a pot, by a door (a model).</summary>
         Bonsai,
+        /// <summary>A generated tree: its kind (<see cref="Instance.Species"/>) and what it was asked to be are in the instance.</summary>
+        Tree,
     }
 
     /// <summary>One thing strewn: what, where, turned how, how big.</summary>
@@ -27,7 +30,17 @@ namespace GuWorld.Core.Gen
         /// <summary>A number of its own (a boulder's shape, a shrub's colour).</summary>
         public int Seed;
 
-        public bool IsTree => Kind <= Strewn.Bamboo;
+        // A generated tree's asking (Kind == Tree): its kind's index in Flora.Trees.All, its height
+        // in metres, its lean in degrees and the world heading it leans toward (0 +X, 90 +Z), how
+        // crowded and how old it grew.
+        public int Species;
+        public float Height;
+        public float Lean;
+        public float LeanTo;
+        public float Crowding;
+        public float Age;
+
+        public bool IsTree => Kind == Strewn.Tree || Kind <= Strewn.Bamboo;
     }
 
     /// <summary>
@@ -80,37 +93,8 @@ namespace GuWorld.Core.Gen
             }
         }
 
-        /// <summary>The trees of one kind per 1000 m² a biome holds at its densest, by kind.</summary>
-        static (Strewn kind, float perThousand, float minScale, float maxScale)[] Mix(Biome biome)
-        {
-            switch (biome)
-            {
-                case Biome.PineForest: return new[] { (Strewn.Pine, 2.3f, 0.45f, 0.82f), (Strewn.Camphor, 0.12f, 0.38f, 0.55f), (Strewn.Boulder, 0.25f, 0.8f, 2.4f), (Strewn.Shrub, 0.8f, 0.7f, 1.3f) };
-                case Biome.Broadleaf: return new[] { (Strewn.Camphor, 0.45f, 0.38f, 0.58f), (Strewn.Plum, 1.4f, 0.8f, 1.35f), (Strewn.Pine, 0.4f, 0.45f, 0.7f), (Strewn.Shrub, 1.6f, 0.7f, 1.4f) };
-                case Biome.Bamboo: return new[] { (Strewn.Bamboo, 3.2f, 0.9f, 1.55f), (Strewn.Shrub, 0.4f, 0.6f, 1.1f) };
-                case Biome.Deadwood: return new[] { (Strewn.Deadwood, 0.9f, 0.6f, 1.05f), (Strewn.Boulder, 0.6f, 0.8f, 3f), (Strewn.Pine, 0.25f, 0.4f, 0.6f) };
-                case Biome.Rock: return new[] { (Strewn.Boulder, 1.4f, 1f, 4.5f), (Strewn.Pine, 0.12f, 0.35f, 0.55f) };
-                case Biome.Marsh: return new[] { (Strewn.Reeds, 4f, 0.7f, 1.4f), (Strewn.Deadwood, 0.25f, 0.5f, 0.8f), (Strewn.Shrub, 0.5f, 0.6f, 1f) };
-                case Biome.Riverbank: return new[] { (Strewn.Reeds, 2.4f, 0.6f, 1.2f), (Strewn.Plum, 0.35f, 0.8f, 1.2f), (Strewn.Boulder, 0.6f, 0.6f, 1.8f) };
-                case Biome.Meadow: return new[] { (Strewn.Plum, 0.14f, 0.8f, 1.3f), (Strewn.Pine, 0.1f, 0.45f, 0.7f), (Strewn.Shrub, 0.6f, 0.6f, 1.2f), (Strewn.Boulder, 0.12f, 0.8f, 2f) };
-                default: return new (Strewn, float, float, float)[0];
-            }
-        }
-
-        /// <summary>How close to another tree a tree of a kind may stand, at scale 1.</summary>
-        static float Room(Strewn kind)
-        {
-            switch (kind)
-            {
-                case Strewn.Pine: return 11;
-                case Strewn.Camphor: return 22;
-                case Strewn.Ancient: return 40;
-                case Strewn.Deadwood: return 8;
-                case Strewn.Bamboo: return 5;
-                case Strewn.Plum: return 6;
-                default: return 2.5f;
-            }
-        }
+        /// <summary>The woods' fields across the map (grandeur, wind, the tree line).</summary>
+        public readonly Woods Woods = new Woods();
 
         /// <summary>Everything strewn in the cell (cx, cz) of 64 m.</summary>
         public List<Instance> Cell(int cx, int cz)
@@ -122,6 +106,7 @@ namespace GuWorld.Core.Gen
             var surface = world.Surface;
             var trees = new List<(Vec2 at, float room)>();
             var steps = (int)(CellSize / Spacing);
+            var kinds = Flora.Trees.All;
 
             for (var j = 0; j < steps; j++)
             {
@@ -137,22 +122,27 @@ namespace GuWorld.Core.Gen
                     var height = land.Height(p);
                     var slope = land.Slope(p.X, p.Z, 2.5f);
                     var biome = surface.BiomeAt(p, height, slope, land.Moisture(p));
-                    var mix = Mix(biome);
+                    var profile = Biomes.Of(biome);
 
-                    if (mix.Length == 0)
+                    if (profile == null)
                     {
                         continue;
                     }
 
-                    // Patchy: clearings and thickets.
+                    // Patchy: clearings and thickets, as patchy as the biome is; fewer trees up at the tree line.
                     var patch = Noise.Smooth(-0.35f, 0.45f, density.Fbm(p.X * 0.006f, p.Z * 0.006f, 3));
-                    var weights = new float[mix.Length];
-                    var any = 0f;
+                    var cover = (1 - profile.Patchiness) + profile.Patchiness * (0.25f + 1.2f * patch);
+                    var line = Woods.TreeLine(height);
+                    var treeChance = profile.Density * Spacing * Spacing / 1000 * cover * (0.4f + 0.6f * line);
+                    var under = profile.Undergrowth;
+                    var weights = new float[under.Length + 1];
+                    weights[0] = treeChance;
+                    var any = treeChance;
 
-                    for (var k = 0; k < mix.Length; k++)
+                    for (var k = 0; k < under.Length; k++)
                     {
-                        weights[k] = mix[k].perThousand * Spacing * Spacing / 1000 * (mix[k].kind <= Strewn.Bamboo ? 0.3f + 1.2f * patch : 1);
-                        any += weights[k];
+                        weights[k + 1] = under[k].perThousand * Spacing * Spacing / 1000;
+                        any += weights[k + 1];
                     }
 
                     if (!rng.Chance(Math.Min(1, any)))
@@ -161,38 +151,66 @@ namespace GuWorld.Core.Gen
                     }
 
                     var pick = rng.Weighted(weights);
-                    var (kind, _, minScale, maxScale) = mix[pick];
-                    var scale = rng.Range(minScale, maxScale);
-                    var tree = kind <= Strewn.Bamboo;
 
-                    if (tree && slope > 0.75f || !Allowed(p, tree ? 4 : 2))
+                    if (pick > 0)
                     {
-                        continue;
-                    }
+                        var (kind, _, minScale, maxScale) = under[pick - 1];
 
-                    if (tree)
-                    {
-                        var room = Room(kind) * scale;
-                        var crowded = false;
-
-                        foreach (var (at, other) in trees)
-                        {
-                            if (Vec2.Distance(at, p) < (room + other) * 0.5f)
-                            {
-                                crowded = true;
-                                break;
-                            }
-                        }
-
-                        if (crowded)
+                        if (!Allowed(p, 2))
                         {
                             continue;
                         }
 
-                        trees.Add((p, room));
+                        result.Add(new Instance { Kind = kind, At = p, Yaw = rng.Range(0f, 360f), Scale = rng.Range(minScale, maxScale), Seed = (int)(rng.Next() & 0xFFFFFF), Species = -1 });
+
+                        continue;
                     }
 
-                    result.Add(new Instance { Kind = kind, At = p, Yaw = rng.Range(0f, 360f), Scale = scale, Seed = (int)(rng.Next() & 0xFFFFFF) });
+                    if (slope > 0.75f || !Allowed(p, 4))
+                    {
+                        continue;
+                    }
+
+                    // Which kind: by the biome's shares.
+                    var shares = new float[profile.Trees.Length];
+
+                    for (var k = 0; k < shares.Length; k++)
+                    {
+                        shares[k] = profile.Trees[k].share;
+                    }
+
+                    var species = Flora.Trees.Get(profile.Trees[rng.Weighted(shares)].kind);
+
+                    if (species == null)
+                    {
+                        continue;
+                    }
+
+                    var downhill = Downhill(p);
+                    var asked = Woods.Ask(profile, species, p, height, slope, downhill, ref rng);
+                    var room = Room(species, asked.height, asked.crowd);
+                    var crowded = false;
+
+                    foreach (var (at, other) in trees)
+                    {
+                        if (Vec2.Distance(at, p) < (room + other) * 0.5f)
+                        {
+                            crowded = true;
+                            break;
+                        }
+                    }
+
+                    if (crowded)
+                    {
+                        continue;
+                    }
+
+                    trees.Add((p, room));
+                    result.Add(new Instance
+                    {
+                        Kind = Strewn.Tree, At = p, Yaw = rng.Range(0f, 360f), Scale = 1, Seed = (int)(rng.Next() & 0xFFFFFF),
+                        Species = Biomes.KindIndex(species.Id), Height = asked.height, Lean = asked.lean, LeanTo = asked.heading, Crowding = asked.crowd, Age = asked.age,
+                    });
                 }
             }
 
@@ -202,14 +220,38 @@ namespace GuWorld.Core.Gen
                 var p = origin + new Vec2(CellSize * 0.5f, CellSize * 0.5f);
                 var biome = surface.BiomeAt(p, land.Height(p), land.Slope(p.X, p.Z), land.Moisture(p));
 
-                if ((biome == Biome.PineForest || biome == Biome.Broadleaf) && Allowed(p, 30))
+                if ((biome == Biome.PineForest || biome == Biome.Broadleaf || biome == Biome.Maple) && Allowed(p, 30))
                 {
+                    var ancient = Flora.Trees.Ancient;
                     result.RemoveAll(other => other.IsTree && Vec2.Distance(other.At, p) < 26);
-                    result.Add(new Instance { Kind = Strewn.Ancient, At = p, Yaw = rng.Range(0f, 360f), Scale = rng.Range(0.42f, 0.5f), Seed = 1 });
+                    result.Add(new Instance
+                    {
+                        Kind = Strewn.Tree, At = p, Yaw = rng.Range(0f, 360f), Scale = 1, Seed = (int)(rng.Next() & 0xFFFFFF), Species = Biomes.KindIndex(ancient.Id),
+                        Height = rng.Range(ancient.MinHeight, ancient.MaxHeight), Lean = rng.Range(0f, 5f), LeanTo = rng.Range(0f, 360f), Crowding = 0.1f, Age = 1,
+                    });
                 }
             }
 
             return result;
+        }
+
+        /// <summary>How far apart trees stand, centre to centre: about their crowns' width, less where crowded.</summary>
+        static float Room(TreeSpecies species, float height, float crowd)
+        {
+            var crown = height * species.Spread * (species.Leaves == Leafage.Bamboo ? 4 : 1);
+
+            return Math.Max(2.5f, crown * (1.1f - 0.5f * crowd));
+        }
+
+        /// <summary>The level way down the slope at a point (zero on the flat).</summary>
+        Vec2 Downhill(Vec2 p)
+        {
+            var land = world.Land;
+            var dx = land.Height(p.X + 2, p.Z) - land.Height(p.X - 2, p.Z);
+            var dz = land.Height(p.X, p.Z + 2) - land.Height(p.X, p.Z - 2);
+            var length = (float)Math.Sqrt(dx * dx + dz * dz);
+
+            return length < 1e-4f ? new Vec2(0, 0) : new Vec2(-dx / length, -dz / length);
         }
 
         /// <summary>Whether something may stand at a point, `margin` clear of roads, water, settlements, places and the plan's things.</summary>

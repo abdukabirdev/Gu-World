@@ -4,7 +4,7 @@ using System.Collections.Generic;
 namespace GuWorld.Core.Gen
 {
     /// <summary>What grows on a piece of land.</summary>
-    public enum Biome { Meadow, PineForest, Broadleaf, Bamboo, Deadwood, Rock, Marsh, Riverbank, Settled, Field }
+    public enum Biome { Meadow, PineForest, Broadleaf, Bamboo, Deadwood, Rock, Marsh, Riverbank, Settled, Field, Fir, Maple }
 
     /// <summary>
     /// What the ground is like at a point: its biome (what grows), and the mix of the ten ground
@@ -174,7 +174,15 @@ namespace GuWorld.Core.Gen
 
             if (height > 420)
             {
-                return patch > 0.15f ? Biome.Deadwood : Biome.Rock;
+                return patch > 0.15f ? Biome.Deadwood : patch > -0.2f ? Biome.Fir : Biome.Rock;
+            }
+
+            // A third of the way up the mountain the pines give way to dark firs, in tongues.
+            var fir = patches.Fbm(p.X * 0.003f - 40, p.Z * 0.003f + 13, 2);
+
+            if (height > 260 && fir > 0.05f - (height - 260) * 0.002f && patch > -0.3f)
+            {
+                return Biome.Fir;
             }
 
             if (height > 110)
@@ -182,12 +190,14 @@ namespace GuWorld.Core.Gen
                 return patch > -0.25f ? Biome.PineForest : Biome.Meadow;
             }
 
-            if (moisture > 0.62f && patch > -0.1f)
+            // The low valleys: broad woods where it is damp (with groves of maples gone red), pines on
+            // the drier knolls, meadow between.
+            if (moisture > 0.45f && patch > -0.08f)
             {
-                return Biome.Broadleaf;
+                return patches.Fbm(p.X * 0.005f + 90, p.Z * 0.005f - 30, 2) > 0.28f ? Biome.Maple : Biome.Broadleaf;
             }
 
-            return patch > 0.28f ? Biome.PineForest : Biome.Meadow;
+            return patch > 0.12f ? Biome.PineForest : Biome.Meadow;
         }
 
         /// <summary>The ground layers' weights at a point (they add up to 1), and the biome there.</summary>
@@ -205,6 +215,11 @@ namespace GuWorld.Core.Gen
                     Mix(weights, ForestFloor, 0.6f + 0.35f * grain);
                     Mix(weights, Moss, 0.2f * grain);
                     break;
+                case Biome.Fir:
+                    Mix(weights, ForestFloor, 0.7f + 0.25f * grain);
+                    Mix(weights, Moss, 0.3f * grain);
+                    break;
+                case Biome.Maple:
                 case Biome.Broadleaf:
                     Mix(weights, ForestFloor, 0.45f + 0.3f * grain);
                     Mix(weights, Moss, 0.3f * (1 - grain));

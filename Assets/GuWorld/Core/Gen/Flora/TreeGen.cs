@@ -34,7 +34,7 @@ namespace GuWorld.Core.Gen.Flora
         public V3 CrownCentre;
         /// <summary>Where the top of the main trunk ended up (its lean shows in X).</summary>
         public V3 Top;
-        /// <summary>Levels of detail, near to far: 0 all of it, 1 lighter, 2 a few blobs on a pole.</summary>
+        /// <summary>Levels of detail, near to far: 0 all of it, 1 lighter, 2 a few blobs on its limbs, 3 one or two blobs on a pole (for the far woods, tens of triangles).</summary>
         public MeshData[] Lods;
         public int Limbs;
         public int Clumps;
@@ -100,6 +100,12 @@ namespace GuWorld.Core.Gen.Flora
             var asked0 = (float)Math.Tan(Math.Min(60, Math.Abs(asked.Lean)) * Math.PI / 180) * Math.Sign(asked.Lean);
             Limb main = null;
 
+            if (species.Leaves == Leafage.Bamboo)
+            {
+                main = Bamboo(species, height, crowd, limbs, clumps, noise, ref rng);
+                trunks = 0;
+            }
+
             for (var k = 0; k < trunks; k++)
             {
                 // Its own lean: a little of the kind's, any way, on top of the asked lean along +X.
@@ -152,7 +158,12 @@ namespace GuWorld.Core.Gen.Flora
             }
 
             Lift(limbs);
-            Leaves(species, limbs, height, crowd, asked.Season, noise, ref rng, clumps);
+
+            if (species.Leaves != Leafage.Bamboo)
+            {
+                Leaves(species, limbs, height, crowd, asked.Season, noise, ref rng, clumps);
+            }
+
             Fit(limbs, clumps, height);
             Shear(limbs, clumps, height, asked0);
             model.TrunkRadius = main.Radii[Math.Min(main.Radii.Count - 1, 1)];
@@ -165,6 +176,7 @@ namespace GuWorld.Core.Gen.Flora
                 Mesh(species, model, limbs, clumps, 0, noise),
                 Mesh(species, model, limbs, clumps, 1, noise),
                 Mesh(species, model, limbs, clumps, 2, noise),
+                Mesh(species, model, limbs, clumps, 3, noise),
             };
 
             return model;
@@ -480,6 +492,96 @@ namespace GuWorld.Core.Gen.Flora
             }
         }
 
+        /// <summary>
+        /// A clump of bamboo: culms from one root spreading out and arching at the top, each jointed
+        /// at its nodes; from the upper nodes short side twigs carry sprays of narrow leaves.
+        /// Returns the tallest culm.
+        /// </summary>
+        static Limb Bamboo(TreeSpecies species, float height, float crowd, List<Limb> limbs, List<Clump> clumps, Noise noise, ref Rng rng)
+        {
+            var culms = rng.Range(species.MinTrunks, species.MaxTrunks + 1) + (int)(crowd * 4);
+            var spread = 0.5f + 0.9f * (1 - crowd);
+            Limb tallest = null;
+
+            for (var c = 0; c < culms; c++)
+            {
+                var a = rng.Range(0f, Build.Tau);
+                var r = spread * (float)Math.Sqrt(rng.Value());
+                var outward = new V3((float)Math.Cos(a), 0, (float)Math.Sin(a));
+                var tall = height * rng.Range(0.62f, 1.02f);
+                var radius = Math.Max(0.025f, tall * species.Girth * rng.Range(0.8f, 1.25f));
+                var tilt = (float)Math.Tan(rng.Range(3f, 13f) * Math.PI / 180) * (0.4f + r / spread);
+                var dir = (V3.Up + outward * tilt).Normalized;
+                var culm = new Limb { Depth = 0, Length = tall };
+                var p = new V3(outward.X * r, -0.3f, outward.Z * r);
+                const int steps = 18;
+                var step = tall / steps;
+
+                for (var s = 0; s <= steps; s++)
+                {
+                    var t = s / (float)steps;
+                    culm.Points.Add(p);
+                    // A node every other ring, a little proud of the culm.
+                    culm.Radii.Add(radius * (1 - 0.65f * t) * (s % 2 == 0 ? 1.12f : 1));
+                    // The top arches over, out from the clump, under the weight of its leaves.
+                    dir = (dir + outward * (0.018f * t * t * 4) - V3.Up * (0.012f * t * t * 3) + new V3(noise.Perlin(c * 3.1f, t * 2), 0, noise.Perlin(t * 2, c * 3.1f)) * species.Wander).Normalized;
+                    p = p + dir * step;
+                }
+
+                limbs.Add(culm);
+
+                if (tallest == null || tall > tallest.Length)
+                {
+                    tallest = culm;
+                }
+
+                // Sprays at the upper nodes, alternately to each side.
+                for (var s = 6; s < steps; s += 2)
+                {
+                    if (!rng.Chance(0.92f))
+                    {
+                        continue;
+                    }
+
+                    var at = culm.Points[s];
+                    var axis = (culm.Points[s + 1] - culm.Points[s]).Normalized;
+                    var side = Build.Rotate(Build.Perpendicular(axis), axis, s * 2.4f + c);
+                    var twigDir = (side + axis * 0.4f + V3.Up * 0.1f).Normalized;
+                    var twigLength = rng.Range(0.4f, 1.1f) * (height / 10);
+                    var twig = new Limb { Depth = 1, Length = twigLength };
+
+                    for (var k = 0; k <= 3; k++)
+                    {
+                        twig.Points.Add(at + twigDir * (twigLength * k / 3f) - V3.Up * (0.05f * k * k));
+                        twig.Radii.Add(radius * 0.25f * (1 - 0.7f * k / 3f));
+                    }
+
+                    limbs.Add(twig);
+                    var tip = twig.Points[3];
+                    var size = height * species.Clump * rng.Range(0.8f, 1.2f);
+                    var flat = new V3(twigDir.X, 0, twigDir.Z).Normalized;
+                    var across = V3.Cross(V3.Up, flat);
+                    var colour = Tint.Mix(species.Leaf, species.Leaf2, rng.Value());
+                    clumps.Add(new Clump { Kind = ClumpKind.Blob, Centre = tip - V3.Up * (size * 0.3f), Ax = flat * (size * 0.9f), Ay = V3.Up * (size * 0.7f), Az = across * (size * 0.8f), Colour = colour, Size = size * 0.8f });
+
+                    // A few single leaves hanging from the spray: narrow and drooping.
+                    var leaves = rng.Range(6, 10);
+
+                    for (var l = 0; l < leaves; l++)
+                    {
+                        var la = rng.Range(-2.6f, 2.6f);
+                        var ld = (flat * (float)Math.Cos(la) + across * (float)Math.Sin(la)).Normalized;
+                        var length = size * rng.Range(1.4f, 2.2f);
+                        var from = tip + ld * (size * 0.6f);
+                        var path = new[] { from, from + ld * (length * 0.5f) - V3.Up * (length * 0.15f), from + ld * length - V3.Up * (length * 0.45f) };
+                        clumps.Add(new Clump { Kind = ClumpKind.Strand, Path = path, Size = size * 0.32f, Colour = Tint.Mix(colour, species.Leaf2, 0.4f), Centre = path[1] });
+                    }
+                }
+            }
+
+            return tallest;
+        }
+
         /// <summary>Branches of a leaning or drooping tree kept off the ground (roots are meant to go in).</summary>
         static void Lift(List<Limb> limbs)
         {
@@ -663,12 +765,18 @@ namespace GuWorld.Core.Gen.Flora
         {
             var mesh = new MeshData();
             var height = model.Height;
+            var stems = 0;
 
             foreach (var limb in limbs)
             {
                 var r0 = limb.Radii[0];
 
-                // Far: only the trunk and the thickest limbs; mid: no finest twigs.
+                // Farthest: the trunk alone; far: only the trunk and the thickest limbs; mid: no finest twigs.
+                if (lod == 3 && (limb.Depth > 0 || limb.Root || ++stems > 4))
+                {
+                    continue;
+                }
+
                 if (lod == 2 && limb.Depth > 0 && (limb.Depth > 1 || r0 < height * 0.006f))
                 {
                     continue;
@@ -686,7 +794,11 @@ namespace GuWorld.Core.Gen.Flora
 
                 int sides;
 
-                if (limb.Depth == 0 || limb.Root)
+                if (lod == 3)
+                {
+                    sides = 4;
+                }
+                else if (limb.Depth == 0 || limb.Root)
                 {
                     sides = lod == 0 ? Math.Max(8, Math.Min(16, (int)(r0 * 22) + 7)) : lod == 1 ? 6 : 5;
                 }
@@ -698,19 +810,20 @@ namespace GuWorld.Core.Gen.Flora
                 var points = limb.Points;
                 var radii = limb.Radii;
 
-                if (lod == 2 && points.Count > 6)
+                if (lod >= 2 && points.Count > 6)
                 {
-                    // Half the rings.
+                    // Half the rings (a quarter on the farthest).
                     var p2 = new List<V3>();
                     var r2 = new List<float>();
+                    var every = lod == 3 ? 4 : 2;
 
-                    for (var i = 0; i < points.Count; i += 2)
+                    for (var i = 0; i < points.Count; i += every)
                     {
                         p2.Add(points[i]);
                         r2.Add(radii[i]);
                     }
 
-                    if ((points.Count - 1) % 2 != 0)
+                    if ((points.Count - 1) % every != 0)
                     {
                         p2.Add(points[points.Count - 1]);
                         r2.Add(radii[points.Count - 1]);
@@ -721,7 +834,9 @@ namespace GuWorld.Core.Gen.Flora
                 }
 
                 var ringCount = points.Count;
-                Build.Tube(mesh, points, radii, sides, (ring, around, p, n) => BarkColour(species, p, n, around, noise, height), !limb.Snapped || lod > 0, 0.5f);
+                var bamboo = species.Leaves == Leafage.Bamboo;
+                var step = points.Count == limb.Points.Count ? 1 : 2;
+                Build.Tube(mesh, points, radii, sides, (ring, around, p, n) => bamboo && (ring * step) % 2 == 0 && ring > 0 ? Build.Shade(species.BarkDark, 1.1f) : BarkColour(species, p, n, around, noise, height), !limb.Snapped || lod > 0, 0.5f);
 
                 if (limb.Snapped && lod == 0)
                 {
@@ -745,10 +860,10 @@ namespace GuWorld.Core.Gen.Flora
                 return Build.Shade(baseColour, ao * light);
             }
 
-            if (lod == 2)
+            if (lod >= 2)
             {
-                // A handful of big blobs: the clumps gathered on a coarse grid.
-                var cell = Math.Max(1.5f, crownR * 0.8f);
+                // A handful of big blobs: the clumps gathered on a coarse grid (coarser yet, and plainer, on the farthest).
+                var cell = lod == 3 ? Math.Max(2f, crownR * 1.7f) : Math.Max(1.5f, crownR * 0.8f);
                 var groups = new Dictionary<long, (V3 sum, float min_x, float max_x, float min_y, float max_y, float min_z, float max_z, int n, float r, float g, float b)>();
 
                 foreach (var c in clumps)
@@ -788,7 +903,7 @@ namespace GuWorld.Core.Gen.Flora
                     var colour = new Tint(gr.r / gr.n, gr.g / gr.n, gr.b / gr.n);
                     var shrink = gr.n == 1 ? 1 : 0.88f;
                     Build.Blob(mesh, mid, new V3((gr.max_x - gr.min_x) / 2 * shrink, 0, 0), new V3(0, (gr.max_y - gr.min_y) / 2 * shrink, 0), new V3(0, 0, (gr.max_z - gr.min_z) / 2 * shrink),
-                        1, noise, 0.18f, (p, n) => LeafColour(colour, p, n));
+                        lod == 3 ? 0 : 1, noise, lod == 3 ? 0.05f : 0.18f, (p, n) => LeafColour(colour, p, n));
                 }
 
                 return mesh;

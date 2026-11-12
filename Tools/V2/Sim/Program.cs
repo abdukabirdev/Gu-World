@@ -41,6 +41,11 @@ static partial class Program
                 GenChecks.Trees(repo, Check, genReport, export);
             }
 
+            if (Array.IndexOf(what, "biomes") >= 0)
+            {
+                GenChecks.BiomeChecks(repo, Check, genReport);
+            }
+
             foreach (var line in genReport)
             {
                 Console.WriteLine(line);

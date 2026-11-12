@@ -281,7 +281,7 @@ static class WorldChecks
         report.Add($"  atlas: {RegionPeople.All.Length} people, {RegionThings.All.Length} things, {RegionSpawns.All.Length} spawns of the regions placed; {moved} with a day of their own");
     }
 
-    static readonly int[] LayerColours = { 0x5A7A3C, 0x2F4A2A, 0x8A8A86, 0xA08A5C, 0x6E6A66, 0x9A9488, 0x4A6A3A, 0x7A5E40, 0x4A3E30, 0x8A7050 };
+    public static readonly int[] LayerColours = { 0x5A7A3C, 0x2F4A2A, 0x8A8A86, 0xA08A5C, 0x6E6A66, 0x9A9488, 0x4A6A3A, 0x7A5E40, 0x4A3E30, 0x8A7050 };
 
     /// <summary>A shaded relief map of a square of the world: ground layers lit from the north-west, water, roads, buildings, settlements' names.</summary>
     static void Picture(WorldPlan plan, string path, int size, float x0, float z0, float span, bool roads)
@@ -407,9 +407,17 @@ static class WorldChecks
                 {
                     foreach (var instance in plan.Scatter.Cell(cx, cz))
                     {
-                        var colour = instance.Kind == Strewn.Boulder ? 0x8A8680 : instance.Kind == Strewn.Bamboo ? 0x6AA040 : instance.Kind == Strewn.Reeds ? 0x9AA060
-                            : instance.Kind == Strewn.Shrub ? 0x3A5A2A : instance.Kind == Strewn.Deadwood ? 0x5A4A3A : 0x1A3A1A;
-                        Dot(instance.At.X, instance.At.Z, colour, instance.IsTree ? Math.Max(1, (int)(instance.Scale * 3 / step)) : 0);
+                        var colour = instance.Kind == Strewn.Boulder ? 0x8A8680 : instance.Kind == Strewn.Reeds ? 0x9AA060 : instance.Kind == Strewn.Shrub ? 0x3A5A2A : 0x1A3A1A;
+                        var reach = 0;
+
+                        if (instance.Kind == Strewn.Tree)
+                        {
+                            var kind = GuWorld.Core.Gen.Flora.Trees.All[instance.Species];
+                            colour = TreeDot(kind.Id);
+                            reach = Math.Max(1, (int)(instance.Height * kind.Spread * 0.7f / step));
+                        }
+
+                        Dot(instance.At.X, instance.At.Z, colour, reach);
                     }
                 }
             }
@@ -437,6 +445,25 @@ static class WorldChecks
     }
 
     /// <summary>The ground's small growth: thick on meadows, none on roads and in the deep, ferns under trees, quick enough to plant as the hero walks.</summary>
+    /// <summary>A kind of tree's colour on the map: maples red, plums pink, firs nearly black.</summary>
+    public static int TreeDot(string kind)
+    {
+        switch (kind)
+        {
+            case "fir": return 0x10261A;
+            case "cypress": return 0x183018;
+            case "maple": return 0xA03A1C;
+            case "plum": return 0xC08A92;
+            case "bamboo": return 0x6AA040;
+            case "willow": return 0x7A9A3A;
+            case "birch": return 0xA8AA62;
+            case "deadwood": return 0x6A5A4A;
+            case "ancient": return 0x082808;
+            case "camphor": return 0x2A4A1A;
+            default: return 0x1A3A1A;
+        }
+    }
+
     static void GrassChecks(WorldPlan plan, Action<bool, string> check, List<string> report)
     {
         var tufts = new List<Tuft>();

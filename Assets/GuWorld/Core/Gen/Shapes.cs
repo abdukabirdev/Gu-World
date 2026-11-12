@@ -574,11 +574,18 @@ namespace GuWorld.Core.Gen
                     // Woods look darker from afar than their floor.
                     var biome = world.Surface.BiomeAt(p, h, slope, world.Land.Moisture(p));
 
-                    if (biome == Biome.PineForest || biome == Biome.Broadleaf || biome == Biome.Bamboo)
+                    if (biome == Biome.PineForest || biome == Biome.Broadleaf || biome == Biome.Bamboo || biome == Biome.Fir)
                     {
-                        r *= 0.62f;
-                        g *= 0.7f;
+                        r *= biome == Biome.Fir ? 0.5f : 0.62f;
+                        g *= biome == Biome.Fir ? 0.6f : 0.7f;
                         b *= 0.62f;
+                    }
+                    else if (biome == Biome.Maple)
+                    {
+                        // A red grove reads from across the valley.
+                        r *= 1.15f;
+                        g *= 0.62f;
+                        b *= 0.5f;
                     }
 
                     mesh.Vertex(x, h - sink, z, i / (float)cells, j / (float)cells, r, g, b);
