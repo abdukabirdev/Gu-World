@@ -72,6 +72,8 @@ namespace GuWorld.Core.Gen
                     var town = CityPlanner.Plan(def, new TownGround(Land, Waters, def), Roads.All.ConvertAll(r => r.Points), Waters);
                     Settlements.Add(town);
                     Land.SetPads(town.Pads);
+                    // Its people out in the streets: about one in eight of them is a walker (the rest stay in).
+                    town.Walkers = Crowd.Plan(town, Math.Min(700, town.Population / 8), def.Seed);
                     continue;
                 }
 

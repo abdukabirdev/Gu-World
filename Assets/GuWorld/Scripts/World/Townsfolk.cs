@@ -1,0 +1,272 @@
+using System.Collections.Generic;
+using GuWorld.Actors;
+using GuWorld.Core;
+using GuWorld.Core.Gen;
+using UnityEngine;
+
+namespace GuWorld.World
+{
+    /// <summary>
+    /// The town's crowd in the engine. The day of every townsperson is planned in Core (<see cref="Crowd"/>);
+    /// here only the ones near the hero get a body. A body follows its person's day at a walking pace in
+    /// real seconds (the clock of the game runs sixty times faster, so the plan says where they are going,
+    /// and the body walks there along the plan's streets); those out of sight are simply where the plan
+    /// puts them. Bodies come from a pool (by look) and go back to it when their person walks out of
+    /// reach or goes indoors.
+    /// </summary>
+    public class Townsfolk : MonoBehaviour
+    {
+        sealed class Body
+        {
+            public GameObject Root;
+            public RigAnimator Rig;
+            public string Look;
+            public Walker Walker;
+            public int Leg = -1;
+            public float Distance;
+            public bool Walking;
+            public Vector3 Goal;
+            public float Facing;
+        }
+
+        readonly List<Walker> walkers = new List<Walker>();
+        readonly List<Body> active = new List<Body>();
+        readonly Dictionary<string, Stack<Body>> pool = new Dictionary<string, Stack<Body>>();
+        readonly Dictionary<Walker, Body> bodyOf = new Dictionary<Walker, Body>();
+        readonly List<(Walker walker, float distance)> wanted = new List<(Walker, float)>();
+        float wait;
+        float reach;
+        int most;
+        int made;
+
+        public static Townsfolk Make(Transform parent, SettlementPlan plan)
+        {
+            var root = new GameObject("Townsfolk of " + plan.Def.Name);
+            root.transform.SetParent(parent, false);
+            var folk = root.AddComponent<Townsfolk>();
+            folk.walkers.AddRange(plan.Walkers);
+            folk.reach = Quality.Level >= 2 ? 95 : Quality.Level == 1 ? 70 : 45;
+            folk.most = Quality.Level >= 2 ? 48 : Quality.Level == 1 ? 28 : 14;
+
+            return folk;
+        }
+
+        /// <summary>How many have bodies now and how many exist (for the autotest's log).</summary>
+        public string Count() => $"{active.Count} townsfolk shown of {walkers.Count} ({made} bodies made)";
+
+        void Update()
+        {
+            var hero = Game.Hero;
+
+            if (hero == null || walkers.Count == 0)
+            {
+                return;
+            }
+
+            var focus = hero.transform.position;
+            wait -= Time.deltaTime;
+
+            if (wait <= 0)
+            {
+                wait = 0.4f;
+                Choose(focus);
+            }
+
+            var dt = Time.deltaTime;
+
+            foreach (var body in active)
+            {
+                Move(body, dt);
+            }
+        }
+
+        /// <summary>Who should have a body: the nearest of those out of doors within reach.</summary>
+        void Choose(Vector3 focus)
+        {
+            wanted.Clear();
+            var hour = Atmosphere.Hour;
+            var here = new Vec2(focus.x, focus.z);
+
+            foreach (var walker in walkers)
+            {
+                // Those with a body are where their body is; the rest where the plan puts them.
+                Vec2 at;
+
+                if (bodyOf.TryGetValue(walker, out var has))
+                {
+                    at = new Vec2(has.Root.transform.position.x, has.Root.transform.position.z);
+                }
+                else
+                {
+                    var pose = Crowd.At(walker, hour);
+
+                    if (pose.Indoors)
+                    {
+                        continue;
+                    }
+
+                    at = pose.At;
+                }
+
+                var distance = Vec2.Distance(at, here);
+
+                if (distance < reach)
+                {
+                    wanted.Add((walker, distance));
+                }
+            }
+
+            wanted.Sort((a, b) => a.distance.CompareTo(b.distance));
+            var keep = new HashSet<Walker>();
+
+            for (var i = 0; i < wanted.Count && i < most; i++)
+            {
+                keep.Add(wanted[i].walker);
+            }
+
+            // Bodies whose person is no longer wanted (or has gone in and stands at home) go back.
+            for (var i = active.Count - 1; i >= 0; i--)
+            {
+                var body = active[i];
+                var home = !body.Walking && Crowd.At(body.Walker, hour).Indoors;
+
+                if (!keep.Contains(body.Walker) || home)
+                {
+                    Release(body);
+                    active.RemoveAt(i);
+                }
+            }
+
+            foreach (var walker in keep)
+            {
+                if (!bodyOf.ContainsKey(walker))
+                {
+                    var body = Take(walker);
+
+                    if (body != null)
+                    {
+                        Place(body, hour);
+                        active.Add(body);
+                    }
+                }
+            }
+        }
+
+        Body Take(Walker walker)
+        {
+            if (!pool.TryGetValue(walker.Look, out var stack))
+            {
+                pool[walker.Look] = stack = new Stack<Body>();
+            }
+
+            Body body;
+
+            if (stack.Count > 0)
+            {
+                body = stack.Pop();
+                body.Root.SetActive(true);
+            }
+            else
+            {
+                var root = new GameObject("Townsperson");
+                root.transform.SetParent(transform, false);
+                Models.Human(root.transform, walker.Look, false, false, out var rig);
+                body = new Body { Root = root, Rig = rig, Look = walker.Look };
+                made++;
+            }
+
+            body.Walker = walker;
+            body.Leg = -1;
+            bodyOf[walker] = body;
+
+            return body;
+        }
+
+        void Release(Body body)
+        {
+            bodyOf.Remove(body.Walker);
+            body.Walker = null;
+            body.Root.SetActive(false);
+            pool[body.Look].Push(body);
+        }
+
+        /// <summary>A new body appears where its person is by the plan, part way along a walk if they are walking.</summary>
+        void Place(Body body, float hour)
+        {
+            var walker = body.Walker;
+            var index = Crowd.LegAt(walker, hour);
+            var pose = Crowd.At(walker, hour);
+            body.Root.transform.position = Game.Ground(new Vector3(pose.At.X, 0, pose.At.Z));
+            body.Root.transform.rotation = Quaternion.Euler(0, pose.Facing, 0);
+            body.Leg = index;
+
+            if (index >= 0 && walker.Day[index].Path.Length >= 2)
+            {
+                var leg = walker.Day[index];
+                var h = hour < leg.From ? hour + 24 : hour;
+                body.Distance = leg.Length * Mathf.Clamp01((h - leg.From) / Mathf.Max(1e-4f, leg.To - leg.From));
+                body.Walking = true;
+                body.Rig?.Play("walk", 0, false, walker.Pace / 1.3f);
+            }
+            else
+            {
+                body.Walking = false;
+                body.Facing = pose.Facing;
+                body.Rig?.Play("idle", 0);
+            }
+        }
+
+        /// <summary>A frame of a body: along its walk at its pace, or standing turned to its work; a new leg of the plan starts when it is free.</summary>
+        void Move(Body body, float dt)
+        {
+            var walker = body.Walker;
+            var transformOf = body.Root.transform;
+
+            if (body.Walking)
+            {
+                var leg = walker.Day[body.Leg];
+                body.Distance += walker.Pace * dt;
+                var (at, heading) = Crowd.Along(leg.Path, Mathf.Min(body.Distance, leg.Length));
+                var next = Game.Ground(new Vector3(at.X, 0, at.Z));
+                transformOf.position = Vector3.Lerp(transformOf.position, next, 0.5f);
+                transformOf.rotation = Quaternion.RotateTowards(transformOf.rotation, Quaternion.Euler(0, heading, 0), 300 * dt);
+
+                if (body.Distance >= leg.Length)
+                {
+                    // Arrived: stand as the leg's end has it until the plan moves on.
+                    body.Walking = false;
+                    body.Facing = leg.Facing;
+                    body.Rig?.Play("idle", 0.3f);
+                }
+            }
+            else
+            {
+                transformOf.rotation = Quaternion.RotateTowards(transformOf.rotation, Quaternion.Euler(0, body.Facing, 0), 200 * dt);
+                var index = Crowd.LegAt(walker, Atmosphere.Hour);
+
+                // The plan has moved on to a new walk: set off along it from wherever the body stands.
+                if (index != body.Leg)
+                {
+                    body.Leg = index;
+                    var leg = index >= 0 ? walker.Day[index] : null;
+
+                    if (leg != null && leg.Path.Length >= 2)
+                    {
+                        body.Distance = 0;
+                        body.Walking = true;
+                        body.Rig?.Play("walk", 0.25f, false, walker.Pace / 1.3f);
+                    }
+                    else if (leg != null)
+                    {
+                        body.Facing = leg.Facing;
+                    }
+                }
+            }
+
+            if (!Game.Frozen)
+            {
+                body.Rig?.Tick(dt);
+            }
+        }
+    }
+}

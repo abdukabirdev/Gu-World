@@ -129,6 +129,7 @@ static class WorldChecks
                 var made = settlement.Buildings.Where(b => b.Model.StartsWith("code:")).GroupBy(b => b.Model.Split(':')[1]).OrderBy(g => g.Key).Select(g => $"{g.Key} {g.Count()}");
                 report.Add($"  town {settlement.Def.Id}, made in code: " + string.Join(", ", made));
                 check(settlement.Stalls >= 20, $"world: {settlement.Def.Id} has a market ({settlement.Stalls} stalls)");
+                CrowdChecks(settlement, check, report);
                 check(settlement.Buildings.Count(b => b.Model.StartsWith("code:paifang")) >= 2, $"world: {settlement.Def.Id} has archways over its avenues");
                 continue;
             }
@@ -424,6 +425,64 @@ static class WorldChecks
         }
 
         WritePng(path, size, size, rgb);
+    }
+
+    /// <summary>The town's walkers: enough of them, their ways along the streets, out by day and in by night.</summary>
+    static void CrowdChecks(SettlementPlan town, Action<bool, string> check, List<string> report)
+    {
+        var walkers = town.Walkers;
+        check(walkers.Count >= 300, $"world: {town.Def.Id} has a crowd ({walkers.Count} walkers)");
+
+        if (walkers.Count == 0)
+        {
+            return;
+        }
+
+        int Out(float hour) => walkers.Count(w => !Crowd.At(w, hour).Indoors);
+        int Walking(float hour) => walkers.Count(w => Crowd.At(w, hour).Walking);
+        var noon = Out(10);
+        var midnight = Out(2);
+        check(noon > walkers.Count * 0.8f, $"world: by day the town is out ({noon} of {walkers.Count} at ten)");
+        check(midnight < walkers.Count * 0.15f, $"world: by night the town is in ({midnight} of {walkers.Count} at two)");
+        check(new[] { 7f, 9f, 12f, 13f, 18f, 21f }.All(h => Walking(h) > walkers.Count * 0.02f), "world: at every hour of the day someone is on the way");
+
+        // Every walk keeps to a sane pace and every leg follows the one before.
+        var badPace = 0;
+        var gaps = 0;
+        var throughStreets = 0;
+        var walks = 0;
+
+        foreach (var walker in walkers)
+        {
+            for (var i = 0; i < walker.Day.Count; i++)
+            {
+                var leg = walker.Day[i];
+
+                if (i > 0 && Math.Abs(walker.Day[i - 1].To - leg.From) > 1e-3f)
+                {
+                    gaps++;
+                }
+
+                if (leg.Path.Length >= 2)
+                {
+                    walks++;
+                    throughStreets += leg.Path.Length > 2 || leg.Length < 12 ? 1 : 0;
+                    var speed = leg.Length / Math.Max(1e-4f, (leg.To - leg.From) * 3600);
+                    badPace += speed > 3.2f ? 1 : 0;
+                }
+            }
+        }
+
+        check(gaps == 0, $"world: the walkers' days have no gaps ({gaps})");
+        check(badPace < walks * 0.03f, $"world: the walkers walk, not fly ({badPace} of {walks} walks too fast)");
+        check(throughStreets > walks * 0.9f, $"world: the walks go along the streets ({throughStreets} of {walks})");
+
+        var parts = new Crowd.Graph(town).Components();
+        report.Add($"  town {town.Def.Id}, its street graph: {parts.Sum()} nodes in {parts.Count} parts (the biggest {parts[0]}, then {string.Join(", ", parts.Skip(1).Take(6))})");
+
+        // The town at three hours, by trade.
+        var at = new[] { 7f, 12f, 15f, 19f, 23f }.Select(h => $"{h:0}h {Out(h)} out/{Walking(h)} walking");
+        report.Add($"  town {town.Def.Id}, its crowd: {walkers.Count} walkers ({string.Join(", ", walkers.GroupBy(w => w.Trade).Select(g => $"{g.Key} {g.Count()}"))}); " + string.Join(", ", at));
     }
 
     /// <summary>A plain RGB PNG (zlib from the framework, CRCs by hand).</summary>

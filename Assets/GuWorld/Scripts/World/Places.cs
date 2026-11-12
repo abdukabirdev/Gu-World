@@ -38,6 +38,7 @@ namespace GuWorld.World
                 if (settlement.Def.City)
                 {
                     Town.Make(root.transform, settlement);
+                    Townsfolk.Make(root.transform, settlement);
                 }
             }
 

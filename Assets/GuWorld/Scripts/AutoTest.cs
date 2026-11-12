@@ -1,10 +1,12 @@
 using System;
 using System.Collections;
+using System.Collections.Generic;
 using System.IO;
 using System.Text;
 using GuWorld.Actors;
 using GuWorld.Core;
 using GuWorld.UI;
+using GuWorld.World;
 using UnityEngine;
 
 namespace GuWorld
@@ -127,6 +129,80 @@ namespace GuWorld
                     yield return Frames(2);
                 }
 
+                // The big world: the town's streets and market, the other settlements, the far places.
+                if (WorldMode.Big)
+                {
+                    var big = new List<(string name, Vector3 at)>
+                    {
+                        ("town_market", new Vector3(0, 0, -104)),
+                        ("town_street_east", new Vector3(180, 0, 10)),
+                        ("town_outskirts", new Vector3(-300, 0, 120)),
+                    };
+
+                    foreach (var id in new[] { "bai_village", "xiong_village", "willow", "trade_post", "bandit_fort" })
+                    {
+                        var settlement = Regions.Settlement(id);
+
+                        if (settlement != null)
+                        {
+                            big.Add((id, new Vector3(settlement.At.X, 0, settlement.At.Z - 12)));
+                        }
+                    }
+
+                    foreach (var id in new[] { "peak", "great_tree", "tomb", "marsh" })
+                    {
+                        var place = Regions.Place(id);
+
+                        if (place != null)
+                        {
+                            big.Add((id, new Vector3(place.At.X, 0, place.At.Z - place.Radius - 6)));
+                        }
+                    }
+
+                    foreach (var (name, at) in big)
+                    {
+                        n++;
+                        Streamer.Instance?.LoadNow(at);
+                        Game.Hero.Teleport(Game.Ground(at) + Vector3.up * 0.2f);
+                        Game.Rig.Follow(Game.Hero, 0);
+                        yield return Frames(40);
+                        var start = Time.realtimeSinceStartup;
+                        yield return Frames(90);
+                        var fps = 90 / (Time.realtimeSinceStartup - start);
+                        Shot(level, n, name);
+                        Note(string.Format("q{0} {1,-18} at ({2:0},{3:0}) fps {4:0.0}", level, name, at.x, at.z, fps));
+                    }
+
+                    foreach (var town in Engine.FindAll<Town>())
+                    {
+                        Note("q" + level + " " + town.Count());
+                    }
+
+                    foreach (var folk in Engine.FindAll<Townsfolk>())
+                    {
+                        Note("q" + level + " " + folk.Count());
+                    }
+
+                    // The immortal aperture: in, a Gu lent, wolves called, a killer move tried, out.
+                    Aperture.Enter();
+                    yield return new WaitForSecondsRealtime(2);
+                    Shot(level, 40, "aperture");
+                    Game.Session.SandboxTryMove("moon_on_wind");
+                    Aperture.Instance?.Call("wolf", 3);
+                    Game.Ui.Show(Ui.Page.Sandbox);
+                    yield return Frames(15);
+                    Shot(level, 41, "page_Sandbox");
+                    Game.Ui.Show(Ui.Page.Moves);
+                    yield return Frames(15);
+                    Shot(level, 42, "page_Moves");
+                    Game.Ui.Show(Ui.Page.None);
+                    yield return new WaitForSecondsRealtime(1.5f);
+                    Shot(level, 43, "aperture_wolves");
+                    Aperture.Leave();
+                    yield return new WaitForSecondsRealtime(2);
+                    Note("q" + level + " aperture: in and out, " + (Game.Session.InSandbox ? "STILL INSIDE" : "back"));
+                }
+
                 // A wolf beside the hero.
                 Game.Hero.Teleport(Game.Ground(At("forest_edge")) + Vector3.up * 0.2f);
                 Game.Rig.Follow(Game.Hero, 0);
@@ -140,7 +216,7 @@ namespace GuWorld
                 Game.Hero.Teleport(Game.Ground(new Vector3(0, 0, -16)) + Vector3.up * 0.2f);
                 yield return Frames(10);
 
-                var pages = new[] { Ui.Page.Aperture, Ui.Page.Bag, Ui.Page.Journal, Ui.Page.Map, Ui.Page.Shop, Ui.Page.Fusion, Ui.Page.Spring, Ui.Page.Pause, Ui.Page.Title };
+                var pages = new[] { Ui.Page.Aperture, Ui.Page.Moves, Ui.Page.Codex, Ui.Page.Clans, Ui.Page.Bag, Ui.Page.Journal, Ui.Page.Map, Ui.Page.Shop, Ui.Page.Fusion, Ui.Page.Spring, Ui.Page.Pause, Ui.Page.Title };
                 n = 60;
 
                 foreach (var page in pages)
