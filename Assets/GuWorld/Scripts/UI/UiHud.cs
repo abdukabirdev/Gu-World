@@ -303,6 +303,34 @@ namespace GuWorld.UI
             return string.Join("  ", parts);
         }
 
+        /// <summary>What is happening in the world now: the tide, a raid, the fair, the Cicada's sleep.</summary>
+        static string EventsLine(Session session)
+        {
+            var line = "";
+
+            if (session.TideUp)
+            {
+                line += "<color=#FF8060>Волчий прилив</color>  ";
+            }
+
+            if (session.RaidUp)
+            {
+                line += "<color=#FFB060>Набег на Ивовый хутор</color>  ";
+            }
+
+            if (session.FairOn(World.Atmosphere.Hour))
+            {
+                line += "<color=#F2C850>Ярмарка в городе</color>  ";
+            }
+
+            if (session.Sparring)
+            {
+                line += "<color=#A0D8FF>Учебный бой</color>  ";
+            }
+
+            return line;
+        }
+
         void TickHud()
         {
             var dt = Time.unscaledDeltaTime;
@@ -356,7 +384,7 @@ namespace GuWorld.UI
             insight.Set(session.InsightShare, state.Step >= Cultivation.MaxStep ? "вершина" : ready ? "прорыв у источника" : $"прорыв {(int)state.Insight} / {session.InsightNeeded}");
             stones.text = state.Stones.ToString();
             pills.text = session.Count("heal_pill").ToString();
-            effects.text = EffectsLine(session);
+            effects.text = EventsLine(session) + EffectsLine(session);
 
             for (var i = 0; i < slotCells.Length; i++)
             {
