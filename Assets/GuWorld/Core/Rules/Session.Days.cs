@@ -32,6 +32,8 @@ namespace GuWorld.Core
             {
                 State.Hour = hour;
             }
+
+            UpdateTide(hour);
         }
 
         /// <summary>Sleeps some hours (an inn's bed): whole again, and as many dawns as pass.</summary>

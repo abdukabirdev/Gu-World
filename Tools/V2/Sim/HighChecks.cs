@@ -276,6 +276,29 @@ static partial class Program
             Check(given.Count >= 1 && given.Distinct().Count() == given.Count, $"then unleashes each once, and waits long for it again ({string.Join(", ", given)})");
         }
 
+        // ------------------------------------------------------------------ The wolf tide
+
+        var w = new Session(Session.NewGame("Прилив"), 81);
+        w.State.Step = 4;
+        w.Recompute();
+        w.State.Day = 7;
+        w.State.Hour = 20;
+        w.SetClock(20);
+        Check(!w.TideUp, "no tide before nine");
+        w.SetClock(22);
+        Check(w.TideUp && w.WantsEncounter("wolf_tide"), "the tide rises on the seventh night");
+        var stonesBefore = w.State.Stones;
+        w.EncounterWon("wolf_tide");
+        Check(!w.TideUp && w.State.Stones > stonesBefore && w.State.Tides == 1, "a held tide pays and ebbs");
+        w.SetClock(23);
+        Check(!w.TideUp, "a held tide does not rise again that night");
+        w.SetClock(5);
+        w.State.Day = 14;
+        w.SetClock(21.5f);
+        Check(w.TideUp && w.WantsEncounter("wolf_tide"), "the next tide comes a week later");
+        w.SetClock(4.5f);
+        Check(!w.TideUp, "an unmet tide ebbs at dawn");
+
         // ------------------------------------------------------------------ A house of one's own
 
         var h = new Session(Session.NewGame("Хозяин"), 71);

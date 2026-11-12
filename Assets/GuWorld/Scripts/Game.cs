@@ -254,6 +254,15 @@ namespace GuWorld
                 Ui.Banner(GuBook.PathName(path), Attainment.Grades[grade]);
                 Sound.AudioDirector.Play("breakthrough", null, 0.6f, 0);
             };
+            Session.TideChanged += up =>
+            {
+                if (up)
+                {
+                    Ui.Banner("Волчий прилив", "Стаи идут к северным воротам деревни");
+                    Sound.AudioDirector.Play("howl", null, 1, 0);
+                    spawns?.Refresh();
+                }
+            };
             Session.MoveLearnt += move =>
             {
                 Ui.Banner("Убийственный приём", move.Name);

@@ -95,6 +95,8 @@ namespace GuWorld.Core
             new AchievementDef { Id = "perfect_gu", Name = "Без изъяна", Text = "Закалите Гу до совершенства.", Counts = "perfect", Goal = 1 },
             new AchievementDef { Id = "rank_four", Name = "Мастер четвёртого ранга", Text = "Прорвитесь на четвёртый ранг.", Counts = "step", Goal = 12 },
             new AchievementDef { Id = "rank_five", Name = "Вершина смертных", Text = "Прорвитесь на пятый ранг.", Counts = "step", Goal = 16 },
+            new AchievementDef { Id = "tide", Name = "Стена против прилива", Text = "Отбейте волчий прилив.", Counts = "tides", Goal = 1 },
+            new AchievementDef { Id = "tides", Name = "Сторож деревни", Text = "Отбейте пять волчьих приливов.", Counts = "tides", Goal = 5 },
             new AchievementDef { Id = "homeowner", Name = "Свой угол", Text = "Купите дом.", Counts = "homes", Goal = 1 },
             new AchievementDef { Id = "parry", Name = "В последний миг", Text = "Отразите двадцать ударов, поставив блок в последний миг.", Counts = "parries", Goal = 20 },
             new AchievementDef { Id = "elite_hunter", Name = "Охотник на сильных", Text = "Одолейте десять элитных врагов.", Counts = "elites", Goal = 10 },

@@ -112,6 +112,11 @@ namespace GuWorld.Core
 
         public static readonly EncounterDef[] MountainEncounters =
         {
+            // The wolf tide (see Session.Tide): at the old north gate of the village, on its nights.
+            E("wolf_tide", "Волчий прилив", new MapPoint(0, 110), 150, "wolf_tide",
+                W("Вой со всех склонов сразу. Стая выходит из темноты к воротам.", ("wolf", 6)),
+                W("За первыми — грозовые волки.", ("wolf", 4), ("storm_wolf", 3)),
+                W("И вожак. Сотенный.", ("storm_wolf", 2), ("hundred_king", 1))),
             E("bear_king", "Медвежий король", P("bear_hollow", 0, 0.1f), 40, "",
                 W("Земля дрожит. Из лога поднимается медведь размером с дом.", ("bear_king", 1))),
             E("swamp_python", "Хозяин болота", P("marsh", 330, 0.2f), 40, "",

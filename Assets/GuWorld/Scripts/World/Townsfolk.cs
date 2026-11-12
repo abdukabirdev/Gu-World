@@ -131,6 +131,8 @@ namespace GuWorld.World
         {
             wanted.Clear();
             var hour = Atmosphere.Hour;
+            // On a wolf tide's night everyone is behind their doors.
+            var tide = Game.Session != null && Game.Session.TideUp;
             var here = new Vec2(focus.x, focus.z);
 
             foreach (var walker in walkers)
@@ -156,7 +158,7 @@ namespace GuWorld.World
 
                 var distance = Vec2.Distance(at, here);
 
-                if (distance < reach)
+                if (distance < reach && !tide)
                 {
                     wanted.Add((walker, distance));
                 }

@@ -740,6 +740,11 @@ namespace GuWorld.Core
         {
             SetFlag(id + "_won");
             Notify(StepKind.Encounter, id);
+
+            if (id == Tide)
+            {
+                TideHeld();
+            }
         }
 
         public void Reached(string place) => Notify(StepKind.Reach, place);
