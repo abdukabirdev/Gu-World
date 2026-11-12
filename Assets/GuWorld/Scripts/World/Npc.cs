@@ -34,7 +34,7 @@ namespace GuWorld.World
             npc.Def = def;
             npc.home = root.transform.rotation;
             npc.goal = root.transform.position;
-            var model = Models.Human(root.transform, def.Look, false, false, out npc.rig);
+            var model = Models.Human(root.transform, def.Look, false, false, out npc.rig, People.Seed(def.Id));
             npc.rig?.Play("idle", 0);
             npc.springs = Quality.Level >= 1 ? new SpringBones(model.transform) : null;
             var solid = root.AddComponent<CapsuleCollider>();

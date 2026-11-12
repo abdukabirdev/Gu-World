@@ -235,6 +235,13 @@ sealed class Raster
                         r = 1;
                         bl = 1;
                     }
+                    else if (isBack)
+                    {
+                        // Seen from inside (a sleeve, a hem): the cloth's own colour, in shadow.
+                        r = (mesh.Colours[ia * 4] * pz0 + mesh.Colours[ib * 4] * pz1 + mesh.Colours[ic * 4] * pz2) * 0.4f;
+                        g = (mesh.Colours[ia * 4 + 1] * pz0 + mesh.Colours[ib * 4 + 1] * pz1 + mesh.Colours[ic * 4 + 1] * pz2) * 0.4f;
+                        bl = (mesh.Colours[ia * 4 + 2] * pz0 + mesh.Colours[ib * 4 + 2] * pz1 + mesh.Colours[ic * 4 + 2] * pz2) * 0.4f;
+                    }
                     else
                     {
                         r = (mesh.Colours[ia * 4] * pz0 + mesh.Colours[ib * 4] * pz1 + mesh.Colours[ic * 4] * pz2) * light;

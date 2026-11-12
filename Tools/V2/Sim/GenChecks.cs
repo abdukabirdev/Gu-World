@@ -6,6 +6,7 @@ using System.Text;
 using GuWorld.Core;
 using GuWorld.Core.Gen;
 using GuWorld.Core.Gen.Flora;
+using GuWorld.Core.Gen.People;
 
 /// <summary>
 /// The generators, looked at without the engine (Sim `gen`): every kind of tree grown across
@@ -530,5 +531,243 @@ static class GenChecks
         rgb[o] = (byte)Math.Min(255, ((colour >> 16) & 255) * shade);
         rgb[o + 1] = (byte)Math.Min(255, ((colour >> 8) & 255) * shade);
         rgb[o + 2] = (byte)Math.Min(255, (colour & 255) * shade);
+    }
+
+    // ---------------------------------------------------------------------- People
+
+    static readonly string[] Roles = { "villager", "farmer", "porter", "trader", "merchant", "guard", "student", "elder", "child", "cook", "herbalist", "smith", "scribe", "bandit", "gambler", "judge", "watch", "keeper" };
+
+    /// <summary>
+    /// A crowd made by the people generator: every trade, both sexes, every age, the clans; each
+    /// checked (weights, bones, budget, height, sound numbers), drawn from the front and from the
+    /// back, and some of them posed through their skin (an arm raised, an elbow and a knee bent) to
+    /// see that the weights hold; written as .glb for the viewer.
+    /// </summary>
+    public static void PeopleChecks(string repo, Action<bool, string> check, List<string> report, bool export)
+    {
+        var dir = OutDir(repo);
+        var glbDir = Path.Combine(dir, "people");
+
+        if (export)
+        {
+            Directory.CreateDirectory(glbDir);
+        }
+
+        const int tw = 180, th = 300, columns = 12;
+        var people = new List<PersonModel>();
+        var watch = System.Diagnostics.Stopwatch.StartNew();
+        var clans = new[] { "gu_yue", "gu_yue", "bai", "xiong" };
+
+        for (var i = 0; i < 72; i++)
+        {
+            var role = Roles[i % Roles.Length];
+            var spec = GuWorld.Core.Gen.People.PersonSpec.FromLook(role, 1000 + i * 37, clans[(i / Roles.Length) % clans.Length]);
+            people.Add(GuWorld.Core.Gen.People.PersonGen.Make(spec));
+        }
+
+        var each = watch.ElapsedMilliseconds / (double)people.Count;
+        var rows = people.Count / columns + 2;
+        var sheetW = tw * columns;
+        var sheet = new byte[sheetW * th * rows * 3];
+        long pixels = 0, back = 0;
+        var tris = 0;
+        var index = new StringBuilder("[");
+        var bones = GuWorld.Core.Gen.People.Skeleton.Bones.Length;
+
+        for (var n = 0; n < people.Count; n++)
+        {
+            var person = people[n];
+            var mesh = person.Mesh;
+            var tag = $"person {n} ({person.Spec})";
+            tris += mesh.TriangleCount;
+            check(person.Joints.Length == mesh.VertexCount * 4 && person.Weights.Length == mesh.VertexCount * 4, $"{tag}: a skin for every vertex");
+            var weightsOk = true;
+
+            for (var v = 0; v < mesh.VertexCount; v++)
+            {
+                var sum = person.Weights[v * 4] + person.Weights[v * 4 + 1] + person.Weights[v * 4 + 2] + person.Weights[v * 4 + 3];
+                weightsOk &= Math.Abs(sum - 1) < 0.01f;
+
+                for (var j = 0; j < 4; j++)
+                {
+                    weightsOk &= person.Joints[v * 4 + j] >= 0 && person.Joints[v * 4 + j] < bones;
+                }
+            }
+
+            check(weightsOk, $"{tag}: weights sum to one on real bones");
+            check(mesh.TriangleCount < 16000, $"{tag}: within budget ({mesh.TriangleCount})");
+            mesh.Bounds(out var minX, out var minY, out var minZ, out var maxX, out var maxY, out var maxZ);
+            check(minY > -0.12f && maxY < person.Height + 0.35f && maxY > person.Height * 0.9f, $"{tag}: stands on the ground at its height ({minY:0.00}..{maxY:0.00} for {person.Height:0.00})");
+            var sound = true;
+
+            foreach (var x in mesh.Positions)
+            {
+                sound &= !float.IsNaN(x) && !float.IsInfinity(x);
+            }
+
+            check(sound, $"{tag}: sound positions");
+
+            if (n < columns * (rows - 2))
+            {
+                var raster = new Raster(tw, th) { PaintBackFaces = false };
+                raster.Frame(new V3(-0.5f, 0, -0.4f), new V3(0.5f, 1.9f, 0.4f), new V3(0.35f, 0.1f, 1), 28, 1.0f);
+                raster.Ground(0, 0.8f, new V3(0, 0, 0));
+                raster.Draw(mesh, 0, 0, 0, 1);
+                pixels += raster.Pixels;
+                back += raster.BackPixels;
+                raster.Into(sheet, sheetW, (n % columns) * tw, (n / columns) * th);
+                Raster.Label(sheet, sheetW, (n % columns) * tw + 4, (n / columns) * th + 4, person.Spec.Role, 1);
+                Raster.Label(sheet, sheetW, (n % columns) * tw + 4, (n / columns) * th + 12, $"{person.Spec.Sex.ToString()[0]} {person.Spec.Age} {person.Spec.Clan}", 1);
+            }
+
+            if (export)
+            {
+                var skin = new Glb.Skin { Names = new string[bones], Parents = new int[bones], Heads = person.BoneAt, Joints = person.Joints, Weights = person.Weights };
+
+                for (var b = 0; b < bones; b++)
+                {
+                    skin.Names[b] = GuWorld.Core.Gen.People.Skeleton.Bones[b].Name;
+                    skin.Parents[b] = GuWorld.Core.Gen.People.Skeleton.Bones[b].Parent;
+                }
+
+                Glb.Write(Path.Combine(glbDir, $"person_{n}.glb"), new[] { new Glb.Part { Name = "Person", Mesh = mesh, Skin = skin } });
+                index.Append(index.Length > 1 ? "," : "").Append(string.Format(Inv, "{{\"file\":\"people/person_{0}.glb\",\"role\":\"{1}\",\"sex\":\"{2}\",\"age\":\"{3}\",\"clan\":\"{4}\",\"wealth\":{5:0.00},\"seed\":{6},\"height\":{7:0.00},\"tris\":{8},\"about\":\"{9}\"}}",
+                    n, person.Spec.Role, person.Spec.Sex, person.Spec.Age, person.Spec.Clan, person.Spec.Wealth, person.Spec.Seed, person.Height, mesh.TriangleCount, person.Description.Replace("\"", "'")));
+            }
+        }
+
+        // The last two rows: the first twelve from behind, and posed through their skins.
+        for (var n = 0; n < columns; n++)
+        {
+            var person = people[n];
+            var raster = new Raster(tw, th) { PaintBackFaces = false };
+            raster.Frame(new V3(-0.5f, 0, -0.4f), new V3(0.5f, 1.9f, 0.4f), new V3(-0.4f, 0.1f, -1), 28, 1.0f);
+            raster.Ground(0, 0.8f, new V3(0, 0, 0));
+            raster.Draw(person.Mesh, 0, 0, 0, 1);
+            raster.Into(sheet, sheetW, n * tw, (rows - 2) * th);
+            Raster.Label(sheet, sheetW, n * tw + 4, (rows - 2) * th + 4, "BACK", 1);
+
+            var posed = Pose(person);
+            var pr = new Raster(tw, th) { PaintBackFaces = false };
+            pr.Frame(new V3(-0.7f, 0, -0.5f), new V3(0.7f, 1.9f, 0.5f), new V3(0.5f, 0.15f, 1), 30, 1.0f);
+            pr.Ground(0, 0.9f, new V3(0, 0, 0));
+            pr.Draw(posed, 0, 0, 0, 1);
+            pr.Into(sheet, sheetW, n * tw, (rows - 1) * th);
+            Raster.Label(sheet, sheetW, n * tw + 4, (rows - 1) * th + 4, "POSED", 1);
+        }
+
+        WorldChecks.WritePng(Path.Combine(dir, "people.png"), sheetW, th * rows, sheet);
+        report.Add($"people: {people.Count} made, {each:0.0} ms each, {tris / people.Count} triangles on average, back-face pixels {100.0 * back / Math.Max(1, pixels):0.00}% → {Path.Combine(dir, "people.png")}");
+        check(each < 60, "people: one is made in well under a tenth of a second");
+        check(back < pixels * 0.04f, "people: hardly a pixel shows the inside of a garment (sleeves and hems are drawn two-sided in the game)");
+
+        // Faces, close: the first 24 heads.
+        const int fw = 150, fh = 170;
+        var faces = new byte[fw * 12 * fh * 2 * 3];
+
+        for (var n = 0; n < 24; n++)
+        {
+            var person = people[n];
+            var head = person.BoneAt[GuWorld.Core.Gen.People.PersonGen.Bone("head")];
+            var raster = new Raster(fw, fh) { PaintBackFaces = false };
+            raster.Camera(head + new V3(0.18f, 0.13f, 0.55f), head + new V3(0, 0.08f, 0), 30);
+            raster.Draw(person.Mesh, 0, 0, 0, 1);
+            raster.Into(faces, fw * 12, (n % 12) * fw, (n / 12) * fh);
+            Raster.Label(faces, fw * 12, (n % 12) * fw + 3, (n / 12) * fh + 3, person.Spec.Role, 1);
+        }
+
+        WorldChecks.WritePng(Path.Combine(dir, "faces.png"), fw * 12, fh * 2, faces);
+
+        var again = GuWorld.Core.Gen.People.PersonGen.Make(people[5].Spec);
+        check(again.Mesh.VertexCount == people[5].Mesh.VertexCount && Same(again.Mesh, people[5].Mesh), "people: the same spec makes the same person");
+
+        // How different they are: the distinct outfits, hair and colours among the crowd.
+        var looks = new HashSet<string>();
+
+        foreach (var person in people)
+        {
+            looks.Add(person.Description.Substring(person.Description.IndexOf(';') + 1));
+        }
+
+        report.Add($"people: {looks.Count} different outfits and hairstyles among {people.Count}");
+        check(looks.Count > people.Count * 0.7f, "people: hardly two dressed and coiffed alike");
+
+        if (export)
+        {
+            File.WriteAllText(Path.Combine(dir, "people.json"), index.Append("]").ToString());
+        }
+    }
+
+    /// <summary>
+    /// The person posed through their skin, as the engine would: the left arm raised out to the
+    /// side with the elbow bent, the right knee lifted and bent, the head turned — each bone turned
+    /// about its own joint, its children carried with it, every vertex moved by its four bones.
+    /// </summary>
+    static MeshData Pose(PersonModel person)
+    {
+        var bones = GuWorld.Core.Gen.People.Skeleton.Bones;
+        var turns = new Dictionary<string, (V3 axis, float degrees)>
+        {
+            ["upperArm_L"] = (new V3(0, 0, 1), -75),
+            ["forearm_L"] = (new V3(1, 0, 0), -70),
+            ["thigh_R"] = (new V3(1, 0, 0), -55),
+            ["shin_R"] = (new V3(1, 0, 0), 75),
+            ["head"] = (new V3(0, 1, 0), 30),
+        };
+        // Each bone's world turn and where its joint has gone.
+        var rot = new (V3 axis, float angle)[bones.Length][];
+        var origin = new V3[bones.Length];
+        var at = person.BoneAt;
+        var chain = new List<(V3 pivot, V3 axis, float angle)>[bones.Length];
+
+        for (var i = 0; i < bones.Length; i++)
+        {
+            chain[i] = bones[i].Parent >= 0 ? new List<(V3, V3, float)>(chain[bones[i].Parent]) : new List<(V3, V3, float)>();
+
+            if (turns.TryGetValue(bones[i].Name, out var turn))
+            {
+                chain[i].Add((at[i], turn.axis.Normalized, turn.degrees * (float)Math.PI / 180));
+            }
+        }
+
+        V3 Move(int bone, V3 p)
+        {
+            // Innermost turn last: apply the bone's own first, then its parents' (each about its rest pivot).
+            var list = chain[bone];
+
+            for (var t = list.Count - 1; t >= 0; t--)
+            {
+                var (pivot, axis, angle) = list[t];
+                p = pivot + Build.Rotate(p - pivot, axis, angle);
+            }
+
+            return p;
+        }
+
+        var mesh = person.Mesh;
+        var posed = new MeshData();
+
+        for (var v = 0; v < mesh.VertexCount; v++)
+        {
+            var p = new V3(mesh.Positions[v * 3], mesh.Positions[v * 3 + 1], mesh.Positions[v * 3 + 2]);
+            var sum = new V3(0, 0, 0);
+
+            for (var j = 0; j < 4; j++)
+            {
+                var w = person.Weights[v * 4 + j];
+
+                if (w > 0)
+                {
+                    sum = sum + Move(person.Joints[v * 4 + j], p) * w;
+                }
+            }
+
+            posed.Vertex(sum.X, sum.Y, sum.Z, 0, 0, mesh.Colours[v * 4], mesh.Colours[v * 4 + 1], mesh.Colours[v * 4 + 2]);
+        }
+
+        posed.Triangles.AddRange(mesh.Triangles);
+        posed.ComputeNormals();
+
+        return posed;
     }
 }

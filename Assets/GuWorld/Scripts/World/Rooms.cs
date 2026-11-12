@@ -202,7 +202,7 @@ namespace GuWorld.World
                 body.transform.SetParent(root, false);
                 body.transform.position = root.position + new Vector3(person.x, 0.02f, person.z);
                 body.transform.rotation = Quaternion.Euler(0, person.yaw, 0);
-                Models.Human(body.transform, person.look, false, false, out var rig);
+                Models.Human(body.transform, person.look, false, false, out var rig, People.Seed(person.name + person.title));
                 rig?.Play("idle", 0);
                 body.AddComponent<RoomPerson>().Set(rig, person.name, person.title, person.line);
                 var solid = body.AddComponent<CapsuleCollider>();

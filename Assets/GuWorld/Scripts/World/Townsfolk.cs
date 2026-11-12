@@ -186,10 +186,18 @@ namespace GuWorld.World
                 }
             }
 
+            var fresh = 0;
+
             foreach (var walker in keep)
             {
                 if (!bodyOf.ContainsKey(walker))
                 {
+                    // A generated person takes a few milliseconds to make: a handful a round, so the frame holds.
+                    if (People.Enabled && !(pool.TryGetValue("w" + walker.Id, out var waiting) && waiting.Count > 0) && fresh++ >= 6)
+                    {
+                        continue;
+                    }
+
                     var body = Take(walker);
 
                     if (body != null)
@@ -203,8 +211,9 @@ namespace GuWorld.World
 
         Body Take(Walker walker)
         {
-            // Watchmen keep bodies of their own (they carry a lantern).
-            var kind = walker.Trade == Trade.Watch ? walker.Look + "#watch" : walker.Look;
+            // Generated people are each their own: a body goes back to its own person's pool. Watchmen
+            // keep bodies of their own (they carry a lantern).
+            var kind = People.Enabled ? "w" + walker.Id : walker.Trade == Trade.Watch ? walker.Look + "#watch" : walker.Look;
 
             if (!pool.TryGetValue(kind, out var stack))
             {
@@ -217,12 +226,14 @@ namespace GuWorld.World
             {
                 body = stack.Pop();
                 body.Root.SetActive(true);
+                resting.Remove(body);
             }
             else
             {
                 var root = new GameObject("Townsperson");
                 root.transform.SetParent(transform, false);
-                Models.Human(root.transform, walker.Look, false, false, out var rig);
+                // Each townsperson is their own person: their body, face, hair and clothes from their number.
+                Models.Human(root.transform, TradeLook(walker), false, false, out var rig, 104729 + walker.Id * 7 + (walker.Clan ?? "").Length, walker.Clan);
                 body = new Body { Root = root, Rig = rig, Look = kind };
 
                 // A watchman's lantern: a warm glow at the hand, lit at night.
@@ -243,12 +254,57 @@ namespace GuWorld.World
             return body;
         }
 
+        readonly LinkedList<Body> resting = new LinkedList<Body>();
+
         void Release(Body body)
         {
             bodyOf.Remove(body.Walker);
             body.Walker = null;
             body.Root.SetActive(false);
             pool[body.Look].Push(body);
+
+            if (!People.Enabled)
+            {
+                return;
+            }
+
+            // Kept for when their person comes back; the longest unused go when too many wait.
+            resting.AddLast(body);
+
+            while (resting.Count > 40)
+            {
+                var old = resting.First.Value;
+                resting.RemoveFirst();
+
+                if (pool.TryGetValue(old.Look, out var stack) && stack.Count > 0 && stack.Peek() == old)
+                {
+                    stack.Pop();
+
+                    foreach (var renderer in old.Root.GetComponentsInChildren<SkinnedMeshRenderer>(true))
+                    {
+                        Destroy(renderer.sharedMesh);
+                    }
+
+                    Destroy(old.Root);
+                }
+            }
+        }
+
+        /// <summary>The look a townsperson is made from: their trade, in the clan's colours.</summary>
+        static string TradeLook(Walker walker)
+        {
+            switch (walker.Trade)
+            {
+                case Trade.Trader: return "trader";
+                case Trade.Porter: return "porter";
+                case Trade.Farmer: return "farmer";
+                case Trade.Student: return "student";
+                case Trade.Guard: return "guard";
+                case Trade.Elder: return "elder";
+                case Trade.Child: return "child";
+                case Trade.Watch: return "watch";
+                default: return walker.Look == "villager" || string.IsNullOrEmpty(walker.Look) ? "villager" : walker.Look;
+            }
         }
 
         /// <summary>A new body appears where its person is by the plan, part way along a walk if they are walking.</summary>

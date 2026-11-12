@@ -300,9 +300,28 @@ namespace GuWorld.Actors
 
         // ------------------------------------------------------------------ Bodies
 
-        /// <summary>A person: the hero's model (full or game detail) or the lighter one, dyed by a look. Returns the model under `parent`.</summary>
-        public static GameObject Human(Transform parent, string look, bool hero, bool fullDetail, out RigAnimator animator)
+        /// <summary>
+        /// A person: the hero's model (full or game detail); everyone else generated from their look
+        /// and a seed (Core/Gen/People: their own body, face, hair and clothes), or — when people are
+        /// not generated, or for the stone statue — the lighter hand-made model dyed by the look.
+        /// Returns the model under `parent`.
+        /// </summary>
+        public static GameObject Human(Transform parent, string look, bool hero, bool fullDetail, out RigAnimator animator, int seed = 0, string clan = null)
         {
+            if (!hero && People.Enabled && !People.HandMade(look))
+            {
+                try
+                {
+                    var spec = GuWorld.Core.Gen.People.PersonSpec.FromLook(look, seed != 0 ? seed : People.Fresh(), clan ?? People.ClanOf(look));
+
+                    return People.Make(parent, spec, out animator);
+                }
+                catch (System.Exception error)
+                {
+                    Debug.LogError($"GU World: making a person ({look}, {seed}) failed, the hand-made model stands in: {error}");
+                }
+            }
+
             var path = hero ? (fullDetail ? "Models/gu-hero" : "Models/gu-hero-game") : "Models/gu-npc";
             var prefab = Resources.Load<GameObject>(path);
 
