@@ -527,6 +527,23 @@ namespace GuWorld.Core.Gen
 
         // ------------------------------------------------------------------ Lanterns
 
+        /// <summary>Where the lanterns of a string of a variant hang (their bodies' middles), for the light they give at night.</summary>
+        public static List<V3> LanternPoints(int variant)
+        {
+            var span = variant == 0 ? 8f : variant == 1 ? 12f : 16f;
+            var count = variant + 5;
+            var sag = span * 0.08f;
+            var points = new List<V3>();
+
+            for (var i = 0; i < count; i++)
+            {
+                var t = (i + 0.5f) / count;
+                points.Add(new V3(0, 4.6f - 0.15f - sag * 4 * t * (1 - t) - 0.58f, -span / 2 + span * t));
+            }
+
+            return points;
+        }
+
         /// <summary>A string of red paper lanterns across a lane `span` wide: two poles, a sagging rope, the lanterns hanging from it.</summary>
         public static MeshData Lanterns(float span, int count)
         {

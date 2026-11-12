@@ -65,13 +65,47 @@ namespace GuWorld.Actors
             renderer.shadowCastingMode = Quality.Level >= 1 ? UnityEngine.Rendering.ShadowCastingMode.On : UnityEngine.Rendering.ShadowCastingMode.Off;
             Split(model, out var kind, out _);
 
-            // Strings of lanterns are walked under, not into.
+            // Strings of lanterns are walked under, not into; at night they glow.
             if (kind != "lanterns")
             {
                 made.AddComponent<MeshCollider>().sharedMesh = mesh;
             }
+            else
+            {
+                Split(model, out _, out var variant);
+                var glow = new GameObject("Glow");
+                glow.transform.SetParent(made.transform, false);
+
+                foreach (var p in Props.LanternPoints(variant))
+                {
+                    Models.Part("Light", glow.transform, Models.Quad, Models.Glow(new Color(1f, 0.55f, 0.3f, 0.55f)), new Vector3(p.X, p.Y, p.Z), Vector3.one * 1.1f).AddComponent<Fx.Billboard>();
+                }
+
+                made.AddComponent<NightGlow>().Glow = glow;
+            }
 
             return made;
+        }
+    }
+
+    /// <summary>Shows its glow only at night (and at dusk), checked now and then.</summary>
+    public class NightGlow : MonoBehaviour
+    {
+        public GameObject Glow;
+        float wait;
+
+        void Update()
+        {
+            wait -= Time.deltaTime;
+
+            if (wait > 0 || Glow == null)
+            {
+                return;
+            }
+
+            wait = 2 + Random.value;
+            var hour = World.Atmosphere.Hour;
+            Glow.SetActive(hour < 6f || hour > 18.6f);
         }
     }
 }
