@@ -567,6 +567,64 @@ namespace GuWorld.Core.Gen
                 }
             }
 
+            // Banners of the clan along the avenues near the middle, both sides, blue and red by turns.
+            foreach (var street in plan.Streets)
+            {
+                if (!street.Main)
+                {
+                    continue;
+                }
+
+                var length = Lines.Length(street.Points);
+
+                for (var along = 6f; along < length - 6; along += 22)
+                {
+                    var p = Lines.At(street.Points, along, out var direction);
+                    var fromMiddle = Vec2.Distance(p, plan.Centre);
+
+                    if (fromMiddle < def.Core + 8 || fromMiddle > def.Core + 110)
+                    {
+                        continue;
+                    }
+
+                    foreach (var side in new[] { -1, 1 })
+                    {
+                        var at = p + direction.Right * (street.HalfWidth + 1.2f) * side;
+                        Place(plan, placed, index, streets, ground, waters, Code("banner:" + ((int)(along / 22) % 2)), at, direction.Yaw + (side > 0 ? 90 : -90), "prop", 0.1f, false, true);
+                    }
+                }
+            }
+
+            // Stone lions before the great halls' doors: the male on the left, the female on the right.
+            foreach (var building in plan.Buildings.ToArray())
+            {
+                if (building.Role != "hall" && building.Role != "academy")
+                {
+                    continue;
+                }
+
+                var forward = Vec2.FromYaw(building.Yaw);
+                var right = forward.Right;
+                var door = building.Footprint.Centre + forward * (building.Footprint.Half.Z + 3.5f);
+                Place(plan, placed, index, streets, ground, waters, Code("stone_lion:0"), door - right * 4.5f, building.Yaw, "prop", 0.1f, false, true);
+                Place(plan, placed, index, streets, ground, waters, Code("stone_lion:1"), door + right * 4.5f, building.Yaw, "prop", 0.1f, false, true);
+
+                // The academy's training yard beside it.
+                if (building.Role == "academy")
+                {
+                    for (var attempt = 0; attempt < 8; attempt++)
+                    {
+                        var side = attempt % 2 == 0 ? 1 : -1;
+                        var at = building.Footprint.Centre + right * side * (building.Footprint.Half.X + 11 + attempt * 2);
+
+                        if (Place(plan, placed, index, streets, ground, waters, Code("training_yard:0"), at, building.Yaw, "yard", 1f))
+                        {
+                            break;
+                        }
+                    }
+                }
+            }
+
             plan.Stalls = stalls;
         }
 

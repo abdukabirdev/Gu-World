@@ -34,7 +34,7 @@ namespace GuWorld.Core.Gen
         {
             ("paifang", 2), ("wall", 1), ("stall", 6), ("cart", 3), ("boat", 3), ("arch_bridge", 2),
             ("lanterns", 3), ("pagoda", 2), ("drum_tower", 1), ("aperture", 1), ("dummy_post", 1), ("gu_altar", 1),
-            ("town_wall", 1), ("town_gate", 1), ("corner_tower", 1),
+            ("town_wall", 1), ("town_gate", 1), ("corner_tower", 1), ("banner", 3), ("stone_lion", 2), ("training_yard", 1),
         };
 
         /// <summary>A model by its kind and variant (null if there is no such kind).</summary>
@@ -57,6 +57,9 @@ namespace GuWorld.Core.Gen
                 case "town_wall": return TownWall(10);
                 case "town_gate": return TownGate();
                 case "corner_tower": return CornerTower();
+                case "banner": return Banner(variant);
+                case "stone_lion": return StoneLion(variant == 1);
+                case "training_yard": return TrainingYard();
                 default: return null;
             }
         }
@@ -81,6 +84,9 @@ namespace GuWorld.Core.Gen
                 case "town_wall": return (10f, 3.2f);
                 case "town_gate": return (18f, 10f);
                 case "corner_tower": return (7f, 7f);
+                case "banner": return (1.6f, 0.6f);
+                case "stone_lion": return (1.4f, 2.2f);
+                case "training_yard": return (16f, 12f);
                 default: return (1f, 1f);
             }
         }
@@ -105,6 +111,9 @@ namespace GuWorld.Core.Gen
                 case "town_wall": return 6.6f;
                 case "town_gate": return 15f;
                 case "corner_tower": return 13f;
+                case "banner": return 7.5f;
+                case "stone_lion": return 2.6f;
+                case "training_yard": return 2.6f;
                 default: return 2f;
             }
         }
@@ -676,6 +685,163 @@ namespace GuWorld.Core.Gen
             k.Pop();
 
             return k.Mesh;
+        }
+
+        // ------------------------------------------------------------------ The clan's signs
+
+        /// <summary>A clan banner: a lacquered pole on a stone base, a long cloth hanging from a crossbar (moon blue, red, or gold), a moon disc on it.</summary>
+        public static MeshData Banner(int variant)
+        {
+            var k = new Kit();
+            var cloth = variant == 0 ? Tint.Hex(0x2E4E8A) : variant == 1 ? Tint.Hex(0x9A2A22) : Tint.Hex(0xC8A040);
+            k.Drum(0, 0, 0, 0.5f, 0.35f, 8, StoneDark);
+            k.Post(0, 0.35f, 0, 0.09f, 0.07f, 7f, 8, Lacquer);
+            k.Ball(new V3(0, 7.45f, 0), 0.14f, 1.4f, 8, 4, Gold);
+            k.Beam(new V3(0, 6.8f, -0.05f), new V3(1.4f, 6.8f, -0.05f), 0.06f, 0.06f, Lacquer);
+
+            // The cloth: a few rows that sway out a little toward the bottom (the shader sways what is high; the cut gives it a wind).
+            var rows = 8;
+            var top = new V3[3];
+            var previous = new[] { new V3(0.1f, 6.75f, 0), new V3(0.75f, 6.75f, 0), new V3(1.35f, 6.75f, 0) };
+
+            for (var r = 1; r <= rows; r++)
+            {
+                var y = 6.75f - r * 0.48f;
+                var bow = 0.12f * (float)Math.Sin(r * 0.7f);
+                var row = new[] { new V3(0.1f, y, bow), new V3(0.75f, y, bow * 1.4f), new V3(1.35f - 0.02f * r, y, bow) };
+                k.Sheet(previous, row, cloth.Times(r % 2 == 0 ? 1 : 0.94f), true);
+                previous = row;
+            }
+
+            // The tails.
+            k.Triangle(previous[0], previous[1], previous[1] + new V3(-0.3f, -0.6f, 0), cloth.Times(0.9f));
+            k.Triangle(previous[1] + new V3(-0.3f, -0.6f, 0), previous[1], previous[0], cloth.Times(0.8f));
+            // The moon on the cloth (both faces).
+            k.Push(new V3(0.72f, 5.3f, 0.24f));
+            Disc(k, 0.36f, Tint.Hex(0xE8EEF2));
+            k.Pop();
+            k.Push(new V3(0.72f, 5.3f, 0.0f), 180);
+            Disc(k, 0.36f, Tint.Hex(0xE8EEF2));
+            k.Pop();
+
+            return k.Mesh;
+        }
+
+        /// <summary>A disc standing up, facing +z.</summary>
+        static void Disc(Kit k, float radius, Tint tint)
+        {
+            const int sides = 16;
+
+            for (var i = 0; i < sides; i++)
+            {
+                var a0 = i * 2 * Math.PI / sides;
+                var a1 = (i + 1) * 2 * Math.PI / sides;
+                k.Triangle(new V3(0, 0, 0), new V3((float)Math.Sin(a1) * radius, (float)Math.Cos(a1) * radius, 0), new V3((float)Math.Sin(a0) * radius, (float)Math.Cos(a0) * radius, 0), tint);
+            }
+        }
+
+        /// <summary>
+        /// A guardian stone lion on its plinth, sitting up, facing +z: a body and haunches of blocks, a
+        /// maned head with a ball of curls, a paw on a ball (the male) or on a cub (the female).
+        /// </summary>
+        public static MeshData StoneLion(bool female)
+        {
+            var k = new Kit();
+            var stone = Tint.Hex(0x9A968C);
+            var dark = stone.Times(0.8f);
+            k.Box(0, 0, 0, 1.3f, 0.6f, 2.0f, StoneDark);
+            k.Box(0, 0.6f, 0, 1.1f, 0.12f, 1.8f, Stone);
+            // Haunches and body, the chest raised.
+            k.Box(0, 0.72f, -0.45f, 0.95f, 0.55f, 0.8f, stone);
+            k.Beam(new V3(0, 0.95f, -0.3f), new V3(0, 1.55f, 0.25f), 0.7f, 0.6f, stone);
+            // Forelegs.
+            k.Box(-0.28f, 0.72f, 0.45f, 0.22f, 0.75f, 0.25f, stone);
+            k.Box(0.28f, 0.72f, 0.45f, 0.22f, 0.75f, 0.25f, stone);
+            // The mane: a ring of curls; the head; the face.
+            k.Ball(new V3(0, 1.75f, 0.35f), 0.48f, 1, 10, 6, dark);
+
+            for (var c = 0; c < 9; c++)
+            {
+                var a = c * Math.PI * 2 / 9;
+                k.Ball(new V3((float)Math.Sin(a) * 0.42f, 1.75f + (float)Math.Cos(a) * 0.42f, 0.3f), 0.12f, 1, 6, 3, dark.Times(0.9f));
+            }
+
+            k.Box(0, 1.55f, 0.72f, 0.42f, 0.35f, 0.25f, stone);
+            k.Ball(new V3(-0.14f, 1.9f, 0.76f), 0.06f, 1, 6, 3, StoneDark);
+            k.Ball(new V3(0.14f, 1.9f, 0.76f), 0.06f, 1, 6, 3, StoneDark);
+            k.Box(0, 1.5f, 0.86f, 0.3f, 0.08f, 0.05f, StoneDark);
+
+            // Under its paw: an embroidered ball, or a cub.
+            if (female)
+            {
+                k.Ball(new V3(0.45f, 0.95f, 0.55f), 0.2f, 1, 8, 4, stone);
+                k.Ball(new V3(0.45f, 1.18f, 0.62f), 0.13f, 1, 8, 4, dark);
+            }
+            else
+            {
+                k.Ball(new V3(-0.45f, 0.92f, 0.55f), 0.2f, 1, 10, 5, dark);
+            }
+
+            return k.Mesh;
+        }
+
+        /// <summary>The academy's training yard: sand behind a low bamboo fence, posts to strike, racks, a drum, a bench for the teacher.</summary>
+        public static MeshData TrainingYard()
+        {
+            var k = new Kit();
+            const float w = 8, d = 6;
+            k.Tiled(0, 0, 0, w * 2, 0.06f, d * 2, 4, Tint.Hex(0xD8C8A0));
+
+            // The fence: posts and two rails, open at the front.
+            for (var x = -w; x <= w + 0.01f; x += 2)
+            {
+                k.Post(x, 0, d, 0.06f, 0.06f, 1.0f, 6, Tint.Hex(0x8AA060));
+                k.Post(x, 0, -d, 0.06f, 0.06f, 1.0f, 6, Tint.Hex(0x8AA060));
+            }
+
+            for (var z = -d; z <= d + 0.01f; z += 2)
+            {
+                k.Post(-w, 0, z, 0.06f, 0.06f, 1.0f, 6, Tint.Hex(0x8AA060));
+                k.Post(w, 0, z, 0.06f, 0.06f, 1.0f, 6, Tint.Hex(0x8AA060));
+            }
+
+            foreach (var y in new[] { 0.45f, 0.85f })
+            {
+                k.Beam(new V3(-w, y, d), new V3(w, y, d), 0.05f, 0.05f, Tint.Hex(0x9AB070));
+                k.Beam(new V3(-w, y, -d), new V3(-2, y, -d), 0.05f, 0.05f, Tint.Hex(0x9AB070));
+                k.Beam(new V3(2, y, -d), new V3(w, y, -d), 0.05f, 0.05f, Tint.Hex(0x9AB070));
+                k.Beam(new V3(-w, y, -d), new V3(-w, y, d), 0.05f, 0.05f, Tint.Hex(0x9AB070));
+                k.Beam(new V3(w, y, -d), new V3(w, y, d), 0.05f, 0.05f, Tint.Hex(0x9AB070));
+            }
+
+            // Posts to strike, in a row.
+            for (var i = 0; i < 4; i++)
+            {
+                k.Push(new V3(-4.5f + i * 3f, 0, 2.5f));
+                var post = DummyPost();
+                Append(k, post);
+                k.Pop();
+            }
+
+            // A drum on its stand and the teacher's bench.
+            k.Push(new V3(6.5f, 0.9f, -4f), 90);
+            k.Wheel(new V3(0, 0, 0), 0.6f, 0.5f, 0, Lacquer, Gold);
+            k.Pop();
+            k.Box(6.5f, 0, -4f, 0.2f, 0.4f, 0.8f, Wood);
+            k.Box(-6f, 0, -4.5f, 1.8f, 0.45f, 0.5f, Wood);
+
+            return k.Mesh;
+        }
+
+        /// <summary>Copies another mesh into the kit at its present frame.</summary>
+        static void Append(Kit k, MeshData other)
+        {
+            for (var t = 0; t < other.Triangles.Count; t += 3)
+            {
+                V3 P(int i) => new V3(other.Positions[i * 3], other.Positions[i * 3 + 1], other.Positions[i * 3 + 2]);
+                var a = other.Triangles[t];
+                k.Triangle(P(a), P(other.Triangles[t + 1]), P(other.Triangles[t + 2]), new Tint(other.Colours[a * 4], other.Colours[a * 4 + 1], other.Colours[a * 4 + 2]));
+            }
         }
 
         // ------------------------------------------------------------------ Rooms

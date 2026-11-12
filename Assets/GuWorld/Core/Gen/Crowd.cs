@@ -482,6 +482,7 @@ namespace GuWorld.Core.Gen
             halls.AddRange(Spots(plan, "hall"));
             halls.AddRange(Spots(plan, "academy"));
             halls.AddRange(Spots(plan, "landmark"));
+            halls.AddRange(Spots(plan, "yard"));
             var works = new List<Spot>();
             works.AddRange(Spots(plan, "smithy"));
             works.AddRange(Spots(plan, "granary"));
