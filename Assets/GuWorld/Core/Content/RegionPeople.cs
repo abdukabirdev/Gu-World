@@ -327,6 +327,31 @@ namespace GuWorld.Core
             new ShopEntry { Item = "relic_r2", Price = 1100, Chapter = 3, Needs = new[] { "rank==2" } },
         };
 
+        // The town's market stalls (their traders, standing behind them, sell these).
+        public static readonly ShopEntry[] StallFood =
+        {
+            new ShopEntry { Item = "jerky", Price = 4 }, new ShopEntry { Item = "honey", Price = 6 }, new ShopEntry { Item = "dew_gourd", Price = 3 },
+            new ShopEntry { Item = "bitter_root", Price = 5 }, new ShopEntry { Item = "stolen_rice", Price = 5 },
+        };
+
+        public static readonly ShopEntry[] StallHerbs =
+        {
+            new ShopEntry { Item = "ginseng", Price = 14 }, new ShopEntry { Item = "spirit_moss", Price = 16 }, new ShopEntry { Item = "bitter_root", Price = 5 },
+            new ShopEntry { Item = "cloud_tea", Price = 12 }, new ShopEntry { Item = "bear_garlic", Price = 5 },
+        };
+
+        public static readonly ShopEntry[] StallPills =
+        {
+            new ShopEntry { Item = "heal_pill", Price = 13 }, new ShopEntry { Item = "essence_pill", Price = 16 }, new ShopEntry { Item = "bandage", Price = 11 },
+            new ShopEntry { Item = "antidote", Price = 15 }, new ShopEntry { Item = "big_heal_pill", Price = 46, Chapter = 3 },
+        };
+
+        public static readonly ShopEntry[] StallGuFood =
+        {
+            new ShopEntry { Item = "moon_orchid", Price = 9 }, new ShopEntry { Item = "ember_coal", Price = 6 }, new ShopEntry { Item = "night_moth", Price = 8 },
+            new ShopEntry { Item = "spark_moss", Price = 9 }, new ShopEntry { Item = "stone_dust", Price = 3 }, new ShopEntry { Item = "frost_lotus", Price = 14, Chapter = 3 },
+        };
+
         /// <summary>A shelf by its id ("" or "valley": Baoshan's).</summary>
         public static ShopEntry[] Get(string id)
         {
@@ -340,11 +365,15 @@ namespace GuWorld.Core
                 case "hamlet": return Hamlet;
                 case "wander_shop": return Wanderer;
                 case "black_market": return BlackMarket;
+                case "stall_food": return StallFood;
+                case "stall_herbs": return StallHerbs;
+                case "stall_pills": return StallPills;
+                case "stall_gu_food": return StallGuFood;
                 case "gamble": return Shops.Gamble;
                 default: return Shops.Shop;
             }
         }
 
-        public static readonly string[] Ids = { "valley", "bai_shop", "bai_gu", "xiong_shop", "xiong_smith", "xiong_gu", "hamlet", "wander_shop", "black_market", "gamble" };
+        public static readonly string[] Ids = { "valley", "bai_shop", "bai_gu", "xiong_shop", "xiong_smith", "xiong_gu", "hamlet", "wander_shop", "black_market", "gamble", "stall_food", "stall_herbs", "stall_pills", "stall_gu_food" };
     }
 }

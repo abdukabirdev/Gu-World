@@ -85,6 +85,7 @@ namespace GuWorld
         float saveWait = 30;
         float nearbyWait;
         Component nearby;
+        Core.Gen.Walker nearbyWalker;
         public static string Prompt { get; private set; }
 
         /// <summary>The save slots (the first is the old single save, so a game saved before slots is kept).</summary>
@@ -454,6 +455,20 @@ namespace GuWorld
                     Prompt = thing.Verb + " · " + thing.Def.Name;
                 }
             }
+            // A townsperson close by (only when no one of the story is closer).
+            if (nearby == null)
+            {
+                var (folk, walker, body) = Townsfolk.Nearest(Hero.transform.position, 2.6f);
+
+                if (walker != null)
+                {
+                    nearby = folk;
+                    nearbyWalker = walker;
+                    var (name, title) = Core.Chatter.Who(walker);
+                    Prompt = (folk.AtStall(walker) ? "Торговать · " : "Говорить · ") + name;
+                }
+            }
+
             // The altar of the immortal aperture.
             if (World.Aperture.Prompt != null)
             {
@@ -473,6 +488,15 @@ namespace GuWorld
             else if (Instance.nearby is Thing thing)
             {
                 thing.Use();
+            }
+            else if (Instance.nearby is Townsfolk folk && Instance.nearbyWalker != null)
+            {
+                var walker = Instance.nearbyWalker;
+                folk.TurnTo(walker, Hero.transform.position);
+                var lines = Core.Chatter.Say(walker, Atmosphere.Hour, Session.Rank, Session.StandingWith("gu_yue"), Atmosphere.Gloom > 0.5f, Session.State.Day + (int)Time.time);
+                var stall = folk.AtStall(walker) ? Core.Chatter.ShelfOf(walker.Stall) : null;
+                var (name, _) = Core.Chatter.Who(walker);
+                Ui.Talk(lines, stall == null ? (System.Action)null : () => Ui.OpenShop(stall, "Лоток · " + name, "gu_yue"));
             }
             else if (Instance.nearby is World.Aperture)
             {

@@ -410,7 +410,10 @@ namespace GuWorld.UI
             shade.rectTransform.Fill();
             shade.Gradient(new Color(3 / 255f, 4 / 255f, 10 / 255f, 0), new Color(3 / 255f, 4 / 255f, 10 / 255f, 0.96f), false, new Color(3 / 255f, 4 / 255f, 10 / 255f, 0.1f), 0.45f);
             var npc = Atlas.Npc(line.Who);
-            var name = line.Who == "hero" ? "Гу Юэ " + S.State.HeroName : npc != null ? npc.Name : null;
+            // A passer-by of the town speaks as "~Name|Title".
+            var passer = line.Who != null && line.Who.StartsWith("~") ? line.Who.Substring(1).Split('|') : null;
+            var name = line.Who == "hero" ? "Гу Юэ " + S.State.HeroName : npc != null ? npc.Name : passer?[0];
+            var title = line.Who == "hero" ? "Вы" : npc != null ? npc.Title : passer != null && passer.Length > 1 ? passer[1] : "";
             var words = UiKit.Rect("Words", stage);
             words.Place(new Vector2(0.5f, 0), new Vector2(0.5f, 0), -460, 70, -460, -300);
             words.Stack<VerticalLayoutGroup>(12);
@@ -422,7 +425,7 @@ namespace GuWorld.UI
                 row.childForceExpandWidth = false;
                 who.Size(36);
                 UiKit.Disp(name, who, 30, UiKit.GoldText).Size(36);
-                UiKit.Lbl(line.Who == "hero" ? "Вы" : npc.Title, who, 11, UiKit.Muted, 0.3f).Size(36);
+                UiKit.Lbl(title, who, 11, UiKit.Muted, 0.3f).Size(36);
                 UiKit.Rule(words);
                 var said = UiKit.Disp($"«{line.Text}»", words, 26, UiKit.Hex(0xF2EADB), TextAnchor.UpperLeft);
                 said.horizontalOverflow = HorizontalWrapMode.Wrap;

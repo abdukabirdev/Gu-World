@@ -51,6 +51,52 @@ namespace GuWorld.World
             return folk;
         }
 
+        static readonly List<Townsfolk> all = new List<Townsfolk>();
+
+        void OnEnable() => all.Add(this);
+        void OnDisable() => all.Remove(this);
+
+        /// <summary>The townsperson with a body nearest a point (within `reach`), and its root; null if none.</summary>
+        public static (Townsfolk folk, Walker walker, Transform body) Nearest(Vector3 at, float reach)
+        {
+            (Townsfolk, Walker, Transform) best = (null, null, null);
+            var bestDistance = reach * reach;
+
+            foreach (var folk in all)
+            {
+                foreach (var body in folk.active)
+                {
+                    var d = (body.Root.transform.position - at).sqrMagnitude;
+
+                    if (d < bestDistance)
+                    {
+                        bestDistance = d;
+                        best = (folk, body.Walker, body.Root.transform);
+                    }
+                }
+            }
+
+            return best;
+        }
+
+        /// <summary>Whether a townsperson is behind their stall now (and not walking to or from it).</summary>
+        public bool AtStall(Walker walker) => bodyOf.TryGetValue(walker, out var body) && !body.Walking && walker.Stall >= 0 && Crowd.At(walker, Atmosphere.Hour).Doing == "stall";
+
+        /// <summary>A townsperson turns to the one speaking to them.</summary>
+        public void TurnTo(Walker walker, Vector3 to)
+        {
+            if (bodyOf.TryGetValue(walker, out var body) && !body.Walking)
+            {
+                var away = to - body.Root.transform.position;
+                away.y = 0;
+
+                if (away.sqrMagnitude > 0.01f)
+                {
+                    body.Facing = Quaternion.LookRotation(away).eulerAngles.y;
+                }
+            }
+        }
+
         /// <summary>How many have bodies now and how many exist (for the autotest's log).</summary>
         public string Count() => $"{active.Count} townsfolk shown of {walkers.Count} ({made} bodies made)";
 

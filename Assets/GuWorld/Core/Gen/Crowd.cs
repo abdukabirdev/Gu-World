@@ -28,6 +28,8 @@ namespace GuWorld.Core.Gen
         public Trade Trade;
         public Vec2 Home;
         public readonly List<Leg> Day = new List<Leg>();
+        /// <summary>The variant of the stall a trader keeps (-1: none).</summary>
+        public int Stall = -1;
         /// <summary>Walking pace, metres a second (an elder slower, a child quicker).</summary>
         public float Pace = 1.3f;
     }
@@ -530,6 +532,7 @@ namespace GuWorld.Core.Gen
                             stallTaken[free] = true;
                             // Behind the counter (the spot is the customer's, before the stall), facing out.
                             work = stalls[free];
+                            walker.Stall = StallVariant(plan, work.At);
                             work.At = work.At - Vec2.FromYaw(work.Facing) * 3f;
                         }
                         else
@@ -618,6 +621,22 @@ namespace GuWorld.Core.Gen
             }
 
             return walkers;
+        }
+
+        /// <summary>The variant of the stall whose customer's spot this is.</summary>
+        static int StallVariant(SettlementPlan plan, Vec2 spot)
+        {
+            foreach (var building in plan.Buildings)
+            {
+                if (building.Role == "stall" && Vec2.Distance(building.Door, spot) < 0.5f)
+                {
+                    var parts = building.Model.Split(':');
+
+                    return parts.Length > 2 && int.TryParse(parts[2], out var v) ? v : 0;
+                }
+            }
+
+            return 0;
         }
 
         static List<Spot> Spots(SettlementPlan plan, string role) => plan.Spots.FindAll(s => s.Role == role);

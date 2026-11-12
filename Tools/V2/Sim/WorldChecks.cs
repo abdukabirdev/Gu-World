@@ -534,6 +534,14 @@ static class WorldChecks
         check(badPace < walks * 0.03f, $"world: the walkers walk, not fly ({badPace} of {walks} walks too fast)");
         check(throughStreets > walks * 0.9f, $"world: the walks go along the streets ({throughStreets} of {walks})");
 
+        // They talk: a name and a title each, a line for every trade, a stall's goods for its trader.
+        var traders = walkers.Count(w => w.Stall >= 0);
+        check(traders >= town.Stalls * 0.8f, $"world: the stalls have traders ({traders} of {town.Stalls})");
+        check(walkers.All(w => Chatter.Who(w).name.Length > 2 && Chatter.Who(w).name == Chatter.Who(w).name), "world: every townsperson has a name");
+        check(walkers.Take(80).All(w => Chatter.Say(w, 10, 2, Standing.Neutral, false, 1).Length >= 1), "world: every townsperson has something to say");
+        check(walkers.Where(w => w.Stall >= 0).All(w => Markets.Get(Chatter.ShelfOf(w.Stall)).Length > 0), "world: every stall has goods");
+        report.Add($"  town {town.Def.Id}, a passer-by: {Chatter.Who(walkers[3]).name} ({Chatter.Who(walkers[3]).title}): «{Chatter.Say(walkers[3], 10, 4, Standing.Friendly, false, 2)[0].Text}»");
+
         var parts = new Crowd.Graph(town).Components();
         report.Add($"  town {town.Def.Id}, its street graph: {parts.Sum()} nodes in {parts.Count} parts (the biggest {parts[0]}, then {string.Join(", ", parts.Skip(1).Take(6))})");
 
