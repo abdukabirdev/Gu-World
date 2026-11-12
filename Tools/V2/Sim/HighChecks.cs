@@ -211,6 +211,45 @@ static partial class Program
         Check(t.TwinsOf(blade).Count == 1 && t.FeedTwin(blade.Uid) && blade.MasteryXp == xp + gain && t.FindGu(twin.Uid) == null, "a Gu takes in its twin as mastery");
         Check(!t.FeedTwin(blade.Uid), "no twin left to take in");
 
+        // ------------------------------------------------------------------ Attainment on the paths
+
+        var p = new Session(Session.NewGame("Путь"), 31);
+        var moon = p.AddGu(p.MakeGu("moonlight", 0, true), true);
+        p.Equip(moon.Uid, false, 0);
+        var plain = p.PowerOf(moon);
+        var plainCost = p.CostOf(moon);
+        p.GainAttainment(GuPath.Moon, Attainment.Needs[2]);
+        Check(p.GradeOf(GuPath.Moon) == 2 && p.GradeOf(GuPath.Fire) == 0, "attainment is of one path");
+        Check(p.PowerOf(moon) > plain * 1.09f && p.CostOf(moon) < plainCost, "a master's Gu of the path are stronger and cheaper");
+        Check(p.DeviseCost(KillerMoves.Get("moon_on_wind")) < KillerMoves.Get("moon_on_wind").Insight, "a master comprehends the path's moves for less");
+        Check(p.State.Achievements.Contains("path_master"), "becoming a master is an achievement");
+        var before2 = p.AttainmentOf(GuPath.Moon);
+        p.State.Essence = 500;
+        p.Tick(10);
+        var c3 = p.CastSlot(0);
+        Check(c3 != null, "a Gu is cast");
+        p.SkillHit(c3, Bestiary.Get("wolf"));
+        Check(p.AttainmentOf(GuPath.Moon) >= before2, "using the path's Gu adds to it");
+        Check(Attainment.Needs.Length == Attainment.Grades.Length && Attainment.Power.Length == Attainment.Grades.Length && Attainment.Thrift.Length == Attainment.Grades.Length, "every grade has its numbers");
+
+        // ------------------------------------------------------------------ Relic Gu
+
+        var r = new Session(Session.NewGame("Реликвия"), 41);
+        r.AddItem("relic_r1", 4, true);
+        r.AddItem("relic_r2", 1, true);
+        Check(r.UseConsumable("relic_r1") && r.State.Step == 1, "a relic lifts a stage");
+        Check(!r.UseConsumable("relic_r2") && r.Count("relic_r2") == 1, "a relic of another rank does nothing");
+        r.UseConsumable("relic_r1");
+        r.UseConsumable("relic_r1");
+        Check(r.State.Step == 3 && !r.UseConsumable("relic_r1") && r.Count("relic_r1") == 1 && r.WhyNoRelic(ItemBook.Get("relic_r1")) != null, "a relic does not carry across a rank's gate");
+
+        foreach (var rank in Enumerable.Range(1, Cultivation.MaxRank))
+        {
+            var id = $"relic_r{rank}";
+            Check(ItemBook.Get(id)?.Relic == rank, $"a relic of rank {rank} exists");
+            Check(Bestiary.Tables.Any(t => t.Items.Any(e => e.Item == id)) || Markets.Ids.SelectMany(Markets.Get).Any(e => e.Item == id), $"the relic of rank {rank} can be found");
+        }
+
         // ------------------------------------------------------------------ The immortal aperture
 
         var a = new Session(Session.NewGame("Полигон"), 21);

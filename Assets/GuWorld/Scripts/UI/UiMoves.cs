@@ -146,7 +146,7 @@ namespace GuWorld.UI
 
             var blocked = session.WhyNoDevise(move);
             var moveId = move.Id;
-            UiKit.HexButton($"Постичь · {move.Insight} прозрения", column, () =>
+            UiKit.HexButton($"Постичь · {session.DeviseCost(move)} прозрения", column, () =>
             {
                 if (session.Devise(moveId))
                 {

@@ -95,6 +95,7 @@ namespace GuWorld.Core
             State.Effects = State.Effects ?? new List<Effect>();
             State.Prayed = State.Prayed ?? new List<string>();
             State.Moves = State.Moves ?? new List<string>();
+            State.Attainment = State.Attainment ?? new List<Tally>();
             // A game stopped inside the immortal aperture: its loans go back.
             DropBorrowed();
             State.Move = State.Move ?? "";
@@ -320,7 +321,7 @@ namespace GuWorld.Core
         float CooldownOf(GuInstance gu) => GuBook.Get(gu.Def).Skill.Cooldown * Stats.Cooldown * (1 - AffixOf(gu, AffixKind.Quick));
 
         /// <summary>A Gu's essence cost: a starving Gu takes a third more.</summary>
-        public float CostOf(GuInstance gu) => GuBook.Get(gu.Def).Skill.Cost * Stats.Cost * (1 - AffixOf(gu, AffixKind.Thrifty)) * (IsStarving(gu) ? 1.3f : 1);
+        public float CostOf(GuInstance gu) => GuBook.Get(gu.Def).Skill.Cost * Stats.Cost * (1 - AffixOf(gu, AffixKind.Thrifty)) * (IsStarving(gu) ? 1.3f : 1) * AttainmentThrift(GuBook.Get(gu.Def).Path);
 
         /// <summary>The sky over the hero (the interface tells it from the weather and the hero's height).</summary>
         public Sky Sky { get; private set; } = Sky.Clear;
@@ -363,6 +364,8 @@ namespace GuWorld.Core
             {
                 power *= Stats.MoonPower;
             }
+
+            power *= AttainmentPower(def.Path);
 
             // Hunger weakens; the hour and the sky favour some paths.
             power *= HungerFactor(gu);
@@ -489,6 +492,8 @@ namespace GuWorld.Core
 
         void GainMastery(GuInstance gu, int xp)
         {
+            // What a Gu learns, its master learns of its path.
+            GainAttainment(GuBook.Get(gu.Def).Path, xp);
             var before = Cultivation.MasteryLevel(gu.MasteryXp);
             gu.MasteryXp += xp;
             var after = Cultivation.MasteryLevel(gu.MasteryXp);

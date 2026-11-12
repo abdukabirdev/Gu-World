@@ -132,18 +132,18 @@ namespace GuWorld.Core
             new LootTable { Id = "wolf", StonesMin = 2, StonesMax = 6, Items = new[] { new LootEntry { Item = "wolf_fang", Chance = 0.6f }, new LootEntry { Item = "wolf_pelt", Chance = 0.35f } }, GuChance = 0.06f, GuPool = new[] { "tailwind", "stone_beetle", "life_grass", "little_light", "jade_skin" } },
             new LootTable
             {
-                Id = "ragged_ear", StonesMin = 30, StonesMax = 45, Items = new[] { new LootEntry { Item = "wolf_fang", Min = 3, Max = 5 }, new LootEntry { Item = "wolf_pelt", Min = 2, Max = 3 }, new LootEntry { Item = "heal_pill", Min = 2, Max = 2 } },
+                Id = "ragged_ear", StonesMin = 30, StonesMax = 45, Items = new[] { new LootEntry { Item = "relic_r1", Chance = 0.5f }, new LootEntry { Item = "wolf_fang", Min = 3, Max = 5 }, new LootEntry { Item = "wolf_pelt", Min = 2, Max = 3 }, new LootEntry { Item = "heal_pill", Min = 2, Max = 2 } },
                 GuChance = 1, GuPool = new[] { "tailwind", "stone_beetle" }, GuMinQuality = 1
             },
             new LootTable { Id = "storm_wolf", StonesMin = 5, StonesMax = 12, Items = new[] { new LootEntry { Item = "storm_core", Chance = 0.45f }, new LootEntry { Item = "wolf_fang", Chance = 0.5f } }, GuChance = 0.08f, GuPool = new[] { "spark", "tailwind", "storm_step" } },
             new LootTable
             {
-                Id = "hundred_king", StonesMin = 90, StonesMax = 130, Items = new[] { new LootEntry { Item = "king_core" }, new LootEntry { Item = "wolf_pelt", Min = 4, Max = 6 }, new LootEntry { Item = "essence_pill", Min = 2, Max = 3 } },
+                Id = "hundred_king", StonesMin = 90, StonesMax = 130, Items = new[] { new LootEntry { Item = "relic_r1" }, new LootEntry { Item = "king_core" }, new LootEntry { Item = "wolf_pelt", Min = 4, Max = 6 }, new LootEntry { Item = "essence_pill", Min = 2, Max = 3 } },
                 GuChance = 1, GuPool = new[] { "bear_strength", "whirl", "rock_skin" }, GuMinQuality = 1
             },
             new LootTable
             {
-                Id = "thunder_crown_wolf", StonesMin = 220, StonesMax = 300, Items = new[] { new LootEntry { Item = "crown_core" }, new LootEntry { Item = "storm_core", Min = 5, Max = 7 }, new LootEntry { Item = "scroll_thunder_crown" } },
+                Id = "thunder_crown_wolf", StonesMin = 220, StonesMax = 300, Items = new[] { new LootEntry { Item = "relic_r2" }, new LootEntry { Item = "crown_core" }, new LootEntry { Item = "storm_core", Min = 5, Max = 7 }, new LootEntry { Item = "scroll_thunder_crown" } },
                 GuChance = 1, GuPool = new[] { "storm_step", "spark" }, GuMinQuality = 2
             },
             new LootTable { Id = "blood_wolf", StonesMin = 10, StonesMax = 22, Items = new[] { new LootEntry { Item = "blood_crystal", Chance = 0.3f }, new LootEntry { Item = "wolf_fang", Chance = 0.5f } }, GuChance = 0.08f, GuPool = new[] { "ice_spike", "whirl", "bear_strength", "storm_step" } },
@@ -161,7 +161,7 @@ namespace GuWorld.Core
             },
             new LootTable { Id = "duelist", StonesMin = 40, StonesMax = 60, Items = new[] { new LootEntry { Item = "essence_pill", Min = 1, Max = 2 } } },
             new LootTable { Id = "blood_puppet", StonesMin = 12, StonesMax = 26, Items = new[] { new LootEntry { Item = "blood_crystal", Chance = 0.4f } }, GuChance = 0.08f, GuPool = new[] { "rock_skin", "ice_spike", "whirl", "white_jade" } },
-            new LootTable { Id = "elder", StonesMin = 500, StonesMax = 500, Items = new[] { new LootEntry { Item = "blood_crystal", Min = 3, Max = 3 } } },
+            new LootTable { Id = "elder", StonesMin = 500, StonesMax = 500, Items = new[] { new LootEntry { Item = "relic_r3" }, new LootEntry { Item = "blood_crystal", Min = 3, Max = 3 } } },
 
             // Chests.
             new LootTable { Id = "chest_grove", StonesMin = 12, StonesMax = 18, Items = new[] { new LootEntry { Item = "heal_pill", Min = 2, Max = 2 } }, GuChance = 1, GuPool = new[] { "tailwind" } },

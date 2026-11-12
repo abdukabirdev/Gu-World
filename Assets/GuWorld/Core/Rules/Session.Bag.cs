@@ -100,6 +100,12 @@ namespace GuWorld.Core
                 return false;
             }
 
+            // A relic Gu: a stage at once.
+            if (def.Relic > 0)
+            {
+                return UseRelic(def);
+            }
+
             // The wider world's pills: cures, buffs, boosts, insight.
             if (def.Cures != StatusKind.None || def.Buff != BuffKind.None || def.BoostSeconds > 0 || def.Insight > 0)
             {
@@ -116,6 +122,46 @@ namespace GuWorld.Core
             RemoveItem(item);
             Heal(def.Heal);
             State.Essence = Math.Min(Stats.MaxEssence, State.Essence + def.Essence * Stats.MaxEssence);
+
+            return true;
+        }
+
+        /// <summary>Why a relic Gu cannot be used now (it is of another rank, or the next step is a rank's gate), or null.</summary>
+        public string WhyNoRelic(ItemDef def)
+        {
+            if (def == null || def.Relic <= 0)
+            {
+                return "Это не реликвия";
+            }
+
+            if (Rank != def.Relic)
+            {
+                return $"Реликвия {GuBook.RankNumerals[def.Relic]} ранга, а вы — {GuBook.RankNumerals[Rank]}";
+            }
+
+            if (State.Step >= Cultivation.MaxStep)
+            {
+                return "Выше подниматься некуда";
+            }
+
+            return Cultivation.IsRankUp(State.Step) ? "Реликвия не переносит через ворота ранга: прорывайтесь у источника" : null;
+        }
+
+        bool UseRelic(ItemDef def)
+        {
+            var why = WhyNoRelic(def);
+
+            if (why != null)
+            {
+                Say(why);
+
+                return false;
+            }
+
+            RemoveItem(def.Id);
+            // The insight of the stage is filled and the step is taken (what was gathered towards it carries over).
+            GainInsight(Math.Max(0, Cultivation.Needs[State.Step] - State.Insight) / DifficultyRules.Insight(State.Settings.Difficulty) + 0.01f);
+            Say($"{def.Name}: ступень вверх");
 
             return true;
         }
@@ -594,6 +640,7 @@ namespace GuWorld.Core
             }
 
             State.Fusions++;
+            GainAttainment(GuBook.Get(recipe.Result).Path, 25 * GuBook.Get(recipe.Result).Rank);
             Achieve();
             Notify(StepKind.Fuse, recipe.Result);
             Touch();

@@ -127,6 +127,12 @@ namespace GuWorld.Core
 
         public static readonly ItemDef[] Items =
         {
+            // The relic Gu: one use each, a stage of cultivation at once (the canon's green copper, red steel, white silver, yellow gold, purple crystal).
+            new ItemDef { Id = "relic_r1", Name = "Реликвия Зелёной меди", Seal = "铜", Kind = ItemKind.Consumable, Relic = 1, Price = 300, Colour = 0x5FB88A, Description = "Гу-реликвия: мастер первого ранга, проглотив её, поднимается на ступень. Через ворота ранга не переносит." },
+            new ItemDef { Id = "relic_r2", Name = "Реликвия Красной стали", Seal = "钢", Kind = ItemKind.Consumable, Relic = 2, Price = 800, Colour = 0xD0584A, Description = "Гу-реликвия второго ранга: ступень вверх, но не новый ранг." },
+            new ItemDef { Id = "relic_r3", Name = "Реликвия Белого серебра", Seal = "银", Kind = ItemKind.Consumable, Relic = 3, Price = 1800, Colour = 0xE8EEF2, Description = "Гу-реликвия третьего ранга: ступень вверх." },
+            new ItemDef { Id = "relic_r4", Name = "Реликвия Жёлтого золота", Seal = "金", Kind = ItemKind.Consumable, Relic = 4, Price = 4000, Colour = 0xF2C850, Description = "Гу-реликвия четвёртого ранга: ступень вверх." },
+            new ItemDef { Id = "relic_r5", Name = "Реликвия Пурпурного кристалла", Seal = "晶", Kind = ItemKind.Consumable, Relic = 5, Price = 9000, Colour = 0xB07AE8, Description = "Гу-реликвия пятого ранга: ступень вверх. Говорят, их видели только в сокровищницах бессмертных." },
             new ItemDef { Id = "heart_of_qingmao", Name = "Сердце Цинмао", Seal = "髓", Kind = ItemKind.Material, Price = 2000, Colour = 0x9FEFC4, Description = "Камень из-под корней Великого древа и льда вершины: в нём бьётся сама гора. Без него не сплавить Гу пятого ранга." },
             new ItemDef { Id = "scroll_moon_sickle", Name = "Свиток: Гу Лунного серпа", Seal = "卷", Kind = ItemKind.Scroll, Teaches = "moon_sickle", Price = 1200, Description = "Тайный рецепт четвёртого ранга клана Гу Юэ." },
             new ItemDef { Id = "scroll_north_wind_ice", Name = "Свиток: Гу Северного ледяного ветра", Seal = "卷", Kind = ItemKind.Scroll, Teaches = "north_wind_ice", Price = 1200, Description = "Тайный рецепт четвёртого ранга клана Бай." },
@@ -146,9 +152,9 @@ namespace GuWorld.Core
         /// <summary>Where the high scrolls and the mountain's heart are found (added to the tables of the great beasts and the deepest chests).</summary>
         public static readonly LootTable[] Tables =
         {
-            new LootTable { Id = "high_gu_yue", Items = new[] { new LootEntry { Item = "scroll_moon_sickle" }, new LootEntry { Item = "scroll_full_moon", Chance = 0.5f } } },
-            new LootTable { Id = "heart_peak", Items = new[] { new LootEntry { Item = "heart_of_qingmao" }, new LootEntry { Item = "scroll_heaven_thunder" } }, StonesMin = 400, StonesMax = 600 },
-            new LootTable { Id = "heart_tree", Items = new[] { new LootEntry { Item = "heart_of_qingmao" }, new LootEntry { Item = "scroll_boundless_sea" } }, StonesMin = 400, StonesMax = 600 },
+            new LootTable { Id = "high_gu_yue", Items = new[] { new LootEntry { Item = "relic_r4", Chance = 0.6f }, new LootEntry { Item = "scroll_moon_sickle" }, new LootEntry { Item = "scroll_full_moon", Chance = 0.5f } } },
+            new LootTable { Id = "heart_peak", Items = new[] { new LootEntry { Item = "relic_r4" }, new LootEntry { Item = "heart_of_qingmao" }, new LootEntry { Item = "scroll_heaven_thunder" } }, StonesMin = 400, StonesMax = 600 },
+            new LootTable { Id = "heart_tree", Items = new[] { new LootEntry { Item = "relic_r5", Chance = 0.6f }, new LootEntry { Item = "heart_of_qingmao" }, new LootEntry { Item = "scroll_boundless_sea" } }, StonesMin = 400, StonesMax = 600 },
         };
     }
 }

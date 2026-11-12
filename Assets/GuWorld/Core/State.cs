@@ -116,6 +116,8 @@ namespace GuWorld.Core
         public int MovesCast;
         /// <summary>The day the Spring Autumn Cicada wakes again after saving the hero.</summary>
         public int CicadaDay;
+        /// <summary>Attainment on each path (Id: the path's name, Count: its points).</summary>
+        public List<Tally> Attainment = new List<Tally>();
     }
 
     [Serializable]

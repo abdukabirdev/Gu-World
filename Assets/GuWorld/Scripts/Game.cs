@@ -208,6 +208,11 @@ namespace GuWorld
             Session.Dawn += day => Ui.Toast($"Рассвет · день {day}");
             Session.Achieved += achievement => Ui.Banner("Достижение", achievement.Name);
             Session.StandingChanged += (clan, standing) => spawns?.Refresh();
+            Session.AttainmentRose += (path, grade) =>
+            {
+                Ui.Banner(GuBook.PathName(path), Attainment.Grades[grade]);
+                Sound.AudioDirector.Play("breakthrough", null, 0.6f, 0);
+            };
             Session.MoveLearnt += move =>
             {
                 Ui.Banner("Убийственный приём", move.Name);

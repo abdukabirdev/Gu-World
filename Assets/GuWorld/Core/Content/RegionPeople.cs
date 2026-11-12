@@ -323,6 +323,8 @@ namespace GuWorld.Core
             new ShopEntry { Item = "scroll_immortal_shadow", Price = 1400, Needs = new[] { "rank>=4", "standing:bandit=friendly" } },
             new ShopEntry { Item = "rock_2", Price = 80 },
             new ShopEntry { Item = "blood_crystal", Price = 95, Chapter = 3 },
+            new ShopEntry { Item = "relic_r1", Price = 450, Chapter = 2, Needs = new[] { "rank<=1" } },
+            new ShopEntry { Item = "relic_r2", Price = 1100, Chapter = 3, Needs = new[] { "rank==2" } },
         };
 
         /// <summary>A shelf by its id ("" or "valley": Baoshan's).</summary>

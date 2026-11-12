@@ -146,7 +146,7 @@ namespace GuWorld.Core
                 return "Вставьте в апертуру: " + string.Join(", ", missing);
             }
 
-            return State.Insight < move.Insight ? $"Нужно {move.Insight} прозрения" : null;
+            return State.Insight < DeviseCost(move) ? $"Нужно {DeviseCost(move)} прозрения" : null;
         }
 
         /// <summary>Comprehends a move: the Gu are together in the aperture, insight is spent, the move is known.</summary>
@@ -159,7 +159,8 @@ namespace GuWorld.Core
                 return false;
             }
 
-            State.Insight -= move.Insight;
+            State.Insight -= DeviseCost(move);
+            GainAttainment(GuBook.Get(move.Core).Path, 60 * move.Rank);
             LearnMove(id);
 
             return true;
@@ -287,6 +288,7 @@ namespace GuWorld.Core
 
             if (gu != null)
             {
+                cost *= AttainmentThrift(GuBook.Get(gu.Def).Path);
                 cost *= 1 - AffixOf(gu, AffixKind.Thrifty);
                 cost *= IsStarving(gu) ? 1.3f : 1;
             }
