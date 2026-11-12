@@ -190,7 +190,7 @@ namespace GuWorld.Core
             King("lake_dragon", "relic_r5", "scroll_full_moon", new[] { "north_wind_ice", "moon_sickle" }),
 
             // The caches the kings sat on.
-            new LootTable { Id = "cache_wilds", StonesMin = 600, StonesMax = 900, Items = new[] { new LootEntry { Item = "heart_of_qingmao", Chance = 0.5f }, new LootEntry { Item = "relic_r4", Chance = 0.5f }, new LootEntry { Item = "king_core", Min = 1, Max = 2 }, new LootEntry { Item = "great_essence_pill", Min = 2, Max = 3 } }, GuChance = 1, GuPool = new[] { "golden_bell", "moon_sickle", "crimson_flame", "myriad_lightning", "north_wind_ice", "stone_giant", "ten_thousand_li" }, GuMinQuality = 1 },
+            new LootTable { Id = "cache_wilds", StonesMin = 600, StonesMax = 900, Items = new[] { new LootEntry { Item = "heart_of_qingmao", Chance = 0.5f }, new LootEntry { Item = "relic_r4", Chance = 0.5f }, new LootEntry { Item = "king_core", Min = 1, Max = 2 }, new LootEntry { Item = "great_essence_pill", Min = 2, Max = 3 }, new LootEntry { Item = "scroll_tree_of_life", Chance = 0.2f }, new LootEntry { Item = "scroll_sky_wind", Chance = 0.2f }, new LootEntry { Item = "scroll_thousand_shadows", Chance = 0.2f }, new LootEntry { Item = "scroll_jade_bone", Chance = 0.2f }, new LootEntry { Item = "scroll_mountain", Chance = 0.2f }, new LootEntry { Item = "scroll_sun_flame", Chance = 0.2f } }, GuChance = 1, GuPool = new[] { "golden_bell", "moon_sickle", "crimson_flame", "myriad_lightning", "north_wind_ice", "stone_giant", "ten_thousand_li" }, GuMinQuality = 1 },
         };
 
         static LootTable King(string id, string relic, string scroll, string[] gu) => new LootTable

@@ -93,6 +93,87 @@ namespace GuWorld.Core
                 Passive = new[] { new StatBonus(StatKind.EssenceRegen, 2f), new StatBonus(StatKind.Cost, -0.2f) }
             },
 
+            // ------------------------------------------------------------------ The paths' high Gu (the second batch)
+
+            new GuDef
+            {
+                Id = "spring_life", Name = "Гу Весенней жизни", Seal = "春", Rank = 4, Path = GuPath.Wood, Kind = GuKind.Active, Colour = 0x9FEF9F, Price = 1800, Food = "ginseng", Appetite = 3,
+                Description = "Весна внутри тела: за четыре секунды возвращает много здоровья, а потом ещё полминуты тело само затягивает раны.",
+                Skill = new SkillDef { Shape = SkillShape.Heal, Power = 420, Duration = 4, Cost = 90, Cooldown = 24 }
+            },
+            new GuDef
+            {
+                Id = "tree_of_life", Name = "Гу Древа жизни", Seal = "樹", Rank = 5, Path = GuPath.Wood, Kind = GuKind.Passive, Colour = 0x7FD07F, Price = 6400, Food = "ginseng", Appetite = 3,
+                Description = "Корни в апертуре: здоровье +350, эссенция восполняется вдвое быстрее.",
+                Passive = new[] { new StatBonus(StatKind.Health, 350), new StatBonus(StatKind.EssenceRegen, 1f) }
+            },
+            new GuDef
+            {
+                Id = "sky_wind", Name = "Гу Небесного ветра", Seal = "颶", Rank = 5, Path = GuPath.Wind, Kind = GuKind.Active, Colour = 0xE0FFF4, Price = 6000, Food = "dew_gourd", Appetite = 2,
+                Description = "Ураган сходит с неба на место прицела и семь секунд режет и тянет всё в себя.",
+                Skill = new SkillDef { Shape = SkillShape.Storm, Power = 140, Range = 26, Radius = 11, Duration = 7, Count = 16, Cost = 150, Cooldown = 12, Status = StatusKind.Slow, StatusPower = 0.5f, StatusTime = 2 }
+            },
+            new GuDef
+            {
+                Id = "venom_dragon", Name = "Гу Ядовитого дракона", Seal = "蛟", Rank = 4, Path = GuPath.Poison, Kind = GuKind.Active, Colour = 0x90E040, Price = 1900, Food = "snake_gall", Appetite = 2,
+                Description = "Дракон из ядовитого тумана проходит сквозь врагов по прямой. Яд держится восемь секунд.",
+                Skill = new SkillDef { Shape = SkillShape.Projectile, Power = 120, Range = 28, Radius = 2.2f, Speed = 22, Pierce = true, Cost = 70, Cooldown = 6, Status = StatusKind.Poison, StatusPower = 30, StatusTime = 8 }
+            },
+            new GuDef
+            {
+                Id = "thunder_roar", Name = "Гу Громового рыка", Seal = "吼", Rank = 4, Path = GuPath.Sound, Kind = GuKind.Active, Colour = 0xF0D890, Price = 1800, Food = "echo_shell", Appetite = 3,
+                Description = "Рык, от которого дрожит камень: всё перед вами оглушено на две секунды.",
+                Skill = new SkillDef { Shape = SkillShape.Cone, Power = 110, Range = 14, Radius = 70, Cost = 70, Cooldown = 12, Status = StatusKind.Stun, StatusTime = 2 }
+            },
+            new GuDef
+            {
+                Id = "radiant_lotus", Name = "Гу Сияющего лотоса", Seal = "輝", Rank = 4, Path = GuPath.Light, Kind = GuKind.Passive, Colour = 0xFFF4C0, Price = 2200, Food = "moon_orchid", Appetite = 4,
+                Description = "Лотос света в апертуре: все Гу сильнее на десятую часть, перезарядка короче.",
+                Passive = new[] { new StatBonus(StatKind.Power, 0.1f), new StatBonus(StatKind.Cooldown, -0.08f) }
+            },
+            new GuDef
+            {
+                Id = "thousand_shadows", Name = "Гу Тысячи теней", Seal = "影", Rank = 5, Path = GuPath.Dark, Kind = GuKind.Active, Colour = 0x7060B0, Price = 6200, Food = "night_moth", Appetite = 2,
+                Description = "Вы распадаетесь на тысячу теней: двадцать секунд вас не видят, а первый удар из тени страшен.",
+                Skill = new SkillDef { Shape = SkillShape.Buff, Buff = BuffKind.Stealth, BuffValue = 1, Duration = 20, Cost = 120, Cooldown = 40 }
+            },
+            new GuDef
+            {
+                Id = "pure_wine", Name = "Гу Чистого вина", Seal = "醇", Rank = 4, Path = GuPath.Wine, Kind = GuKind.Passive, Colour = 0xF0E0A0, Price = 2000, Food = "wine_jar", Appetite = 5,
+                Description = "Вино, что очищает эссенцию: её втрое больше прибывает, Гу берут на десятую часть меньше.",
+                Passive = new[] { new StatBonus(StatKind.EssenceRegen, 1.2f), new StatBonus(StatKind.Cost, -0.1f) }
+            },
+            new GuDef
+            {
+                Id = "jade_bone", Name = "Гу Нефритовой кости", Seal = "髓", Rank = 5, Path = GuPath.Bone, Kind = GuKind.Active, Colour = 0xE8F0E0, Price = 6000, Food = "bone_shard", Appetite = 3,
+                Description = "Из земли вокруг вырастают нефритовые кости — копьями во все стороны.",
+                Skill = new SkillDef { Shape = SkillShape.Nova, Power = 230, Radius = 11, Cost = 150, Cooldown = 14, Status = StatusKind.Bleed, StatusPower = 30, StatusTime = 5 }
+            },
+            new GuDef
+            {
+                Id = "blood_lotus", Name = "Гу Кровавого лотоса", Seal = "蓮", Rank = 4, Path = GuPath.Blood, Kind = GuKind.Active, Colour = 0xE04050, Price = 2300, Food = "blood_vine", Appetite = 2,
+                Description = "Лотос из крови раскрывается вокруг: режет всё рядом и возвращает треть урона здоровьем.",
+                Skill = new SkillDef { Shape = SkillShape.Nova, Power = 120, Radius = 8, Cost = 75, Cooldown = 10, Leech = 0.33f }
+            },
+            new GuDef
+            {
+                Id = "mountain", Name = "Гу Горы", Seal = "嶽", Rank = 5, Path = GuPath.Earth, Kind = GuKind.Active, Colour = 0xC0A880, Price = 6400, Food = "stone_dust", Appetite = 4,
+                Description = "Гора падает на место прицела. Всё под ней — оглушено, если выжило.",
+                Skill = new SkillDef { Shape = SkillShape.Storm, Power = 260, Range = 22, Radius = 8, Duration = 2, Count = 4, Cost = 160, Cooldown = 16, Status = StatusKind.Stun, StatusTime = 2.5f }
+            },
+            new GuDef
+            {
+                Id = "sun_flame", Name = "Гу Солнечного пламени", Seal = "曜", Rank = 5, Path = GuPath.Fire, Kind = GuKind.Active, Colour = 0xFFB040, Price = 6600, Food = "ember_coal", Appetite = 1,
+                Description = "Маленькое солнце летит в цель и взрывается — всё в восьми шагах горит.",
+                Skill = new SkillDef { Shape = SkillShape.Projectile, Power = 300, Range = 30, Radius = 8, Speed = 18, Cost = 160, Cooldown = 9, Status = StatusKind.Burn, StatusPower = 40, StatusTime = 6 }
+            },
+            new GuDef
+            {
+                Id = "water_dragon", Name = "Гу Водяного дракона", Seal = "龍", Rank = 4, Path = GuPath.Water, Kind = GuKind.Active, Colour = 0x60B8F0, Price = 1900, Food = "dew_gourd", Appetite = 3,
+                Description = "Водяной дракон бросается к цели, сшибая всех на пути, и тянет их за собой.",
+                Skill = new SkillDef { Shape = SkillShape.Dash, Power = 110, Range = 18, Radius = 3, Cost = 65, Cooldown = 8, Status = StatusKind.Slow, StatusPower = 0.5f, StatusTime = 3 }
+            },
+
             // ------------------------------------------------------------------ The Cicada
 
             new GuDef
@@ -123,6 +204,19 @@ namespace GuWorld.Core
             new RecipeDef { Id = "immortal_body", Result = "immortal_body", Gu = new[] { "golden_bell", "ancient_bone" }, Items = new[] { ("heart_of_qingmao", 1), ("ancient_relic", 1) }, Stones = 3500 },
             new RecipeDef { Id = "heaven_thunder", Result = "heaven_thunder", Gu = new[] { "myriad_lightning", "thunder_crown" }, Items = new[] { ("heart_of_qingmao", 1), ("storm_core", 10) }, Stones = 3200 },
             new RecipeDef { Id = "boundless_sea", Result = "boundless_sea", Gu = new[] { "four_wines", "deep_breath" }, Items = new[] { ("heart_of_qingmao", 1), ("dew_gourd", 30) }, Stones = 3000 },
+            new RecipeDef { Id = "spring_life", Result = "spring_life", Gu = new[] { "life_grass", "honey_dew" }, Items = new[] { ("ginseng", 10), ("bear_king_heart", 1) }, Stones = 900 },
+            new RecipeDef { Id = "tree_of_life", Result = "tree_of_life", Gu = new[] { "spring_life", "deep_breath" }, Items = new[] { ("heart_of_qingmao", 1), ("ginseng", 20) }, Stones = 3000 },
+            new RecipeDef { Id = "sky_wind", Result = "sky_wind", Gu = new[] { "ten_thousand_li", "whirl" }, Items = new[] { ("heart_of_qingmao", 1), ("eagle_feather", 20) }, Stones = 3000 },
+            new RecipeDef { Id = "venom_dragon", Result = "venom_dragon", Gu = new[] { "ten_thousand_needles", "toxic_mist" }, Items = new[] { ("python_core", 1), ("toad_venom", 10) }, Stones = 950 },
+            new RecipeDef { Id = "thunder_roar", Result = "thunder_roar", Gu = new[] { "heaven_echo", "bear_roar" }, Items = new[] { ("crown_core", 1), ("echo_shell", 10) }, Stones = 950 },
+            new RecipeDef { Id = "radiant_lotus", Result = "radiant_lotus", Gu = new[] { "gold_silkworm", "ice_lotus" }, Items = new[] { ("ancient_relic", 1), ("moon_orchid", 15) }, Stones = 1100 },
+            new RecipeDef { Id = "thousand_shadows", Result = "thousand_shadows", Gu = new[] { "immortal_shadow", "stealth_scales" }, Items = new[] { ("heart_of_qingmao", 1), ("night_moth", 20) }, Stones = 3200 },
+            new RecipeDef { Id = "pure_wine", Result = "pure_wine", Gu = new[] { "four_wines", "liquor_worm" }, Items = new[] { ("wine_jar", 10), ("king_core", 1) }, Stones = 1000 },
+            new RecipeDef { Id = "jade_bone", Result = "jade_bone", Gu = new[] { "ancient_bone", "bone_spear" }, Items = new[] { ("heart_of_qingmao", 1), ("jade_shard", 20) }, Stones = 3000 },
+            new RecipeDef { Id = "blood_lotus", Result = "blood_lotus", Gu = new[] { "blood_moon", "blood_skull" }, Items = new[] { ("blood_crystal", 6), ("blood_vine", 10) }, Stones = 1100 },
+            new RecipeDef { Id = "mountain", Result = "mountain", Gu = new[] { "golden_bell", "earth_spikes" }, Items = new[] { ("heart_of_qingmao", 1), ("iron_ore", 30) }, Stones = 3200 },
+            new RecipeDef { Id = "sun_flame", Result = "sun_flame", Gu = new[] { "crimson_flame", "blazing_feather" }, Items = new[] { ("heart_of_qingmao", 1), ("ember_coal", 40) }, Stones = 3400 },
+            new RecipeDef { Id = "water_dragon", Result = "water_dragon", Gu = new[] { "river_serpent", "white_cloud" }, Items = new[] { ("python_core", 1), ("dew_gourd", 20) }, Stones = 900 },
         };
 
         public static readonly ItemDef[] Items =
@@ -147,6 +241,19 @@ namespace GuWorld.Core
             new ItemDef { Id = "scroll_immortal_body", Name = "Свиток: Гу Бессмертного тела", Seal = "卷", Kind = ItemKind.Scroll, Teaches = "immortal_body", Price = 4500, Description = "Рецепт пятого ранга из саркофага Древнего мастера." },
             new ItemDef { Id = "scroll_heaven_thunder", Name = "Свиток: Гу Небесного грома", Seal = "卷", Kind = ItemKind.Scroll, Teaches = "heaven_thunder", Price = 4200, Description = "Рецепт пятого ранга." },
             new ItemDef { Id = "scroll_boundless_sea", Name = "Свиток: Гу Безбрежного моря", Seal = "卷", Kind = ItemKind.Scroll, Teaches = "boundless_sea", Price = 4000, Description = "Рецепт пятого ранга." },
+            new ItemDef { Id = "scroll_spring_life", Name = "Свиток: Гу Весенней жизни", Seal = "卷", Kind = ItemKind.Scroll, Teaches = "spring_life", Price = 1200, Description = "Рецепт четвёртого ранга." },
+            new ItemDef { Id = "scroll_tree_of_life", Name = "Свиток: Гу Древа жизни", Seal = "卷", Kind = ItemKind.Scroll, Teaches = "tree_of_life", Price = 4200, Description = "Рецепт пятого ранга." },
+            new ItemDef { Id = "scroll_sky_wind", Name = "Свиток: Гу Небесного ветра", Seal = "卷", Kind = ItemKind.Scroll, Teaches = "sky_wind", Price = 4000, Description = "Рецепт пятого ранга." },
+            new ItemDef { Id = "scroll_venom_dragon", Name = "Свиток: Гу Ядовитого дракона", Seal = "卷", Kind = ItemKind.Scroll, Teaches = "venom_dragon", Price = 1250, Description = "Рецепт четвёртого ранга." },
+            new ItemDef { Id = "scroll_thunder_roar", Name = "Свиток: Гу Громового рыка", Seal = "卷", Kind = ItemKind.Scroll, Teaches = "thunder_roar", Price = 1200, Description = "Рецепт четвёртого ранга." },
+            new ItemDef { Id = "scroll_radiant_lotus", Name = "Свиток: Гу Сияющего лотоса", Seal = "卷", Kind = ItemKind.Scroll, Teaches = "radiant_lotus", Price = 1400, Description = "Рецепт четвёртого ранга." },
+            new ItemDef { Id = "scroll_thousand_shadows", Name = "Свиток: Гу Тысячи теней", Seal = "卷", Kind = ItemKind.Scroll, Teaches = "thousand_shadows", Price = 4300, Description = "Рецепт пятого ранга." },
+            new ItemDef { Id = "scroll_pure_wine", Name = "Свиток: Гу Чистого вина", Seal = "卷", Kind = ItemKind.Scroll, Teaches = "pure_wine", Price = 1300, Description = "Рецепт четвёртого ранга." },
+            new ItemDef { Id = "scroll_jade_bone", Name = "Свиток: Гу Нефритовой кости", Seal = "卷", Kind = ItemKind.Scroll, Teaches = "jade_bone", Price = 4000, Description = "Рецепт пятого ранга." },
+            new ItemDef { Id = "scroll_blood_lotus", Name = "Свиток: Гу Кровавого лотоса", Seal = "卷", Kind = ItemKind.Scroll, Teaches = "blood_lotus", Price = 1400, Description = "Рецепт четвёртого ранга." },
+            new ItemDef { Id = "scroll_mountain", Name = "Свиток: Гу Горы", Seal = "卷", Kind = ItemKind.Scroll, Teaches = "mountain", Price = 4300, Description = "Рецепт пятого ранга." },
+            new ItemDef { Id = "scroll_sun_flame", Name = "Свиток: Гу Солнечного пламени", Seal = "卷", Kind = ItemKind.Scroll, Teaches = "sun_flame", Price = 4500, Description = "Рецепт пятого ранга." },
+            new ItemDef { Id = "scroll_water_dragon", Name = "Свиток: Гу Водяного дракона", Seal = "卷", Kind = ItemKind.Scroll, Teaches = "water_dragon", Price = 1200, Description = "Рецепт четвёртого ранга." },
         };
 
         /// <summary>Where the high scrolls and the mountain's heart are found (added to the tables of the great beasts and the deepest chests).</summary>

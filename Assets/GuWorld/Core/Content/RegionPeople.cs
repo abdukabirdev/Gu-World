@@ -244,6 +244,7 @@ namespace GuWorld.Core
             new ShopEntry { Gu = "river_serpent", Price = 260, Chapter = 4 },
             new ShopEntry { Gu = "white_cloud", Price = 280, Chapter = 4 },
             new ShopEntry { Item = "scroll_north_wind_ice", Price = 1200, Needs = new[] { "rank>=4", "standing:bai=friendly" } },
+            new ShopEntry { Item = "scroll_water_dragon", Price = 1200, Needs = new[] { "rank>=4", "standing:bai=friendly" } },
             new ShopEntry { Item = "scroll_heaven_ice", Price = 4000, Needs = new[] { "rank>=5", "standing:bai=honoured" } },
         };
 
@@ -277,6 +278,7 @@ namespace GuWorld.Core
             new ShopEntry { Gu = "bear_roar", Price = 240, Chapter = 4 },
             new ShopEntry { Item = "scroll_white_boar", Price = 150, Chapter = 4 },
             new ShopEntry { Item = "scroll_stone_giant", Price = 1250, Needs = new[] { "rank>=4", "standing:xiong=friendly" } },
+            new ShopEntry { Item = "scroll_thunder_roar", Price = 1200, Needs = new[] { "rank>=4", "standing:xiong=friendly" } },
         };
 
         public static readonly ShopEntry[] Hamlet =
@@ -309,6 +311,8 @@ namespace GuWorld.Core
             new ShopEntry { Item = "scroll_flame_burst", Price = 90, Chapter = 3 },
             new ShopEntry { Item = "scroll_myriad_lightning", Price = 1250, Needs = new[] { "rank>=4" } },
             new ShopEntry { Item = "scroll_ten_thousand_li", Price = 1150, Needs = new[] { "rank>=4" } },
+            new ShopEntry { Item = "scroll_spring_life", Price = 1200, Needs = new[] { "rank>=4" } },
+            new ShopEntry { Item = "scroll_radiant_lotus", Price = 1400, Needs = new[] { "rank>=4" } },
         };
 
         public static readonly ShopEntry[] BlackMarket =
@@ -321,9 +325,12 @@ namespace GuWorld.Core
             new ShopEntry { Item = "scroll_stealth_scales", Price = 160, Chapter = 3 },
             new ShopEntry { Item = "scroll_crimson_flame", Price = 1200, Needs = new[] { "rank>=4" } },
             new ShopEntry { Item = "scroll_immortal_shadow", Price = 1400, Needs = new[] { "rank>=4", "standing:bandit=friendly" } },
+            new ShopEntry { Item = "scroll_venom_dragon", Price = 1250, Needs = new[] { "rank>=4" } },
+            new ShopEntry { Item = "scroll_blood_lotus", Price = 1400, Needs = new[] { "rank>=4" } },
             new ShopEntry { Item = "rock_2", Price = 80 },
             new ShopEntry { Item = "blood_crystal", Price = 95, Chapter = 3 },
             new ShopEntry { Item = "relic_r1", Price = 450, Chapter = 2, Needs = new[] { "rank<=1" } },
+            new ShopEntry { Item = "scroll_pure_wine", Price = 1300, Needs = new[] { "rank>=4" } },
             new ShopEntry { Item = "relic_r2", Price = 1100, Chapter = 3, Needs = new[] { "rank==2" } },
         };
 

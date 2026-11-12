@@ -177,6 +177,48 @@ namespace GuWorld.Core
 
             new KillerMoveDef
             {
+                Id = "spring_rain", Name = "Весенний дождь", Seal = "霖", Rank = 4, Core = "spring_life", Supports = new[] { "honey_dew", "life_grass" }, Insight = 1700, Colour = 0xA0F0A0,
+                Description = "Весна проливается дождём: здоровье возвращается целиком за пять секунд.",
+                Skill = new SkillDef { Shape = SkillShape.Heal, Power = 900, Duration = 5, Cost = 140, Cooldown = 40 }
+            },
+            new KillerMoveDef
+            {
+                Id = "venom_flood", Name = "Ядовитый потоп", Seal = "瘟", Rank = 4, Core = "venom_dragon", Supports = new[] { "toxic_mist", "water_dragon" }, Insight = 1900, Colour = 0x80E060,
+                Description = "Ядовитый дракон тянет за собой реку: туча яда над местом на шесть секунд.",
+                Skill = new SkillDef { Shape = SkillShape.Storm, Power = 70, Range = 24, Radius = 9, Duration = 6, Count = 14, Cost = 135, Cooldown = 16, Status = StatusKind.Poison, StatusPower = 34, StatusTime = 8 }
+            },
+            new KillerMoveDef
+            {
+                Id = "lion_roar", Name = "Рык льва", Seal = "獅", Rank = 4, Core = "thunder_roar", Supports = new[] { "bear_roar", "echo" }, Insight = 1800, Colour = 0xF0D080,
+                Description = "Громовой рык, умноженный эхом: всё вокруг на двенадцать шагов падает оглушённым.",
+                Skill = new SkillDef { Shape = SkillShape.Nova, Power = 170, Radius = 12, Cost = 130, Cooldown = 18, Status = StatusKind.Stun, StatusTime = 3 }
+            },
+            new KillerMoveDef
+            {
+                Id = "blood_bloom", Name = "Цветение крови", Seal = "綻", Rank = 4, Core = "blood_lotus", Supports = new[] { "blood_moon", "blood_skull" }, Insight = 2000, Colour = 0xFF3050,
+                Description = "Кровавый лотос раскрывается трижды, и половина урона возвращается кровью.",
+                Skill = new SkillDef { Shape = SkillShape.Storm, Power = 110, Range = 6, Radius = 8, Duration = 2, Count = 6, Cost = 140, Cooldown = 14, Leech = 0.5f }
+            },
+            new KillerMoveDef
+            {
+                Id = "mountain_fall", Name = "Обрушение горы", Seal = "崩", Rank = 5, Core = "mountain", Supports = new[] { "golden_bell", "earth_spikes" }, Insight = 5000, Colour = 0xD0B080,
+                Description = "Не одна гора — хребет. Три удара земли с неба, и под ними никто не стоит.",
+                Skill = new SkillDef { Shape = SkillShape.Storm, Power = 320, Range = 26, Radius = 11, Duration = 3, Count = 6, Cost = 300, Cooldown = 34, Status = StatusKind.Stun, StatusTime = 3 }
+            },
+            new KillerMoveDef
+            {
+                Id = "great_sun", Name = "Великое солнце", Seal = "陽", Rank = 5, Core = "sun_flame", Supports = new[] { "crimson_flame", "fire_robe" }, Insight = 5100, Colour = 0xFFC060,
+                Description = "Солнце ростом с дом. Взрыв на четырнадцать шагов, и всё в нём горит восемь секунд.",
+                Skill = new SkillDef { Shape = SkillShape.Projectile, Power = 600, Range = 32, Radius = 14, Speed = 14, Cost = 320, Cooldown = 36, Status = StatusKind.Burn, StatusPower = 60, StatusTime = 8 }
+            },
+            new KillerMoveDef
+            {
+                Id = "heaven_gale", Name = "Небесный шквал", Seal = "飆", Rank = 5, Core = "sky_wind", Supports = new[] { "ten_thousand_li", "whirl" }, Insight = 4900, Colour = 0xE8FFF8,
+                Description = "Небесный ветер и десять тысяч ли в нём: буря на девять секунд, из которой не выйти.",
+                Skill = new SkillDef { Shape = SkillShape.Storm, Power = 190, Range = 30, Radius = 13, Duration = 9, Count = 22, Cost = 300, Cooldown = 38, Status = StatusKind.Slow, StatusPower = 0.6f, StatusTime = 3 }
+            },
+            new KillerMoveDef
+            {
                 Id = "moonfall", Name = "Лунопад", Seal = "坠", Rank = 5, Core = "full_moon", Supports = new[] { "moon_sickle", "moon_lake" }, Insight = 5000, Colour = 0xFFFFFF,
                 Description = "Полная луна падает на землю. Восемь секунд в двенадцати шагах не остаётся ничего живого.",
                 Skill = new SkillDef { Shape = SkillShape.Storm, Power = 200, Range = 30, Radius = 12, Duration = 8, Count = 22, Cost = 300, Cooldown = 40 }
