@@ -208,7 +208,7 @@ namespace GuWorld.Core
 
         // ---------------------------------------------------------------- Places beyond the valley
 
-        public static readonly PlaceDef[] Places =
+        public static readonly PlaceDef[] Mountain =
         {
             new PlaceDef { Id = "pass", Name = "Перевал Цинмао", At = new MapPoint(-1150, 1760), Radius = 26, Flatten = true, Colour = 0xC9D3D5 },
             new PlaceDef { Id = "peak", Name = "Вершина Цинмао", At = new MapPoint(300, 1950), Radius = 30, Flatten = true, Colour = 0xFFF1CF },
@@ -222,6 +222,9 @@ namespace GuWorld.Core
             new PlaceDef { Id = "eagle_cliffs", Name = "Орлиные скалы", At = new MapPoint(1700, 1400), Radius = 40, Flatten = true, Colour = 0xC9D3D5 },
             new PlaceDef { Id = "south_road", Name = "Южный тракт", At = new MapPoint(150, -3300), Radius = 60, Colour = 0xE8C98A },
         };
+
+        /// <summary>The mountain's places and the wild lands' round it.</summary>
+        public static readonly PlaceDef[] Places = Lists.Join(Mountain, Wilds.Places);
 
         // ---------------------------------------------------------------- Roads
 

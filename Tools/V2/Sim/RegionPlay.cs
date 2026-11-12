@@ -179,7 +179,8 @@ static partial class Program
 
                 case StepKind.Kill:
                 {
-                    var enemy = Bestiary.All.FirstOrDefault(e => step.Target.EndsWith("*") ? e.Id.StartsWith(step.Target.TrimEnd('*')) : e.Id == step.Target);
+                    var first = step.Target.Split('|')[0];
+                    var enemy = Bestiary.All.FirstOrDefault(e => first.EndsWith("*") ? e.Id.StartsWith(first.TrimEnd('*')) : e.Id == first);
 
                     if (enemy == null)
                     {

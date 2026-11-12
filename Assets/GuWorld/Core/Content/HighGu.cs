@@ -65,8 +65,8 @@ namespace GuWorld.Core
             new GuDef
             {
                 Id = "full_moon", Name = "Гу Полной луны", Seal = "望", Rank = 5, Path = GuPath.Moon, Kind = GuKind.Active, Colour = 0xF0F6FF, Price = 6000, Food = "moon_orchid", Appetite = 1, Clan = "gu_yue",
-                Description = "Полная луна встаёт над точкой прицела, и шесть секунд с неё падает свет, режущий камень.",
-                Skill = new SkillDef { Shape = SkillShape.Storm, Power = 120, Range = 26, Radius = 10, Duration = 6, Count = 14, Cost = 160, Cooldown = 24 }
+                Description = "Полная луна встаёт над точкой прицела, и шесть секунд с неё падает свет, режущий камень. Каждые десять секунд.",
+                Skill = new SkillDef { Shape = SkillShape.Storm, Power = 150, Range = 26, Radius = 10, Duration = 6, Count = 14, Cost = 150, Cooldown = 10 }
             },
             new GuDef
             {

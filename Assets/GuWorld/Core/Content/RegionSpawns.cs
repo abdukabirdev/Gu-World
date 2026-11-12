@@ -26,7 +26,7 @@ namespace GuWorld.Core
         static SpawnDef A(string id, string enemy, int count, float x, float z, float radius = 18, float respawn = 240, string needs = "") =>
             new SpawnDef { Id = id, Enemy = enemy, Count = count, At = new MapPoint(x, z), Radius = radius, Respawn = respawn, Needs = needs };
 
-        public static readonly SpawnDef[] All =
+        public static readonly SpawnDef[] Mountain =
         {
             // ------------------------------------------------------------------ The roads out of the valley
             A("road_north_wolves", "wolf", 3, -600, 1350, 20),
@@ -110,7 +110,7 @@ namespace GuWorld.Core
 
         static WaveDef W(string shout, params (string enemy, int count)[] enemies) => new WaveDef { Shout = shout, Enemies = enemies };
 
-        public static readonly EncounterDef[] Encounters =
+        public static readonly EncounterDef[] MountainEncounters =
         {
             E("bear_king", "Медвежий король", P("bear_hollow", 0, 0.1f), 40, "",
                 W("Земля дрожит. Из лога поднимается медведь размером с дом.", ("bear_king", 1))),
@@ -143,5 +143,9 @@ namespace GuWorld.Core
                 W("Вой с трёх сторон.", ("snow_wolf", 4)),
                 W("Вожак снежной стаи.", ("snow_wolf", 3), ("storm_wolf", 1))),
         };
+
+        /// <summary>The mountain's and the wild lands' roamers and staged fights.</summary>
+        public static readonly SpawnDef[] All = Lists.Join(Mountain, Wilds.Spawns);
+        public static readonly EncounterDef[] Encounters = Lists.Join(MountainEncounters, Wilds.Encounters);
     }
 }

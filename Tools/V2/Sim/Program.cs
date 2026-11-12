@@ -213,7 +213,10 @@ static partial class Program
             {
                 var target = step.Target.TrimEnd('*');
                 var wild = step.Target.EndsWith("*");
-                bool Any<T>(IEnumerable<T> all, Func<T, string> key) => all.Any(x => wild ? key(x).StartsWith(target) : key(x) == target);
+                // "a|b|c": any of several targets, each must be real.
+                bool Any<T>(IEnumerable<T> all, Func<T, string> key) => step.Target.Contains('|')
+                    ? step.Target.Split('|').All(one => all.Any(x => key(x) == one))
+                    : all.Any(x => wild ? key(x).StartsWith(target) : key(x) == target);
                 var ok = step.Kind switch
                 {
                     StepKind.Talk => Atlas.Npc(target) != null && step.Lines.Length > 0,
@@ -618,6 +621,10 @@ static partial class Program
             ("bandit", 4, "moonglow"), ("crooked_fang", 4, "moonglow"), ("xiong_fighter", 5, "moonglow"), ("bai_fighter", 5, "moonglow"),
             ("storm_wolf", 6, "moonglow"), ("hundred_king", 6, "moonglow"), ("thunder_crown_wolf", 7, "moonglow"),
             ("blood_puppet", 8, "golden_moon"), ("blood_wolf", 8, "golden_moon"), ("elder", 8, "golden_moon"),
+            // The wild lands: masters of the fourth and fifth ranks.
+            ("frost_wolf", 12, "moon_sickle"), ("ice_bear", 12, "moon_sickle"), ("thunder_roc", 13, "moon_sickle"), ("bone_soldier", 13, "moon_sickle"),
+            ("fire_ape", 14, "moon_sickle"), ("lake_hermit", 14, "moon_sickle"), ("frost_emperor", 14, "moon_sickle"), ("python_queen", 15, "moon_sickle"),
+            ("roc_king", 16, "moon_sickle"), ("ape_king", 16, "moon_sickle"), ("bone_general", 17, "moon_sickle"), ("lake_dragon", 18, "moon_sickle"),
         };
 
         foreach (var (id, step, guId) in expected)
@@ -626,6 +633,7 @@ static partial class Program
             var s = new Session(Session.NewGame("Весы"), 1);
             s.State.Step = step;
             s.State.Talent = step >= 7 ? 0.82f : step >= 3 ? 0.62f : 0.44f;
+            s.State.Settings.Hunger = HungerRule.Off;
             s.Recompute();
             var gu = s.AddGu(s.MakeGu(guId, 0, true), true);
             gu.MasteryXp = step >= 6 ? 200 : step >= 2 ? 90 : 0;
@@ -638,7 +646,9 @@ static partial class Program
             var combo = 0;
             var next = 0f;
             const float dt = 0.1f;
-            var fan = GuBook.Get(guId).Skill.Shape == SkillShape.Fan ? 2 : 1;
+            // Hits a cast lands on one foe: two bolts of a fan, about half the strikes of a storm.
+            var skill = GuBook.Get(guId).Skill;
+            var fan = skill.Shape == SkillShape.Fan ? 2 : skill.Shape == SkillShape.Storm ? Math.Max(1, skill.Count / 2) : 1;
 
             while (health > 0 && time < 600)
             {

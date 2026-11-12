@@ -48,7 +48,7 @@ namespace GuWorld.Core
             }
         }
 
-        public static readonly ThingDef[] All = Build();
+        public static readonly ThingDef[] Mountain = Build();
 
         static ThingDef[] Build()
         {
@@ -156,5 +156,8 @@ namespace GuWorld.Core
 
             return all.ToArray();
         }
+
+        /// <summary>The mountain's things and the wild lands'.</summary>
+        public static readonly ThingDef[] All = Lists.Join(Mountain, Wilds.Things);
     }
 }

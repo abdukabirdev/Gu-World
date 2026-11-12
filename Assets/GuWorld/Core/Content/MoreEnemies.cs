@@ -7,7 +7,7 @@ namespace GuWorld.Core
     /// </summary>
     public static class MoreEnemies
     {
-        public static readonly EnemyDef[] All =
+        public static readonly EnemyDef[] Mountain =
         {
             // ------------------------------------------------------------------ The marsh
 
@@ -210,7 +210,7 @@ namespace GuWorld.Core
             },
         };
 
-        public static readonly LootTable[] Tables =
+        public static readonly LootTable[] MountainTables =
         {
             new LootTable { Id = "marsh_snake", StonesMin = 3, StonesMax = 8, Items = new[] { new LootEntry { Item = "snake_skin", Chance = 0.5f }, new LootEntry { Item = "snake_gall", Chance = 0.45f }, new LootEntry { Item = "snake_fang", Chance = 0.25f } }, GuChance = 0.06f, GuPool = new[] { "poison_needle", "clinging_vine" } },
             new LootTable { Id = "marsh_toad", StonesMin = 3, StonesMax = 7, Items = new[] { new LootEntry { Item = "toad_venom", Chance = 0.6f }, new LootEntry { Item = "marsh_reed", Chance = 0.4f, Max = 2 } }, GuChance = 0.05f, GuPool = new[] { "poison_needle", "echo" } },
@@ -285,5 +285,9 @@ namespace GuWorld.Core
             new LootTable { Id = "chest_bai_vault", StonesMin = 200, StonesMax = 260, Items = new[] { new LootEntry { Item = "frost_lotus", Min = 3, Max = 4 }, new LootEntry { Item = "scroll_ice_lotus" } }, GuChance = 1, GuPool = new[] { "white_cloud", "river_serpent" }, GuMinQuality = 2 },
             new LootTable { Id = "chest_hamlet", StonesMin = 10, StonesMax = 20, Items = new[] { new LootEntry { Item = "jerky", Min = 1, Max = 3 }, new LootEntry { Item = "bitter_root", Min = 1, Max = 2 }, new LootEntry { Item = "heal_pill", Chance = 0.5f } } },
         };
+
+        /// <summary>The mountain's beasts and masters and the wild lands', and what they drop.</summary>
+        public static readonly EnemyDef[] All = Lists.Join(Mountain, Wilds.Enemies);
+        public static readonly LootTable[] Tables = Lists.Join(MountainTables, Wilds.Tables);
     }
 }

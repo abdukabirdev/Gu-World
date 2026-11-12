@@ -40,7 +40,7 @@ namespace GuWorld.Core
 
         static (string, int)[] Rep(params (string clan, int change)[] changes) => changes;
 
-        public static readonly QuestDef[] All =
+        public static readonly QuestDef[] Mountain =
         {
             // ================================================================== The Bai
 
@@ -366,5 +366,8 @@ namespace GuWorld.Core
                 Reward = new Reward { Insight = 1000, Stones = 500, Reputation = Rep(("bai", 20), ("xiong", 20), ("gu_yue", 20), ("mortal", 20), ("wanderers", 20)), Flags = new[] { "treaty_signed" } }
             },
         };
+
+        /// <summary>The mountain's errands and the wild lands'.</summary>
+        public static readonly QuestDef[] All = Lists.Join(Mountain, Wilds.Quests);
     }
 }

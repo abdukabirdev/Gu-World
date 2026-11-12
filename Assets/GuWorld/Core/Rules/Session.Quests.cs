@@ -145,6 +145,20 @@ namespace GuWorld.Core
                 return true;
             }
 
+            // Several targets, any of them: "a|b|c".
+            if (pattern.IndexOf('|') >= 0)
+            {
+                foreach (var one in pattern.Split('|'))
+                {
+                    if (Matches(one, id))
+                    {
+                        return true;
+                    }
+                }
+
+                return false;
+            }
+
             return pattern.EndsWith("*") ? id != null && id.StartsWith(pattern.Substring(0, pattern.Length - 1)) : pattern == id;
         }
 
