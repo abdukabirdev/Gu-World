@@ -359,6 +359,17 @@ namespace GuWorld.Core
             new ShopEntry { Item = "spark_moss", Price = 9 }, new ShopEntry { Item = "stone_dust", Price = 3 }, new ShopEntry { Item = "frost_lotus", Price = 14, Chapter = 3 },
         };
 
+        // The fair (every tenth day in the Gu Yue town): rare things, gone by evening.
+        public static readonly ShopEntry[] Fair =
+        {
+            new ShopEntry { Gu = "moon_shadow", Price = 340 }, new ShopEntry { Gu = "river_serpent", Price = 300 }, new ShopEntry { Gu = "storm_step", Price = 260 },
+            new ShopEntry { Gu = "gold_silkworm", Price = 420, Chapter = 3 }, new ShopEntry { Gu = "deep_breath", Price = 150 }, new ShopEntry { Gu = "night_eye", Price = 140 },
+            new ShopEntry { Item = "relic_r1", Price = 380 }, new ShopEntry { Item = "relic_r2", Price = 950, Chapter = 3 },
+            new ShopEntry { Item = "jade_shard", Price = 24 }, new ShopEntry { Item = "blood_crystal", Price = 80, Chapter = 3 },
+            new ShopEntry { Item = "great_essence_pill", Price = 40 }, new ShopEntry { Item = "clarity_pill", Price = 70, Chapter = 3 },
+            new ShopEntry { Item = "rock_2", Price = 70 }, new ShopEntry { Item = "rock_3", Price = 220, Chapter = 3 },
+        };
+
         /// <summary>A shelf by its id ("" or "valley": Baoshan's).</summary>
         public static ShopEntry[] Get(string id)
         {
@@ -376,11 +387,12 @@ namespace GuWorld.Core
                 case "stall_herbs": return StallHerbs;
                 case "stall_pills": return StallPills;
                 case "stall_gu_food": return StallGuFood;
+                case "fair": return Fair;
                 case "gamble": return Shops.Gamble;
                 default: return Shops.Shop;
             }
         }
 
-        public static readonly string[] Ids = { "valley", "bai_shop", "bai_gu", "xiong_shop", "xiong_smith", "xiong_gu", "hamlet", "wander_shop", "black_market", "gamble", "stall_food", "stall_herbs", "stall_pills", "stall_gu_food" };
+        public static readonly string[] Ids = { "valley", "bai_shop", "bai_gu", "xiong_shop", "xiong_smith", "xiong_gu", "hamlet", "wander_shop", "black_market", "gamble", "stall_food", "stall_herbs", "stall_pills", "stall_gu_food", "fair" };
     }
 }

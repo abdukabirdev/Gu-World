@@ -310,6 +310,15 @@ static partial class Program
             Check(new CasterMind(p2.Gu).Gu.Length == p2.Gu.Length, $"the partner of rank {pr} casts all its Gu");
         }
 
+        // ------------------------------------------------------------------ The fair
+
+        var f = new Session(Session.NewGame("Ярмарка"), 121);
+        f.State.Day = 5;
+        Check(f.FairDay && f.StallShelf(1, 10) == "fair" && f.StallShelf(0, 10) != "fair" && f.StallShelf(1, 20) != "fair", "on the fair's day, by day, every other stall sells the fair's goods");
+        f.State.Day = 6;
+        Check(!f.FairDay && f.StallShelf(1, 10) != "fair", "not on other days");
+        Check(Markets.Get("fair").All(e => (e.Item == null || ItemBook.Get(e.Item) != null) && (e.Gu == null || GuBook.Get(e.Gu) != null)), "the fair's goods exist");
+
         // ------------------------------------------------------------------ Hints
 
         var hs = new Session(Session.NewGame("Подсказки"), 91);

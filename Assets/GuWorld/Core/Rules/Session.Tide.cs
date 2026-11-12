@@ -48,6 +48,14 @@ namespace GuWorld.Core
             }
         }
 
+        /// <summary>The fair: every tenth day (the fifth, fifteenth…) from morning to evening, rare goods at the town's stalls.</summary>
+        public bool FairDay => State.Day % 10 == 5;
+
+        public bool FairOn(float hour) => FairDay && hour >= 7 && hour < 19;
+
+        /// <summary>What a stall sells now: on a fair's hours every other stall sells the fair's goods.</summary>
+        public string StallShelf(int variant, float hour) => FairOn(hour) && variant % 2 == 1 ? "fair" : Chatter.ShelfOf(variant);
+
         /// <summary>The tide's last wave fell: the town was held.</summary>
         void TideHeld()
         {

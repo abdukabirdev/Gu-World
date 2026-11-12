@@ -37,7 +37,7 @@ namespace GuWorld.Core
         }
 
         /// <summary>One or two lines a townsperson says now.</summary>
-        public static Line[] Say(Walker walker, float hour, int heroRank, Standing standing, bool rain, int seed)
+        public static Line[] Say(Walker walker, float hour, int heroRank, Standing standing, bool rain, int seed, bool fair = false)
         {
             var (name, title) = Who(walker);
             var who = "~" + name + "|" + title;
@@ -66,6 +66,12 @@ namespace GuWorld.Core
             if (rng.Chance(0.35f))
             {
                 first = rain ? rng.Pick(Rain) : hour < 9 ? rng.Pick(Morning) : hour >= 19 ? rng.Pick(Evening) : first;
+            }
+
+            // On a fair's day the traders shout about it.
+            if (walker.Trade == Trade.Trader && hour >= 7 && hour < 19 && fair)
+            {
+                first = rng.Pick(FairCalls);
             }
 
             var second = heroRank >= 4 ? rng.Pick(ToMaster) : heroRank == 3 ? rng.Pick(ToRising) : heroRank <= 1 && walker.Trade != Trade.Child ? rng.Pick(ToNobody) : null;
@@ -165,6 +171,13 @@ namespace GuWorld.Core
             "Сидел бы и сидел. Солнце, площадь, никто не гонит.",
             "Говорят, в гробнице за горой нашли что-то. Или кого-то.",
             "У старого Вана снова сбежал петух. Третий раз за весну.",
+        };
+
+        static readonly string[] FairCalls =
+        {
+            "Ярмарка! Раз в десять дней такое привозят — Гу с южных гор, реликвии, камни!",
+            "Подходите! До заката — потом всё уедет с караваном!",
+            "Сегодня ярмарка, господин. Цены — как в последний день весны.",
         };
 
         static readonly string[] Morning = { "Рано вы. Даже лавки ещё не все открылись.", "Утро доброе. Туман сойдёт к полудню." };

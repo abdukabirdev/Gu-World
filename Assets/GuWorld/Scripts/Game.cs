@@ -247,7 +247,15 @@ namespace GuWorld
             Session.FlagSet += flag => spawns?.Refresh();
             Session.Requested += Requested;
             Session.ClockSet += hour => Atmosphere.Hour = hour;
-            Session.Dawn += day => Ui.Toast($"Рассвет · день {day}");
+            Session.Dawn += day =>
+            {
+                Ui.Toast($"Рассвет · день {day}");
+
+                if (Session.FairDay)
+                {
+                    Ui.Banner("Ярмарка в городе Гу Юэ", "До заката у лотков — редкие Гу и реликвии");
+                }
+            };
             Session.Achieved += achievement => Ui.Banner("Достижение", achievement.Name);
             Session.StandingChanged += (clan, standing) => spawns?.Refresh();
             Session.AttainmentRose += (path, grade) =>
@@ -533,8 +541,8 @@ namespace GuWorld
             {
                 var walker = Instance.nearbyWalker;
                 folk.TurnTo(walker, Hero.transform.position);
-                var lines = Core.Chatter.Say(walker, Atmosphere.Hour, Session.Rank, Session.StandingWith(walker.Clan), Atmosphere.Gloom > 0.5f, Session.State.Day + (int)Time.time);
-                var stall = folk.AtStall(walker) ? Core.Chatter.ShelfOf(walker.Stall) : null;
+                var lines = Core.Chatter.Say(walker, Atmosphere.Hour, Session.Rank, Session.StandingWith(walker.Clan), Atmosphere.Gloom > 0.5f, Session.State.Day + (int)Time.time, Session.FairDay && walker.Clan == "gu_yue");
+                var stall = folk.AtStall(walker) ? (walker.Clan == "gu_yue" ? Session.StallShelf(walker.Stall, Atmosphere.Hour) : Core.Chatter.ShelfOf(walker.Stall)) : null;
                 var (name, _) = Core.Chatter.Who(walker);
                 Ui.Talk(lines, stall == null ? (System.Action)null : () => Ui.OpenShop(stall, "Лоток · " + name, walker.Clan));
             }
