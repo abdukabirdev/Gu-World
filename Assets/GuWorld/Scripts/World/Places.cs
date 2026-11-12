@@ -197,6 +197,22 @@ namespace GuWorld.World
 
         // ------------------------------------------------------------------ Bridges
 
+        /// <summary>Whether a point is near a town or a clan's village (where bridges are of stone).</summary>
+        bool Stony(Vec2 at)
+        {
+            foreach (var settlement in plan.Settlements)
+            {
+                var style = settlement.Def.Style;
+
+                if ((settlement.Def.City || style == SettlementStyle.Bai || style == SettlementStyle.GuYue) && Vec2.Distance(at, settlement.Centre) < settlement.Def.Radius + 200)
+                {
+                    return true;
+                }
+            }
+
+            return false;
+        }
+
         void Bridges()
         {
             var root = new GameObject("Bridges").transform;
@@ -205,6 +221,21 @@ namespace GuWorld.World
 
             foreach (var bridge in plan.Roads.Bridges)
             {
+                // Near the clans' town and villages the roads cross on humped stone bridges.
+                if (Stony(bridge.At) && bridge.Length <= 30)
+                {
+                    var variant = bridge.Length > 18 ? 1 : 0;
+                    var (_, depth) = Core.Gen.Props.Footprint("arch_bridge", variant);
+                    var scale = Mathf.Clamp(bridge.Length / (depth - 2), 0.8f, 1.4f);
+                    var stone = Models.Prefab(CodeProp.Name("arch_bridge", variant), root, new Vector3(bridge.At.X, bridge.Deck - 0.4f * scale, bridge.At.Z), bridge.Along.Yaw, scale);
+
+                    if (stone != null)
+                    {
+                        bridges.Add((stone.transform.position, stone));
+                        continue;
+                    }
+                }
+
                 var data = Shapes.Bridge(bridge.Length, bridge.Width, 4, seed++);
                 var mesh = Meshes.From(data, "Bridge");
                 var at = new Vector3(bridge.At.X, bridge.Deck, bridge.At.Z);
