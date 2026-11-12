@@ -42,7 +42,12 @@ namespace GuWorld.UI
                 keys.Add(UiKit.Entry("Продолжить", $"Гу Юэ {save.HeroName} · {Cultivation.Name(save.Step)} · {minutes} мин", middle, () => Game.Instance.Begin(false)).Centre());
             }
 
-            keys.Add(UiKit.Entry("Новая игра", save != null ? "Прежнее сохранение будет заменено" : null, middle, () => Game.Instance.Begin(true)).Centre());
+            keys.Add(UiKit.Entry("Новая игра", save != null ? $"В ячейке {Game.Slot + 1} — прежнее будет заменено" : null, middle, () => Game.Instance.Begin(true)).Centre());
+            keys.Add(UiKit.Entry($"Ячейка сохранения: {Game.Slot + 1} из {Game.Slots}", SlotLine(Game.Slot + 1 < Game.Slots ? Game.Slot + 1 : 0, "Следующая: "), middle, () =>
+            {
+                Game.Slot = (Game.Slot + 1) % Game.Slots;
+                Show(Page.Title);
+            }).Centre());
             keys.Add(UiKit.Entry($"Качество: {Quality.Names[Quality.Level]}", Quality.Level == 2 ? "Полная модель героя, дальние тени, свечение" : Quality.Level == 0 ? "Для слабой встроенной графики" : "Для ноутбука без видеокарты", middle, () =>
             {
                 Quality.Set((Quality.Level + 1) % 3);
@@ -53,6 +58,14 @@ namespace GuWorld.UI
             var credit = UiKit.Label(Credits, stage, 11, UiKit.Muted.A(0.7f), TextAnchor.MiddleCenter);
             credit.rectTransform.Place(new Vector2(0, 0), new Vector2(1, 0), 0, 60, 0, -78);
             UiKit.Footer(stage, new[] { ("↑↓", "Выбор"), ("Enter", "Открыть") }).GetComponent<HorizontalLayoutGroup>().childAlignment = TextAnchor.MiddleCenter;
+        }
+
+        /// <summary>A line about what a slot holds.</summary>
+        static string SlotLine(int slot, string lead)
+        {
+            var data = Game.ReadSlot(slot);
+
+            return data == null ? lead + $"ячейка {slot + 1} пуста" : lead + $"{slot + 1} — Гу Юэ {data.HeroName}, {Cultivation.Name(data.Step)}, {Mathf.RoundToInt(data.PlayedSeconds / 60)} мин";
         }
 
         void LoadingPage()

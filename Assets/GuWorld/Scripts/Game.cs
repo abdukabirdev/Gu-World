@@ -87,8 +87,23 @@ namespace GuWorld
         Component nearby;
         public static string Prompt { get; private set; }
 
-        static string SavePath => Path.Combine(Application.persistentDataPath, "gu-world-2.json");
-        public static bool HasSave => File.Exists(SavePath);
+        /// <summary>The save slots (the first is the old single save, so a game saved before slots is kept).</summary>
+        public const int Slots = 3;
+
+        /// <summary>The slot played now (kept between runs).</summary>
+        public static int Slot
+        {
+            get => Mathf.Clamp(PlayerPrefs.GetInt("gw2.slot", 0), 0, Slots - 1);
+            set
+            {
+                PlayerPrefs.SetInt("gw2.slot", Mathf.Clamp(value, 0, Slots - 1));
+                PlayerPrefs.Save();
+            }
+        }
+
+        static string PathOf(int slot) => Path.Combine(Application.persistentDataPath, slot == 0 ? "gu-world-2.json" : $"gu-world-2-slot{slot + 1}.json");
+        static string SavePath => PathOf(Slot);
+        public static bool HasSave => File.Exists(SavePath) || File.Exists(SavePath + ".bak");
 
         [RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.AfterSceneLoad)]
         static void Boot()
@@ -125,18 +140,32 @@ namespace GuWorld
 
         // ------------------------------------------------------------------ Beginning and ending a game
 
-        public static SaveData ReadSave()
-        {
-            try
-            {
-                return HasSave && !AutoTest.On ? JsonUtility.FromJson<SaveData>(File.ReadAllText(SavePath)) : null;
-            }
-            catch (System.Exception error)
-            {
-                Debug.LogWarning("GU World: the save could not be read: " + error.Message);
+        public static SaveData ReadSave() => AutoTest.On ? null : ReadSlot(Slot);
 
-                return null;
+        /// <summary>A slot's save, or its backup if the save itself is missing or broken (null if neither is there).</summary>
+        public static SaveData ReadSlot(int slot)
+        {
+            foreach (var path in new[] { PathOf(slot), PathOf(slot) + ".bak" })
+            {
+                try
+                {
+                    if (File.Exists(path))
+                    {
+                        var data = JsonUtility.FromJson<SaveData>(File.ReadAllText(path));
+
+                        if (data != null && !string.IsNullOrEmpty(data.HeroName))
+                        {
+                            return data;
+                        }
+                    }
+                }
+                catch (System.Exception error)
+                {
+                    Debug.LogWarning($"GU World: {path} could not be read: {error.Message}");
+                }
             }
+
+            return null;
         }
 
         public static void Save()
@@ -159,7 +188,18 @@ namespace GuWorld
 
             try
             {
-                File.WriteAllText(SavePath, JsonUtility.ToJson(Session.State));
+                // Written beside, then moved in, the last good save kept as a backup: a crash mid-write loses nothing.
+                var path = SavePath;
+                var fresh = path + ".tmp";
+                File.WriteAllText(fresh, JsonUtility.ToJson(Session.State));
+
+                if (File.Exists(path))
+                {
+                    File.Copy(path, path + ".bak", true);
+                    File.Delete(path);
+                }
+
+                File.Move(fresh, path);
             }
             catch (System.Exception error)
             {
