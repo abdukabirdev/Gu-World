@@ -334,7 +334,12 @@ namespace GuWorld.World
 
                     break;
                 case ThingKind.Door:
-                    glow.SetActive(session.Meets(Def.Needs));
+                    // A building's door ("interior:") has no seal, only a lamp.
+                    if (glow != null)
+                    {
+                        glow.SetActive(session.Meets(Def.Needs));
+                    }
+
                     break;
                 case ThingKind.Lantern:
                     // The lantern the hero wakes at is brightest; lit ones glow; unlit ones are dim until touched.
