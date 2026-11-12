@@ -80,12 +80,22 @@ def arm(pose, side, swing, out, elbow, twist=0.0, wrist=0.0):
     pose['hand_' + side] = (-wrist, 0, 0)
 
 
+# The model was made with its head pushed forward of its chest and the upper back rounded (a
+# hunch): every pose straightens it. The upper back opens, the neck comes back over the
+# shoulders and the head tips forward again by as much, so the gaze stays where it was.
+# Checked side-on in Blender (Docs/V2/rig-posture.png): ears over the shoulders.
+POSTURE = {'spine1': -2.0, 'spine2': -4.0, 'chest': -7.0, 'neck': -18.0, 'neck1': -10.0, 'head': 33.0}
+
+
 def torso(pose, lean=0.0, twist=0.0, side=0.0, head=None):
     """The trunk: the hips lean, the spine carries the twist, the head looks where told (or stays level)."""
     pose['hips'] = (lean * 0.5, twist * 0.25, side * 0.5)
     for name in ('spine', 'spine1', 'spine2', 'chest'):
-        pose[name] = (lean * 0.125, twist * 0.19, side * 0.125)
-    pose['head'] = head if head is not None else (-lean * 0.8, -twist * 0.7, -side * 0.6)
+        pose[name] = (lean * 0.125 + POSTURE.get(name, 0.0), twist * 0.19, side * 0.125)
+    pose['neck'] = (POSTURE['neck'], 0, 0)
+    pose['neck1'] = (POSTURE['neck1'], 0, 0)
+    look = head if head is not None else (-lean * 0.8, -twist * 0.7, -side * 0.6)
+    pose['head'] = (look[0] + POSTURE['head'], look[1], look[2])
 
 
 def stand(crouch=0.0):
