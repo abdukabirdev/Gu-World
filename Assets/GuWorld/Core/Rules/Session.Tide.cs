@@ -28,9 +28,51 @@ namespace GuWorld.Core
             return night && Rank >= 2 && day > 0 && day % TideEvery == 0 && !Has("tide_held_" + day) && !InSandbox;
         }
 
+        public const string Raid = "bandit_raid";
+
+        /// <summary>A bandits' raid on the Willow hamlet: every ninth day by daylight, until the Black Tail is beaten.</summary>
+        public bool RaidHours(float hour) => State.Day % 9 == 4 && hour >= 10 && hour < 17 && !Has("black_tail_beaten") && !Has("raid_held_" + State.Day) && !InSandbox;
+
+        public bool RaidUp => Has(Raid);
+
+        void UpdateRaid(float hour)
+        {
+            var should = RaidHours(hour);
+
+            if (should && !RaidUp)
+            {
+                SetFlag(Raid);
+                State.Flags.Remove(Raid + "_won");
+                Say("Дым над хутором Ивы! Разбойники Чёрного Хвоста грабят хутор.");
+                RaidChanged?.Invoke(true);
+            }
+            else if (!should && RaidUp)
+            {
+                State.Flags.Remove(Raid);
+                RaidChanged?.Invoke(false);
+            }
+        }
+
+        public event Action<bool> RaidChanged;
+
+        void RaidHeld()
+        {
+            SetFlag("raid_held_" + State.Day);
+            State.Flags.Remove(Raid);
+            State.Raids++;
+            AddStones(40 + 15 * Rank);
+            GainInsight(40 * Rank);
+            ChangeReputation("mortal", 10, false);
+            ChangeReputation("bandit", -10, false);
+            Say("Хутор отбит. Крестьяне кланяются и несут что могут.");
+            RaidChanged?.Invoke(false);
+            Achieve();
+        }
+
         /// <summary>Called with the clock: raises the tide or lets it ebb.</summary>
         void UpdateTide(float hour)
         {
+            UpdateRaid(hour);
             var should = TideNight(hour);
 
             if (should && !TideUp)

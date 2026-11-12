@@ -98,6 +98,7 @@ namespace GuWorld.Core
             new AchievementDef { Id = "sparring", Name = "Лучший в классе", Text = "Выиграйте десять учебных боёв в академии.", Counts = "spars", Goal = 10 },
             new AchievementDef { Id = "clan_member", Name = "Свой в клане", Text = "Станьте членом клана Гу Юэ по заслугам.", Counts = "clan_rank", Goal = 2 },
             new AchievementDef { Id = "clan_elder", Name = "Старейшина", Text = "Станьте старейшиной клана по заслугам.", Counts = "clan_rank", Goal = 4 },
+            new AchievementDef { Id = "raid", Name = "Защитник хутора", Text = "Отбейте набег разбойников на хутор.", Counts = "raids", Goal = 1 },
             new AchievementDef { Id = "tide", Name = "Стена против прилива", Text = "Отбейте волчий прилив.", Counts = "tides", Goal = 1 },
             new AchievementDef { Id = "tides", Name = "Сторож деревни", Text = "Отбейте пять волчьих приливов.", Counts = "tides", Goal = 5 },
             new AchievementDef { Id = "homeowner", Name = "Свой угол", Text = "Купите дом.", Counts = "homes", Goal = 1 },

@@ -167,6 +167,7 @@ namespace GuWorld.Core
                 case "parries": return State.Parries;
                 case "homes": return State.Homes.Count;
                 case "tides": return State.Tides;
+                case "raids": return State.Raids;
                 case "clan_rank": return ClanRank;
                 case "spars": return State.SparsWon;
                 case "moves_cast": return State.MovesCast;

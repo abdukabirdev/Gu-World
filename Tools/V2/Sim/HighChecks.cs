@@ -310,6 +310,21 @@ static partial class Program
             Check(new CasterMind(p2.Gu).Gu.Length == p2.Gu.Length, $"the partner of rank {pr} casts all its Gu");
         }
 
+        // ------------------------------------------------------------------ The bandits' raid
+
+        var b = new Session(Session.NewGame("Набег"), 131);
+        b.State.Day = 13;
+        b.SetClock(9);
+        b.SetClock(11);
+        Check(b.RaidUp && b.WantsEncounter("bandit_raid"), "the raid comes on its day by daylight");
+        var mortal = b.ReputationOf("mortal");
+        b.EncounterWon("bandit_raid");
+        Check(!b.RaidUp && b.ReputationOf("mortal") > mortal && b.State.Raids == 1, "a raid beaten pleases the hamlets and ends");
+        b.SetFlag("black_tail_beaten");
+        b.State.Day = 22;
+        b.SetClock(12);
+        Check(!b.RaidUp, "no raids once the Black Tail is beaten");
+
         // ------------------------------------------------------------------ The fair
 
         var f = new Session(Session.NewGame("Ярмарка"), 121);

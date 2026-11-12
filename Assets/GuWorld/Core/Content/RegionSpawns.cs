@@ -112,6 +112,11 @@ namespace GuWorld.Core
 
         public static readonly EncounterDef[] MountainEncounters =
         {
+            // The bandits' raid on the Willow hamlet (see Session.Tide).
+            E("bandit_raid", "Набег на хутор", P("willow", 0, 0), 120, "bandit_raid",
+                W("Разбойники тащат мешки из амбара. Увидели вас.", ("bandit", 4)),
+                W("Из-за изгороди — мастера Хвоста.", ("bandit", 2), ("rogue_master", 2))),
+
             // The wolf tide (see Session.Tide): at the old north gate of the village, on its nights.
             E("wolf_tide", "Волчий прилив", new MapPoint(0, 110), 150, "wolf_tide",
                 W("Вой со всех склонов сразу. Стая выходит из темноты к воротам.", ("wolf", 6)),

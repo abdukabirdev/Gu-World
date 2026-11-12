@@ -124,6 +124,7 @@ namespace GuWorld.Core
         public int Parries;
         /// <summary>Wolf tides held.</summary>
         public int Tides;
+        public int Raids;
         /// <summary>Merit with the clan: what is left to spend, and all ever earned (the clan rank).</summary>
         public int Merit;
         public int MeritEarned;

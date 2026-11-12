@@ -758,6 +758,11 @@ namespace GuWorld.Core
             {
                 TideHeld();
             }
+
+            if (id == Raid)
+            {
+                RaidHeld();
+            }
         }
 
         public void Reached(string place) => Notify(StepKind.Reach, place);

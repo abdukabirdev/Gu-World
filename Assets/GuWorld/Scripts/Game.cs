@@ -264,6 +264,14 @@ namespace GuWorld
                 Sound.AudioDirector.Play("breakthrough", null, 0.6f, 0);
             };
             Session.ClanRankRose += rank => Ui.Banner("Клан Гу Юэ", Session.ClanRanks[rank]);
+            Session.RaidChanged += up =>
+            {
+                if (up)
+                {
+                    Ui.Banner("Набег на Ивовый хутор", "Разбойники Чёрного Хвоста грабят крестьян");
+                    spawns?.Refresh();
+                }
+            };
             Session.TideChanged += up =>
             {
                 if (up)
