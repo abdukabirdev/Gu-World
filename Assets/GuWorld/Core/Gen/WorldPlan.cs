@@ -78,7 +78,19 @@ namespace GuWorld.Core.Gen
                 }
 
                 var flat = Land.FlatOf(def.Id);
-                Settlements.Add(Planner.Plan(def, flat != null ? flat.Level : Land.Shaped(def.At.X, def.At.Z), RoadsInto(def), Waters));
+                var village = Planner.Plan(def, flat != null ? flat.Level : Land.Shaped(def.At.X, def.At.Z), RoadsInto(def), Waters);
+                Settlements.Add(village);
+
+                // A clan's village has its people out too (fewer than the town).
+                if (def.Houses >= 20 && !string.IsNullOrEmpty(def.Clan) && def.Clan != "bandit")
+                {
+                    village.Walkers = Crowd.Plan(village, Math.Min(90, def.Houses * 2), def.Seed + 31);
+
+                    foreach (var walker in village.Walkers)
+                    {
+                        walker.Clan = def.Clan;
+                    }
+                }
             }
 
             Stage("settlements");

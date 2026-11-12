@@ -28,6 +28,8 @@ namespace GuWorld.Core.Gen
         public Trade Trade;
         public Vec2 Home;
         public readonly List<Leg> Day = new List<Leg>();
+        /// <summary>The clan of the settlement (its students, guards and elders bear its name).</summary>
+        public string Clan = "gu_yue";
         /// <summary>The variant of the stall a trader keeps (-1: none).</summary>
         public int Stall = -1;
         /// <summary>Walking pace, metres a second (an elder slower, a child quicker).</summary>

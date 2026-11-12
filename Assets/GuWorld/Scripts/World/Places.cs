@@ -38,6 +38,11 @@ namespace GuWorld.World
                 if (settlement.Def.City)
                 {
                     Town.Make(root.transform, settlement);
+                }
+
+                // Every settlement that has walkers has its townsfolk.
+                if (settlement.Walkers.Count > 0)
+                {
                     Townsfolk.Make(root.transform, settlement);
                 }
             }

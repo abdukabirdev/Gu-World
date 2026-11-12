@@ -141,6 +141,11 @@ static class WorldChecks
             var h0 = land.Height(settlement.Centre);
             var flatness = solid.Max(b => Math.Abs(land.Height(b.Footprint.Centre) - h0));
             check(flatness < 2.5f, $"world: {settlement.Def.Id} is level under its buildings (off by {flatness:0.0} m)");
+            if (settlement.Def.Clan == "bai" || settlement.Def.Clan == "xiong")
+            {
+                check(settlement.Walkers.Count >= 30 && settlement.Walkers.All(w => w.Clan == settlement.Def.Clan), $"world: {settlement.Def.Id} has its people out ({settlement.Walkers.Count})");
+            }
+
             report.Add($"  {settlement.Def.Name,-26} {houses,2} houses, {settlement.Buildings.Count,3} pieces, {settlement.Streets.Count} streets, gates {settlement.Gates.Count}, level {settlement.Level:0}");
         }
 

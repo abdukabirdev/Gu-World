@@ -532,10 +532,10 @@ namespace GuWorld
             {
                 var walker = Instance.nearbyWalker;
                 folk.TurnTo(walker, Hero.transform.position);
-                var lines = Core.Chatter.Say(walker, Atmosphere.Hour, Session.Rank, Session.StandingWith("gu_yue"), Atmosphere.Gloom > 0.5f, Session.State.Day + (int)Time.time);
+                var lines = Core.Chatter.Say(walker, Atmosphere.Hour, Session.Rank, Session.StandingWith(walker.Clan), Atmosphere.Gloom > 0.5f, Session.State.Day + (int)Time.time);
                 var stall = folk.AtStall(walker) ? Core.Chatter.ShelfOf(walker.Stall) : null;
                 var (name, _) = Core.Chatter.Who(walker);
-                Ui.Talk(lines, stall == null ? (System.Action)null : () => Ui.OpenShop(stall, "Лоток · " + name, "gu_yue"));
+                Ui.Talk(lines, stall == null ? (System.Action)null : () => Ui.OpenShop(stall, "Лоток · " + name, walker.Clan));
             }
             else if (Instance.nearby is World.RoomPerson person)
             {

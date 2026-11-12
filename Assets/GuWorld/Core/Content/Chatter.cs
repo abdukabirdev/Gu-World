@@ -20,13 +20,14 @@ namespace GuWorld.Core
             var rng = new Rng(walker.Id * 7349 + 11);
             var family = Family[rng.Range(0, Family.Length)];
             var given = Given[rng.Range(0, Given.Length)];
+            var clan = walker.Clan == "bai" ? "Бай" : walker.Clan == "xiong" ? "Сюн" : "Гу Юэ";
 
             switch (walker.Trade)
             {
                 case Trade.Child: return ("Малыш " + given, "Ребёнок");
                 case Trade.Elder: return ("Старейшина " + given, "Старший клана");
-                case Trade.Student: return ("Гу Юэ " + given + (rng.Chance(0.5f) ? given.ToLowerInvariant() : ""), "Ученик академии");
-                case Trade.Guard: return ("Гу Юэ " + family, "Страж ворот");
+                case Trade.Student: return (clan + " " + given + (rng.Chance(0.5f) ? given.ToLowerInvariant() : ""), "Ученик академии");
+                case Trade.Guard: return (clan + " " + family, "Страж ворот");
                 case Trade.Watch: return ("Ночной сторож " + family, "Ночная стража");
                 case Trade.Trader: return ((rng.Chance(0.4f) ? "Тётушка " : "Лао ") + family, "Торговец");
                 case Trade.Porter: return (family + " " + given, "Носильщик");
