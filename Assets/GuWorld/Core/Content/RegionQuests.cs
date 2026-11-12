@@ -323,7 +323,7 @@ namespace GuWorld.Core
                     Use("tomb_gate", 1, "Откройте нефритовые врата", "tomb_gate"),
                     Fight("ancient_shade", "Упокойте Тень Древнего мастера"),
                 },
-                Reward = new Reward { Insight = 1200, Stones = 400, Reputation = Rep(("wanderers", 15)), Flags = new[] { "tomb_cleared" } }
+                Reward = new Reward { Insight = 1200, Stones = 400, Reputation = Rep(("wanderers", 15)), Flags = new[] { "tomb_cleared" }, Gu = new[] { "spring_autumn_cicada" } }
             },
             new QuestDef
             {

@@ -243,6 +243,8 @@ namespace GuWorld.Core
             new ShopEntry { Gu = "ice_spike", Price = 210, Chapter = 3 },
             new ShopEntry { Gu = "river_serpent", Price = 260, Chapter = 4 },
             new ShopEntry { Gu = "white_cloud", Price = 280, Chapter = 4 },
+            new ShopEntry { Item = "scroll_north_wind_ice", Price = 1200, Needs = new[] { "rank>=4", "standing:bai=friendly" } },
+            new ShopEntry { Item = "scroll_heaven_ice", Price = 4000, Needs = new[] { "rank>=5", "standing:bai=honoured" } },
         };
 
         public static readonly ShopEntry[] XiongShop =
@@ -263,6 +265,7 @@ namespace GuWorld.Core
             new ShopEntry { Item = "ember_coal", Price = 6 },
             new ShopEntry { Item = "iron_pill", Price = 38, Chapter = 3 },
             new ShopEntry { Item = "scroll_earth_spikes", Price = 110, Chapter = 3 },
+            new ShopEntry { Item = "scroll_golden_bell", Price = 1300, Needs = new[] { "rank>=4", "standing:xiong=friendly" } },
         };
 
         public static readonly ShopEntry[] XiongGu =
@@ -272,6 +275,7 @@ namespace GuWorld.Core
             new ShopEntry { Gu = "bear_strength", Price = 200, Chapter = 3 },
             new ShopEntry { Gu = "bear_roar", Price = 240, Chapter = 4 },
             new ShopEntry { Item = "scroll_white_boar", Price = 150, Chapter = 4 },
+            new ShopEntry { Item = "scroll_stone_giant", Price = 1250, Needs = new[] { "rank>=4", "standing:xiong=friendly" } },
         };
 
         public static readonly ShopEntry[] Hamlet =
@@ -302,6 +306,8 @@ namespace GuWorld.Core
             new ShopEntry { Gu = "night_eye", Price = 120, Chapter = 3 },
             new ShopEntry { Item = "scroll_thunder_wing", Price = 130, Chapter = 3 },
             new ShopEntry { Item = "scroll_flame_burst", Price = 90, Chapter = 3 },
+            new ShopEntry { Item = "scroll_myriad_lightning", Price = 1250, Needs = new[] { "rank>=4" } },
+            new ShopEntry { Item = "scroll_ten_thousand_li", Price = 1150, Needs = new[] { "rank>=4" } },
         };
 
         public static readonly ShopEntry[] BlackMarket =
@@ -312,6 +318,8 @@ namespace GuWorld.Core
             new ShopEntry { Item = "shadow_pill", Price = 70 },
             new ShopEntry { Item = "scroll_blood_skull", Price = 260, Chapter = 4 },
             new ShopEntry { Item = "scroll_stealth_scales", Price = 160, Chapter = 3 },
+            new ShopEntry { Item = "scroll_crimson_flame", Price = 1200, Needs = new[] { "rank>=4" } },
+            new ShopEntry { Item = "scroll_immortal_shadow", Price = 1400, Needs = new[] { "rank>=4", "standing:bandit=friendly" } },
             new ShopEntry { Item = "rock_2", Price = 80 },
         };
 

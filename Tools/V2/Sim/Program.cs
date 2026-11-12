@@ -30,6 +30,7 @@ static partial class Program
         Content(repo);
         Rules();
         MoreRules();
+        HighRules();
         SaveRoundTrip();
         var report = new List<string>();
 
@@ -246,6 +247,13 @@ static partial class Program
                 var item = needs.Substring(5);
                 var got = Bestiary.Tables.Any(t => t.Items.Any(i => i.Item == item)) || Story.All.Any(q => q.Gives.Contains(item) || q.Steps.Any(st => st.Gives.Contains(item)) || q.Reward.Items.Any(i => i.item == item));
                 Check(ItemBook.Get(item) != null && got, $"thing {thing.Id}: the key {item} can be found");
+                continue;
+            }
+
+            // A condition on the hero's rank or standing (not a flag) is met by playing on.
+            if (needs.Contains(">=") || needs.StartsWith("standing:"))
+            {
+                Check(new Session(Session.NewGame("Тест"), 1).Explain(needs) != "", $"thing {thing.Id}: its condition {needs} is understood");
                 continue;
             }
 

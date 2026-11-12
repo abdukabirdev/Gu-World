@@ -141,7 +141,7 @@ namespace GuWorld.Core
         };
 
         /// <summary>Every Gu: the valley's first ones and those of the wider world (MoreGu).</summary>
-        public static readonly GuDef[] All = Lists.Join(First, MoreGu.All);
+        public static readonly GuDef[] All = Lists.Join(First, MoreGu.All, HighGu.All);
 
         static Dictionary<string, GuDef> byId;
 

@@ -13,7 +13,7 @@ namespace GuWorld.UI
         string pickedItem;
         string pickedQuest;
         static Texture2D mapTexture;
-        static readonly string[] SlotKeys = { "Q", "E", "R", "F" };
+        static readonly string[] SlotKeys = { "Q", "E", "R", "F", "Z", "C" };
 
         // ------------------------------------------------------------------ Aperture
 
@@ -64,7 +64,7 @@ namespace GuWorld.UI
             active.Stack<HorizontalLayoutGroup>(10, null, TextAnchor.MiddleLeft).childForceExpandWidth = false;
             active.Size(64);
 
-            for (var i = 0; i < 4; i++)
+            for (var i = 0; i < state.Active.Length; i++)
             {
                 var gu = i < stats.ActiveSlots ? session.ActiveGu(i) : null;
                 var uid = gu != null ? gu.Uid : 0;
@@ -77,7 +77,7 @@ namespace GuWorld.UI
             passive.Stack<HorizontalLayoutGroup>(10, null, TextAnchor.MiddleLeft).childForceExpandWidth = false;
             passive.Size(64);
 
-            for (var i = 0; i < 3; i++)
+            for (var i = 0; i < state.Passive.Length; i++)
             {
                 var gu = i < stats.PassiveSlots ? session.FindGu(state.Passive[i]) : null;
                 var uid = gu != null ? gu.Uid : 0;
@@ -185,6 +185,12 @@ namespace GuWorld.UI
                     var uid = gu.Uid;
                     UiKit.HexButton("Покормить", column, () => { session.Feed(uid); Redraw(); }, hungry ? UiKit.HexKind.Main : UiKit.HexKind.Ghost, 12, 40);
                 }
+            }
+
+            if (def.Id == HighGu.Cicada)
+            {
+                var sleep = session.CicadaSleepLeft;
+                Fact(column, "Цикада", sleep > 0 ? $"спит ещё {sleep} дн." : session.CicadaReady ? "бодрствует · спасёт от смерти" : "вставьте в пассивный слот", sleep > 0 ? UiKit.Muted : UiKit.Essence);
             }
 
             if (def.Clan != "")

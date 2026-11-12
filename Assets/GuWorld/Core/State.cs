@@ -63,8 +63,8 @@ namespace GuWorld.Core
         public int NextUid = 1;
         public List<GuInstance> Gu = new List<GuInstance>();
         /// <summary>Uids of the Gu in the active slots (0: empty).</summary>
-        public int[] Active = new int[4];
-        public int[] Passive = new int[3];
+        public int[] Active = new int[6];
+        public int[] Passive = new int[5];
         public List<ItemStack> Items = new List<ItemStack>();
         public List<QuestState> Quests = new List<QuestState>();
         public List<string> Flags = new List<string>();
@@ -106,6 +106,12 @@ namespace GuWorld.Core
         /// <summary>The shrines prayed at today ("shrine_id").</summary>
         public List<string> Prayed = new List<string>();
         public Settings Settings = new Settings();
+        /// <summary>The killer moves the hero has devised or been taught, and the one ready on V.</summary>
+        public List<string> Moves = new List<string>();
+        public string Move = "";
+        public int MovesCast;
+        /// <summary>The day the Spring Autumn Cicada wakes again after saving the hero.</summary>
+        public int CicadaDay;
     }
 
     [Serializable]

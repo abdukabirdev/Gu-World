@@ -114,8 +114,12 @@ namespace GuWorld.Core
                 Chest("chest_eagle", "Сокровища гнезда", "chest_eagle", "eagle_cliffs", 60, 0.55f, "storm_eagle_dead", "Грозовой орёл не подпустит."),
                 Chest("chest_peak", "Ларец на вершине", "chest_peak", "peak", 300, 0.5f, "flag:peak_blessed", "Ларец вмёрз в лёд. Святилище, может быть, растопит его."),
                 Chest("chest_tree", "Дупло древа", "chest_tree", "great_tree", 260, 0.5f, "tree_healed", "Дупло затянуто корой."),
+                // The mountain's heart, twice: under the ice of the peak and under the roots of the Great Tree. Only a master's hand reaches it.
+                Chest("heart_peak", "Сердце под льдом", "heart_peak", "peak", 120, 0.35f, "rank>=4", "Подо льдом бьётся что-то живое. Рука слабее мастера не пробьёт этот лёд."),
+                Chest("heart_tree", "Сердце под корнями", "heart_tree", "great_tree", 80, 0.3f, "rank>=4", "Под корнями светится зелёным. Корни не пускают того, кто не мастер."),
                 new ThingDef { Id = "chest_fort", Name = "Погреб атамана", Kind = ThingKind.Chest, Content = "chest_fort", Home = "bandit_fort", Role = "plaza", At = Regions.Settlement("bandit_fort").At, Needs = "item:fort_key", Locked = "Погреб на замке. Ключ у атамана." },
                 new ThingDef { Id = "chest_bai_vault", Name = "Хранилище Бай", Kind = ThingKind.Chest, Content = "chest_bai_vault", Home = "bai_village", Role = "nursery", At = Regions.Settlement("bai_village").At, Needs = "item:bai_vault_key", Locked = "Хранилище клана. Чужим нельзя." },
+                new ThingDef { Id = "chest_gu_yue_vault", Name = "Тайное хранилище Гу Юэ", Kind = ThingKind.Chest, Content = "high_gu_yue", Home = "gu_yue", Role = "plaza", At = Regions.Settlement("gu_yue").At, Needs = "standing:gu_yue=honoured", Locked = "Хранилище старейшин. Его откроют только тому, кого клан чтит." },
                 new ThingDef { Id = "chest_willow", Name = "Сундук в амбаре", Kind = ThingKind.Chest, Content = "chest_hamlet", Home = "willow", Role = "house", At = Regions.Settlement("willow").At, Needs = "willow_wolves_done", Locked = "Хозяин косится. Сначала помогите хутору." },
 
                 // ------------------------------------------------------------------ The quests' objects

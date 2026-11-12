@@ -16,7 +16,7 @@ namespace GuWorld.UI
     /// </summary>
     public partial class Ui : MonoBehaviour
     {
-        public enum Page { None, Title, Loading, Talk, Aperture, Bag, Journal, Map, Shop, Gamble, Board, Fusion, Spring, Pause, Help, Death, Ending, Choice, Dialogue, Alchemy, Bounties, Codex, Clans, Travel, Inn, Settings }
+        public enum Page { None, Title, Loading, Talk, Aperture, Bag, Journal, Map, Shop, Gamble, Board, Fusion, Spring, Pause, Help, Death, Ending, Choice, Dialogue, Alchemy, Bounties, Codex, Clans, Travel, Inn, Settings, Moves }
 
         public Page Open { get; private set; } = Page.Title;
 
@@ -28,8 +28,8 @@ namespace GuWorld.UI
         int lostStones;
         Session S => Game.Session;
 
-        static readonly Page[] HeroPages = { Page.Aperture, Page.Bag, Page.Journal, Page.Map, Page.Codex, Page.Clans };
-        static readonly (string name, string key)[] HeroTabs = { ("Апертура", "K"), ("Сумка", "I"), ("Журнал", "J"), ("Карта", "M"), ("Кодекс", "B"), ("Кланы", "L") };
+        static readonly Page[] HeroPages = { Page.Aperture, Page.Moves, Page.Bag, Page.Journal, Page.Map, Page.Codex, Page.Clans };
+        static readonly (string name, string key)[] HeroTabs = { ("Апертура", "K"), ("Приёмы", "U"), ("Сумка", "I"), ("Журнал", "J"), ("Карта", "M"), ("Кодекс", "B"), ("Кланы", "L") };
 
         void Awake()
         {
@@ -105,6 +105,7 @@ namespace GuWorld.UI
                 case Page.Alchemy: AlchemyPage(); break;
                 case Page.Bounties: BountyPage(); break;
                 case Page.Codex: CodexPage(); break;
+                case Page.Moves: MovesPage(); break;
                 case Page.Clans: ClansPage(); break;
                 case Page.Travel: TravelPage(); break;
                 case Page.Inn: InnPage(); break;
@@ -156,6 +157,7 @@ namespace GuWorld.UI
                 }
 
                 if (Keys.Down(Key.K)) { Show(Page.Aperture); }
+                else if (Keys.Down(Key.U)) { Show(Page.Moves); }
                 else if (Keys.Down(Key.I)) { Show(Page.Bag); }
                 else if (Keys.Down(Key.J)) { Show(Page.Journal); }
                 else if (Keys.Down(Key.M)) { Show(Page.Map); }
@@ -165,7 +167,7 @@ namespace GuWorld.UI
             }
             else if (hero >= 0)
             {
-                var own = new[] { Key.K, Key.I, Key.J, Key.M, Key.B, Key.L };
+                var own = new[] { Key.K, Key.U, Key.I, Key.J, Key.M, Key.B, Key.L };
 
                 if (Keys.Down(Key.Escape) || Keys.Down(own[hero]))
                 {

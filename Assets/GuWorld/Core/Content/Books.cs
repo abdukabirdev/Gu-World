@@ -41,7 +41,7 @@ namespace GuWorld.Core
         };
 
         /// <summary>Every item: the valley's and the wider world's (MoreItems).</summary>
-        public static readonly ItemDef[] All = Lists.Join(First, MoreItems.All);
+        public static readonly ItemDef[] All = Lists.Join(First, MoreItems.All, HighGu.Items);
 
         static Dictionary<string, ItemDef> byId;
 
@@ -173,7 +173,7 @@ namespace GuWorld.Core
             new LootTable { Id = "chest_blood", StonesMin = 150, StonesMax = 200, Items = new[] { new LootEntry { Item = "blood_crystal", Min = 2, Max = 3 }, new LootEntry { Item = "rock_3" } }, GuChance = 1, GuPool = new[] { "frost_demon" }, GuMinQuality = 1 },
         };
 
-        public static readonly LootTable[] Tables = Lists.Join(FirstTables, MoreEnemies.Tables);
+        public static readonly LootTable[] Tables = Lists.Join(FirstTables, MoreEnemies.Tables, HighGu.Tables);
 
         static Dictionary<string, EnemyDef> byId;
         static Dictionary<string, LootTable> tables;
@@ -224,7 +224,7 @@ namespace GuWorld.Core
             new RecipeDef { Id = "sky_canopy", Result = "sky_canopy", Gu = new[] { "rock_skin", "white_jade" }, Items = new[] { ("blood_crystal", 3) }, Stones = 250 },
         };
 
-        public static readonly RecipeDef[] All = Lists.Join(First, MoreGu.Recipes);
+        public static readonly RecipeDef[] All = Lists.Join(First, MoreGu.Recipes, HighGu.Recipes);
 
         public static RecipeDef Get(string id)
         {

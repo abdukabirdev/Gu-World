@@ -581,5 +581,7 @@ namespace GuWorld.Core
         public int Price;
         /// <summary>The chapter from which it is on the shelf.</summary>
         public int Chapter = 1;
+        /// <summary>What else must be so for it to be on the shelf (conditions: "rank>=4", "standing:bai=honoured").</summary>
+        public string[] Needs;
     }
 }

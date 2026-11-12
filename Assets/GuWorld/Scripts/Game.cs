@@ -207,6 +207,21 @@ namespace GuWorld
             Session.Dawn += day => Ui.Toast($"Рассвет · день {day}");
             Session.Achieved += achievement => Ui.Banner("Достижение", achievement.Name);
             Session.StandingChanged += (clan, standing) => spawns?.Refresh();
+            Session.MoveLearnt += move =>
+            {
+                Ui.Banner("Убийственный приём", move.Name);
+                Sound.AudioDirector.Play("killer_move", null, 0.8f, 0);
+            };
+            Session.Revived += () =>
+            {
+                Ui.Banner("Цикада Весны и Осени", "Время повернулось вспять");
+                Sound.AudioDirector.Play("revive", null, 1, 0);
+
+                if (Hero != null)
+                {
+                    Effects.Pillar(Hero.transform.position, new Color(0.66f, 0.88f, 0.69f), 2.2f, 16, 1.6f);
+                }
+            };
 
             world = new GameObject("World");
 

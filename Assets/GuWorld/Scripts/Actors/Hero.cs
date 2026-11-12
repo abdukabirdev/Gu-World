@@ -340,6 +340,11 @@ namespace GuWorld.Actors
             else if (Keys.Down(Key.E)) { TryCast(1); }
             else if (Keys.Down(Key.R)) { TryCast(2); }
             else if (Keys.Down(Key.F)) { TryCast(3); }
+            // The fourth and fifth ranks open two more slots.
+            else if (Keys.Down(Key.Z)) { TryCast(4); }
+            else if (Keys.Down(Key.C)) { TryCast(5); }
+            // A killer move of the Gu slotted together.
+            else if (Keys.Down(Key.V)) { TryKillerMove(); }
 
             if (Keys.Down(Key.H))
             {
@@ -581,17 +586,58 @@ namespace GuWorld.Actors
 
             var cast = Session.CastSlot(slot);
 
+            if (cast != null)
+            {
+                Perform(cast);
+            }
+        }
+
+        /// <summary>
+        /// The killer move on V (Shift + V: the next one ready). Cast like a Gu's skill, but louder and
+        /// brighter: the core Gu's sound and a gong over it, a ring of the move's colour, its name shown.
+        /// </summary>
+        void TryKillerMove()
+        {
+            if (Keys.Shift)
+            {
+                var next = Session.NextMove();
+                Note(next != null ? $"Приём: {next.Name}" : "Нет готовых приёмов: постигайте их в окне Гу");
+
+                return;
+            }
+
+            var move = Session.SelectedMove();
+            var why = Session.WhyNoMove(move);
+
+            if (why != null)
+            {
+                Note(move == null && Session.State.Moves.Count == 0 ? "Вы не знаете убийственных приёмов" : why);
+
+                return;
+            }
+
+            var cast = Session.CastMove(move);
+
             if (cast == null)
             {
                 return;
             }
 
+            Sound.AudioDirector.Play("killer_move", transform.position, 0.8f);
+            Effects.Wave(transform.position, Models.Rgb(move.Colour), 4.5f, 0.5f);
+            Note(move.Name);
+            Perform(cast);
+        }
+
+        /// <summary>What a cast does in the world: the sound, the animation, the shape of its skill.</summary>
+        void Perform(Cast cast)
+        {
             Sound.AudioDirector.Play(cast.Skill.Shape == SkillShape.Heal ? "heal" : cast.Skill.Shape == SkillShape.Buff ? "buff" : Core.Audio.Sounds.CastOf(cast.Def.Path), transform.position, 0.9f);
 
             sinceStrike = 0;
             SinceFight = 0;
             var aim = AimDirection();
-            var colour = Models.Rgb(cast.Def.Colour);
+            var colour = Models.Rgb(cast.Move != null ? cast.Move.Colour : cast.Def.Colour);
             var shape = cast.Skill.Shape;
 
             if (shape != SkillShape.Buff && shape != SkillShape.Heal && shape != SkillShape.Nova)

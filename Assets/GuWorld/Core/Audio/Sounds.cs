@@ -47,6 +47,10 @@ namespace GuWorld.Core.Audio
             ["cast_wine"] = Glug,
             ["heal"] = v => Chord(v, new[] { 67f, 71, 74, 79 }, 1.6f, 0.08f),
             ["buff"] = v => Chord(v, new[] { 62f, 69, 74 }, 1.0f, 0.03f),
+            // A killer move: a low gong under a quick rising fifth, the room large.
+            ["killer_move"] = Killer,
+            // The Cicada turning time back: a falling then rising shimmer, like a breath drawn in.
+            ["revive"] = Revive,
 
             // ---------------------------------------------------------------- Steps
             ["step_grass"] = v => Step(v, 1800, 0.6f, 0.07f),
@@ -731,6 +735,22 @@ namespace GuWorld.Core.Audio
             }
 
             return b;
+        }
+
+        static Wave Killer(int v)
+        {
+            var b = Struck(Modes.Gong, 82 + 6 * v, 2.6f, v, 0.5f);
+            b.Mix(Chord(v, new[] { 57f, 64, 69, 76 }, 0.9f, 0.025f), 0.05f, 0.5f);
+
+            return b.Room(0.8f, 0.25f, 0.5f, 1.4f).Normalise(0.85f);
+        }
+
+        static Wave Revive(int v)
+        {
+            var b = Shimmer(v, 84 - v, 1.4f, 1.8f);
+            b.Mix(Chord(v, new[] { 60f, 67, 72, 79, 84 }, 2.2f, 0.12f), 0.3f, 0.7f);
+
+            return b.Normalise(0.8f);
         }
 
         static Wave Breakthrough(int v)

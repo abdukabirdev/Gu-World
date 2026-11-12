@@ -13,6 +13,8 @@ namespace GuWorld.Core
         public float Power;
         public float Range;
         public float Leech;
+        /// <summary>The killer move this is, or null for a single Gu's skill.</summary>
+        public KillerMoveDef Move;
     }
 
     public struct Hit
@@ -56,12 +58,45 @@ namespace GuWorld.Core
         {
             State = state ?? new SaveData();
             Random = seed == 0 ? new Random() : new Random(seed);
+            Migrate();
             Recompute();
 
             if (State.Quests.Count == 0 && !Has("finished"))
             {
                 StartQuest(Story.First);
             }
+        }
+
+        /// <summary>A save made by an older game: its slots grown to the five ranks', its lists filled.</summary>
+        void Migrate()
+        {
+            if (State.Active == null || State.Active.Length < 6)
+            {
+                var active = State.Active ?? new int[0];
+                Array.Resize(ref active, 6);
+                State.Active = active;
+            }
+
+            if (State.Passive == null || State.Passive.Length < 5)
+            {
+                var passive = State.Passive ?? new int[0];
+                Array.Resize(ref passive, 5);
+                State.Passive = passive;
+            }
+
+            State.Settings = State.Settings ?? new Settings();
+            State.Reputation = State.Reputation ?? new List<Reputation>();
+            State.Codex = State.Codex ?? new List<string>();
+            State.Achievements = State.Achievements ?? new List<string>();
+            State.Lanterns = State.Lanterns ?? new List<string>();
+            State.Pills = State.Pills ?? new List<string>();
+            State.KillsBy = State.KillsBy ?? new List<Tally>();
+            State.Bounties = State.Bounties ?? new List<BountyState>();
+            State.Effects = State.Effects ?? new List<Effect>();
+            State.Prayed = State.Prayed ?? new List<string>();
+            State.Moves = State.Moves ?? new List<string>();
+            State.Move = State.Move ?? "";
+            State.Version = Math.Max(State.Version, 2);
         }
 
         public static SaveData NewGame(string heroName)
@@ -225,6 +260,8 @@ namespace GuWorld.Core
                 healTime -= dt;
             }
 
+            TickMoves(dt);
+
             if (cooldowns.Count > 0)
             {
                 var keys = new List<int>(cooldowns.Keys);
@@ -307,12 +344,14 @@ namespace GuWorld.Core
         {
             var def = GuBook.Get(gu.Def);
 
-            if (def.Skill == null)
-            {
-                return 0;
-            }
+            return def.Skill == null ? 0 : PowerOf(gu, def.Skill.Power);
+        }
 
-            var power = def.Skill.Power * Stats.Power;
+        /// <summary>A power of the given base lent by a Gu (its mastery, quality, affixes, path, hunger, the sky).</summary>
+        public float PowerOf(GuInstance gu, float basePower)
+        {
+            var def = GuBook.Get(gu.Def);
+            var power = basePower * Stats.Power;
             power *= 1 + 0.12f * (Cultivation.MasteryLevel(gu.MasteryXp) - 1);
             power *= 1 + 0.08f * gu.Quality;
             power *= 1 + AffixOf(gu, AffixKind.Sharp);
@@ -479,6 +518,17 @@ namespace GuWorld.Core
             var damage = raw * Stats.DamageTaken * (shieldTime > 0 ? 1 - shieldValue : 1) * DifficultyRules.DamageTaken(State.Settings.Difficulty);
             State.Health = Math.Max(0, State.Health - damage);
 
+            if (State.Health <= 0 && CicadaReady)
+            {
+                // The Spring Autumn Cicada turns time back for its master, and sleeps.
+                State.CicadaDay = State.Day + HighGu.CicadaSleep;
+                statuses.Clear();
+                Restore();
+                Say("Цикада Весны и Осени повернула время вспять. Она уснёт на три дня.");
+                Revived?.Invoke();
+                Changed?.Invoke();
+            }
+
             return damage;
         }
 
@@ -491,6 +541,36 @@ namespace GuWorld.Core
         }
 
         public bool Dead => State.Health <= 0;
+
+        /// <summary>The Cicada brought the hero back (for the screen's flash of green and the sound).</summary>
+        public event Action Revived;
+
+        /// <summary>The Spring Autumn Cicada is in a passive slot and awake.</summary>
+        public bool CicadaReady
+        {
+            get
+            {
+                if (State.Day < State.CicadaDay)
+                {
+                    return false;
+                }
+
+                for (var i = 0; i < State.Passive.Length && i < Stats.PassiveSlots; i++)
+                {
+                    var gu = FindGu(State.Passive[i]);
+
+                    if (gu != null && gu.Def == HighGu.Cicada)
+                    {
+                        return true;
+                    }
+                }
+
+                return false;
+            }
+        }
+
+        /// <summary>Days until the Cicada wakes (0: awake).</summary>
+        public int CicadaSleepLeft => Math.Max(0, State.CicadaDay - State.Day);
 
         /// <summary>The hero fell: a tenth of the stones is lost, and they wake whole at their lantern. The stones lost.</summary>
         public int Die()

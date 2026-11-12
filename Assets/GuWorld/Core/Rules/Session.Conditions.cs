@@ -167,6 +167,13 @@ namespace GuWorld.Core
                 return $"Нужно: {Clans.StandingName(Clans.StandingOf((int)need))} с «{Clans.Get(clan)?.Name ?? clan}»";
             }
 
+            if (kind == "standing" && rest.IndexOf('=') > 0 && Enum.TryParse(rest.Substring(rest.IndexOf('=') + 1), true, out Standing wanted))
+            {
+                var who = rest.Substring(0, rest.IndexOf('='));
+
+                return $"Нужно: {Clans.StandingName(wanted)} с «{Clans.Get(who)?.Name ?? who}»";
+            }
+
             if (kind == "item" && SplitComparison(rest, out var item, out _, out var count))
             {
                 return $"Нужно: {ItemBook.Get(item)?.Name ?? item} × {count}";
@@ -304,6 +311,10 @@ namespace GuWorld.Core
                     if (Part(1) == "pill")
                     {
                         LearnPill(Part(2));
+                    }
+                    else if (Part(1) == "move")
+                    {
+                        LearnMove(Part(2));
                     }
                     else if (Part(1) == "fusion" && !State.Recipes.Contains(Part(2)))
                     {

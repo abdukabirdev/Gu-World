@@ -598,7 +598,7 @@ namespace GuWorld.Core
 
             foreach (var entry in shop)
             {
-                if (entry.Chapter <= Chapter)
+                if (entry.Chapter <= Chapter && MeetsAll(entry.Needs))
                 {
                     shelf.Add(entry);
                 }

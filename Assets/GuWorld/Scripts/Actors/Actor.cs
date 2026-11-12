@@ -9,6 +9,7 @@ namespace GuWorld.Actors
     {
         public static bool Down(Key key) => Keyboard.current != null && Keyboard.current[key].wasPressedThisFrame;
         public static bool Held(Key key) => Keyboard.current != null && Keyboard.current[key].isPressed;
+        public static bool Shift => Held(Key.LeftShift) || Held(Key.RightShift);
         public static bool LeftDown => Mouse.current != null && Mouse.current.leftButton.wasPressedThisFrame;
         public static bool LeftHeld => Mouse.current != null && Mouse.current.leftButton.isPressed;
         public static bool RightDown => Mouse.current != null && Mouse.current.rightButton.wasPressedThisFrame;

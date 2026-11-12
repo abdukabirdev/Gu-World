@@ -47,8 +47,10 @@ namespace GuWorld.UI
         Text heroName, heroRank, stones, pills, questTitle, questStep, promptText, bossName, bossTitle, markText, bannerLabel, bannerTitle, effects;
         RectTransform promptRoot, bossRoot, questRoot, markRoot, targetMark, bannerRoot, toastRoot;
         CanvasGroup bannerGroup;
-        readonly Cell[] slotCells = new Cell[4];
-        readonly Text[] slotSeals = new Text[4];
+        readonly Cell[] slotCells = new Cell[6];
+        readonly Text[] slotSeals = new Text[6];
+        Cell moveCell;
+        Text moveSeal;
         readonly List<Floating> numbers = new List<Floating>();
         readonly List<OverBar> overBars = new List<OverBar>();
         readonly List<(Text text, float age)> toasts = new List<(Text, float)>();
@@ -109,12 +111,12 @@ namespace GuWorld.UI
 
             // The Gu in the slots.
             var slots = UiKit.Rect("Slots", stage);
-            slots.At(new Vector2(0.5f, 0), new Vector2(0, 64), new Vector2(430, 72));
+            slots.At(new Vector2(0.5f, 0), new Vector2(0, 64), new Vector2(680, 72));
             var slotRow = slots.Stack<HorizontalLayoutGroup>(14, null, TextAnchor.MiddleCenter);
             slotRow.childForceExpandWidth = false;
-            var keys = new[] { "Q", "E", "R", "F" };
+            var keys = new[] { "Q", "E", "R", "F", "Z", "C" };
 
-            for (var i = 0; i < 4; i++)
+            for (var i = 0; i < keys.Length; i++)
             {
                 var cell = UiKit.Cell(slots, 68);
                 cell.Size(68, 68, 0);
@@ -124,6 +126,14 @@ namespace GuWorld.UI
                 slotSeals[i] = UiKit.Zh("", cell.transform, 34, UiKit.Text, TextAnchor.MiddleCenter);
                 slotSeals[i].rectTransform.Fill();
             }
+
+            // The killer move on V (shown once one is known).
+            moveCell = UiKit.Cell(slots, 60);
+            moveCell.Size(60, 60, 0);
+            moveCell.Key.text = "V";
+            moveCell.Mark.enabled = false;
+            moveSeal = UiKit.Zh("", moveCell.transform, 30, UiKit.Gold, TextAnchor.MiddleCenter);
+            moveSeal.rectTransform.Fill();
 
             var pill = UiKit.Cell(slots, 52);
             pill.Size(52, 52, 0);
@@ -348,9 +358,11 @@ namespace GuWorld.UI
             pills.text = session.Count("heal_pill").ToString();
             effects.text = EffectsLine(session);
 
-            for (var i = 0; i < 4; i++)
+            for (var i = 0; i < slotCells.Length; i++)
             {
                 var cell = slotCells[i];
+                // Slots the rank has not opened yet are hidden past the fourth.
+                cell.gameObject.SetActive(i < 4 || i < stats.ActiveSlots);
                 var open = i < stats.ActiveSlots;
                 var gu = open ? session.ActiveGu(i) : null;
                 var def = gu != null ? GuBook.Get(gu.Def) : null;
@@ -361,6 +373,21 @@ namespace GuWorld.UI
                 var total = session.CooldownOf(i);
                 cell.SetRest(def != null && total > 0 ? session.CooldownLeft(i) / total : 0);
                 cell.SetRank(def != null ? def.Rank : 0);
+            }
+
+            // The killer move: its seal in its colour, greyed when it cannot be cast, its cooldown.
+            var move = session.SelectedMove();
+            moveCell.gameObject.SetActive(state.Moves.Count > 0);
+
+            if (state.Moves.Count > 0)
+            {
+                moveSeal.text = move != null ? move.Seal : "招";
+                var castable = move != null && session.WhyNoMove(move) == null;
+                moveSeal.color = move == null ? UiKit.Muted.A(0.4f) : castable ? UiKit.Hex(move.Colour) : UiKit.Muted;
+                moveCell.SetRim(move != null ? UiKit.Gold.A(castable ? 0.9f : 0.4f) : UiKit.Line);
+                var whole = move != null ? session.MoveCooldownOf(move) : 0;
+                moveCell.SetRest(whole > 0 ? session.MoveCooldownLeft(move) / whole : 0);
+                moveCell.SetRank(move != null ? move.Rank : 0);
             }
 
             promptRoot.gameObject.SetActive(Game.Prompt != null && Open == Page.None);
