@@ -1,0 +1,294 @@
+<meta charset="utf-8">
+<title>Генераторы GU World</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@500;600&family=Inter+Tight:wght@400;500;600&family=JetBrains+Mono:wght@400&display=swap">
+<style>
+/* Layout: a moonlit workshop — a rail of specimens on the left, the stage (3D) on the right, a ledger of numbers under it. One dark world, as the game's own interface. */
+:root {
+  --void: #0b0d12;
+  --panel: #12161e;
+  --line: #2a2f3a;
+  --ink: #d9d4c7;
+  --dim: #8c8a82;
+  --gold: #c9a45a;
+  --moon: #9fb4d6;
+  --display: "Cormorant Garamond", "Iowan Old Style", Georgia, serif;
+  --body: "Inter Tight", "Segoe UI", system-ui, sans-serif;
+  --mono: "JetBrains Mono", ui-monospace, Menlo, monospace;
+  color-scheme: dark;
+}
+html, body { height: 100%; }
+body { background: var(--void); color: var(--ink); font-family: var(--body); font-size: 14px; }
+.wrap { min-height: 100%; display: flex; flex-direction: column; gap: 14px; padding-block: 18px; padding-left: max(16px, env(safe-area-inset-left, 0px)); padding-right: max(16px, env(safe-area-inset-right, 0px)); box-sizing: border-box; }
+header { display: flex; flex-wrap: wrap; align-items: baseline; gap: 10px 24px; border-bottom: 1px solid var(--line); padding-bottom: 12px; }
+h1 { font-family: var(--display); font-weight: 600; font-size: 30px; letter-spacing: 0.02em; margin: 0; text-wrap: balance; }
+h1 em { color: var(--gold); font-style: normal; }
+.lede { color: var(--dim); max-width: 62ch; margin: 0; line-height: 1.5; }
+nav { display: flex; gap: 4px; margin-left: auto; }
+nav button { background: none; border: 1px solid transparent; color: var(--dim); font: 500 13px var(--body); letter-spacing: 0.08em; text-transform: uppercase; padding: 8px 14px; cursor: pointer; border-radius: 2px; }
+nav button[aria-selected="true"] { color: var(--gold); border-color: var(--gold); }
+nav button:focus-visible, .chip:focus-visible, .item:focus-visible, .ctl button:focus-visible { outline: 2px solid var(--moon); outline-offset: 2px; }
+.main { flex: 1; display: grid; grid-template-columns: minmax(240px, 300px) minmax(0, 1fr); gap: 16px; min-height: 0; }
+.rail { display: flex; flex-direction: column; gap: 10px; min-width: 0; }
+.chips { display: flex; flex-wrap: wrap; gap: 6px; }
+.chip { background: none; border: 1px solid var(--line); color: var(--ink); font: 500 12px var(--body); padding: 5px 10px; border-radius: 999px; cursor: pointer; }
+.chip[aria-pressed="true"] { border-color: var(--gold); color: var(--gold); }
+.list { display: flex; flex-direction: column; gap: 2px; overflow-y: auto; max-height: 62vh; border-top: 1px solid var(--line); padding-top: 6px; }
+.item { display: grid; grid-template-columns: 1fr auto; gap: 2px 10px; text-align: left; background: none; border: 0; border-left: 2px solid transparent; color: var(--ink); padding: 7px 10px; cursor: pointer; font: 13px var(--body); }
+.item small { grid-column: 1 / -1; color: var(--dim); font-size: 11.5px; }
+.item .n { font-family: var(--mono); font-size: 11.5px; color: var(--dim); font-variant-numeric: tabular-nums; }
+.item[aria-current="true"] { border-left-color: var(--gold); background: var(--panel); }
+.stage { position: relative; min-width: 0; display: flex; flex-direction: column; gap: 10px; }
+#view { width: 100%; aspect-ratio: 16 / 10; max-height: 66vh; background: radial-gradient(ellipse at 50% 30%, #1a2030, var(--void) 70%); border: 1px solid var(--line); border-radius: 2px; display: block; touch-action: none; }
+.ctl { display: flex; flex-wrap: wrap; gap: 6px 14px; align-items: center; }
+.ctl label { color: var(--dim); font-size: 12px; letter-spacing: 0.06em; text-transform: uppercase; }
+.ctl button { background: var(--panel); border: 1px solid var(--line); color: var(--ink); font: 500 12px var(--body); padding: 6px 10px; border-radius: 2px; cursor: pointer; }
+.ctl button[aria-pressed="true"] { border-color: var(--moon); color: var(--moon); }
+.ledger { display: grid; grid-template-columns: repeat(auto-fill, minmax(150px, 1fr)); gap: 8px 18px; border-top: 1px solid var(--line); padding-top: 10px; }
+.ledger div { display: flex; flex-direction: column; gap: 2px; min-width: 0; }
+.ledger span { color: var(--dim); font-size: 11px; letter-spacing: 0.08em; text-transform: uppercase; }
+.ledger b { font-family: var(--mono); font-weight: 400; font-size: 13px; font-variant-numeric: tabular-nums; overflow-wrap: anywhere; }
+.about { color: var(--ink); line-height: 1.5; max-width: 80ch; margin: 0; }
+.status { position: absolute; left: 12px; top: 10px; color: var(--dim); font: 12px var(--mono); pointer-events: none; }
+.biomes { display: flex; flex-direction: column; gap: 16px; }
+.biomes figure { margin: 0; display: flex; flex-direction: column; gap: 6px; }
+.biomes img { border: 1px solid var(--line); width: 100%; height: auto; }
+.biomes figcaption { color: var(--dim); font-size: 12.5px; line-height: 1.5; max-width: 80ch; }
+.table { overflow-x: auto; border: 1px solid var(--line); }
+table { border-collapse: collapse; width: 100%; font-size: 12.5px; }
+th, td { text-align: left; padding: 6px 10px; border-bottom: 1px solid var(--line); white-space: nowrap; }
+th { color: var(--gold); font-weight: 500; letter-spacing: 0.06em; text-transform: uppercase; font-size: 11px; }
+td.num { font-family: var(--mono); font-variant-numeric: tabular-nums; }
+.swatch { display: inline-block; width: 10px; height: 10px; border-radius: 2px; margin-right: 6px; vertical-align: -1px; }
+@media (max-width: 760px) { .main { grid-template-columns: minmax(0, 1fr); } .list { max-height: 30vh; } nav { margin-left: 0; } }
+@media (prefers-reduced-motion: reduce) { * { scroll-behavior: auto !important; } }
+</style>
+
+<div class="wrap">
+  <header>
+    <h1>Генераторы <em>GU World</em></h1>
+    <p class="lede">Каждое дерево и каждый житель здесь выращены кодом из семени и параметров, тем же кодом, что строит мир в игре. Вращайте мышью, колесо — приближение.</p>
+    <nav role="tablist">
+      <button role="tab" id="tab-trees" data-tab="trees">Деревья</button>
+      <button role="tab" id="tab-people" data-tab="people">Люди</button>
+      <button role="tab" id="tab-biomes" data-tab="biomes">Биомы</button>
+    </nav>
+  </header>
+
+  <section class="main" id="pane-3d">
+    <aside class="rail">
+      <div class="chips" id="chips"></div>
+      <div class="list" id="list" role="listbox" aria-label="Варианты"></div>
+    </aside>
+    <div class="stage">
+      <canvas id="view"></canvas>
+      <div class="status" id="status">загрузка…</div>
+      <div class="ctl" id="ctl"></div>
+      <p class="about" id="about"></p>
+      <div class="ledger" id="ledger"></div>
+    </div>
+  </section>
+
+  <section class="biomes" id="pane-biomes" hidden>
+    <figure>
+      <img src="biomes.png" alt="Участки каждого биома в 3D: земля, деревья библиотеки, подлесок" loading="lazy" width="960" height="1500">
+      <figcaption>Участок 150 × 150 м каждого биома: та же раскладка, те же варианты из библиотеки, тот же поворот по ветру и масштаб по росту, что в игре. В подписи — координаты, высота над морем и «величие» места (G): больше единицы — роща великанов.</figcaption>
+    </figure>
+    <figure>
+      <img src="biome-map.png" alt="Карта биомов мира 16 × 16 км и поле величия" loading="lazy" width="1280" height="640">
+      <figcaption>Слева — биомы на всей карте 16 × 16 км. Справа — поле величия поверх лесов: светлее — деревья выше и старше, тёмные пятна — луга и скалы.</figcaption>
+    </figure>
+    <div class="table">
+      <table id="biome-table"></table>
+    </div>
+  </section>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/three@0.147.0/build/three.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/three@0.147.0/examples/js/loaders/GLTFLoader.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/three@0.147.0/examples/js/controls/OrbitControls.js"></script>
+<script>
+const KINDS = { pine: 'Горная сосна', fir: 'Пихта', cypress: 'Кипарис', camphor: 'Камфорное дерево', maple: 'Клён', plum: 'Слива', willow: 'Ива', birch: 'Берёза', deadwood: 'Сухостой', ancient: 'Древнее дерево', bamboo: 'Бамбук' };
+const ROLES = { villager: 'житель', farmer: 'крестьянин', porter: 'носильщик', trader: 'торговец', merchant: 'купец', guard: 'страж', student: 'ученик', elder: 'старейшина', child: 'ребёнок', cook: 'повар', herbalist: 'травник', smith: 'кузнец', scribe: 'писарь', bandit: 'разбойник', gambler: 'игрок', judge: 'судья', watch: 'ночной дозор', keeper: 'хранитель' };
+const AGES = { Child: 'ребёнок', Teen: 'юный', Adult: 'взрослый', Elder: 'пожилой' };
+const CLANS = { gu_yue: 'Гу Юэ', bai: 'Бай', xiong: 'Сюн', none: 'без клана' };
+const BIOMES = [
+  ['Сосновый лес', '#2e5a30', 'сосна 78 %, пихта, камфора, сухостой', 2.6, 0.55, 0.6, 6, 0.6],
+  ['Пихтовый лес', '#163a2a', 'пихта 80 %, сосна, берёза, сухостой', 3.2, 0.6, 0.8, 4, 0.35],
+  ['Широколиственный', '#4e7a34', 'камфора 40 %, слива, клён, сосна, берёза', 2.3, 0.5, 0.45, 5, 0.55],
+  ['Кленовая роща', '#b0482a', 'клён 75 %, камфора, берёза', 2.4, 0.55, 0.5, 4, 0.4],
+  ['Бамбук', '#7ab04a', 'бамбук', 3.4, 0.6, 0.7, 5, 0.3],
+  ['Сухие склоны', '#7a6a5a', 'сухостой 65 %, сосна, берёза', 1.0, 0.4, 0.2, 8, 0.7],
+  ['Скалы', '#8a8884', 'редкие сосны, сухостой', 0.14, 0.25, 0, 8, 0.8],
+  ['Болото', '#5a6a4a', 'ива, сухостой; тростник', 0.5, 0.35, 0.1, 6, 0.7],
+  ['Берег', '#9aaa7a', 'ива 70 %, слива, берёза; тростник', 0.45, 0.55, 0.1, 4, 0.6],
+  ['Луг', '#8aa65a', 'одиночные сливы, сосны, камфоры', 0.24, 0.5, 0, 7, 0.8],
+];
+
+const $ = (id) => document.getElementById(id);
+const canvas = $('view');
+const renderer = new THREE.WebGLRenderer({ canvas, antialias: true });
+renderer.outputEncoding = THREE.sRGBEncoding;
+renderer.setPixelRatio(Math.min(2, window.devicePixelRatio || 1));
+const scene = new THREE.Scene();
+scene.background = new THREE.Color(0x0b0d12);
+scene.fog = new THREE.Fog(0x0b0d12, 60, 220);
+const camera = new THREE.PerspectiveCamera(35, 1.6, 0.05, 600);
+const controls = new THREE.OrbitControls(camera, canvas);
+controls.enableDamping = true;
+scene.add(new THREE.HemisphereLight(0xbfd0ff, 0x30281e, 0.75));
+const sun = new THREE.DirectionalLight(0xfff0d8, 1.25);
+sun.position.set(6, 12, 8);
+scene.add(sun);
+const ground = new THREE.Mesh(new THREE.CircleGeometry(80, 64), new THREE.MeshStandardMaterial({ color: 0x10140e, roughness: 1 }));
+ground.rotation.x = -Math.PI / 2;
+scene.add(ground);
+const grid = new THREE.PolarGridHelper(40, 8, 8, 64, 0x2a3326, 0x232a20);
+grid.position.y = 0.01;
+scene.add(grid);
+
+const loader = new THREE.GLTFLoader();
+let current = null, data = { trees: [], people: [] }, tab = 'trees', kind = 'pine', role = 'all', lod = 0, pose = 'rest', selected = null;
+
+function resize() {
+  const w = canvas.clientWidth, h = canvas.clientHeight;
+  if (canvas.width !== Math.floor(w * renderer.getPixelRatio()) || canvas.height !== Math.floor(h * renderer.getPixelRatio())) {
+    renderer.setSize(w, h, false);
+    camera.aspect = w / h;
+    camera.updateProjectionMatrix();
+  }
+}
+
+function frameObject(height, wide) {
+  const h = Math.max(1.8, height);
+  controls.target.set(0, h * 0.5, 0);
+  camera.position.set(h * 0.55 * (wide || 1), h * 0.62, h * 1.75 * (wide || 1));
+  camera.near = h * 0.01;
+  camera.far = h * 40;
+  camera.updateProjectionMatrix();
+  scene.fog.near = h * 3; scene.fog.far = h * 12;
+  controls.update();
+}
+
+function load(entry) {
+  selected = entry;
+  $('status').textContent = 'загрузка ' + entry.file + '…';
+  loader.load(entry.file, (gltf) => {
+    if (current) scene.remove(current);
+    current = gltf.scene;
+    current.traverse((o) => {
+      if (o.isMesh) {
+        o.material.side = THREE.DoubleSide;
+        o.material.roughness = 0.9;
+        o.material.metalness = 0;
+      }
+    });
+    scene.add(current);
+    applyLod();
+    applyPose();
+    frameObject(entry.height, tab === 'trees' ? 1 : 1);
+    $('status').textContent = '';
+  }, undefined, (err) => { $('status').textContent = 'не загрузилось: ' + entry.file; });
+  describe(entry);
+  for (const el of document.querySelectorAll('.item')) el.setAttribute('aria-current', el.dataset.file === entry.file ? 'true' : 'false');
+}
+
+function applyLod() {
+  if (!current || tab !== 'trees') return;
+  current.traverse((o) => { if (o.isMesh) o.visible = o.name === 'LOD' + lod || (o.parent && o.parent.name === 'LOD' + lod); });
+}
+
+const POSES = {
+  rest: {},
+  wave: { upperArm_L: [0, 0, 1.3], forearm_L: [-1.1, 0, 0], head: [0, -0.4, 0] },
+  step: { thigh_R: [-0.9, 0, 0], shin_R: [1.2, 0, 0], thigh_L: [0.35, 0, 0], upperArm_R: [0.5, 0, 0], upperArm_L: [-0.5, 0, 0] },
+  bow: { spine1: [0.25, 0, 0], spine2: [0.25, 0, 0], chest: [0.2, 0, 0], head: [0.3, 0, 0], upperArm_L: [-0.9, 0, 0.3], upperArm_R: [-0.9, 0, -0.3], forearm_L: [-1.3, 0, 0], forearm_R: [-1.3, 0, 0] },
+};
+
+function applyPose() {
+  if (!current || tab !== 'people') return;
+  current.traverse((o) => { if (o.isBone || (o.type === 'Object3D' && o.name)) o.rotation.set(0, 0, 0); });
+  const p = POSES[pose] || {};
+  current.traverse((o) => { if (p[o.name]) o.rotation.set(p[o.name][0], p[o.name][1], p[o.name][2]); });
+}
+
+const WORDS = [['robe', 'халат'], ['tunic', 'туника'], ['jacket', 'куртка'], ['vest', 'безрукавка'], ['trousers', 'штаны'], ['hair', 'волосы'], ['beard', 'борода'], ['hat', 'головной убор'], ['armour', 'доспех'], ['apron', 'фартук'], ['basket', 'корзина'], ['embroidered', 'с вышивкой'], ['patched', 'в заплатах'], ['striped', 'в полоску'], ['topknot', 'пучок на макушке'], ['twinbuns', 'два пучка'], ['ponytail', 'хвост'], ['braid', 'коса'], ['tied', 'завязанные'], ['balding', 'с залысиной'], ['bald', 'бритая голова'], ['bob', 'каре'], ['bun', 'узел'], ['long', 'длинные'], ['short', 'короткие'], ['stubble', 'щетина'], ['moustache', 'усы'], ['goatee', 'бородка'], ['straw', 'соломенная шляпа'], ['cap', 'шапочка'], ['crown', 'гуань'], ['headband', 'повязка'], ['scarf', 'платок'], ['helmet', 'шлем'], ['girth', 'полнота'], ['muscle', 'мышцы'], [' m,', ' м,']];
+function ru(text) { let t = text; for (const [en, r] of WORDS) t = t.replace(new RegExp('\\b' + en + '\\b', 'g'), r); return t; }
+
+function cell(label, value) { return `<div><span>${label}</span><b>${value}</b></div>`; }
+
+function describe(e) {
+  if (tab === 'trees') {
+    $('about').textContent = `${KINDS[e.kind] || e.kind}, семя ${e.seed}. Высота задана ${e.height} м, наклон ${e.lean}° по ветру, теснота ${e.crowding} (0 — на просторе, 1 — в чаще), возраст ${e.age}.`;
+    $('ledger').innerHTML = cell('Высота', e.height + ' м') + cell('Крона', 'R ' + e.crown + ' м') + cell('Наклон', e.lean + '°') + cell('Теснота', e.crowding) + cell('Возраст', e.age)
+      + cell('Треугольники', e.tris.map((t, i) => 'L' + i + ' ' + t.toLocaleString('ru')).join(' · '));
+  } else {
+    $('about').textContent = `${ROLES[e.role] || e.role}, ${e.sex === 'Female' ? 'женщина' : 'мужчина'}, ${AGES[e.age] || e.age}, клан ${CLANS[e.clan] || e.clan}. ${ru(e.about)}.`;
+    $('ledger').innerHTML = cell('Рост', e.height + ' м') + cell('Достаток', e.wealth) + cell('Семя', e.seed) + cell('Треугольники', e.tris.toLocaleString('ru')) + cell('Кости', '125 · скелет героя');
+  }
+}
+
+function controlsFor() {
+  const ctl = $('ctl');
+  if (tab === 'trees') {
+    ctl.innerHTML = '<label>Детализация</label>' + [0, 1, 2, 3].map((l) => `<button data-lod="${l}" aria-pressed="${l === lod}">L${l}${['  вблизи', '  средняя', '  дальняя', '  горизонт'][l]}</button>`).join('');
+    ctl.querySelectorAll('button').forEach((b) => b.onclick = () => { lod = +b.dataset.lod; controlsFor(); applyLod(); });
+  } else {
+    const names = { rest: 'покой', wave: 'взмах', step: 'шаг', bow: 'поклон' };
+    ctl.innerHTML = '<label>Поза через скин</label>' + Object.keys(POSES).map((p) => `<button data-pose="${p}" aria-pressed="${p === pose}">${names[p]}</button>`).join('');
+    ctl.querySelectorAll('button').forEach((b) => b.onclick = () => { pose = b.dataset.pose; controlsFor(); applyPose(); });
+  }
+}
+
+function chips() {
+  const c = $('chips');
+  if (tab === 'trees') {
+    const kinds = [...new Set(data.trees.map((t) => t.kind))];
+    c.innerHTML = kinds.map((k) => `<button class="chip" data-k="${k}" aria-pressed="${k === kind}">${KINDS[k] || k}</button>`).join('');
+    c.querySelectorAll('.chip').forEach((b) => b.onclick = () => { kind = b.dataset.k; chips(); list(true); });
+  } else {
+    const roles = ['all', ...new Set(data.people.map((p) => p.role))];
+    c.innerHTML = roles.map((r) => `<button class="chip" data-k="${r}" aria-pressed="${r === role}">${r === 'all' ? 'все' : ROLES[r] || r}</button>`).join('');
+    c.querySelectorAll('.chip').forEach((b) => b.onclick = () => { role = b.dataset.k; chips(); list(true); });
+  }
+}
+
+function list(pickFirst) {
+  const l = $('list');
+  const items = tab === 'trees' ? data.trees.filter((t) => t.kind === kind) : data.people.filter((p) => role === 'all' || p.role === role);
+  l.innerHTML = items.map((e) => tab === 'trees'
+    ? `<button class="item" role="option" data-file="${e.file}"><span>${KINDS[e.kind]} · семя ${e.seed}</span><span class="n">${e.height} м</span><small>наклон ${e.lean}°, теснота ${e.crowding}, возраст ${e.age}</small></button>`
+    : `<button class="item" role="option" data-file="${e.file}"><span>${ROLES[e.role] || e.role} · ${e.sex === 'Female' ? 'ж' : 'м'} · ${AGES[e.age]}</span><span class="n">${e.height} м</span><small>${CLANS[e.clan] || e.clan} · ${ru(e.about.split(';')[1] || '')}</small></button>`).join('');
+  l.querySelectorAll('.item').forEach((b) => b.onclick = () => load(items.find((e) => e.file === b.dataset.file)));
+  if (pickFirst && items.length) load(items[0]);
+}
+
+function show(next) {
+  tab = next;
+  document.querySelectorAll('nav button').forEach((b) => b.setAttribute('aria-selected', b.dataset.tab === tab ? 'true' : 'false'));
+  $('pane-3d').hidden = tab === 'biomes';
+  $('pane-biomes').hidden = tab !== 'biomes';
+  if (tab !== 'biomes') { chips(); list(true); controlsFor(); }
+  if (location.hash.slice(1) !== tab) history.replaceState(null, '', '#' + tab);
+}
+
+document.querySelectorAll('nav button').forEach((b) => b.onclick = () => show(b.dataset.tab));
+window.addEventListener('hashchange', () => { const h = location.hash.slice(1); if (['trees', 'people', 'biomes'].includes(h) && h !== tab) show(h); });
+
+$('biome-table').innerHTML = '<thead><tr><th>Биом</th><th>Деревья</th><th>Плотность /1000 м²</th><th>Рост в диапазоне</th><th>Теснота</th><th>Ветер, °</th><th>Пятнистость</th></tr></thead><tbody>'
+  + BIOMES.map((b) => `<tr><td><span class="swatch" style="background:${b[1]}"></span>${b[0]}</td><td>${b[2]}</td><td class="num">${b[3]}</td><td class="num">${b[4]}</td><td class="num">${b[5]}</td><td class="num">${b[6]}</td><td class="num">${b[7]}</td></tr>`).join('') + '</tbody>';
+
+Promise.all([fetch('trees.json').then((r) => r.json()), fetch('people.json').then((r) => r.json())]).then(([t, p]) => {
+  data.trees = t; data.people = p;
+  const h = location.hash.slice(1);
+  show(['trees', 'people', 'biomes'].includes(h) ? h : 'trees');
+}).catch(() => { $('status').textContent = 'не загрузились списки моделей'; });
+
+(function loop() {
+  requestAnimationFrame(loop);
+  resize();
+  controls.update();
+  renderer.render(scene, camera);
+})();
+</script>

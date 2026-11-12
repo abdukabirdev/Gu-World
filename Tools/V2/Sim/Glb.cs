@@ -79,7 +79,7 @@ static class Glb
             var n = mesh.VertexCount;
             var positions = new float[n * 3];
             var normals = new float[n * 3];
-            var colours = new float[n * 4];
+            var colours = new byte[n * 4];
             float minX = float.MaxValue, minY = float.MaxValue, minZ = float.MaxValue, maxX = float.MinValue, maxY = float.MinValue, maxZ = float.MinValue;
 
             for (var i = 0; i < n; i++)
@@ -99,25 +99,39 @@ static class Glb
 
                 for (var k = 0; k < 4; k++)
                 {
-                    colours[i * 4 + k] = k == 3 ? 1 : (float)Math.Pow(Math.Clamp(mesh.Colours[i * 4 + k], 0, 1), 2.2);
+                    // Linear, as glTF's vertex colours are; a byte each, normalised.
+                    colours[i * 4 + k] = (byte)Math.Round(255 * (k == 3 ? 1 : Math.Pow(Math.Clamp(mesh.Colours[i * 4 + k], 0, 1), 2.2)));
                 }
             }
 
             var indices = new List<byte>();
+            var small = n < 65536;
+
+            void Index(int i)
+            {
+                if (small)
+                {
+                    indices.AddRange(BitConverter.GetBytes((ushort)i));
+                }
+                else
+                {
+                    indices.AddRange(BitConverter.GetBytes((uint)i));
+                }
+            }
 
             for (var t = 0; t < mesh.Triangles.Count; t += 3)
             {
                 // Mirrored: the winding turns.
-                indices.AddRange(BitConverter.GetBytes((uint)mesh.Triangles[t]));
-                indices.AddRange(BitConverter.GetBytes((uint)mesh.Triangles[t + 2]));
-                indices.AddRange(BitConverter.GetBytes((uint)mesh.Triangles[t + 1]));
+                Index(mesh.Triangles[t]);
+                Index(mesh.Triangles[t + 2]);
+                Index(mesh.Triangles[t + 1]);
             }
 
             var inv = System.Globalization.CultureInfo.InvariantCulture;
             var pa = Accessor(View(Floats(positions), 34962), 5126, n, "VEC3", string.Format(inv, ",\"min\":[{0},{1},{2}],\"max\":[{3},{4},{5}]", minX, minY, minZ, maxX, maxY, maxZ));
             var na = Accessor(View(Floats(normals), 34962), 5126, n, "VEC3");
-            var ca = Accessor(View(Floats(colours), 34962), 5126, n, "VEC4");
-            var ia = Accessor(View(indices.ToArray(), 34963), 5125, mesh.Triangles.Count, "SCALAR");
+            var ca = Accessor(View(colours, 34962), 5121, n, "VEC4", ",\"normalized\":true");
+            var ia = Accessor(View(indices.ToArray(), 34963), small ? 5123 : 5125, mesh.Triangles.Count, "SCALAR");
             var attributes = $"\"POSITION\":{pa},\"NORMAL\":{na},\"COLOR_0\":{ca}";
 
             if (part.Skin != null)
