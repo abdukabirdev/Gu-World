@@ -39,6 +39,19 @@ namespace GuWorld.Core
                 Hunts = new[] { ("rogue_master", 2, 3), ("bandit", 3, 6), ("black_tail_thug", 2, 5), ("marsh_snake", 3, 6), ("centipede", 2, 3), ("marsh_toad", 3, 5) },
                 Gathers = new[] { ("bitter_root", 3, 6), ("red_cap", 2, 4), ("snake_gall", 2, 4), ("ginseng", 1, 3), ("spider_silk", 2, 4) },
             },
+            new BoardDef
+            {
+                Settlement = "gu_yue", Clan = "gu_yue",
+                Hunts = new[] { ("wolf", 4, 8), ("fox", 4, 8), ("wild_boar", 3, 6), ("bandit", 2, 5), ("storm_wolf", 2, 4) },
+                Gathers = new[] { ("moon_orchid", 3, 6), ("bitter_root", 3, 6), ("wolf_pelt", 2, 4), ("ginseng", 1, 2) },
+            },
+            // The masters' board in the Gu Yue town: the wild lands' beasts, for those of the fourth rank.
+            new BoardDef
+            {
+                Settlement = "gu_yue_masters", Clan = "gu_yue",
+                Hunts = new[] { ("frost_wolf", 3, 6), ("thunder_roc", 2, 4), ("jade_python", 2, 3), ("bone_soldier", 3, 6), ("fire_ape", 2, 4), ("lake_serpent", 2, 4), ("ice_bear", 1, 3) },
+                Gathers = new[] { ("frost_lotus", 3, 6), ("spark_moss", 3, 6), ("king_core", 1, 2), ("storm_core", 3, 5) },
+            },
         };
 
         public static BoardDef Board(string settlement) => Array.Find(Boards, b => b.Settlement == settlement);

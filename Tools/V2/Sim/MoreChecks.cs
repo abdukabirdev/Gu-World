@@ -228,7 +228,7 @@ static partial class Program
 
         foreach (var board in Session.Boards)
         {
-            Check(Regions.Settlement(board.Settlement) != null && Clans.Get(board.Clan) != null, $"board {board.Settlement}");
+            Check(Regions.Settlement(board.Settlement.Replace("_masters", "")) != null && Clans.Get(board.Clan) != null, $"board {board.Settlement}");
             Check(board.Hunts.All(h => Bestiary.Get(h.enemy) != null && h.min <= h.max) && board.Gathers.All(g => ItemBook.Get(g.item) != null && g.min <= g.max), $"board {board.Settlement}: errands");
             Check(Atlas.AllThings.Any(t => t.Kind == ThingKind.Board && t.Content == board.Settlement), $"board {board.Settlement} stands somewhere");
         }

@@ -86,6 +86,8 @@ namespace GuWorld.Core
                 new ThingDef { Id = "furnace_trade", Name = "Котёл алхимика", Kind = ThingKind.Furnace, Home = "trade_post", Role = "inn", At = Regions.Settlement("trade_post").At, Model = "prop_bronze_ding" },
                 new ThingDef { Id = "board_bai", Name = "Доска поручений Бай", Kind = ThingKind.Board, Home = "bai_village", Role = "hall", At = Regions.Settlement("bai_village").At, Content = "bai_village" },
                 new ThingDef { Id = "board_xiong", Name = "Доска поручений Сюн", Kind = ThingKind.Board, Home = "xiong_village", Role = "hall", At = Regions.Settlement("xiong_village").At, Content = "xiong_village" },
+                new ThingDef { Id = "board_gu_yue", Name = "Доска поручений Гу Юэ", Kind = ThingKind.Board, Home = "gu_yue", Role = "plaza", At = Regions.Settlement("gu_yue").At, Content = "gu_yue" },
+                new ThingDef { Id = "board_gu_yue_masters", Name = "Доска мастеров", Kind = ThingKind.Board, Home = "gu_yue", Role = "hall", At = Regions.Settlement("gu_yue").At, Content = "gu_yue_masters", Needs = "rank>=4", Locked = "Поручения для мастеров четвёртого ранга." },
                 new ThingDef { Id = "board_trade", Name = "Доска на заставе", Kind = ThingKind.Board, Home = "trade_post", Role = "plaza", At = Regions.Settlement("trade_post").At, Content = "trade_post" },
                 new ThingDef { Id = "shrine_peak", Name = "Святилище вершины", Kind = ThingKind.Shrine, At = P("peak", 0, 0.2f), Content = "blessing_peak", Model = "prop_ancestral_altar" },
                 new ThingDef { Id = "shrine_tree", Name = "Корни Великого древа", Kind = ThingKind.Shrine, At = P("great_tree", 0, 0.45f), Content = "blessing_tree" },
