@@ -95,6 +95,8 @@ namespace GuWorld.Core
             State.Effects = State.Effects ?? new List<Effect>();
             State.Prayed = State.Prayed ?? new List<string>();
             State.Moves = State.Moves ?? new List<string>();
+            // A game stopped inside the immortal aperture: its loans go back.
+            DropBorrowed();
             State.Move = State.Move ?? "";
             State.Version = Math.Max(State.Version, 2);
         }
@@ -261,6 +263,7 @@ namespace GuWorld.Core
             }
 
             TickMoves(dt);
+            TickSandbox();
 
             if (cooldowns.Count > 0)
             {
@@ -516,7 +519,7 @@ namespace GuWorld.Core
             }
 
             var damage = raw * Stats.DamageTaken * (shieldTime > 0 ? 1 - shieldValue : 1) * DifficultyRules.DamageTaken(State.Settings.Difficulty);
-            State.Health = Math.Max(0, State.Health - damage);
+            State.Health = Math.Max(InSandbox && SandboxUndying ? 1 : 0, State.Health - damage);
 
             if (State.Health <= 0 && CicadaReady)
             {
@@ -603,7 +606,7 @@ namespace GuWorld.Core
 
         public void GainInsight(float amount)
         {
-            if (amount <= 0)
+            if (amount <= 0 || InSandbox)
             {
                 return;
             }

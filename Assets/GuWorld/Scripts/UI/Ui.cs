@@ -16,7 +16,7 @@ namespace GuWorld.UI
     /// </summary>
     public partial class Ui : MonoBehaviour
     {
-        public enum Page { None, Title, Loading, Talk, Aperture, Bag, Journal, Map, Shop, Gamble, Board, Fusion, Spring, Pause, Help, Death, Ending, Choice, Dialogue, Alchemy, Bounties, Codex, Clans, Travel, Inn, Settings, Moves }
+        public enum Page { None, Title, Loading, Talk, Aperture, Bag, Journal, Map, Shop, Gamble, Board, Fusion, Spring, Pause, Help, Death, Ending, Choice, Dialogue, Alchemy, Bounties, Codex, Clans, Travel, Inn, Settings, Moves, Sandbox }
 
         public Page Open { get; private set; } = Page.Title;
 
@@ -106,6 +106,7 @@ namespace GuWorld.UI
                 case Page.Bounties: BountyPage(); break;
                 case Page.Codex: CodexPage(); break;
                 case Page.Moves: MovesPage(); break;
+                case Page.Sandbox: SandboxPage(); break;
                 case Page.Clans: ClansPage(); break;
                 case Page.Travel: TravelPage(); break;
                 case Page.Inn: InnPage(); break;

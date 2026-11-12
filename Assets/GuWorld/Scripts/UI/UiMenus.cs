@@ -97,6 +97,9 @@ namespace GuWorld.UI
             var keys = middle.gameObject.AddComponent<MenuKeys>();
             keys.Add(UiKit.Entry("Продолжить", null, middle, Close).Centre());
             keys.Add(UiKit.Entry("Управление", null, middle, () => Show(Page.Help)).Centre());
+            keys.Add(World.Aperture.Inside
+                ? UiKit.Entry("Покинуть апертуру", "Всё вернётся, как было", middle, () => { Close(); World.Aperture.Leave(); }).Centre()
+                : UiKit.Entry("Апертура бессмертного", "Полигон: любые Гу, ранги и приёмы, ничего не считается", middle, () => { Close(); World.Aperture.Enter(); }).Centre());
             keys.Add(UiKit.Entry("Настройки игры", $"{DifficultyRules.Name(S.State.Settings.Difficulty)} · голод Гу: {(S.State.Settings.Hunger == HungerRule.Off ? "нет" : S.State.Settings.Hunger == HungerRule.Soft ? "мягкий" : "канон")}", middle, () => Show(Page.Settings)).Centre());
             keys.Add(UiKit.Entry($"Качество: {Quality.Names[Quality.Level]}", "Деревья и модель героя сменятся при следующем входе в игру", middle, () =>
             {
@@ -123,7 +126,7 @@ namespace GuWorld.UI
             {
                 ("W A S D", "Идти"), ("Shift", "Бежать быстрее (тратит силы)"), ("Мышь", "Смотреть"), ("Колесо", "Ближе и дальше"),
                 ("Пробел", "Прыжок (через кольца молний)"), ("ПКМ / Alt", "Перекат: в нём вас не задеть"), ("ЛКМ", "Удар ладонью, три подряд"),
-                ("Q E R F Z C", "Гу в слотах"), ("V · Shift V", "Убийственный приём · следующий"), ("Tab / СКМ", "Держать цель"), ("H", "Пилюля заживления"), ("G", "Впитать первобытный камень"), ("T", "Говорить, взять, открыть"),
+                ("Q E R F Z C", "Гу в слотах"), ("V · X", "Убийственный приём · следующий"), ("Tab / СКМ", "Держать цель"), ("H", "Пилюля заживления"), ("G", "Впитать первобытный камень"), ("T", "Говорить, взять, открыть"),
             })
             {
                 Fact(left, what, key, UiKit.GoldText);

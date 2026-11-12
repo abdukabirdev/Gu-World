@@ -19,7 +19,7 @@ namespace GuWorld.UI
             var state = session.State;
             var ready = session.ReadyMoves();
             var body = Frame("招", "Убийственные приёмы", $"Постигнуто {state.Moves.Count} из {KillerMoves.All.Length} · готово сейчас {ready.Count}", true, null, null,
-                new[] { ("V", "Приём"), ("Shift V", "Следующий"), ("Q E", "Страницы"), ("Esc", "Закрыть") });
+                new[] { ("V", "Приём"), ("X", "Следующий"), ("Q E", "Страницы"), ("Esc", "Закрыть") });
 
             var left = Column(body, 0, 0.42f, 6);
             UiKit.Lbl($"Прозрение · {(int)state.Insight}", left, 11, UiKit.LabelGold).Size(18);
@@ -112,6 +112,13 @@ namespace GuWorld.UI
             }
 
             Gap(column, 12);
+
+            // In the immortal aperture any move can be tried at once.
+            if (session.InSandbox)
+            {
+                var trial = move.Id;
+                UiKit.HexButton("Испытать: одолжить Гу и вставить", column, () => { session.SandboxTryMove(trial); Redraw(); }, UiKit.HexKind.Main, 12, 42);
+            }
 
             if (known)
             {

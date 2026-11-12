@@ -141,7 +141,8 @@ namespace GuWorld
 
         public static void Save()
         {
-            if (AutoTest.On || Session == null || !Playing || Session.Dead)
+            // Nothing of the immortal aperture is kept: the save waits until the hero is back.
+            if (AutoTest.On || Session == null || !Playing || Session.Dead || Session.InSandbox)
             {
                 return;
             }
@@ -407,6 +408,12 @@ namespace GuWorld
                     Prompt = thing.Verb + " · " + thing.Def.Name;
                 }
             }
+            // The altar of the immortal aperture.
+            if (World.Aperture.Prompt != null)
+            {
+                nearby = World.Aperture.Instance;
+                Prompt = World.Aperture.Prompt;
+            }
         }
 
         public static void Interact()
@@ -420,6 +427,10 @@ namespace GuWorld
             else if (Instance.nearby is Thing thing)
             {
                 thing.Use();
+            }
+            else if (Instance.nearby is World.Aperture)
+            {
+                Ui.Show(UI.Ui.Page.Sandbox);
             }
         }
 

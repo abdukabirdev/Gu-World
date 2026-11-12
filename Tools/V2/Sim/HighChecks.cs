@@ -211,6 +211,43 @@ static partial class Program
         Check(t.TwinsOf(blade).Count == 1 && t.FeedTwin(blade.Uid) && blade.MasteryXp == xp + gain && t.FindGu(twin.Uid) == null, "a Gu takes in its twin as mastery");
         Check(!t.FeedTwin(blade.Uid), "no twin left to take in");
 
+        // ------------------------------------------------------------------ The immortal aperture
+
+        var a = new Session(Session.NewGame("Полигон"), 21);
+        var own = a.AddGu(a.MakeGu("moonlight", 0, true), true);
+        a.Equip(own.Uid, false, 0);
+        var stepBefore = a.State.Step;
+        var guBefore = a.State.Gu.Count;
+        var killsBefore = a.State.Kills;
+        var insightBefore = a.State.Insight;
+        a.EnterSandbox();
+        Check(a.InSandbox, "the hero is in the aperture");
+        a.SandboxStep(16);
+        Check(a.Rank == 5 && a.Stats.ActiveSlots == 6, "in the aperture the hero can be of the fifth rank");
+        var lent = a.SandboxGive("full_moon", 3);
+        Check(lent != null && lent.Borrowed && lent.Quality == 3 && a.IsSlotted(lent.Uid), "a Gu of the book is lent, at any quality, and slotted");
+        Check(a.SandboxTryMove("moonfall") && a.SelectedMove()?.Id == "moonfall", "a killer move can be tried at once (its Gu lent and slotted)");
+        var cast2 = a.CastMove(KillerMoves.Get("moonfall"));
+        Check(cast2 != null && a.State.Essence >= a.Stats.MaxEssence - 0.01f || cast2 != null, "a move cast in the aperture");
+        a.Tick(0.1f);
+        Check(a.State.Essence >= a.Stats.MaxEssence - 0.01f, "essence without end in the aperture");
+        a.Killed("wolf");
+        a.GainInsight(500);
+        Check(a.State.Kills == killsBefore && Math.Abs(a.State.Insight - insightBefore) < 0.01f, "nothing in the aperture counts");
+        a.TakeDamage(1e6f);
+        Check(!a.Dead, "no death in the aperture");
+        a.LeaveSandbox();
+        Check(!a.InSandbox && a.State.Step == stepBefore && a.State.Gu.Count == guBefore && a.State.Gu.TrueForAll(g => !g.Borrowed), "leaving gives everything back and takes the loans");
+        Check(a.ActiveGu(0) == own && !a.KnowsMove("moonfall"), "the slots and the moves as they were");
+
+        // A game saved by mistake inside the aperture loads without its loans.
+        var b2 = new Session(Session.NewGame("Сбой"), 22);
+        b2.EnterSandbox();
+        b2.SandboxGive("heaven_ice", 1);
+        var copy = System.Text.Json.JsonSerializer.Deserialize<SaveData>(System.Text.Json.JsonSerializer.Serialize(b2.State, new System.Text.Json.JsonSerializerOptions { IncludeFields = true }), new System.Text.Json.JsonSerializerOptions { IncludeFields = true });
+        var reloaded = new Session(copy, 23);
+        Check(!reloaded.State.Gu.Exists(g => g.Borrowed), "a save made inside the aperture loads without the loans");
+
         notes.Add($"high: {HighGu.All.Length} Gu of ranks 4–5, {HighGu.Recipes.Length} fusions, {KillerMoves.All.Length} killer moves");
     }
 }

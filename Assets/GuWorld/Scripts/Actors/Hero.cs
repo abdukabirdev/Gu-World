@@ -345,6 +345,8 @@ namespace GuWorld.Actors
             else if (Keys.Down(Key.C)) { TryCast(5); }
             // A killer move of the Gu slotted together.
             else if (Keys.Down(Key.V)) { TryKillerMove(); }
+            // The next killer move ready.
+            else if (Keys.Down(Key.X)) { NextKillerMove(); }
 
             if (Keys.Down(Key.H))
             {
@@ -592,20 +594,18 @@ namespace GuWorld.Actors
             }
         }
 
+        void NextKillerMove()
+        {
+            var next = Session.NextMove();
+            Note(next != null ? $"Приём: {next.Name}" : "Нет готовых приёмов: постигайте их в окне приёмов (U)");
+        }
+
         /// <summary>
-        /// The killer move on V (Shift + V: the next one ready). Cast like a Gu's skill, but louder and
+        /// The killer move on V (X: the next one ready). Cast like a Gu's skill, but louder and
         /// brighter: the core Gu's sound and a gong over it, a ring of the move's colour, its name shown.
         /// </summary>
         void TryKillerMove()
         {
-            if (Keys.Shift)
-            {
-                var next = Session.NextMove();
-                Note(next != null ? $"Приём: {next.Name}" : "Нет готовых приёмов: постигайте их в окне Гу");
-
-                return;
-            }
-
             var move = Session.SelectedMove();
             var why = Session.WhyNoMove(move);
 

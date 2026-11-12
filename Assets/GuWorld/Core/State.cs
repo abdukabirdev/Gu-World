@@ -31,6 +31,8 @@ namespace GuWorld.Core
         public string Name = "";
         /// <summary>Tempering's failures so far at this quality: each makes the next try surer.</summary>
         public int Tempered;
+        /// <summary>Lent in the immortal aperture: gone when the hero leaves it.</summary>
+        public bool Borrowed;
     }
 
     [Serializable]

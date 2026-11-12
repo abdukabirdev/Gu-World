@@ -647,7 +647,8 @@ namespace GuWorld.Core
         {
             var def = Bestiary.Get(enemyId);
 
-            if (def == null)
+            // Nothing in the immortal aperture counts.
+            if (def == null || InSandbox)
             {
                 return new Loot();
             }
