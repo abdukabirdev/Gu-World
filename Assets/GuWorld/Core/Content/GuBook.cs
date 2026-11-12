@@ -160,8 +160,10 @@ namespace GuWorld.Core
             return id != null && byId.TryGetValue(id, out var found) ? found : null;
         }
 
-        public static readonly string[] QualityNames = { "обычный", "редкий", "отменный" };
-        public static readonly int[] QualityColours = { 0xC9D3D5, 0x6FB8FF, 0xE8C98A };
+        public static readonly string[] QualityNames = { "обычный", "редкий", "отменный", "совершенный" };
+        /// <summary>The highest quality: wild Gu and fusions come up to superb (2), only tempering reaches perfect (3).</summary>
+        public const int MaxQuality = 3;
+        public static readonly int[] QualityColours = { 0xC9D3D5, 0x6FB8FF, 0xE8C98A, 0xFF9A5A };
         public static readonly string[] RankNumerals = { "", "I", "II", "III", "IV", "V" };
 
         public static string PathName(GuPath path)

@@ -161,6 +161,10 @@ namespace GuWorld.Core
                 case "stones": return State.Stones;
                 case "step": return State.Step;
                 case "deaths": return State.Deaths;
+                case "moves": return State.Moves.Count;
+                case "moves_cast": return State.MovesCast;
+                case "perfect": return State.Gu.FindAll(g => g.Quality >= GuBook.MaxQuality).Count;
+                case "revived": return State.CicadaDay > 0 ? 1 : 0;
                 default: return 0;
             }
         }

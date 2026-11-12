@@ -264,6 +264,7 @@ namespace GuWorld.Core
             new ShopEntry { Item = "stone_dust", Price = 3 },
             new ShopEntry { Item = "ember_coal", Price = 6 },
             new ShopEntry { Item = "iron_pill", Price = 38, Chapter = 3 },
+            new ShopEntry { Item = "jade_shard", Price = 30, Chapter = 2 },
             new ShopEntry { Item = "scroll_earth_spikes", Price = 110, Chapter = 3 },
             new ShopEntry { Item = "scroll_golden_bell", Price = 1300, Needs = new[] { "rank>=4", "standing:xiong=friendly" } },
         };
@@ -321,6 +322,7 @@ namespace GuWorld.Core
             new ShopEntry { Item = "scroll_crimson_flame", Price = 1200, Needs = new[] { "rank>=4" } },
             new ShopEntry { Item = "scroll_immortal_shadow", Price = 1400, Needs = new[] { "rank>=4", "standing:bandit=friendly" } },
             new ShopEntry { Item = "rock_2", Price = 80 },
+            new ShopEntry { Item = "blood_crystal", Price = 95, Chapter = 3 },
         };
 
         /// <summary>A shelf by its id ("" or "valley": Baoshan's).</summary>

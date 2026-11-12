@@ -51,6 +51,9 @@ namespace GuWorld.Core.Audio
             ["killer_move"] = Killer,
             // The Cicada turning time back: a falling then rising shimmer, like a breath drawn in.
             ["revive"] = Revive,
+            // Tempering: a bright ring of jade under the hammer; a failed one cracks.
+            ["temper"] = v => Struck(Modes.Jade, 1150 + 50 * v, 1.4f, v, 0.25f).Room(0.5f, 0.3f, 0.5f, 0.6f).Normalise(0.7f),
+            ["temper_fail"] = v => Crack(v + 7).Normalise(0.6f),
 
             // ---------------------------------------------------------------- Steps
             ["step_grass"] = v => Step(v, 1800, 0.6f, 0.07f),

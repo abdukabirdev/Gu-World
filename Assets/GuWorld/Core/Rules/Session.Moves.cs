@@ -387,6 +387,12 @@ namespace GuWorld.Core
             }
 
             State.MovesCast++;
+
+            if (State.MovesCast % 10 == 0)
+            {
+                Achieve();
+            }
+
             Touch();
 
             return cast;

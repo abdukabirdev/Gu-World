@@ -177,26 +177,37 @@ namespace GuWorld.Core
         {
             var def = GuBook.Get(defId);
             var gu = new GuInstance { Def = defId, Quality = Math.Max(0, Math.Min(2, quality)), Refined = refined };
-            var pool = def.Kind == GuKind.Passive
-                ? new List<AffixKind> { AffixKind.Sturdy, AffixKind.Wellspring }
-                : def.Skill.Power > 0 && def.Skill.Shape != SkillShape.Heal
-                    ? new List<AffixKind> { AffixKind.Sharp, AffixKind.Thrifty, AffixKind.Quick, AffixKind.Far, AffixKind.Leech, AffixKind.Sturdy, AffixKind.Wellspring }
-                    : new List<AffixKind> { AffixKind.Thrifty, AffixKind.Quick, AffixKind.Sturdy, AffixKind.Wellspring };
+            var pool = AffixPool(def);
 
             for (var i = 0; i < gu.Quality && pool.Count > 0; i++)
             {
                 var kind = pool[Random.Next(pool.Count)];
                 pool.Remove(kind);
-                var roll = (float)Random.NextDouble();
-                var value = kind == AffixKind.Sturdy ? (float)Math.Round(10 + 15 * roll)
-                    : kind == AffixKind.Far ? 0.10f + 0.15f * roll
-                    : kind == AffixKind.Leech ? 0.03f + 0.03f * roll
-                    : kind == AffixKind.Wellspring ? 0.05f + 0.10f * roll
-                    : 0.08f + 0.10f * roll;
-                gu.Affixes.Add(new Affix { Kind = kind, Value = (float)Math.Round(value, 2) });
+                gu.Affixes.Add(RollAffix(kind, 1));
             }
 
             return gu;
+        }
+
+        /// <summary>The affixes a kind of Gu can carry.</summary>
+        public static List<AffixKind> AffixPool(GuDef def) =>
+            def.Kind == GuKind.Passive
+                ? new List<AffixKind> { AffixKind.Sturdy, AffixKind.Wellspring }
+                : def.Skill.Power > 0 && def.Skill.Shape != SkillShape.Heal
+                    ? new List<AffixKind> { AffixKind.Sharp, AffixKind.Thrifty, AffixKind.Quick, AffixKind.Far, AffixKind.Leech, AffixKind.Sturdy, AffixKind.Wellspring }
+                    : new List<AffixKind> { AffixKind.Thrifty, AffixKind.Quick, AffixKind.Sturdy, AffixKind.Wellspring };
+
+        /// <summary>An affix of a kind with its value rolled (`scale` above 1 for a tempered Gu's, which roll higher).</summary>
+        Affix RollAffix(AffixKind kind, float scale)
+        {
+            var roll = Math.Min(1, (float)Random.NextDouble() * scale);
+            var value = kind == AffixKind.Sturdy ? (float)Math.Round(10 + 15 * roll)
+                : kind == AffixKind.Far ? 0.10f + 0.15f * roll
+                : kind == AffixKind.Leech ? 0.03f + 0.03f * roll
+                : kind == AffixKind.Wellspring ? 0.05f + 0.10f * roll
+                : 0.08f + 0.10f * roll;
+
+            return new Affix { Kind = kind, Value = (float)Math.Round(value, 2) };
         }
 
         public GuInstance AddGu(GuInstance gu, bool quiet = false)

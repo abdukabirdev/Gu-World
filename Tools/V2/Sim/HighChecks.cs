@@ -176,6 +176,41 @@ static partial class Program
         c.NewDay();
         Check(c.CicadaReady, "after three days it is awake again");
 
+        // ------------------------------------------------------------------ Tempering
+
+        var t = new Session(Session.NewGame("Кузнец"), 12);
+        var blade = t.AddGu(t.MakeGu("moonglow", 0, true), true);
+        Check(t.WhyNoTemper(blade) != null, "tempering takes its materials");
+        t.State.Stones = 100000;
+        t.AddItem("jade_shard", 200, true);
+        t.AddItem("blood_crystal", 200, true);
+        t.AddItem("king_core", 200, true);
+        var tries = 0;
+
+        while (blade.Quality < GuBook.MaxQuality && tries < 60)
+        {
+            var was = blade.Quality;
+            var result = t.Temper(blade.Uid);
+            tries++;
+            Check(result.Tried, "a tempering is tried when it can be");
+            Check(result.Held ? blade.Quality == was + 1 && blade.Tempered == 0 : blade.Quality == was && blade.Tempered > 0, "a tempering holds (a quality up) or is remembered");
+        }
+
+        Check(blade.Quality == GuBook.MaxQuality && blade.Affixes.Count == 3, "tempered to perfect, with an affix a quality");
+        Check(blade.Affixes.Select(a => a.Kind).Distinct().Count() == blade.Affixes.Count, "no affix twice");
+        Check(t.WhyNoTemper(blade) == "Совершеннее не бывает", "perfect is the top");
+        Check(t.TemperCostOf(t.MakeGu("moonglow", 0, true)).Chance < t.TemperCostOf(new GuInstance { Def = "moonglow", Tempered = 3 }).Chance, "each failure makes the next tempering surer");
+
+        var kinds = blade.Affixes.Select(a => a.Kind).ToList();
+        var made = t.Reforge(blade.Uid, 0);
+        Check(made != null && blade.Affixes[0] == made && blade.Affixes.Select(a => a.Kind).Distinct().Count() == 3, "a reforged affix stays unique");
+
+        var twin = t.AddGu(t.MakeGu("moonglow", 2, true), true);
+        var xp = blade.MasteryXp;
+        var gain = Session.TwinMastery(twin);
+        Check(t.TwinsOf(blade).Count == 1 && t.FeedTwin(blade.Uid) && blade.MasteryXp == xp + gain && t.FindGu(twin.Uid) == null, "a Gu takes in its twin as mastery");
+        Check(!t.FeedTwin(blade.Uid), "no twin left to take in");
+
         notes.Add($"high: {HighGu.All.Length} Gu of ranks 4–5, {HighGu.Recipes.Length} fusions, {KillerMoves.All.Length} killer moves");
     }
 }

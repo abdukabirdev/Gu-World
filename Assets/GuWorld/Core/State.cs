@@ -29,6 +29,8 @@ namespace GuWorld.Core
         public int Hunger;
         /// <summary>A name the hero gave it, or "".</summary>
         public string Name = "";
+        /// <summary>Tempering's failures so far at this quality: each makes the next try surer.</summary>
+        public int Tempered;
     }
 
     [Serializable]

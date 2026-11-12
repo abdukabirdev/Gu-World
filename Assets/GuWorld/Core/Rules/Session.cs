@@ -526,6 +526,7 @@ namespace GuWorld.Core
                 Restore();
                 Say("Цикада Весны и Осени повернула время вспять. Она уснёт на три дня.");
                 Revived?.Invoke();
+                Achieve();
                 Changed?.Invoke();
             }
 

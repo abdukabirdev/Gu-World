@@ -120,7 +120,11 @@ namespace GuWorld.UI
             // The one chosen.
             var right = Column(body, 0.67f, 1, 6);
 
-            if (picked != null)
+            if (picked != null && temperGu == picked.Uid)
+            {
+                TemperPanel(right, picked);
+            }
+            else if (picked != null)
             {
                 GuDetail(right, picked, true);
             }
@@ -260,16 +264,102 @@ namespace GuWorld.UI
                 }
             }
 
+            var actions = UiKit.Rect("Actions", column);
+            actions.Stack<HorizontalLayoutGroup>(8, null, TextAnchor.MiddleLeft).childForceExpandWidth = false;
+            actions.Size(46);
+
             if (session.IsSlotted(gu.Uid))
             {
                 var uid = gu.Uid;
-                UiKit.HexButton("Снять", column, () =>
+                UiKit.HexButton("Снять", actions, () =>
                 {
                     session.Unslot(uid);
                     session.RefreshQuests();
                     Redraw();
-                }, UiKit.HexKind.Ghost, 13, 46);
+                }, UiKit.HexKind.Ghost, 13, 46).Size(46, 120, 0);
             }
+
+            var forge = gu.Uid;
+            UiKit.HexButton("Закалка…", actions, () => { temperGu = forge; Redraw(); }, UiKit.HexKind.Ghost, 13, 46).Size(46, 150, 0);
+        }
+
+        int temperGu;
+
+        /// <summary>Tempering a Gu up a quality, reforging its affixes, feeding it a twin.</summary>
+        void TemperPanel(RectTransform column, GuInstance gu)
+        {
+            var session = S;
+            var def = GuBook.Get(gu.Def);
+            var uid = gu.Uid;
+            var head = UiKit.Rect("Head", column);
+            head.Size(84);
+            var seal = UiKit.Zh(def.Seal, head, 64, UiKit.Hex(def.Colour), TextAnchor.MiddleLeft);
+            seal.rectTransform.Place(Vector2.zero, new Vector2(0, 1), 0, 0, -80, 0);
+            var name = UiKit.Disp(def.Name, head, 26, QualityColour(gu.Quality));
+            name.rectTransform.Place(Vector2.zero, Vector2.one, 92, 34, 0, 8);
+            var kind = UiKit.Lbl($"Закалка · {GuBook.QualityNames[gu.Quality]}", head, 11, UiKit.LabelGold, 0.2f);
+            kind.rectTransform.Place(Vector2.zero, Vector2.one, 92, 12, 0, 54);
+            UiKit.Rule(column);
+
+            // Up a quality.
+            if (gu.Quality < GuBook.MaxQuality)
+            {
+                var cost = session.TemperCostOf(gu);
+                var item = ItemBook.Get(cost.Item);
+                Fact(column, "Станет", GuBook.QualityNames[gu.Quality + 1], QualityColour(gu.Quality + 1));
+                Fact(column, item?.Name ?? cost.Item, $"{cost.Count} · в сумке {session.Count(cost.Item)}", session.Count(cost.Item) >= cost.Count ? UiKit.Text2 : UiKit.Danger);
+                Fact(column, "Камни", $"{cost.Stones}", session.State.Stones >= cost.Stones ? UiKit.GoldText : UiKit.Danger);
+                Fact(column, "Удача", $"{Mathf.RoundToInt(cost.Chance * 100)}%" + (gu.Tempered > 0 ? $" · неудач {gu.Tempered}" : ""), UiKit.Essence);
+                var why = session.WhyNoTemper(gu);
+                UiKit.HexButton("Закалить", column, () =>
+                {
+                    var result = session.Temper(uid);
+                    Sound.AudioDirector.Play(result.Held ? "temper" : "temper_fail", null, 0.8f, 0);
+                    Redraw();
+                }, why == null ? UiKit.HexKind.Main : UiKit.HexKind.Off, 13, 48);
+
+                if (why != null)
+                {
+                    Para(why, column, 13, UiKit.Danger);
+                }
+            }
+            else
+            {
+                Para("Этот Гу совершенен: закалять больше нечего.", column, 14, UiKit.GoldText);
+            }
+
+            // Each affix, with a button to forge it again.
+            if (gu.Affixes.Count > 0)
+            {
+                Gap(column, 6);
+                UiKit.Lbl($"Перековка · {session.ReforgeStones(gu)} камней и {ItemBook.Get("jade_shard")?.Name} × {session.ReforgeJade(gu)}", column, 11, UiKit.LabelGold).Size(18);
+
+                for (var i = 0; i < gu.Affixes.Count; i++)
+                {
+                    var at = i;
+                    var row = UiKit.Rect("Affix", column);
+                    row.Stack<HorizontalLayoutGroup>(8, null, TextAnchor.MiddleLeft).childForceExpandWidth = false;
+                    row.Size(40);
+                    UiKit.Label(GuBook.AffixText(gu.Affixes[i]), row, 14, UiKit.SystemBlue).Size(40, 260, 0);
+                    UiKit.HexButton("Перековать", row, () => { session.Reforge(uid, at); Redraw(); }, session.WhyNoReforge(gu, at) == null ? UiKit.HexKind.Ghost : UiKit.HexKind.Off, 12, 36).Size(36, 130, 0);
+                }
+            }
+
+            // A twin to take in.
+            var twins = session.TwinsOf(gu);
+            Gap(column, 6);
+
+            if (twins.Count > 0)
+            {
+                UiKit.HexButton($"Поглотить двойника · мастерство +{Session.TwinMastery(twins[0])} (их {twins.Count})", column, () => { session.FeedTwin(uid); Redraw(); }, UiKit.HexKind.Ghost, 12, 42);
+            }
+            else
+            {
+                Para("Второй такой же Гу, не вставленный в апертуру, можно скормить этому — его мастерство перейдёт сюда.", column, 13, UiKit.Muted);
+            }
+
+            Gap(column, 6);
+            UiKit.HexButton("Назад", column, () => { temperGu = 0; Redraw(); }, UiKit.HexKind.Ghost, 13, 42);
         }
 
         // ------------------------------------------------------------------ Bag
