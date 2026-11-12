@@ -158,7 +158,7 @@ namespace GuWorld.World
 
                 var distance = Vec2.Distance(at, here);
 
-                if (distance < reach && !tide)
+                if (distance < reach && !(tide && walker.Clan == "gu_yue"))
                 {
                     wanted.Add((walker, distance));
                 }

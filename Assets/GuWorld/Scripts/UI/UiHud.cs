@@ -233,15 +233,21 @@ namespace GuWorld.UI
 
         public void Place(string name) => Toast("— " + name + " —");
 
-        public void DamageNumber(Vector3 at, float amount, bool critical, bool onHero)
+        static readonly Color WeakColour = new Color(1f, 0.55f, 0.25f);
+        static readonly Color StrongColour = new Color(0.6f, 0.64f, 0.7f);
+
+        /// <summary>A number rising off a struck one; a blow of its weakness is marked «!», of its resistance shown grey and small.</summary>
+        public void DamageNumber(Vector3 at, float amount, bool critical, bool onHero, int affinity = 0)
         {
             if (floats == null || numbers.Count > 40)
             {
                 return;
             }
 
-            var colour = onHero ? UiKit.Danger : critical ? UiKit.GoldLit : UiKit.Text;
-            var text = UiKit.Label(Mathf.Max(1, Mathf.RoundToInt(amount)).ToString(), floats, critical ? 26 : 19, colour, TextAnchor.MiddleCenter, FontStyle.Bold).Shadowed();
+            var colour = onHero ? UiKit.Danger : critical ? UiKit.GoldLit : affinity > 0 ? WeakColour : affinity < 0 ? StrongColour : UiKit.Text;
+            var shown = Mathf.Max(1, Mathf.RoundToInt(amount)).ToString() + (affinity > 0 ? "!" : "");
+            var size = critical ? 26 : affinity > 0 ? 23 : affinity < 0 ? 16 : 19;
+            var text = UiKit.Label(shown, floats, size, colour, TextAnchor.MiddleCenter, FontStyle.Bold).Shadowed();
             text.rectTransform.sizeDelta = new Vector2(120, 30);
             numbers.Add(new Floating { Text = text, At = at + Random.insideUnitSphere * 0.3f });
         }
@@ -480,7 +486,8 @@ namespace GuWorld.UI
             if (boss != null)
             {
                 bossName.text = boss.Def.Name;
-                bossTitle.text = (boss.Def.Title ?? "").ToUpperInvariant() + (boss.Shielded ? " · ЩИТ" : "");
+                var knows = session.AffinityLine(boss.Def);
+                bossTitle.text = (boss.Def.Title ?? "").ToUpperInvariant() + (boss.Shielded ? " · ЩИТ" : "") + (knows != null ? " · " + knows.ToUpperInvariant() : "");
                 bossBar.Set(boss.Health / boss.MaxHealth);
             }
 

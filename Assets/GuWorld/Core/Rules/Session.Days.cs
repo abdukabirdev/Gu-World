@@ -19,6 +19,8 @@ namespace GuWorld.Core
         public const int StarveDays = 3;
 
         /// <summary>The interface's clock moved on: a new day if the hour went round midnight.</summary>
+        int tideQuarter = -1;
+
         public void SetClock(float hour)
         {
             hour = ((hour % 24) + 24) % 24;
@@ -33,7 +35,14 @@ namespace GuWorld.Core
                 State.Hour = hour;
             }
 
-            UpdateTide(hour);
+            // The world's events are looked at a few times an hour of the game, not every frame.
+            var quarter = (int)(hour * 4);
+
+            if (quarter != tideQuarter)
+            {
+                tideQuarter = quarter;
+                UpdateTide(hour);
+            }
         }
 
         /// <summary>Sleeps some hours (an inn's bed): whole again, and as many dawns as pass.</summary>

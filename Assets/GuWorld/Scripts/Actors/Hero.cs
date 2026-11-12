@@ -685,7 +685,7 @@ namespace GuWorld.Actors
             }
 
             var blow = Session.SkillHit(cast, enemy.Def);
-            enemy.TakeHit(blow.Damage, blow.Critical, transform.position, push, cast.Skill.Status, cast.Skill.StatusPower, cast.Skill.StatusTime);
+            enemy.TakeHit(blow.Damage, blow.Critical, transform.position, push, cast.Skill.Status, cast.Skill.StatusPower, cast.Skill.StatusTime, blow.Affinity);
             SinceFight = 0;
         }
 

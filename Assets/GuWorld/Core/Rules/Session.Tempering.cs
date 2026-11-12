@@ -60,6 +60,11 @@ namespace GuWorld.Core
                 return "Совершеннее не бывает";
             }
 
+            if (InSandbox || gu.Borrowed)
+            {
+                return "В апертуре бессмертного не закаляют";
+            }
+
             var cost = TemperCostOf(gu);
 
             if (Count(cost.Item) < cost.Count)
@@ -170,6 +175,11 @@ namespace GuWorld.Core
                 return "Сначала очистите Гу";
             }
 
+            if (InSandbox || gu.Borrowed)
+            {
+                return "В апертуре бессмертного не перековывают";
+            }
+
             if (Count("jade_shard") < ReforgeJade(gu))
             {
                 return $"Нужно: {ItemBook.Get("jade_shard")?.Name} × {ReforgeJade(gu)}";
@@ -217,7 +227,7 @@ namespace GuWorld.Core
 
             foreach (var other in State.Gu)
             {
-                if (other != gu && other.Def == gu.Def && !IsSlotted(other.Uid))
+                if (other != gu && other.Def == gu.Def && !IsSlotted(other.Uid) && !other.Borrowed && !InSandbox)
                 {
                     twins.Add(other);
                 }

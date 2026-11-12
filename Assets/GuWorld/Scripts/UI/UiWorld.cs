@@ -483,6 +483,19 @@ namespace GuWorld.UI
                         {
                             Fact(right, "Охотится", "ночью");
                         }
+
+                        var (weak, strong) = Affinity.Of(enemy);
+                        var known = S.KillsOf(id) >= Session.KillsToKnow;
+
+                        if (weak.Length > 0)
+                        {
+                            Fact(right, "Боится", known ? Affinity.Names(weak) : $"узнаете, победив {Session.KillsToKnow}", known ? UiKit.GoldText : UiKit.Muted);
+                        }
+
+                        if (strong.Length > 0 && known)
+                        {
+                            Fact(right, "Стоек к", Affinity.Names(strong));
+                        }
                     }
 
                     break;

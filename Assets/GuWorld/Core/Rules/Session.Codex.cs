@@ -142,6 +142,33 @@ namespace GuWorld.Core
 
         // ------------------------------------------------------------------ Tallies
 
+        /// <summary>How many of a kind the hero must beat before it knows what that kind fears.</summary>
+        public const int KillsToKnow = 3;
+
+        /// <summary>What a beast fears and shrugs off, once the hero has beaten enough of its kind to know; null before.</summary>
+        public string AffinityLine(EnemyDef enemy)
+        {
+            if (enemy == null || KillsOf(enemy.Id) < KillsToKnow)
+            {
+                return null;
+            }
+
+            var (weak, strong) = Affinity.Of(enemy);
+            var parts = new List<string>();
+
+            if (weak.Length > 0)
+            {
+                parts.Add("боится: " + Affinity.Names(weak));
+            }
+
+            if (strong.Length > 0)
+            {
+                parts.Add("стоек к: " + Affinity.Names(strong));
+            }
+
+            return parts.Count == 0 ? null : string.Join(" · ", parts);
+        }
+
         public int KillsOf(string enemy)
         {
             var tally = State.KillsBy.Find(t => t.Id == enemy);

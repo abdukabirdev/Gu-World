@@ -776,7 +776,7 @@ namespace GuWorld.Actors
 
         // ------------------------------------------------------------------ Being hit
 
-        public void TakeHit(float damage, bool critical, Vector3 from, float push = 0, StatusKind status = StatusKind.None, float statusPower = 0, float statusTime = 0)
+        public void TakeHit(float damage, bool critical, Vector3 from, float push = 0, StatusKind status = StatusKind.None, float statusPower = 0, float statusTime = 0, int affinity = 0)
         {
             if (!alive)
             {
@@ -790,7 +790,7 @@ namespace GuWorld.Actors
 
             Health -= damage;
             SinceHurt = 0;
-            Game.Ui?.DamageNumber(transform.position + Vector3.up * (Height + hover + 0.2f), damage, critical, false);
+            Game.Ui?.DamageNumber(transform.position + Vector3.up * (Height + hover + 0.2f), damage, critical, false, affinity);
 
             if (!aware)
             {

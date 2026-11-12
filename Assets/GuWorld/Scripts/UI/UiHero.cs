@@ -60,6 +60,18 @@ namespace GuWorld.UI
             Fact(left, "Сила Гу", $"×{stats.Power:0.00}");
             Fact(left, "Удар ладонью", $"×{stats.Melee:0.00}");
             Fact(left, "Урон по вам", $"×{stats.DamageTaken:0.00}");
+
+            // The harmony of the aperture: three of a path ring together, five paths and more jar.
+            if (stats.Resonance.HasValue)
+            {
+                Fact(left, "Созвучие", $"{GuBook.PathName(stats.Resonance.Value)} +{stats.ResonanceBonus * 100:0}%", UiKit.GoldText);
+            }
+
+            if (stats.Discord > 0)
+            {
+                Fact(left, "Разлад путей", $"{stats.Paths} путей · −{stats.Discord * 100:0}%", UiKit.Danger);
+            }
+
             Gap(left, 10);
             UiKit.Lbl("Активные слоты", left, 11, UiKit.LabelGold).Size(18);
             var active = UiKit.Rect("Active", left);

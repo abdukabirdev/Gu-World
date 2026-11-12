@@ -70,6 +70,12 @@ namespace GuWorld.Core
     /// <summary>What the hero is worth right now: the step, the Gu in the slots and their affixes, all added up.</summary>
     public class HeroStats
     {
+        /// <summary>The path most of the slotted Gu share (three or more of it resonate), and the power it adds to that path.</summary>
+        public GuPath? Resonance;
+        public float ResonanceBonus;
+        /// <summary>Too many paths in one aperture jar against each other: the share of power lost by all.</summary>
+        public float Discord;
+        public int Paths;
         public float MaxHealth;
         public float MaxEssence;
         /// <summary>Essence per second.</summary>

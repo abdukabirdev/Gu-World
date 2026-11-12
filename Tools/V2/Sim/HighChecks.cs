@@ -472,6 +472,64 @@ static partial class Program
         var reloaded = new Session(copy, 23);
         Check(!reloaded.State.Gu.Exists(g => g.Borrowed), "a save made inside the aperture loads without the loans");
 
+        // ------------------------------------------------------------------ Affinities and the aperture's harmony
+
+        var cold = Bestiary.All.First(e => e.Inflicts == StatusKind.Chill);
+        Check(Affinity.Factor(cold, GuPath.Fire, out var hot) > 1 && hot == 1, $"{cold.Id} (it chills) fears fire");
+        Check(Affinity.Factor(cold, GuPath.Ice, out var icy) < 1 && icy == -1, $"{cold.Id} shrugs off ice");
+        var weakSome = 0;
+
+        foreach (var enemy in Bestiary.All)
+        {
+            var (weak, strong) = Affinity.Of(enemy);
+            Check(!weak.Intersect(strong).Any(), $"{enemy.Id} is not both weak and strong to a path");
+            weakSome += weak.Length > 0 ? 1 : 0;
+        }
+
+        Check(weakSome * 3 >= Bestiary.All.Length, $"a good share of the beasts fear something ({weakSome} of {Bestiary.All.Length})");
+        var frosty = Elites.Make(Bestiary.Get("wolf"), Elites.Get("frost"));
+        Check(frosty == null || Affinity.Factor(frosty, GuPath.Fire, out _) > 1, "a frosty elite fears fire");
+
+        var hm = new Session(Session.NewGame("Созвучие"), 51);
+        Check(hm.AffinityLine(cold) == null, "what a beast fears is unknown before beating its kind");
+
+        for (var i = 0; i < Session.KillsToKnow; i++)
+        {
+            hm.Killed(cold.Id);
+        }
+
+        Check(hm.AffinityLine(cold)?.Contains("огонь") == true || hm.AffinityLine(cold)?.Contains("огн") == true, $"…and known after: {hm.AffinityLine(cold)}");
+
+        hm.EnterSandbox();
+        hm.SandboxStep(16);
+        var moons = GuBook.All.Where(g => g.Path == GuPath.Moon && g.Kind != GuKind.Passive && g.Skill != null).Take(4).ToList();
+
+        foreach (var mg in moons)
+        {
+            hm.SandboxGive(mg.Id, 0);
+        }
+
+        Check(moons.Count >= 3 && hm.Stats.Resonance == GuPath.Moon && hm.Stats.ResonanceBonus > 0, $"three Gu of the moon resonate ({hm.Stats.Resonance}, {hm.Stats.Paths} paths)");
+        var moonGu = hm.ActiveGu(0);
+        var rang = hm.PowerOf(moonGu);
+        hm.Stats.ResonanceBonus = 0;
+        Check(hm.PowerOf(moonGu) < rang, "resonance makes the path stronger");
+        hm.Recompute();
+
+        var others = GuBook.All.Where(g => g.Kind == GuKind.Passive && g.Rank <= 5).GroupBy(g => g.Path).Where(k => k.Key != GuPath.Moon).Select(k => k.First()).Take(6).ToList();
+
+        foreach (var og in others)
+        {
+            hm.SandboxGive(og.Id, 0);
+        }
+
+        Check(hm.Stats.Paths < 5 || hm.Stats.Discord > 0, $"five paths and more jar ({hm.Stats.Paths} paths, discord {hm.Stats.Discord})");
+        Check(hm.Stats.Paths >= 5, $"the aperture can hold five paths ({hm.Stats.Paths})");
+
+        var lent2 = hm.SandboxGive("moonglow", 0);
+        Check(hm.WhyNoTemper(lent2) != null && hm.WhyNoReforge(lent2, 0) != null && hm.TwinsOf(lent2).Count == 0, "a lent Gu is not tempered, reforged or fed");
+        hm.LeaveSandbox();
+
         notes.Add($"high: {HighGu.All.Length} Gu of ranks 4–5, {HighGu.Recipes.Length} fusions, {KillerMoves.All.Length} killer moves");
     }
 }

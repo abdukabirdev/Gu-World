@@ -21,6 +21,8 @@ namespace GuWorld.Core
     {
         public float Damage;
         public bool Critical;
+        /// <summary>+1 the blow struck a weakness, −1 a resistance.</summary>
+        public int Affinity;
     }
 
     /// <summary>
@@ -178,6 +180,28 @@ namespace GuWorld.Core
                     }
                 }
             }
+
+            // Paths in the aperture: three or more Gu of one path resonate; five paths or more jar.
+            var byPath = new Dictionary<GuPath, int>();
+
+            foreach (var gu in Slotted())
+            {
+                var path = GuBook.Get(gu.Def).Path;
+                byPath[path] = byPath.TryGetValue(path, out var n) ? n + 1 : 1;
+            }
+
+            stats.Paths = byPath.Count;
+
+            foreach (var pair in byPath)
+            {
+                if (pair.Value >= 3 && (stats.Resonance == null || pair.Value > byPath[stats.Resonance.Value]))
+                {
+                    stats.Resonance = pair.Key;
+                    stats.ResonanceBonus = Math.Min(0.24f, 0.08f * (pair.Value - 2));
+                }
+            }
+
+            stats.Discord = byPath.Count >= 5 ? 0.04f * (byPath.Count - 4) : 0;
 
             EffectStats(stats, ref regen);
             stats.WardPeriod = ward;
@@ -370,6 +394,8 @@ namespace GuWorld.Core
             }
 
             power *= AttainmentPower(def.Path);
+            // The aperture's harmony: the resonating path stronger, and every Gu weaker for discord.
+            power *= (Stats.Resonance == def.Path ? 1 + Stats.ResonanceBonus : 1) * (1 - Stats.Discord);
 
             // Hunger weakens; the hour and the sky favour some paths.
             power *= HungerFactor(gu);
@@ -466,7 +492,10 @@ namespace GuWorld.Core
         public Hit SkillHit(Cast cast, EnemyDef target)
         {
             var critical = Random.NextDouble() < 0.1;
-            var damage = cast.Power * (critical ? 1.5f : 1) * (1 - (target?.Armour ?? 0)) * (0.92f + 0.16f * (float)Random.NextDouble());
+            // The creature's weakness or resistance to the path.
+            var sign = 0;
+            var affinity = target != null ? Affinity.Factor(target, cast.Def.Path, out sign) : 1;
+            var damage = cast.Power * affinity * (critical ? 1.5f : 1) * (1 - (target?.Armour ?? 0)) * (0.92f + 0.16f * (float)Random.NextDouble());
 
             if (cast.Leech > 0)
             {
@@ -475,7 +504,7 @@ namespace GuWorld.Core
 
             GainMastery(cast.Gu, 1);
 
-            return new Hit { Damage = damage, Critical = critical };
+            return new Hit { Damage = damage, Critical = critical, Affinity = sign };
         }
 
         /// <summary>A palm strike that lands (the combo's step, 0–2): its damage; the hero's essence rises.</summary>
