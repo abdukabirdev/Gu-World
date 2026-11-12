@@ -254,6 +254,7 @@ namespace GuWorld
                     Streamer.Make(world.transform, plan);
                     Forest.Make(world.transform, plan);
                     Places.Make(world.transform, plan);
+                    GrassField.Make(world.transform, plan);
                     Population.Make(world.transform);
                 }
             }

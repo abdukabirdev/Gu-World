@@ -21,6 +21,8 @@ static class WorldChecks
         var outDir = Path.Combine(repo, "Logs", "V2");
         Directory.CreateDirectory(outDir);
 
+        GrassChecks(plan, check, report);
+
         // The valley's places keep their levels.
         foreach (var place in Valley.Places)
         {
@@ -425,6 +427,59 @@ static class WorldChecks
         }
 
         WritePng(path, size, size, rgb);
+    }
+
+    /// <summary>The ground's small growth: thick on meadows, none on roads and in the deep, ferns under trees, quick enough to plant as the hero walks.</summary>
+    static void GrassChecks(WorldPlan plan, Action<bool, string> check, List<string> report)
+    {
+        var tufts = new List<Tuft>();
+        var watch = System.Diagnostics.Stopwatch.StartNew();
+        var cells = 0;
+        var byKind = new int[Grass.Kinds];
+        var onRoad = 0;
+        var inDeep = 0;
+
+        // A walk of cells across the mountain's middle: the town, meadows, woods, the river.
+        for (var x = -1200f; x < 1200f; x += 300)
+        {
+            for (var z = -1200f; z < 1200f; z += 300)
+            {
+                tufts.Clear();
+                Grass.Plant(plan, x, z, 24, 5, tufts);
+                cells++;
+
+                foreach (var t in tufts)
+                {
+                    byKind[t.Kind]++;
+                    var p = new Vec2(t.X, t.Z);
+
+                    if (plan.Roads.Nearest(p, out var toRoad, out _, out var half, out _) && toRoad < half)
+                    {
+                        onRoad++;
+                    }
+
+                    if (plan.Waters.Wet(p, out var level) && level - t.Y > 0.7f)
+                    {
+                        inDeep++;
+                    }
+                }
+            }
+        }
+
+        var each = watch.Elapsed.TotalMilliseconds / cells;
+        var total = byKind.Sum();
+        check(total > cells * 300, $"grass: the ground is not bare ({total} tufts in {cells} cells)");
+        check(onRoad == 0 && inDeep == 0, $"grass: none on the roads or in deep water ({onRoad}, {inDeep})");
+        check(byKind[Grass.Fern] > 0 && byKind[Grass.FlowersWhite] + byKind[Grass.FlowersRed] + byKind[Grass.FlowersYellow] > 0, "grass: ferns in the woods and flowers in the meadows");
+        check(each < 60, $"grass: a cell is planted quickly ({each:0.0} ms)");
+
+        for (var kind = 0; kind < Grass.Kinds; kind++)
+        {
+            var mesh = Grass.Mesh(kind);
+            check(mesh.TriangleCount > 0 && mesh.TriangleCount < 400, $"grass: kind {kind} has a light mesh ({mesh.TriangleCount} triangles)");
+        }
+
+        report.Add($"grass: {total} tufts in {cells} cells of 24 m ({each:0.0} ms a cell): " + string.Join(", ", byKind.Select((n, k) => $"{k}:{n}")));
     }
 
     /// <summary>The town's walkers: enough of them, their ways along the streets, out by day and in by night.</summary>

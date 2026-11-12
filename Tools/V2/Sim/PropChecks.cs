@@ -47,6 +47,12 @@ static class PropChecks
             }
         }
 
+        // The ground's growth too (not checked against footprints: they are tufts).
+        for (var kind = 0; kind < Grass.Kinds; kind++)
+        {
+            all.Add(($"grass/{kind}", Grass.Mesh(kind)));
+        }
+
         // The contact sheet: four across.
         var columns = 4;
         var rows = (all.Count + columns - 1) / columns;

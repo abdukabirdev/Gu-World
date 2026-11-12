@@ -178,6 +178,11 @@ namespace GuWorld
                         Note("q" + level + " " + town.Count());
                     }
 
+                    foreach (var grass in Engine.FindAll<GrassField>())
+                    {
+                        Note("q" + level + " " + grass.Count());
+                    }
+
                     foreach (var folk in Engine.FindAll<Townsfolk>())
                     {
                         Note("q" + level + " " + folk.Count());
