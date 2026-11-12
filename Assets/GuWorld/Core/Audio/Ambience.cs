@@ -25,6 +25,7 @@ namespace GuWorld.Core.Audio
             ["cave"] = Cave,
             ["marsh"] = Marsh,
             ["settlement"] = Settlement,
+            ["market"] = Market,
         };
 
         public static IEnumerable<string> Ids => beds.Keys;
@@ -281,6 +282,111 @@ namespace GuWorld.Core.Audio
                     b.Mix(one, at, 0.2f);
                 }
             }
+
+            return b;
+        }
+
+        /// <summary>
+        /// A market: the murmur of many voices (noise through moving vowel formants, a dozen talkers at once),
+        /// now and then a trader's call rising over it, steps and a cart's creak.
+        /// </summary>
+        static Wave Market()
+        {
+            var b = Bed();
+            var noise = new Noise(4100);
+            var dice = new Dice(4101);
+            // Vowels' first two formants (a, e, i, o, u): talkers drift between them.
+            var vowels = new[] { (730f, 1090f), (530f, 1840f), (270f, 2290f), (570f, 840f), (300f, 870f) };
+            const int talkers = 12;
+            var f1 = new Biquad[talkers];
+            var f2 = new Biquad[talkers];
+            var level = new float[talkers];
+            var vowel = new int[talkers];
+            var pitch = new float[talkers];
+            var phase = new float[talkers];
+
+            for (var t = 0; t < talkers; t++)
+            {
+                f1[t] = new Biquad(FilterKind.Band, 500, 6);
+                f2[t] = new Biquad(FilterKind.Band, 1500, 8);
+                pitch[t] = dice.Range(95, 240);
+            }
+
+            var smooth = new OnePole(2800);
+
+            for (var i = 0; i < b.Length; i++)
+            {
+                var sum = 0f;
+
+                for (var t = 0; t < talkers; t++)
+                {
+                    // Syllables: a new vowel and loudness every ~0.15 s, words broken by pauses.
+                    if ((i + t * 997) % 6600 == 0)
+                    {
+                        vowel[t] = dice.Int(vowels.Length);
+                        level[t] = dice.Chance(0.3f) ? 0 : dice.Range(0.4f, 1);
+                        var (a, e) = vowels[vowel[t]];
+                        f1[t].Set(FilterKind.Band, a * dice.Range(0.9f, 1.1f), 6);
+                        f2[t].Set(FilterKind.Band, e * dice.Range(0.9f, 1.1f), 8);
+                    }
+
+                    phase[t] += pitch[t] / Synth.Rate;
+                    // A voice: a buzzy pulse at its pitch mixed with breath, through two formants.
+                    var source = Synth.Saw(phase[t] % 1) * 0.5f + noise.White() * 0.5f;
+                    sum += (f1[t].Run(source) + f2[t].Run(source) * 0.6f) * level[t];
+                }
+
+                // Far voices: softened.
+                b.Data[i] = smooth.Low(sum) * 0.08f;
+            }
+
+            // Traders calling: a rising-falling vowel louder than the rest.
+            for (var call = 0; call < 3; call++)
+            {
+                var length = dice.Range(0.6f, 1.1f);
+                var shout = new Wave(length);
+                var band = new Biquad(FilterKind.Band, 700, 5);
+                var p = 0f;
+                var basePitch = dice.Range(160, 260);
+
+                for (var i = 0; i < shout.Length; i++)
+                {
+                    var t = i / (float)Synth.Rate;
+                    var u = t / length;
+                    var f = basePitch * (1 + 0.35f * (float)Math.Sin(Math.PI * u));
+                    p += f / Synth.Rate;
+                    var env = (float)Math.Sin(Math.PI * Math.Min(1, u * 1.2f));
+                    shout.Data[i] = band.Run(Synth.Saw(p % 1)) * env * 0.5f;
+                }
+
+                b.Mix(shout.Room(0.7f, 0.4f, 0.4f, 0.4f), dice.Range(0.5f, Seconds - 1.5f), 0.22f);
+            }
+
+            // Steps on stone and a cart's creak.
+            for (var k = 0; k < 18; k++)
+            {
+                var step = new Wave(0.08f);
+
+                for (var i = 0; i < step.Length; i++)
+                {
+                    var t = i / (float)Synth.Rate;
+                    step.Data[i] = Modes.At(Modes.Stone, dice.Range(500, 900), t, 0.05f) * 0.6f;
+                }
+
+                b.Mix(step, dice.Range(0, Seconds - 0.2f), 0.1f);
+            }
+
+            var creak = new Wave(1.2f);
+            var creakBand = new Biquad(FilterKind.Band, 900, 12);
+
+            for (var i = 0; i < creak.Length; i++)
+            {
+                var t = i / (float)Synth.Rate;
+                var rough = (float)Math.Sin(t * 37) > 0.2f ? noise.White() : 0;
+                creak.Data[i] = creakBand.Run(rough) * (float)Math.Sin(Math.PI * t / 1.2f);
+            }
+
+            b.Mix(creak, dice.Range(1, Seconds - 2), 0.12f);
 
             return b;
         }

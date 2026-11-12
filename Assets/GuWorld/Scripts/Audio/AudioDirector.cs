@@ -360,6 +360,13 @@ namespace GuWorld.Sound
                     if (settlement != null)
                     {
                         wanted["settlement"] = night ? 0.3f : 0.6f;
+
+                        // The town's market: loud on the square and round it, by day.
+                        if (settlement.City && !night)
+                        {
+                            var fromMiddle = new Vector2(at.x - settlement.At.X, at.z - settlement.At.Z).magnitude;
+                            wanted["market"] = Mathf.Clamp01(1 - (fromMiddle - settlement.Core) / 120) * 0.75f;
+                        }
                     }
 
                     if (place != null && place.Id == "marsh")
