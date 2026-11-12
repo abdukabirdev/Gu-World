@@ -325,6 +325,12 @@ static partial class Program
         b.SetClock(12);
         Check(!b.RaidUp, "no raids once the Black Tail is beaten");
 
+        // ------------------------------------------------------------------ Manuals of pills
+
+        var al = new Session(Session.NewGame("Алхимик"), 141);
+        al.AddItem("manual_masters", 1, true);
+        Check(al.ReadBook("manual_masters") && al.KnowsPill("master_heal_pill") && al.KnowsPill("iron_body_pill") && !al.ReadBook("manual_masters"), "a manual teaches its pills, once");
+
         // ------------------------------------------------------------------ The fair
 
         var f = new Session(Session.NewGame("Ярмарка"), 121);

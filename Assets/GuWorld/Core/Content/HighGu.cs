@@ -221,6 +221,15 @@ namespace GuWorld.Core
 
         public static readonly ItemDef[] Items =
         {
+            // The masters' pills, and the manuals that teach them.
+            new ItemDef { Id = "master_essence_pill", Name = "Пилюля моря эссенции", Seal = "海", Kind = ItemKind.Consumable, Price = 160, Essence = 1f, BoostStat = StatKind.EssenceRegen, BoostValue = 0.6f, BoostSeconds = 90, Colour = 0x60D0C0, Description = "Апертура полна, и полторы минуты эссенция прибывает быстрее." },
+            new ItemDef { Id = "master_heal_pill", Name = "Пилюля возрождённой плоти", Seal = "肉", Kind = ItemKind.Consumable, Price = 150, Heal = 900, Colour = 0xF07070, Description = "Возвращает 900 здоровья — мастеру высоких рангов это половина жизни." },
+            new ItemDef { Id = "insight_pill", Name = "Пилюля прозрения мастера", Seal = "悟", Kind = ItemKind.Consumable, Price = 400, Insight = 600, Colour = 0xC0F0F0, Description = "Ум мастера раскрывается: +600 прозрения." },
+            new ItemDef { Id = "iron_body_pill", Name = "Пилюля железного тела", Seal = "鐵", Kind = ItemKind.Consumable, Price = 180, BoostStat = StatKind.DamageTaken, BoostValue = -0.25f, BoostSeconds = 120, Colour = 0xA0A8B0, Description = "Две минуты урон по вам на четверть меньше." },
+            new ItemDef { Id = "might_pill", Name = "Пилюля мощи мастера", Seal = "專", Kind = ItemKind.Consumable, Price = 200, BoostStat = StatKind.Power, BoostValue = 0.2f, BoostSeconds = 90, Colour = 0xF0D080, Description = "Полторы минуты все Гу сильнее на пятую часть." },
+            new ItemDef { Id = "manual_masters", Name = "«Котёл мастера»", Seal = "丹", Kind = ItemKind.Book, Price = 900, TeachesPills = new[] { "master_essence_pill", "master_heal_pill", "iron_body_pill" }, Description = "Рецепты пилюль для мастеров четвёртого ранга. Чтение учит им." },
+            new ItemDef { Id = "manual_sages", Name = "«Пилюли мудрецов»", Seal = "丹", Kind = ItemKind.Book, Price = 2500, TeachesPills = new[] { "insight_pill", "might_pill" }, Description = "Рецепты, ради которых кланы воевали. Чтение учит им." },
+
             // The relic Gu: one use each, a stage of cultivation at once (the canon's green copper, red steel, white silver, yellow gold, purple crystal).
             new ItemDef { Id = "relic_r1", Name = "Реликвия Зелёной меди", Seal = "铜", Kind = ItemKind.Consumable, Relic = 1, Price = 300, Colour = 0x5FB88A, Description = "Гу-реликвия: мастер первого ранга, проглотив её, поднимается на ступень. Через ворота ранга не переносит." },
             new ItemDef { Id = "relic_r2", Name = "Реликвия Красной стали", Seal = "钢", Kind = ItemKind.Consumable, Relic = 2, Price = 800, Colour = 0xD0584A, Description = "Гу-реликвия второго ранга: ступень вверх, но не новый ранг." },

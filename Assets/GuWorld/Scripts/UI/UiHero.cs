@@ -449,8 +449,9 @@ namespace GuWorld.UI
             }
             else if (picked.Kind == ItemKind.Book)
             {
-                var read = session.InCodex(picked.Lore);
-                UiKit.HexButton(read ? "Прочитано (в кодексе)" : "Прочесть", right, () =>
+                // A manual is read when all its pills are known; a book when its page is in the codex.
+                var read = picked.TeachesPills != null && picked.TeachesPills.Length > 0 ? System.Array.TrueForAll(picked.TeachesPills, session.KnowsPill) : session.InCodex(picked.Lore);
+                UiKit.HexButton(read ? (picked.TeachesPills != null ? "Рецепты известны" : "Прочитано (в кодексе)") : "Прочесть", right, () =>
                 {
                     session.ReadBook(item);
                     Redraw();

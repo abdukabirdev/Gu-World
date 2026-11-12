@@ -35,6 +35,8 @@ namespace GuWorld.Core
             new TreasuryEntry { Gu = "moon_lake", Quality = 1, Merit = 500, ClanRank = 2 },
             new TreasuryEntry { Item = "blood_crystal", Merit = 60, ClanRank = 2 },
             new TreasuryEntry { Item = "relic_r3", Merit = 700, ClanRank = 3 },
+            new TreasuryEntry { Item = "manual_masters", Merit = 500, ClanRank = 3 },
+            new TreasuryEntry { Item = "manual_sages", Merit = 1400, ClanRank = 4 },
             new TreasuryEntry { Item = "scroll_moon_sickle", Merit = 900, ClanRank = 3 },
             new TreasuryEntry { Item = "king_core", Merit = 250, ClanRank = 3 },
             new TreasuryEntry { Item = "relic_r4", Merit = 1600, ClanRank = 4 },

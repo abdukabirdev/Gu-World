@@ -198,6 +198,8 @@ namespace GuWorld.Core
         public float Essence;
         /// <summary>The recipe a scroll teaches.</summary>
         public string Teaches;
+        /// <summary>A manual of pills: read, it teaches these pill recipes.</summary>
+        public string[] TeachesPills;
         /// <summary>A relic Gu: used, it lifts a hero of this rank one stage (not across a rank's gate).</summary>
         public int Relic;
         /// <summary>A rock's tier, for the gamble.</summary>

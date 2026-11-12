@@ -136,7 +136,8 @@ static partial class Program
             Check(ItemBook.Get(recipe.Result) != null, $"pill recipe {recipe.Id}: result");
             Check(recipe.Items.All(i => ItemBook.Get(i.item) != null), $"pill recipe {recipe.Id}: herbs");
             var taught = recipe.Known || Atlas.AllNpcs.Any(n => n.Teaches.Contains(recipe.Id)) || Dialogues.All.Any(d => d.Nodes.Any(n => n.Options.Any(o => o.Effects.Contains("learn:pill:" + recipe.Id))))
-                         || Story.All.Any(q => q.Reward.Flags.Contains("learnt_" + recipe.Id));
+                         || Story.All.Any(q => q.Reward.Flags.Contains("learnt_" + recipe.Id))
+                         || ItemBook.All.Any(i => i.TeachesPills != null && i.TeachesPills.Contains(recipe.Id));
             Check(taught, $"pill recipe {recipe.Id} can be learnt");
         }
 

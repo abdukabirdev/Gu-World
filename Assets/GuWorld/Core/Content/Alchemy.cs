@@ -38,6 +38,13 @@ namespace GuWorld.Core
             new PillRecipeDef { Id = "regen_pill", Result = "regen_pill", Items = new[] { ("honey", 1), ("ginseng", 1) }, Stones = 6, Difficulty = 2, Teacher = "xiong_hua" },
             new PillRecipeDef { Id = "focus_pill", Result = "focus_pill", Items = new[] { ("spirit_moss", 1), ("spark_moss", 1), ("bitter_root", 1) }, Stones = 15, Difficulty = 3, Teacher = "wandering_alchemist" },
             new PillRecipeDef { Id = "thrift_pill", Result = "thrift_pill", Items = new[] { ("cloud_tea", 1), ("moon_orchid", 1), ("bitter_root", 1) }, Stones = 12, Difficulty = 3, Teacher = "bai_lin" },
+            // The masters' pills (from the manuals).
+            new PillRecipeDef { Id = "master_essence_pill", Result = "master_essence_pill", Items = new[] { ("moon_orchid", 4), ("frost_lotus", 2), ("spirit_moss", 2) }, Stones = 60, Difficulty = 5 },
+            new PillRecipeDef { Id = "master_heal_pill", Result = "master_heal_pill", Items = new[] { ("ginseng", 4), ("blood_vine", 2), ("bear_gall", 1) }, Stones = 50, Difficulty = 4 },
+            new PillRecipeDef { Id = "iron_body_pill", Result = "iron_body_pill", Items = new[] { ("iron_ore", 4), ("bear_claw", 2), ("ginseng", 1) }, Stones = 40, Difficulty = 4 },
+            new PillRecipeDef { Id = "insight_pill", Result = "insight_pill", Items = new[] { ("spirit_moss", 4), ("cloud_tea", 3), ("king_core", 1) }, Stones = 150, Difficulty = 5 },
+            new PillRecipeDef { Id = "might_pill", Result = "might_pill", Items = new[] { ("spark_moss", 3), ("moon_orchid", 3), ("storm_core", 1) }, Stones = 80, Difficulty = 5 },
+
             new PillRecipeDef { Id = "jerky", Result = "jerky", Count = 3, Items = new[] { ("wolf_pelt", 1) }, Stones = 0, Difficulty = 1, Known = true },
             new PillRecipeDef { Id = "stone_dust", Result = "stone_dust", Count = 4, Items = new[] { ("iron_ore", 1) }, Stones = 0, Difficulty = 1, Known = true },
         };

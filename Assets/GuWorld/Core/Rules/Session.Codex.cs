@@ -42,7 +42,34 @@ namespace GuWorld.Core
         {
             var def = ItemBook.Get(item);
 
-            if (def == null || def.Kind != ItemKind.Book || Count(item) <= 0 || string.IsNullOrEmpty(def.Lore))
+            if (def == null || def.Kind != ItemKind.Book || Count(item) <= 0)
+            {
+                return false;
+            }
+
+            // A manual of pills teaches its recipes.
+            if (def.TeachesPills != null && def.TeachesPills.Length > 0)
+            {
+                var learnt = false;
+
+                foreach (var pill in def.TeachesPills)
+                {
+                    if (!KnowsPill(pill))
+                    {
+                        LearnPill(pill);
+                        learnt = true;
+                    }
+                }
+
+                if (!learnt)
+                {
+                    Say("Все рецепты из этой книги вы уже знаете.");
+                }
+
+                return learnt;
+            }
+
+            if (string.IsNullOrEmpty(def.Lore))
             {
                 return false;
             }

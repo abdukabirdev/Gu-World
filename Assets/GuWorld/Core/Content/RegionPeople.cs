@@ -302,6 +302,7 @@ namespace GuWorld.Core
             new ShopEntry { Item = "snake_gall", Price = 9 },
             new ShopEntry { Item = "book_alchemy", Price = 60 },
             new ShopEntry { Item = "book_paths", Price = 45 },
+            new ShopEntry { Item = "manual_masters", Price = 1100, Needs = new[] { "rank>=4" } },
             new ShopEntry { Gu = "ember", Price = 70 },
             new ShopEntry { Gu = "echo", Price = 70 },
             new ShopEntry { Gu = "light_steps", Price = 60 },
