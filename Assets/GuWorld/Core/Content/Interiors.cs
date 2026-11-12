@@ -13,6 +13,8 @@ namespace GuWorld.Core
         public (string model, float x, float z, float yaw)[] Furniture = new (string, float, float, float)[0];
         /// <summary>Warm lights hung from the beams, evenly.</summary>
         public int Lights = 2;
+        /// <summary>Who is in the room: a look, where they stand, their name and title, what they say.</summary>
+        public (string look, float x, float z, float yaw, string name, string title, string line)[] People = new (string, float, float, float, string, string, string)[0];
     }
 
     /// <summary>
@@ -27,6 +29,12 @@ namespace GuWorld.Core
             new InteriorDef
             {
                 Id = "clan_hall", Name = "Главный зал клана Гу Юэ", Width = 22, Depth = 30, Height = 9, Style = "hall", Lights = 6,
+                People = new[]
+                {
+                    ("elder", -2.5f, 10f, 180f, "Старейшина зала", "Хранитель предков", "Здесь висят имена тех, кто держал клан три сотни лет. Твоё имя тоже может здесь оказаться. Или нет."),
+                    ("guard", -3f, -12.5f, 0f, "Страж зала", "Гу Юэ", "В зале не обнажают Гу. Даже если очень хочется."),
+                    ("guard", 3f, -12.5f, 0f, "Страж зала", "Гу Юэ", "Проходи. Старейшины сегодня в духе."),
+                },
                 Furniture = new[]
                 {
                     ("prop_ancestral_altar", 0f, 12.5f, 180f), ("prop_bronze_ding", 0f, 7.5f, 0f), ("prop_folding_screen", 0f, 14.2f, 180f),
@@ -39,6 +47,12 @@ namespace GuWorld.Core
             new InteriorDef
             {
                 Id = "academy", Name = "Класс академии Гу Юэ", Width = 16, Depth = 20, Height = 6, Style = "house", Lights = 4,
+                People = new[]
+                {
+                    ("scribe", 0f, 8.6f, 180f, "Наставник академии", "Гу Юэ", "Сядь. Сегодня формула очищения: эссенция идёт по кругу, а не туда, куда хочется тебе."),
+                    ("student", -4f, 0.8f, 0f, "Ученик", "Академия Гу Юэ", "Тсс. Наставник смотрит. Он всегда смотрит."),
+                    ("student", 4f, -3.7f, 0f, "Ученица", "Академия Гу Юэ", "Я опять уронила кувшин с Гу. Он выжил. Я — не уверена."),
+                },
                 Furniture = new[]
                 {
                     ("prop_writing_desk", 0f, 7.5f, 180f), ("prop_curio_shelf", -4f, 9.3f, 180f), ("prop_curio_shelf", 4f, 9.3f, 180f),
@@ -50,6 +64,12 @@ namespace GuWorld.Core
             new InteriorDef
             {
                 Id = "inn_room", Name = "Зал постоялого двора", Width = 18, Depth = 16, Height = 5.5f, Style = "inn", Lights = 5,
+                People = new[]
+                {
+                    ("cook", 6f, 4f, -90f, "Хозяин двора", "Постоялый двор", "Комната за камни, ужин за улыбку. Улыбка, впрочем, тоже стоит камней."),
+                    ("gambler", -4f, 3.2f, 180f, "Игрок в го", "Завсегдатай", "Ещё партию? Ставлю три камня, что ты не видишь, куда я пойду."),
+                    ("villager", 4f, -4.5f, 0f, "Путник", "С южной дороги", "У Чёрного Хвоста снова новые люди. Ходите по дороге днём."),
+                },
                 Furniture = new[]
                 {
                     ("prop_go_table", -4f, 2f, 0f), ("prop_go_table", 4f, 2f, 0f), ("prop_go_table", -4f, -3f, 0f), ("prop_go_table", 4f, -3f, 0f),
@@ -60,6 +80,11 @@ namespace GuWorld.Core
             new InteriorDef
             {
                 Id = "nursery_hall", Name = "Питомник Гу", Width = 14, Depth = 22, Height = 6, Style = "nursery", Lights = 4,
+                People = new[]
+                {
+                    ("keeper", 0f, 8.4f, 180f, "Смотрительница питомника", "Гу Юэ", "Не стучи по кувшинам. Гу Лунного света обижается, а потом три дня не светит."),
+                    ("herbalist", -3f, -6f, 90f, "Помощник", "Питомник", "Орхидеи — Лунному свету, камень — Нефриту. Перепутаешь — будешь кормить с ладони."),
+                },
                 Furniture = new[]
                 {
                     ("prop_gu_jar_shelf", -5.6f, 6f, 90f), ("prop_gu_jar_shelf", -5.6f, 1f, 90f), ("prop_gu_jar_shelf", -5.6f, -4f, 90f),

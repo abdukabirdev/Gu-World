@@ -54,6 +54,12 @@ static class PropChecks
             var shell = Props.Room(room.Width, room.Depth, room.Height, room.Style);
             check(shell.TriangleCount > 0 && shell.TriangleCount < 24000, $"room {room.Id}: {shell.TriangleCount} triangles");
 
+            foreach (var person in room.People)
+            {
+                check(Array.IndexOf(Wardrobe.Made, person.look) >= 0 || Wardrobe.Dress(person.look).texture != person.look || Array.IndexOf(Wardrobe.Made, Wardrobe.Dress(person.look).texture) >= 0, $"room {room.Id}: {person.name} is dressed ({person.look})");
+                check(Math.Abs(person.x) < room.Width / 2 - 0.5f && Math.Abs(person.z) < room.Depth / 2 - 0.5f && person.line.Length > 10, $"room {room.Id}: {person.name} stands inside and has a word");
+            }
+
             foreach (var (model, x, z, yaw) in room.Furniture)
             {
                 check(Catalog.TryGet(model, out var footprint), $"room {room.Id}: {model} is a model");

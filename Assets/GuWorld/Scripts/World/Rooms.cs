@@ -44,6 +44,31 @@ namespace GuWorld.World
 
         static Vector3 DoorStep(InteriorDef room) => OriginOf(room) + new Vector3(0, 0.15f, -room.Depth / 2 + 1.6f);
 
+        /// <summary>The person of the room nearest the hero, within reach.</summary>
+        public static RoomPerson NearestPerson()
+        {
+            if (!Inside || Game.Hero == null)
+            {
+                return null;
+            }
+
+            RoomPerson best = null;
+            var bestDistance = 2.6f;
+
+            foreach (var person in RoomPerson.All)
+            {
+                var d = Vector3.Distance(person.transform.position, Game.Hero.transform.position);
+
+                if (d < bestDistance)
+                {
+                    bestDistance = d;
+                    best = person;
+                }
+            }
+
+            return best;
+        }
+
         /// <summary>The prompt by the door inside, or null.</summary>
         public static string Prompt => Inside && Game.Hero != null && Vector3.Distance(Game.Hero.transform.position, DoorStep(instance.inside)) < 2.2f ? "Выйти · " + instance.inside.Name : null;
 
@@ -119,6 +144,22 @@ namespace GuWorld.World
                 Models.Prefab(model, root, root.position + new Vector3(x, 0, z), yaw);
             }
 
+            // Its people, standing at their places.
+            foreach (var person in room.People)
+            {
+                var body = new GameObject(person.name);
+                body.transform.SetParent(root, false);
+                body.transform.position = root.position + new Vector3(person.x, 0.02f, person.z);
+                body.transform.rotation = Quaternion.Euler(0, person.yaw, 0);
+                Models.Human(body.transform, person.look, false, false, out var rig);
+                rig?.Play("idle", 0);
+                body.AddComponent<RoomPerson>().Set(rig, person.name, person.title, person.line);
+                var solid = body.AddComponent<CapsuleCollider>();
+                solid.radius = 0.35f;
+                solid.height = 1.8f;
+                solid.center = new Vector3(0, 0.9f, 0);
+            }
+
             // Lanterns under the beams: warm lights down the room's middle (two rows in a wide room).
             var rows = room.Width > 15 ? 2 : 1;
 
@@ -137,5 +178,49 @@ namespace GuWorld.World
                 Models.Part("Lantern", root, Models.Quad, Models.Glow(new Color(1f, 0.55f, 0.3f, 0.8f)), at, Vector3.one * 0.7f).AddComponent<Fx.Billboard>();
             }
         }
+    }
+
+    /// <summary>Someone standing in a room: idles, turns to the hero, says their line.</summary>
+    public class RoomPerson : MonoBehaviour
+    {
+        public static readonly List<RoomPerson> All = new List<RoomPerson>();
+
+        RigAnimator rig;
+        Quaternion rest;
+        public string Name { get; private set; }
+        public string Title { get; private set; }
+        public string Line { get; private set; }
+
+        public void Set(RigAnimator animator, string name, string title, string line)
+        {
+            rig = animator;
+            Name = name;
+            Title = title;
+            Line = line;
+            rest = transform.rotation;
+        }
+
+        void OnEnable() => All.Add(this);
+        void OnDisable() => All.Remove(this);
+
+        void Update()
+        {
+            var hero = Game.Hero;
+
+            if (hero != null)
+            {
+                var to = hero.transform.position - transform.position;
+                to.y = 0;
+                var want = to.magnitude < 5 && to.sqrMagnitude > 0.1f ? Quaternion.LookRotation(to) : rest;
+                transform.rotation = Quaternion.RotateTowards(transform.rotation, want, 160 * Time.deltaTime);
+            }
+
+            if (!Game.Frozen)
+            {
+                rig?.Tick(Time.deltaTime);
+            }
+        }
+
+        public void Talk() => Game.Ui.Talk(new[] { new Core.Line("~" + Name + "|" + Title, Line) }, null);
     }
 }

@@ -476,8 +476,15 @@ namespace GuWorld
                 Prompt = World.Aperture.Prompt;
             }
 
-            // The way out of a room.
-            if (World.Rooms.Prompt != null)
+            // The way out of a room, and the room's people.
+            var person = World.Rooms.NearestPerson();
+
+            if (person != null)
+            {
+                nearby = person;
+                Prompt = "Говорить · " + person.Name;
+            }
+            else if (World.Rooms.Prompt != null)
             {
                 nearby = Ui;
                 Prompt = World.Rooms.Prompt;
@@ -504,6 +511,10 @@ namespace GuWorld
                 var stall = folk.AtStall(walker) ? Core.Chatter.ShelfOf(walker.Stall) : null;
                 var (name, _) = Core.Chatter.Who(walker);
                 Ui.Talk(lines, stall == null ? (System.Action)null : () => Ui.OpenShop(stall, "Лоток · " + name, "gu_yue"));
+            }
+            else if (Instance.nearby is World.RoomPerson person)
+            {
+                person.Talk();
             }
             else if (World.Rooms.Prompt != null)
             {
