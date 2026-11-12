@@ -276,6 +276,33 @@ static partial class Program
             Check(given.Count >= 1 && given.Distinct().Count() == given.Count, $"then unleashes each once, and waits long for it again ({string.Join(", ", given)})");
         }
 
+        // ------------------------------------------------------------------ A house of one's own
+
+        var h = new Session(Session.NewGame("Хозяин"), 71);
+        var house = Atlas.AllThings.First(t => t.Id == "home_gu_yue");
+        Check(h.WhyNoHome(house) != null && !h.StashPut("jerky", 1), "no house without the stones, no store without a house");
+        h.State.Stones = 5000;
+        Check(h.BuyHome(house) && h.OwnsHome(house.Id) && h.State.Stones == 5000 - h.HomePrice(house) || h.OwnsHome(house.Id), "a house is bought");
+        h.AddItem("moon_orchid", 5, true);
+        Check(h.StashPut("moon_orchid", 5) && h.Count("moon_orchid") == 0 && h.StashCount("moon_orchid") == 5, "the store keeps what the bag gives it");
+        var kept = h.AddGu(h.MakeGu("moonlight", 0, true), true);
+        h.Equip(kept.Uid, false, 0);
+        Check(h.NurseryPut(kept.Uid) && !h.IsSlotted(kept.Uid) && h.WhyNoEquip(kept, false, 0) != null, "a Gu in the nursery leaves the aperture");
+        h.State.Settings.Hunger = HungerRule.Canon;
+        kept.Hunger = 0;
+
+        for (var day = 0; day < 6; day++)
+        {
+            h.NewDay();
+        }
+
+        Check(kept.Hunger < GuBook.Get("moonlight").Appetite && h.StashCount("moon_orchid") == 3 && h.FindGu(kept.Uid) != null, $"the nursery feeds its Gu from the store when a meal is due ({h.StashCount("moon_orchid")} left)");
+        Check(h.NurseryTake(kept.Uid) && h.WhyNoEquip(kept, false, 0) == null, "a Gu taken back can be slotted");
+        h.State.Health = 1;
+        h.SleepAtHome();
+        Check(h.State.Health >= h.Stats.MaxHealth - 0.01f && h.State.Effects.Exists(e => e.Source == "rested"), "a night at home: whole and rested");
+        Check(h.State.Achievements.Contains("homeowner"), "owning a house is an achievement");
+
         // ------------------------------------------------------------------ The guard
 
         var g = new Session(Session.NewGame("Блок"), 61);

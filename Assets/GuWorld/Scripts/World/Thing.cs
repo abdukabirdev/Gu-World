@@ -34,6 +34,7 @@ namespace GuWorld.World
                     case ThingKind.Board: return "Прочесть поручения";
                     case ThingKind.Lore: return "Прочесть";
                     case ThingKind.Shrine: return "Помолиться";
+                    case ThingKind.Home: return Game.Session != null && Game.Session.OwnsHome(Def.Id) ? "Войти в дом" : "Дом продаётся";
                     default: return "Осмотреть";
                 }
             }
@@ -189,6 +190,19 @@ namespace GuWorld.World
                     ring.AddComponent<Billboard>();
                     glow = Halo(new Color(colour.r, colour.g, colour.b, 0.3f), 1.5f, 3.4f);
                     Lamp(t, colour, 1.6f, 9, 2);
+                    break;
+                }
+
+                case ThingKind.Home:
+                {
+                    // A red plaque on a post by the door and a warm light: a house that can be the hero's.
+                    Reach = 1.4f;
+                    var red = Models.Lit(new Color(0.6f, 0.14f, 0.12f));
+                    var wood = Models.Lit(new Color(0.35f, 0.24f, 0.15f));
+                    Models.Shape("Post", t, PrimitiveType.Cube, wood, new Vector3(0, 0.9f, 0), new Vector3(0.12f, 1.8f, 0.12f));
+                    Models.Shape("Plaque", t, PrimitiveType.Cube, red, new Vector3(0, 1.55f, 0.08f), new Vector3(0.5f, 0.7f, 0.05f));
+                    Lamp(t, new Color(1f, 0.75f, 0.45f), 1.8f, 7, 1.6f);
+                    glow = Halo(new Color(1f, 0.75f, 0.45f, 0.35f), 1.5f, 1.4f);
                     break;
                 }
 
@@ -358,6 +372,10 @@ namespace GuWorld.World
                         Game.Ui.Show(Ui.Page.Travel);
                     }
 
+                    break;
+                case "home":
+                case "home_buy":
+                    Game.Ui.OpenHome(Def);
                     break;
                 case "alchemy":
                     Game.Ui.Show(Ui.Page.Alchemy);

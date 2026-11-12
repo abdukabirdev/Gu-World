@@ -463,6 +463,8 @@ namespace GuWorld.Core
         Lore,
         /// <summary>A shrine: a prayer gives a blessing for a while (once a day).</summary>
         Shrine,
+        /// <summary>A house the hero can buy: a bed, a store, a nursery for Gu.</summary>
+        Home,
     }
 
     /// <summary>A thing in the world the hero can use.</summary>

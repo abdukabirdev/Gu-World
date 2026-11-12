@@ -333,6 +333,11 @@ namespace GuWorld.Core
                 return "Сначала очистите Гу";
             }
 
+            if (State.Nursery.Contains(gu.Uid))
+            {
+                return "Гу в питомнике дома";
+            }
+
             if ((def.Kind == GuKind.Passive) != passive)
             {
                 return passive ? "Это Гу для активного слота" : "Это пассивный Гу";

@@ -524,6 +524,9 @@ namespace GuWorld.Core
                     return new Use { Ok = message != "" && !message.StartsWith("Сегодня"), Message = message };
                 }
 
+                case ThingKind.Home:
+                    return new Use { Ok = true, Service = OwnsHome(thing.Id) ? "home" : "home_buy", Message = thing.Id };
+
                 case ThingKind.Spring:
                     return new Use { Ok = true, Service = "spring" };
 

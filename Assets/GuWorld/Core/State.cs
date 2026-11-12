@@ -122,6 +122,10 @@ namespace GuWorld.Core
         public int Elites;
         /// <summary>Blows parried.</summary>
         public int Parries;
+        /// <summary>The houses the hero owns (thing ids), what lies in their store, the Gu kept in their nursery.</summary>
+        public List<string> Homes = new List<string>();
+        public List<ItemStack> Stash = new List<ItemStack>();
+        public List<int> Nursery = new List<int>();
     }
 
     [Serializable]

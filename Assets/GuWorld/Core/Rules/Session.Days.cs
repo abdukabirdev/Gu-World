@@ -179,6 +179,28 @@ namespace GuWorld.Core
                     continue;
                 }
 
+                // In the house's nursery a Gu is fed from the store (or the bag) when its meal is due, and never goes hungry while there is food.
+                if (State.Nursery.Contains(gu.Uid) && gu.Hunger + 1 < def.Appetite)
+                {
+                    gu.Hunger++;
+                    continue;
+                }
+
+                if (State.Nursery.Contains(gu.Uid) && (StashCount(def.Food) > 0 || Count(def.Food) > 0))
+                {
+                    if (StashCount(def.Food) > 0)
+                    {
+                        StashTake(def.Food, 1, false);
+                    }
+                    else
+                    {
+                        RemoveItem(def.Food);
+                    }
+
+                    gu.Hunger = 0;
+                    continue;
+                }
+
                 gu.Hunger++;
 
                 if (State.Settings.AutoFeed && gu.Hunger >= def.Appetite && Count(def.Food) > 0)

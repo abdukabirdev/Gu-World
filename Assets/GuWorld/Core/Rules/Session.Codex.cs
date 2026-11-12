@@ -165,6 +165,7 @@ namespace GuWorld.Core
                 case "grade": return BestGrade();
                 case "elites": return State.Elites;
                 case "parries": return State.Parries;
+                case "homes": return State.Homes.Count;
                 case "moves_cast": return State.MovesCast;
                 case "perfect": return State.Gu.FindAll(g => g.Quality >= GuBook.MaxQuality).Count;
                 case "revived": return State.CicadaDay > 0 ? 1 : 0;
