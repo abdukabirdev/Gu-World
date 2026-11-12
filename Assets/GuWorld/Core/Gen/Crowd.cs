@@ -4,7 +4,7 @@ using System.Collections.Generic;
 namespace GuWorld.Core.Gen
 {
     /// <summary>What a townsperson is: their trade decides where their day takes them.</summary>
-    public enum Trade { Trader, Porter, Farmer, Student, Guard, Elder, Child, Idler }
+    public enum Trade { Trader, Porter, Farmer, Student, Guard, Elder, Child, Idler, Watch }
 
     /// <summary>One stretch of a townsperson's day: from an hour to an hour, walking a path or standing at its end.</summary>
     public sealed class Leg
@@ -620,6 +620,51 @@ namespace GuWorld.Core.Gen
                 walkers.Add(walker);
             }
 
+            // The night watch: they sleep by day and walk the streets with lanterns from dusk to dawn,
+            // from crossing to crossing, calling the hours.
+            var crossings = new List<Spot>();
+
+            foreach (var street in plan.Streets)
+            {
+                crossings.Add(new Spot { At = street.Points[0], Role = "crossing" });
+                crossings.Add(new Spot { At = street.Points[street.Points.Count - 1], Role = "crossing" });
+            }
+
+            var watch = Math.Max(4, count / 30);
+
+            for (var n = 0; n < watch && crossings.Count > 1; n++)
+            {
+                var home = homes[rng.Range(0, homes.Count)];
+                var walker = new Walker { Id = count + n, Trade = Trade.Watch, Home = home.At, Look = "guard", Pace = 1.1f };
+                var hour = 19.5f + rng.Range(0f, 0.6f);
+                var dawn = 29.5f + rng.Range(0f, 0.5f);
+                // A walk from home to the first crossing, then round, a short stand at each.
+                var at = home;
+                var first = true;
+
+                while (hour < dawn - 1)
+                {
+                    var next = crossings[rng.Range(0, crossings.Count)];
+
+                    if (Vec2.Distance(next.At, at.At) < 30)
+                    {
+                        continue;
+                    }
+
+                    var until = Math.Min(dawn - 0.6f, hour + rng.Range(0.6f, 1.1f));
+                    hour = Walk(walker, graph, at, next, hour, until, "watch");
+                    at = next;
+                    first = false;
+                }
+
+                if (!first)
+                {
+                    // Home by dawn, asleep through the day (round to the next dusk).
+                    Walk(walker, graph, at, home, hour, walker.Day[0].From + 24, "home");
+                    walkers.Add(walker);
+                }
+            }
+
             return walkers;
         }
 
@@ -651,7 +696,8 @@ namespace GuWorld.Core.Gen
                 case Trade.Porter: return rng.Pick(new[] { "villager", "smith", "farmer" });
                 case Trade.Farmer: return "farmer";
                 case Trade.Student: return "student";
-                case Trade.Guard: return "guard";
+                case Trade.Guard:
+                case Trade.Watch: return "guard";
                 case Trade.Elder: return rng.Pick(new[] { "elder", "scribe", "monk" });
                 case Trade.Child: return "child";
                 default: return rng.Pick(TownLooks);

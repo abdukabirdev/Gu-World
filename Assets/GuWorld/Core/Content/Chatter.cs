@@ -27,6 +27,7 @@ namespace GuWorld.Core
                 case Trade.Elder: return ("Старейшина " + given, "Старший клана");
                 case Trade.Student: return ("Гу Юэ " + given + (rng.Chance(0.5f) ? given.ToLowerInvariant() : ""), "Ученик академии");
                 case Trade.Guard: return ("Гу Юэ " + family, "Страж ворот");
+                case Trade.Watch: return ("Ночной сторож " + family, "Ночная стража");
                 case Trade.Trader: return ((rng.Chance(0.4f) ? "Тётушка " : "Лао ") + family, "Торговец");
                 case Trade.Porter: return (family + " " + given, "Носильщик");
                 case Trade.Farmer: return (family + " " + given, "Крестьянин");
@@ -53,6 +54,7 @@ namespace GuWorld.Core
                 Trade.Farmer => Farmer,
                 Trade.Student => Student,
                 Trade.Guard => Guard,
+                Trade.Watch => Watch,
                 Trade.Elder => Elder,
                 Trade.Child => Child,
                 _ => Idler,
@@ -126,6 +128,15 @@ namespace GuWorld.Core
             "Смена до заката. Потом — в таверну, а там как повезёт.",
             "Вчера у южных ворот поймали вора. Без Гу, дурак, лез.",
             "Пропуск? Шучу. Своих в лицо знаю.",
+        };
+
+        static readonly string[] Watch =
+        {
+            "Третья стража! Огонь берегите, двери запирайте!",
+            "Ночью по улицам ходят только сторожа да воры. Ты не похож на сторожа.",
+            "Фонарь гаснет — значит, ветер с перевала. К дождю.",
+            "Тише. Старейшины спят, а у них уши — как у лисы.",
+            "Видел огни за стеной. Волки, наверное. Или хуже.",
         };
 
         static readonly string[] Elder =

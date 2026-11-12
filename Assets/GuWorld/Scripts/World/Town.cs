@@ -90,6 +90,7 @@ namespace GuWorld.World
                 if (made != null)
                 {
                     raised[cell].Add(made);
+                    Windows(made, building);
                 }
             }
 
@@ -105,6 +106,42 @@ namespace GuWorld.World
             }
 
             Draw();
+        }
+
+        /// <summary>
+        /// Most lived-in houses show a warm light at their door and a window or two after dusk (the far ones,
+        /// drawn in batches, stay dark: from afar the town is a few lights, near it is lived in).
+        /// </summary>
+        static void Windows(GameObject made, Placed building)
+        {
+            if (CityPlanner.Occupants(building.Model) <= 0 && building.Role != "inn" && building.Role != "shop")
+            {
+                return;
+            }
+
+            var seed = Mathf.Abs((int)(building.At.X * 13 + building.At.Z * 7));
+
+            if (seed % 10 >= 7)
+            {
+                return;
+            }
+
+            var glow = new GameObject("Windows");
+            glow.transform.SetParent(made.transform, false);
+            var warm = Models.Glow(new Color(1f, 0.7f, 0.38f, 0.5f));
+            var half = building.Footprint.Half;
+            var front = half.Z + 0.05f;
+            // The door's light, and a window either side of it at a storey's height.
+            Models.Part("Door", glow.transform, Models.Quad, warm, new Vector3(0, 1.4f, front / building.Scale), new Vector3(1.4f, 1.8f, 1)).AddComponent<Fx.Billboard>();
+
+            if (seed % 3 != 0)
+            {
+                var side = Mathf.Min(half.X * 0.55f, 3f);
+                Models.Part("Window", glow.transform, Models.Quad, warm, new Vector3(side, 2.3f, front / building.Scale), new Vector3(0.9f, 0.7f, 1)).AddComponent<Fx.Billboard>();
+                Models.Part("Window", glow.transform, Models.Quad, warm, new Vector3(-side, 2.3f, front / building.Scale), new Vector3(0.9f, 0.7f, 1)).AddComponent<Fx.Billboard>();
+            }
+
+            made.AddComponent<NightGlow>().Glow = glow;
         }
 
         /// <summary>Where a house's origin stands: on its pad.</summary>

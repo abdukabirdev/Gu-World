@@ -200,9 +200,12 @@ namespace GuWorld.World
 
         Body Take(Walker walker)
         {
-            if (!pool.TryGetValue(walker.Look, out var stack))
+            // Watchmen keep bodies of their own (they carry a lantern).
+            var kind = walker.Trade == Trade.Watch ? walker.Look + "#watch" : walker.Look;
+
+            if (!pool.TryGetValue(kind, out var stack))
             {
-                pool[walker.Look] = stack = new Stack<Body>();
+                pool[kind] = stack = new Stack<Body>();
             }
 
             Body body;
@@ -217,7 +220,16 @@ namespace GuWorld.World
                 var root = new GameObject("Townsperson");
                 root.transform.SetParent(transform, false);
                 Models.Human(root.transform, walker.Look, false, false, out var rig);
-                body = new Body { Root = root, Rig = rig, Look = walker.Look };
+                body = new Body { Root = root, Rig = rig, Look = kind };
+
+                // A watchman's lantern: a warm glow at the hand, lit at night.
+                if (walker.Trade == Trade.Watch)
+                {
+                    var glow = new GameObject("Lantern");
+                    glow.transform.SetParent(root.transform, false);
+                    Models.Part("Light", glow.transform, Models.Quad, Models.Glow(new Color(1f, 0.6f, 0.3f, 0.7f)), new Vector3(0.35f, 1.0f, 0.3f), Vector3.one * 0.9f).AddComponent<Fx.Billboard>();
+                    root.AddComponent<NightGlow>().Glow = glow;
+                }
                 made++;
             }
 

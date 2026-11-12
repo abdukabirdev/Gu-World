@@ -500,6 +500,7 @@ static class WorldChecks
         var noon = Out(10);
         var midnight = Out(2);
         check(noon > walkers.Count * 0.8f, $"world: by day the town is out ({noon} of {walkers.Count} at ten)");
+        check(walkers.Count(w => w.Trade == Trade.Watch && !Crowd.At(w, 23).Indoors) >= 4, "world: the night watch walks the streets at night");
         check(midnight < walkers.Count * 0.15f, $"world: by night the town is in ({midnight} of {walkers.Count} at two)");
         check(new[] { 7f, 9f, 12f, 13f, 18f, 21f }.All(h => Walking(h) > walkers.Count * 0.02f), "world: at every hour of the day someone is on the way");
 
