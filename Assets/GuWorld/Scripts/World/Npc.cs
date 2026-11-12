@@ -34,8 +34,9 @@ namespace GuWorld.World
             npc.Def = def;
             npc.home = root.transform.rotation;
             npc.goal = root.transform.position;
-            Models.Human(root.transform, def.Look, false, false, out npc.rig);
+            var model = Models.Human(root.transform, def.Look, false, false, out npc.rig);
             npc.rig?.Play("idle", 0);
+            npc.springs = Quality.Level >= 1 ? new SpringBones(model.transform) : null;
             var solid = root.AddComponent<CapsuleCollider>();
             solid.radius = 0.35f;
             solid.height = 1.8f;
@@ -135,11 +136,19 @@ namespace GuWorld.World
             }
         }
 
+        SpringBones springs;
+
         void LateUpdate()
         {
             if (!Game.Frozen)
             {
                 rig?.Tick(Time.deltaTime);
+
+                // Only those near enough to be looked at swing their sleeves.
+                if (springs != null && Game.Hero != null && (Game.Hero.transform.position - transform.position).sqrMagnitude < 30 * 30)
+                {
+                    springs.Tick(Time.deltaTime, SpringBones.Wind);
+                }
             }
         }
 

@@ -67,6 +67,7 @@ namespace GuWorld.Actors
             model = Models.Human(transform, "hero", true, Quality.FullHero, out rig).transform;
             model.localScale = Vector3.one * 0.97f;
             rig?.Play("idle", 0);
+            springs = Quality.Level >= 1 ? new SpringBones(model) : null;
         }
 
         void SetMode(Mode next)
@@ -229,11 +230,14 @@ namespace GuWorld.Actors
             }
         }
 
+        SpringBones springs;
+
         void LateUpdate()
         {
             if (rig != null && !Game.Frozen)
             {
                 rig.Tick(Time.deltaTime);
+                springs?.Tick(Time.deltaTime, SpringBones.Wind);
             }
         }
 
