@@ -280,9 +280,13 @@ namespace GuWorld.Actors
             var wish = free ? MoveWish() : Vector3.zero;
             var moving = wish.sqrMagnitude > 0.01f;
             Moving = moving;
-            Sprinting = moving && free && Keys.Held(Key.LeftShift) && Session.Stamina > 1 && Grounded;
+            // The guard (Ctrl held): slower, no sprint, a parry in its first instant.
+            var guarding = free && Grounded && (Keys.Held(Key.LeftCtrl) || Keys.Held(Key.RightCtrl));
+            guardSince = guarding ? (Guarding ? guardSince + dt : 0) : 0;
+            Guarding = guarding;
+            Sprinting = moving && free && !guarding && Keys.Held(Key.LeftShift) && Session.Stamina > 1 && Grounded;
             // Cold and slowness drag, wind hastens.
-            var speed = (Sprinting ? SprintSpeed : RunSpeed) * Session.SpeedFactor;
+            var speed = (Sprinting ? SprintSpeed : RunSpeed) * Session.SpeedFactor * (guarding ? 0.45f : 1);
             Walk(wish * speed, dt);
 
             if (moving)
@@ -298,6 +302,10 @@ namespace GuWorld.Actors
             if (!Grounded && Airborne)
             {
                 Animate(fallSpeed > 0 ? "jump" : "fall", 0.12f);
+            }
+            else if (guarding)
+            {
+                Animate("guard", 0.08f, moving ? 1.6f : 1f);
             }
             else if (moving)
             {
@@ -325,7 +333,7 @@ namespace GuWorld.Actors
                 return;
             }
 
-            if (Keys.LeftDown && Grounded)
+            if (Keys.LeftDown && Grounded && !guarding)
             {
                 BeginStrike(0);
                 return;
@@ -971,11 +979,47 @@ namespace GuWorld.Actors
         // ------------------------------------------------------------------ Being hit, dying, coming back
 
         /// <summary>A blow on the hero: what of it landed (0 if it was dodged, swallowed by the ward, or the hero is out of reach of blows).</summary>
-        public float TakeHit(float raw, Vector3 from)
+        /// <summary>The guard is up (Ctrl held).</summary>
+        public bool Guarding { get; private set; }
+        float guardSince;
+
+        public float TakeHit(float raw, Vector3 from, Enemy attacker = null)
         {
             if (mode == Mode.Dead || invulnerable > 0 || Game.Busy)
             {
                 return 0;
+            }
+
+            // A raised guard: parried in its first instant, blocked after, broken from behind or when spent.
+            if (Guarding)
+            {
+                var toward = from - transform.position;
+                toward.y = 0;
+                var facing = toward.sqrMagnitude < 0.01f || Vector3.Angle(transform.forward, toward) < 75;
+                var guard = Session.Guard(raw, guardSince, facing);
+
+                if (guard.Parried)
+                {
+                    Sound.AudioDirector.Play("ward", transform.position, 0.9f);
+                    Effects.Burst(Centre + transform.forward * 0.5f, new Color(1f, 0.95f, 0.7f), 1.2f, 0.25f);
+                    Game.Ui?.Toast("Парировано");
+                    attacker?.Parried();
+
+                    return 0;
+                }
+
+                if (guard.Broken)
+                {
+                    Guarding = false;
+                    Game.Ui?.Toast("Блок пробит");
+                }
+                else if (guard.Share < 1)
+                {
+                    Sound.AudioDirector.Play("block", transform.position, 0.8f);
+                    Effects.Burst(Centre + transform.forward * 0.4f, new Color(0.85f, 0.9f, 1f), 0.8f, 0.15f);
+                }
+
+                raw *= guard.Share;
             }
 
             var damage = Session.TakeDamage(raw);

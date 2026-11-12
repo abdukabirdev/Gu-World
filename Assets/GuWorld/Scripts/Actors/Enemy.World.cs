@@ -138,7 +138,7 @@ namespace GuWorld.Actors
                 damage *= 1 + strongValue;
             }
 
-            var landed = hero.TakeHit(damage, from);
+            var landed = hero.TakeHit(damage, from, this);
 
             if (landed > 0 && Def.Inflicts != StatusKind.None && Random.value < Def.InflictChance)
             {

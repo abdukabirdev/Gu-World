@@ -276,6 +276,18 @@ static partial class Program
             Check(given.Count >= 1 && given.Distinct().Count() == given.Count, $"then unleashes each once, and waits long for it again ({string.Join(", ", given)})");
         }
 
+        // ------------------------------------------------------------------ The guard
+
+        var g = new Session(Session.NewGame("Блок"), 61);
+        var parry = g.Guard(40, 0.1f, true);
+        Check(parry.Parried && parry.Share == 0 && g.State.Parries == 1, "a blow in the first instant of the guard is parried");
+        var stamina = g.Stamina;
+        var block = g.Guard(40, 1, true);
+        Check(!block.Parried && block.Share < 0.5f && g.Stamina < stamina, "a later blow is blocked, for stamina");
+        Check(g.Guard(40, 1, false).Share == 1, "a blow from behind is not blocked");
+        g.Stamina = 0;
+        Check(g.Guard(40, 1, true).Broken, "with no stamina the guard breaks");
+
         // ------------------------------------------------------------------ Elites
 
         var wolf = Bestiary.Get("wolf");

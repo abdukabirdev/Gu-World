@@ -120,6 +120,8 @@ namespace GuWorld.Core
         public List<Tally> Attainment = new List<Tally>();
         /// <summary>Elites the hero has felled.</summary>
         public int Elites;
+        /// <summary>Blows parried.</summary>
+        public int Parries;
     }
 
     [Serializable]

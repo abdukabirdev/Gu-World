@@ -847,6 +847,20 @@ namespace GuWorld.Actors
             }
         }
 
+        /// <summary>Its blow was parried: it reels (a boss only for a moment).</summary>
+        public void Parried()
+        {
+            if (!Alive)
+            {
+                return;
+            }
+
+            Interrupt();
+            staggerTime = Def.Boss ? 0.5f : 1.4f;
+            attackWait = Mathf.Max(attackWait, Def.Boss ? 0.8f : 1.6f);
+            rig?.Play(rig.Has("hit") ? "hit" : "idle", 0.05f, true);
+        }
+
         void Interrupt()
         {
             StopAllCoroutines();
