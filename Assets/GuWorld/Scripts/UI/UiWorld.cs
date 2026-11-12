@@ -539,7 +539,7 @@ namespace GuWorld.UI
         void ClansPage()
         {
             var session = S;
-            var body = Frame("族", "Кланы", "Что о вас думают на горе", true, null, null, new[] { ("Q E", "Страницы"), ("Esc", "Закрыть") });
+            var body = Frame("族", "Кланы", $"В клане Гу Юэ: {Session.ClanRanks[session.ClanRank].ToLowerInvariant()} · заслуги {session.State.Merit} (всего {session.State.MeritEarned})", true, null, null, new[] { ("Q E", "Страницы"), ("Esc", "Закрыть") });
             var left = Column(body, 0, 0.5f, 10);
 
             foreach (var clan in Clans.All)
