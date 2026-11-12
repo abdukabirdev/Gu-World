@@ -159,7 +159,8 @@ namespace GuWorld.Actors
 
             if (attackWait <= 0)
             {
-                var gu = caster.Choose(distance, Health < MaxHealth * 0.5f);
+                // A killer move first when one is ready (a master's strongest), then its Gu in turn.
+                var gu = caster.ChooseMove(distance, Health < MaxHealth * 0.5f) ?? caster.Choose(distance, Health < MaxHealth * 0.5f);
 
                 if (gu != null)
                 {

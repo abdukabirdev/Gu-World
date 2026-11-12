@@ -113,7 +113,7 @@ namespace GuWorld.Core
             {
                 Id = "bone_master", Name = "Мёртвый мастер Гу", Body = EnemyBody.Human, Mind = EnemyMind.Caster, Look = "shade", Level = 21, Health = 1400, Damage = 42, Speed = 4.8f,
                 AttackRange = 15, AttackPeriod = 2.6f, Sight = 30, Insight = 170, Loot = "bone_master", Poise = 30, Colour = 0xB0A0D0,
-                Gu = new[] { "bone_spear", "dark_tide", "ten_thousand_needles" }
+                Gu = new[] { "bone_spear", "bone_needle", "dark_tide", "ten_thousand_needles" }
             },
             new EnemyDef
             {

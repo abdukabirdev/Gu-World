@@ -303,7 +303,44 @@ namespace GuWorld.Core
 
             Gu = list.ToArray();
             ready = new float[Gu.Length];
+
+            // The killer moves it can make of its Gu: the core and at least one of the supports (a master improvises the rest).
+            var moves = new System.Collections.Generic.List<GuDef>();
+
+            foreach (var move in KillerMoves.All)
+            {
+                if (Array.IndexOf(gu, move.Core) < 0)
+                {
+                    continue;
+                }
+
+                var supported = false;
+
+                foreach (var support in move.Supports)
+                {
+                    supported |= Array.IndexOf(gu, support) >= 0;
+                }
+
+                if (supported)
+                {
+                    var core = GuBook.Get(move.Core);
+                    moves.Add(new GuDef { Id = move.Id, Name = move.Name, Seal = move.Seal, Rank = move.Rank, Path = core.Path, Kind = GuKind.Active, Colour = move.Colour, Skill = move.Skill });
+                }
+            }
+
+            Moves = moves.ToArray();
+            moveReady = new float[Moves.Length];
+
+            for (var i = 0; i < moveReady.Length; i++)
+            {
+                // Not at once: a master opens with their Gu and keeps the move for later.
+                moveReady[i] = 6 + 3 * i;
+            }
         }
+
+        /// <summary>The killer moves this master knows, as Gu-like defs (a move's skill, name and colour).</summary>
+        public readonly GuDef[] Moves;
+        readonly float[] moveReady;
 
         /// <summary>The distance it likes to fight at: close for melee buffs, the reach of its bolts otherwise.</summary>
         public float PreferredDistance
@@ -330,6 +367,27 @@ namespace GuWorld.Core
             {
                 ready[i] = Math.Max(0, ready[i] - dt);
             }
+
+            for (var i = 0; i < moveReady.Length; i++)
+            {
+                moveReady[i] = Math.Max(0, moveReady[i] - dt);
+            }
+        }
+
+        /// <summary>A killer move to unleash now (null if none is ready or suits); its wait is long.</summary>
+        public GuDef ChooseMove(float distance, bool hurt)
+        {
+            for (var i = 0; i < Moves.Length; i++)
+            {
+                if (moveReady[i] <= 0 && Suits(Moves[i].Skill, distance, hurt))
+                {
+                    moveReady[i] = Moves[i].Skill.Cooldown * 3 + 8;
+
+                    return Moves[i];
+                }
+            }
+
+            return null;
         }
 
         /// <summary>The Gu to cast now at a hero this far away (null: none suits or all wait). Starts its cooldown, longer than a hero's.</summary>

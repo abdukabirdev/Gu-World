@@ -250,6 +250,32 @@ static partial class Program
             Check(Bestiary.Tables.Any(t => t.Items.Any(e => e.Item == id)) || Markets.Ids.SelectMany(Markets.Get).Any(e => e.Item == id), $"the relic of rank {rank} can be found");
         }
 
+        // ------------------------------------------------------------------ Masters' killer moves
+
+        var masters = Bestiary.All.Where(d => d.Mind == EnemyMind.Caster).Select(d => (d, mind: new CasterMind(d.Gu))).ToList();
+        Check(masters.Count(m => m.mind.Moves.Length > 0) >= 4, $"some Gu masters know killer moves ({string.Join(", ", masters.Where(m => m.mind.Moves.Length > 0).Select(m => m.d.Id + ":" + string.Join("+", m.mind.Moves.Select(x => x.Id))))})");
+        var withMove = masters.FirstOrDefault(m => m.mind.Moves.Length > 0).mind;
+
+        if (withMove != null)
+        {
+            Check(withMove.ChooseMove(10, false) == null, "a master keeps the move for later");
+            withMove.Tick(60);
+            var range = withMove.Moves[0].Skill.Range > 0 ? withMove.Moves[0].Skill.Range * 0.8f : 3;
+            var given = new List<string>();
+
+            for (var i = 0; i < 10; i++)
+            {
+                var picked = withMove.ChooseMove(range, true);
+
+                if (picked != null)
+                {
+                    given.Add(picked.Id);
+                }
+            }
+
+            Check(given.Count >= 1 && given.Distinct().Count() == given.Count, $"then unleashes each once, and waits long for it again ({string.Join(", ", given)})");
+        }
+
         // ------------------------------------------------------------------ Elites
 
         var wolf = Bestiary.Get("wolf");
