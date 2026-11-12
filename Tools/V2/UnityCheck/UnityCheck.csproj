@@ -1,0 +1,19 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <!-- Compiles the Unity layer against Unity's reference assemblies and hand-written stubs (no engine needed). -->
+  <PropertyGroup>
+    <TargetFramework>netstandard2.1</TargetFramework>
+    <LangVersion>9.0</LangVersion>
+    <Nullable>disable</Nullable>
+    <ImplicitUsings>disable</ImplicitUsings>
+    <EnableDefaultCompileItems>false</EnableDefaultCompileItems>
+    <NoWarn>CS0162;CS0168;CS0219;CS0414;CS0649;CS8632;CS0067;CS0618</NoWarn>
+  </PropertyGroup>
+  <ItemGroup>
+    <PackageReference Include="UnityEngine.Modules" Version="2021.3.33" />
+  </ItemGroup>
+  <ItemGroup>
+    <Compile Include="../../../Assets/GuWorld/Core/**/*.cs" />
+    <Compile Include="../../../Assets/GuWorld/Scripts/**/*.cs" />
+    <Compile Include="../stubs/*.cs" />
+  </ItemGroup>
+</Project>

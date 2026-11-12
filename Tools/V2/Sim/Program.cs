@@ -27,6 +27,30 @@ static partial class Program
     static int Main(string[] args)
     {
         var repo = args.Length > 0 && Directory.Exists(args[0]) ? args[0] : FindRepo();
+
+        // The generators alone: `gen` checks and draws them, `gen export` also writes the viewer's models.
+        if (Array.IndexOf(args, "gen") >= 0)
+        {
+            var genReport = new List<string>();
+            var export = Array.IndexOf(args, "export") >= 0;
+            var only = Array.Find(args, a => a.StartsWith("only=")) ?? "only=trees,biomes,people";
+            var what = only.Substring(5).Split(',');
+
+            if (Array.IndexOf(what, "trees") >= 0)
+            {
+                GenChecks.Trees(repo, Check, genReport, export);
+            }
+
+            foreach (var line in genReport)
+            {
+                Console.WriteLine(line);
+            }
+
+            Console.WriteLine(failures == 0 ? "\nALL GENERATOR CHECKS PASSED" : $"\n{failures} GENERATOR CHECK(S) FAILED");
+
+            return failures == 0 ? 0 : 1;
+        }
+
         Content(repo);
         Rules();
         MoreRules();

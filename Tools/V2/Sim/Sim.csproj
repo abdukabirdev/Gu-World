@@ -1,0 +1,15 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <!-- The checks of GU World 2 that need no Unity: Core's rules, content and generators. -->
+  <PropertyGroup>
+    <OutputType>Exe</OutputType>
+    <TargetFramework>net8.0</TargetFramework>
+    <LangVersion>latest</LangVersion>
+    <Nullable>disable</Nullable>
+    <ImplicitUsings>disable</ImplicitUsings>
+    <Optimize>true</Optimize>
+    <NoWarn>CS0162;CS0168;CS0219;CS0414;CS0649;CS8632;CS0067</NoWarn>
+  </PropertyGroup>
+  <ItemGroup>
+    <Compile Include="../../../Assets/GuWorld/Core/**/*.cs" />
+  </ItemGroup>
+</Project>
