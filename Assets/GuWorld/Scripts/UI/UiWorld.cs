@@ -715,6 +715,9 @@ namespace GuWorld.UI
             travelToggle.anchorMin = travelToggle.anchorMax = new Vector2(1, 0.5f);
             travelToggle.anchoredPosition = new Vector2(-20, 0);
 
+            UiKit.Lbl("Кадры", left, 11, UiKit.LabelGold).Size(18);
+            UiKit.HexButton(World.Governor.On ? "Авто-детализация: включена (трава, горожане, тени — по кадрам)" : "Авто-детализация: выключена", left, () => { World.Governor.On = !World.Governor.On; Redraw(); }, World.Governor.On ? UiKit.HexKind.Main : UiKit.HexKind.Ghost, 12, 40);
+
             UiKit.Lbl("Звук", left, 11, UiKit.LabelGold).Size(18);
             Volume(left, "Общая громкость", Sound.AudioDirector.Master, v => Sound.AudioDirector.SetVolumes(v, Sound.AudioDirector.Effects, Sound.AudioDirector.MusicVolume, Sound.AudioDirector.Beds));
             Volume(left, "Музыка", Sound.AudioDirector.MusicVolume, v => Sound.AudioDirector.SetVolumes(Sound.AudioDirector.Master, Sound.AudioDirector.Effects, v, Sound.AudioDirector.Beds));

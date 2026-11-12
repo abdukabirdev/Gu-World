@@ -24,6 +24,8 @@ namespace GuWorld.World
 
         WorldPlan plan;
         float radius;
+        float baseRadius;
+        float detailUsed = 1;
         float density;
         Mesh[] meshes;
         Material material;
@@ -41,6 +43,7 @@ namespace GuWorld.World
             var field = root.AddComponent<GrassField>();
             field.plan = plan;
             field.radius = Quality.Level >= 2 ? 70 : Quality.Level == 1 ? 46 : 28;
+            field.baseRadius = field.radius;
             field.density = Quality.Level >= 2 ? 4f : Quality.Level == 1 ? 2.6f : 1.5f;
             field.meshes = new Mesh[Grass.Kinds];
 
@@ -86,6 +89,14 @@ namespace GuWorld.World
 
             var p = hero.transform.position;
             var here = new Vector2Int(Mathf.FloorToInt(p.x / CellSize), Mathf.FloorToInt(p.z / CellSize));
+
+            // The governor's detail shortens the reach (and the cells beyond it go).
+            if (Mathf.Abs(Governor.Detail - detailUsed) > 0.01f)
+            {
+                detailUsed = Governor.Detail;
+                radius = baseRadius * Mathf.Lerp(0.55f, 1, (detailUsed - 0.4f) / 0.6f);
+                lastCell = new Vector2Int(int.MinValue, int.MinValue);
+            }
 
             if (here != lastCell)
             {

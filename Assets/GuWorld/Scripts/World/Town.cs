@@ -18,7 +18,7 @@ namespace GuWorld.World
         const float CellSize = 80;
 
         SettlementPlan plan;
-        float near, far;
+        float near, far, baseNear;
         float wait;
         Vector2Int lastCell = new Vector2Int(int.MinValue, int.MinValue);
 
@@ -49,6 +49,7 @@ namespace GuWorld.World
             var town = root.AddComponent<Town>();
             town.plan = plan;
             town.near = Quality.Level >= 2 ? 300 : Quality.Level == 1 ? 210 : 150;
+            town.baseNear = town.near;
             town.far = Quality.Level >= 2 ? 1300 : Quality.Level == 1 ? 850 : 520;
 
             foreach (var building in plan.Buildings)
@@ -150,6 +151,8 @@ namespace GuWorld.World
         void Refresh(Vector3 focus)
         {
             var reach = Mathf.CeilToInt(far / CellSize);
+            // The governor brings the prefabs' ring in when frames are slow.
+            near = baseNear * Mathf.Lerp(0.6f, 1, (Governor.Detail - 0.4f) / 0.6f);
             var centre = new Vector2(focus.x, focus.z);
 
             foreach (var batches in farParts.Values)

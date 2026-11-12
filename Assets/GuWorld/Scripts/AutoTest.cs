@@ -178,6 +178,8 @@ namespace GuWorld
                         Note("q" + level + " " + town.Count());
                     }
 
+                    Note("q" + level + " governor detail " + Governor.Detail.ToString("0.00"));
+
                     foreach (var grass in Engine.FindAll<GrassField>())
                     {
                         Note("q" + level + " " + grass.Count());

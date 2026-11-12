@@ -164,8 +164,9 @@ namespace GuWorld.World
 
             wanted.Sort((a, b) => a.distance.CompareTo(b.distance));
             var keep = new HashSet<Walker>();
+            var allowed = Mathf.Max(6, Mathf.RoundToInt(most * Governor.Detail));
 
-            for (var i = 0; i < wanted.Count && i < most; i++)
+            for (var i = 0; i < wanted.Count && i < allowed; i++)
             {
                 keep.Add(wanted[i].walker);
             }

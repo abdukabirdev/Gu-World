@@ -296,6 +296,7 @@ namespace GuWorld
                     Forest.Make(world.transform, plan);
                     Places.Make(world.transform, plan);
                     GrassField.Make(world.transform, plan);
+                    Governor.Make(world.transform);
                     Population.Make(world.transform);
                 }
             }
