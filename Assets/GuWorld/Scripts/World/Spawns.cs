@@ -155,7 +155,14 @@ namespace GuWorld.World
 
                     for (var i = 0; i < def.Count; i++)
                     {
-                        Enemy.Spawn(enemy, Around(def.At, 0, def.Radius, hero.transform.position), Random.Range(0, 360f), def.Id);
+                        // Now and then one of a pack is an elite.
+                        var one = Elites.Make(enemy, Elites.Roll(enemy, Game.Session.Rank, Game.Session.Random));
+                        var made = Enemy.Spawn(one, Around(def.At, 0, def.Radius, hero.transform.position), Random.Range(0, 360f), def.Id);
+
+                        if (one.Elite != "" && made != null)
+                        {
+                            Fx.Effects.Aura(made.transform, Models.Rgb(one.Colour), 9999, 1.4f);
+                        }
                     }
 
                     group.Out = true;

@@ -248,6 +248,11 @@ namespace GuWorld.Core
 
     public class EnemyDef
     {
+        /// <summary>A copy to make an elite of (the arrays are shared: they are not changed).</summary>
+        public EnemyDef Clone() => (EnemyDef)MemberwiseClone();
+
+        /// <summary>The elite this is ("" for an ordinary one; see Elites).</summary>
+        public string Elite = "";
         public string Id;
         public string Name;
         public string Title;

@@ -657,7 +657,10 @@ namespace GuWorld.Core
         // ------------------------------------------------------------------ Fights
 
         /// <summary>An enemy died by the hero's hand: insight, the quests' counts, the loot it leaves.</summary>
-        public Loot Killed(string enemyId)
+        public Loot Killed(string enemyId) => Killed(enemyId, "");
+
+        /// <summary>An enemy fell (an elite, if `elite` names one: twice the insight and the stones, and its loot rolled twice).</summary>
+        public Loot Killed(string enemyId, string elite)
         {
             var def = Bestiary.Get(enemyId);
 
@@ -684,10 +687,26 @@ namespace GuWorld.Core
 
             BountyKill(enemyId);
             Notify(StepKind.Kill, enemyId);
-            GainInsight(def.Insight);
-            Achieve();
+            var isElite = !string.IsNullOrEmpty(elite) && Elites.Get(elite) != null && !def.Boss;
+            GainInsight(def.Insight * (isElite ? 2 : 1));
 
-            return RollLoot(def.Loot);
+            if (isElite)
+            {
+                State.Elites++;
+            }
+
+            Achieve();
+            var loot = RollLoot(def.Loot);
+
+            if (isElite)
+            {
+                var more = RollLoot(def.Loot);
+                loot.Stones = loot.Stones * 2 + more.Stones;
+                loot.Items.AddRange(more.Items);
+                loot.Gu.AddRange(more.Gu);
+            }
+
+            return loot;
         }
 
         /// <summary>The encounter whose turn it is in the story, if the hero is to fight it now.</summary>

@@ -250,6 +250,32 @@ static partial class Program
             Check(Bestiary.Tables.Any(t => t.Items.Any(e => e.Item == id)) || Markets.Ids.SelectMany(Markets.Get).Any(e => e.Item == id), $"the relic of rank {rank} can be found");
         }
 
+        // ------------------------------------------------------------------ Elites
+
+        var wolf = Bestiary.Get("wolf");
+        var fierce = Elites.Make(wolf, Elites.Get("fierce"));
+        Check(fierce != wolf && fierce.Health > wolf.Health && fierce.Damage > wolf.Damage && fierce.Elite == "fierce" && wolf.Elite == "", "an elite is a stronger copy, the beast's def untouched");
+        Check(fierce.Name == "Свирепый серый волк", $"an elite's name ({fierce.Name})");
+        Check(Elites.Named("Огненная обезьяна", Elites.Get("stone")) == "Каменная огненная обезьяна", "an elite's word agrees with a feminine name");
+        Check(Elites.Make(Bestiary.Get("fox"), Elites.Get("venom")).Inflicts == StatusKind.Poison, "an elite brings its status to a beast that had none");
+        var rolled = 0;
+        var random = new Random(5);
+
+        for (var i = 0; i < 2000; i++)
+        {
+            rolled += Elites.Roll(wolf, 3, random) != null ? 1 : 0;
+            Check(Elites.Roll(Bestiary.Get("ragged_ear"), 5, random) == null, "a boss is never an elite");
+        }
+
+        Check(rolled > 2000 * Elites.Chance(3) * 0.6f && rolled < 2000 * Elites.Chance(3) * 1.4f, $"elites come at their chance ({rolled} of 2000)");
+        var e = new Session(Session.NewGame("Элита"), 51);
+        e.State.Insight = 0;
+        e.Killed("fox");
+        var plainGain = e.State.Insight;
+        e.State.Insight = 0;
+        e.Killed("fox", "fierce");
+        Check(e.State.Elites == 1 && Math.Abs(e.State.Insight - plainGain * 2) < 0.5f, $"an elite is worth twice the insight ({plainGain} → {e.State.Insight})");
+
         // ------------------------------------------------------------------ The immortal aperture
 
         var a = new Session(Session.NewGame("Полигон"), 21);

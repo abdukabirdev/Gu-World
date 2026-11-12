@@ -95,6 +95,8 @@ namespace GuWorld.Core
             new AchievementDef { Id = "perfect_gu", Name = "Без изъяна", Text = "Закалите Гу до совершенства.", Counts = "perfect", Goal = 1 },
             new AchievementDef { Id = "rank_four", Name = "Мастер четвёртого ранга", Text = "Прорвитесь на четвёртый ранг.", Counts = "step", Goal = 12 },
             new AchievementDef { Id = "rank_five", Name = "Вершина смертных", Text = "Прорвитесь на пятый ранг.", Counts = "step", Goal = 16 },
+            new AchievementDef { Id = "elite_hunter", Name = "Охотник на сильных", Text = "Одолейте десять элитных врагов.", Counts = "elites", Goal = 10 },
+            new AchievementDef { Id = "elite_bane", Name = "Гроза элиты", Text = "Одолейте сто элитных врагов.", Counts = "elites", Goal = 100 },
             new AchievementDef { Id = "path_master", Name = "Мастер пути", Text = "Достигните мастерства на каком-нибудь пути.", Counts = "grade", Goal = 2 },
             new AchievementDef { Id = "path_grandmaster", Name = "Великий мастер", Text = "Станьте великим мастером пути.", Counts = "grade", Goal = 4 },
             new AchievementDef { Id = "spring_after_autumn", Name = "Весна после осени", Text = "Вернитесь из смерти с Цикадой Весны и Осени.", Counts = "revived", Goal = 1 },

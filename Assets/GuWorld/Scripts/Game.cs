@@ -456,7 +456,7 @@ namespace GuWorld
                 return;
             }
 
-            var loot = Session.Killed(enemy.Def.Id);
+            var loot = Session.Killed(enemy.Def.Id, enemy.Def.Elite);
             var from = enemy.transform.position;
 
             if (loot.Stones > 0)

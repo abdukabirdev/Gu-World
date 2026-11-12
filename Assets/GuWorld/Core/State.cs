@@ -118,6 +118,8 @@ namespace GuWorld.Core
         public int CicadaDay;
         /// <summary>Attainment on each path (Id: the path's name, Count: its points).</summary>
         public List<Tally> Attainment = new List<Tally>();
+        /// <summary>Elites the hero has felled.</summary>
+        public int Elites;
     }
 
     [Serializable]
