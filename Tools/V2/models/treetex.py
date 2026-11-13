@@ -50,17 +50,32 @@ def smooth(a, b, x):
     return t * t * (3 - 2 * t)
 
 
-def voronoi(rng, count, stretch=1.0, size=SIZE):
+def voronoi(rng, count, stretch=1.0, size=SIZE, warp=None):
     """Tiling Worley noise: for every pixel the distances to its nearest two points and the nearest's number.
-    `stretch` above 1 makes the cells that many times taller than wide."""
+    `stretch` above 1 makes the cells that many times taller than wide. `warp`: two tiling fields
+    (x, y, as shares of the tile) the pixels are moved by first, so the cells' edges wander."""
     pts = rng.random((count, 2))
     tiles = np.concatenate([pts + (dx, dy) for dx in (-1, 0, 1) for dy in (-1, 0, 1)])
     ids = np.tile(np.arange(count), 9)
     tree = cKDTree(tiles * (1, 1 / stretch))
     ys, xs = np.mgrid[0:size, 0:size]
-    q = np.stack([(xs.ravel() + 0.5) / size, (ys.ravel() + 0.5) / size / stretch], axis=1)
+    px, py = (xs + 0.5) / size, (ys + 0.5) / size
+    if warp is not None:
+        px, py = (px + warp[0]) % 1.0, (py + warp[1]) % 1.0
+    q = np.stack([px.ravel(), py.ravel() / stretch], axis=1)
     d, i = tree.query(q, k=2, workers=-1)
     return d[:, 0].reshape(size, size).astype(np.float32), d[:, 1].reshape(size, size).astype(np.float32), ids[i[:, 0]].reshape(size, size)
+
+
+def edge_distance(f1, f2):
+    """How far each pixel is from its Worley cell's edge, as a share of the tile — true on the
+    picture whatever the cells' stretch or warp (the plain f2 - f1 is several times too wide
+    across a stretched cell's ends, which paints blobs where furrows should stay narrow)."""
+    e = f2 - f1
+    n = e.shape[0]
+    gx = (np.roll(e, -1, 1) - np.roll(e, 1, 1)) * (n / 2)
+    gy = (np.roll(e, -1, 0) - np.roll(e, 1, 0)) * (n / 2)
+    return e / np.maximum(0.25, np.sqrt(gx * gx + gy * gy))
 
 
 def mix(a, b, t):
@@ -148,24 +163,58 @@ def bark_pine(rng):
 
 
 def bark_broad(rng):
-    """Camphor and the ancient trees: deep, corky, interlacing ridges, grey-brown, green in the furrows."""
-    ridge = ridged(rng, 34, 4, 4)
-    ridge = smooth(0.3, 0.72, ridge)
-    body = fbm(rng, 30, 8, 5)
-    # Cross breaks: the ridges crack across into blocks.
-    f1, f2, _ = voronoi(rng, 1300, stretch=0.5)
-    breaks = smooth(0.0, 0.004, f2 - f1)
-    fine = fbm(rng, 320, 40, 3)
-    height = np.clip(ridge * (0.7 + 0.3 * body) * (0.86 + 0.14 * breaks) * (0.9 + 0.2 * fine), 0, 1)
-    top = colour((0.40, 0.33, 0.27))
-    grey = colour((0.50, 0.47, 0.42))
-    deep = colour((0.10, 0.075, 0.055))
-    blotch = smooth(0.45, 0.75, fbm(rng, 4, 4, 4))
-    base = mix(top, grey, blotch * 0.7) * (0.8 + 0.4 * fine[..., None])
-    rgb = mix(deep, base, smooth(0.08, 0.6, height))
-    damp = (1 - smooth(0.05, 0.4, height)) * smooth(0.4, 0.7, fbm(rng, 6, 6, 3))
-    rgb = mix(rgb, colour((0.15, 0.21, 0.09)), damp * 0.45)
-    return shade_by_height(rgb, height, 0.5), height
+    """Camphor, maple, willow and the ancient trees: deeply furrowed bark — long corky ridges that
+    part and rejoin like a net pulled downward, each split again by shallower fissures and cracked
+    across into blocks; weathered grey on the crests, warm brown on the flanks, dark and a little
+    green deep in the furrows; pale lichen on some crests."""
+    # The ridges wander sideways as they run, so the furrows between weave.
+    wx = (fbm(rng, 5, 3, 3) - 0.5) * 0.05 + (fbm(rng, 16, 5, 2) - 0.5) * 0.012
+    wy = (fbm(rng, 4, 4, 2) - 0.5) * 0.08
+    f1, f2, ids = voronoi(rng, 105, stretch=7.5, warp=(wx, wy))
+    edge = edge_distance(f1, f2)
+    # Furrows: wide and deep in places, pinched nearly shut in others.
+    gape = 0.5 + 1.0 * fbm(rng, 7, 4, 3)
+    furrow_w = 0.0105 * gape
+    ridge = smooth(0.0, 1.0, edge / furrow_w)                       # 0 in the furrow's bed, 1 on the ridge's top
+    crown = smooth(0.0, 0.021, edge)                                # the ridge's rounded back
+    per = np.random.default_rng(11).random(4096).astype(np.float32)[ids % 4096]
+
+    # Each ridge split along its length by shallower fissures...
+    jx = (fbm(rng, 46, 46, 2) - 0.5) * 0.007
+    jy = (fbm(rng, 46, 46, 2) - 0.5) * 0.007
+    g1, g2, ids2 = voronoi(rng, 330, stretch=9.0, warp=(wx * 0.6 + jx, wy))
+    fissure = 1 - (1 - smooth(0.0, 0.0034, edge_distance(g1, g2))) * smooth(0.35, 0.6, fbm(rng, 9, 5, 3))
+    # ...and cracked across into blocks.
+    c1, c2, _ = voronoi(rng, 520, stretch=0.45, warp=(wx + jx, wy * 0.3 + jy))
+    cross = 1 - (1 - smooth(0.0, 0.0024, edge_distance(c1, c2))) * smooth(0.5, 0.68, fbm(rng, 10, 10, 3))
+    per2 = np.random.default_rng(12).random(4096).astype(np.float32)[ids2 % 4096]
+
+    fibre = fbm(rng, 420, 22, 3)                                    # the cork's long grain
+    grit = fbm(rng, 260, 260, 3)
+    lumps = fbm(rng, 24, 9, 4)
+    top = 0.60 + 0.20 * crown + 0.10 * lumps + 0.16 * (per - 0.5) + 0.08 * (per2 - 0.5)
+    top = top * (0.68 + 0.32 * fissure) * (0.84 + 0.16 * cross) + 0.05 * (fibre - 0.5) + 0.03 * (grit - 0.5)
+    height = np.clip(ridge ** 0.8 * top, 0, 1)
+
+    grey = colour((0.47, 0.44, 0.39))
+    brown = colour((0.36, 0.27, 0.20))
+    warm = colour((0.44, 0.31, 0.21))
+    deep = colour((0.085, 0.062, 0.048))
+    # Crests weather grey; flanks and fresh breaks stay warm.
+    weather = smooth(0.35, 0.8, crown * (0.6 + 0.8 * fbm(rng, 6, 6, 4)))
+    base = mix(mix(brown, warm, per[..., None]), grey, weather * 0.85)
+    base = base * (0.74 + 0.52 * fibre[..., None]) * (0.9 + 0.2 * grit[..., None]) * (0.82 + 0.36 * per[..., None]) * (0.93 + 0.14 * per2[..., None])
+    base = base * (0.56 + 0.44 * fissure[..., None]) * (0.7 + 0.3 * cross[..., None])
+    rgb = mix(deep, mix(warm * 0.72, base, smooth(0.55, 1.0, ridge)), smooth(0.05, 0.5, ridge))
+    # Damp green down in the furrows, here and there.
+    damp = (1 - smooth(0.1, 0.7, ridge)) * smooth(0.42, 0.7, fbm(rng, 6, 6, 3))
+    rgb = mix(rgb, colour((0.16, 0.22, 0.10)), damp * 0.5)
+    # Lichen: pale grey-green crusts on some crests.
+    l1, _, lid = voronoi(rng, 170)
+    lr = np.random.default_rng(13).random(4096).astype(np.float32)[lid % 4096]
+    crust = (1 - smooth(0.004 + 0.012 * lr, 0.007 + 0.016 * lr, l1 + 0.01 * (grit - 0.5))) * (lr > 0.6) * smooth(0.6, 0.9, ridge)
+    rgb = mix(rgb, colour((0.58, 0.62, 0.52)) * (0.8 + 0.4 * grit[..., None]), crust * 0.5)
+    return shade_by_height(rgb, height, 0.6), height
 
 
 def bark_smooth(rng):
@@ -214,22 +263,50 @@ def bark_birch(rng):
 
 
 def bark_dead(rng):
-    """Dead standing wood: bark gone, silvered grain running up, long checks, charred and rotten patches."""
-    grain = fbm(rng, 400, 5, 4)
-    slow = fbm(rng, 30, 3, 4)
-    height = 0.6 + 0.3 * (slow - 0.5) + 0.25 * (grain - 0.5)
-    silver = colour((0.56, 0.54, 0.50))
-    brown = colour((0.36, 0.29, 0.22))
-    rgb = mix(brown, silver, smooth(0.3, 0.7, fbm(rng, 5, 5, 4))) * (0.75 + 0.5 * grain[..., None])
-    crack = np.maximum(cracks(rng, 18, 2, 0.02), cracks(rng, 30, 3, 0.012) * 0.7)
-    rgb = mix(rgb, colour((0.05, 0.04, 0.04)), crack)
-    height -= 0.5 * crack
-    char = smooth(0.62, 0.78, fbm(rng, 4, 3, 5))
-    rgb = mix(rgb, colour((0.06, 0.055, 0.05)), char * 0.85)
-    f1, f2, _ = voronoi(rng, 2400, stretch=1.0)
-    blocks = smooth(0.0, 0.004, f2 - f1)
-    height -= 0.25 * char * (1 - blocks)
-    return shade_by_height(rgb, np.clip(height, 0, 1), 0.5), np.clip(height, 0, 1)
+    """Dead standing wood: the bark gone, silvered grain running up and bending round the knots,
+    long drying checks that open and close, rot's brown stain, a few scales of old bark still on."""
+    # The grain bends: slow sideways drift, and a swirl round each knot.
+    wx = (fbm(rng, 3, 2, 3) - 0.5) * 0.06
+    wy = np.zeros((SIZE, SIZE), np.float32)
+    k1, _, kid = voronoi(rng, 14)
+    kr = np.random.default_rng(21).random(64).astype(np.float32)[kid % 64]
+    knot = (1 - smooth(0.0, 0.035 + 0.02 * kr, k1)) * (kr > 0.35)
+    ys, xs = np.mgrid[0:SIZE, 0:SIZE]
+    grain_x = ((xs + 0.5) / SIZE + wx + 0.03 * knot * np.sin(k1 * 240)) % 1.0
+    # Fibres: fine lines running up, sampled where the bend puts them.
+    lines = fbm(rng, 500, 4, 3)
+    col = (grain_x * SIZE).astype(np.int32) % SIZE
+    grain = lines[ys, col]
+    broad = fbm(rng, 60, 3, 3)[ys, col]
+    rings = 0.5 + 0.5 * np.sin(k1 * 520)                              # a knot's rings
+    height = 0.62 + 0.22 * (broad - 0.5) + 0.22 * (grain - 0.5) + 0.1 * knot * (rings - 0.5) - 0.12 * smooth(0.6, 1.0, knot)
+    silver = colour((0.60, 0.59, 0.56))
+    ash = colour((0.45, 0.44, 0.42))
+    stain = colour((0.40, 0.30, 0.21))
+    weather = fbm(rng, 5, 4, 4)
+    rgb = mix(ash, silver, smooth(0.3, 0.7, weather))
+    rgb = mix(rgb, stain, smooth(0.55, 0.8, fbm(rng, 6, 3, 4)) * 0.6)
+    rgb = rgb * (0.72 + 0.56 * grain[..., None]) * (0.9 + 0.2 * broad[..., None])
+    rgb = mix(rgb, colour((0.25, 0.19, 0.14)) * (0.7 + 0.6 * rings[..., None]), knot * 0.75)
+    # Checks: long cracks along the grain, widest in their middles, each closing to nothing.
+    c1, c2, cid = voronoi(rng, 70, stretch=14.0, warp=(wx, wy))
+    cr = np.random.default_rng(22).random(256).astype(np.float32)[cid % 256]
+    d = edge_distance(c1, c2)
+    open_ = smooth(0.35, 0.75, fbm(rng, 3, 9, 3)) * (0.4 + 0.9 * cr)
+    check = (1 - smooth(0.0, 0.0012 + 0.0038 * open_, d)) * smooth(0.02, 0.2, open_)
+    hair = cracks(rng, 40, 3, 0.006) * 0.5 * smooth(0.5, 0.7, fbm(rng, 8, 8, 2))
+    crack = np.clip(np.maximum(check, hair), 0, 1)
+    rgb = mix(rgb, colour((0.045, 0.04, 0.035)), crack)
+    height = height - 0.55 * crack
+    # Scales of old bark left in a few places, proud of the wood.
+    s1, s2, sid = voronoi(rng, 900, stretch=1.6)
+    patch = smooth(0.66, 0.72, fbm(rng, 5, 4, 4))
+    seam = smooth(0.0, 0.004, edge_distance(s1, s2))
+    sr = np.random.default_rng(23).random(1024).astype(np.float32)[sid % 1024]
+    rgb = mix(rgb, colour((0.22, 0.17, 0.13)) * (0.7 + 0.6 * sr[..., None]) * (0.35 + 0.65 * seam[..., None]), patch * 0.92)
+    height = height + 0.2 * patch * (0.3 + 0.7 * seam)
+    height = np.clip(height, 0, 1)
+    return shade_by_height(rgb, height, 0.5), height
 
 
 def bark_bamboo(rng):

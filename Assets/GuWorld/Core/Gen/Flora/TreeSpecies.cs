@@ -195,8 +195,8 @@ namespace GuWorld.Core.Gen.Flora
         {
             // A tall white birch of the cold slopes, light-crowned, its twigs drooping.
             Id = "birch", Name = "Birch", MinHeight = 20, MaxHeight = 42, Girth = 0.016f, Taper = 0.95f, Flare = 0.3f, Buttresses = 3, ButtressHeight = 1.4f, RootReach = 3,
-            Wander = 0.06f, Gnarl = 0.12f, Burls = 1, Lean = 6, MinTrunks = 1, MaxTrunks = 3, CrownBase = 0.4f, Shape = CrownShape.Dome, Spread = 0.2f, Limbs = 14, Angle = 42,
-            LimbGirth = 0.3f, Levels = 3, Twigs = 6, TwigAngle = 42, Rise = 0.05f, Sag = 0.2f, Leaves = LeafStyle.Sprays, Leaf = "leaf_birch", LeafSize = 2.8f, LeafCards = 3,
+            Wander = 0.06f, Gnarl = 0.12f, Burls = 1, Lean = 6, MinTrunks = 1, MaxTrunks = 3, CrownBase = 0.34f, Shape = CrownShape.Dome, Spread = 0.24f, Limbs = 18, Angle = 40,
+            LimbGirth = 0.3f, Levels = 3, Twigs = 5, TwigAngle = 44, Rise = 0.1f, Sag = 0.38f, Leaves = LeafStyle.Sprays, Leaf = "leaf_birch", LeafSize = 1.9f, LeafCards = 2,
             Bark = "bark_birch", BarkTile = 1.6f, Moss = 0.08f, Lichen = 0.05f, Fungus = 2,
         };
 

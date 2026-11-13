@@ -58,12 +58,12 @@ def bark_material(mat, tex_dir, name):
     links.new(scale.outputs[0], moss_h.inputs[0])
     sep = nodes.new('ShaderNodeSeparateColor')
     links.new(attribute(nodes, links), sep.inputs[0])
-    # factor = clamp((weight * 2 - 1 + height) * 2.5)
+    # factor = clamp((weight * 2 - 1 + height - 0.5) * 3 + 0.5), as TreeBark.shader does
     a = nodes.new('ShaderNodeMath'); a.operation = 'MULTIPLY_ADD'; a.inputs[1].default_value = 2; a.inputs[2].default_value = -1
     links.new(sep.outputs[0], a.inputs[0])
     b = nodes.new('ShaderNodeMath'); b.operation = 'ADD'
     links.new(a.outputs[0], b.inputs[0]); links.new(moss_h.outputs[0], b.inputs[1])
-    c = nodes.new('ShaderNodeMath'); c.operation = 'MULTIPLY'; c.inputs[1].default_value = 2.5; c.use_clamp = True
+    c = nodes.new('ShaderNodeMath'); c.operation = 'MULTIPLY_ADD'; c.inputs[1].default_value = 3; c.inputs[2].default_value = -1.0; c.use_clamp = True
     links.new(b.outputs[0], c.inputs[0])
     blend = nodes.new('ShaderNodeMixRGB')
     links.new(c.outputs[0], blend.inputs[0]); links.new(bark.outputs[0], blend.inputs[1]); links.new(moss.outputs[0], blend.inputs[2])

@@ -1137,6 +1137,10 @@ namespace GuWorld.Core.Gen.Flora
             var shape = limb.Shape;
             var species = w.Species;
             var n1 = trunk ? new V3(1, 0, 0) : V3.Up;
+            var thetas = Angles(shape, sides, lod);
+            sides = thetas.Length;
+            // The ring turns with the buttresses' twist, so each fin's crest runs along one line of vertices.
+            var twist = shape != null && thetas.Length > 0 && shape.Angle.Length > 0 && lod <= 1 ? shape.Twist : 0;
             var grid = new V3[rings.Count, sides];
             var ridge = new float[rings.Count, sides];
             var centres = new V3[rings.Count];
@@ -1167,7 +1171,7 @@ namespace GuWorld.Core.Gen.Flora
 
                 for (var s = 0; s < sides; s++)
                 {
-                    var theta = s / (float)sides * Build.Tau;
+                    var theta = thetas[s] + twist * centre.Y;
                     var mul = collar;
 
                     if (shape != null)
@@ -1220,7 +1224,7 @@ namespace GuWorld.Core.Gen.Flora
                     }
 
                     var colour = BarkColour(w, limb, p, n, ridge[k, a], along);
-                    var v = mesh.Vertex(p.X, p.Y, p.Z, s / (float)sides * repeats + limb.Phase, along / cell, colour.moss, colour.shade, 1, 1);
+                    var v = mesh.Vertex(p.X, p.Y, p.Z, (s == sides ? 1 : thetas[s] / Build.Tau) * repeats + limb.Phase, along / cell, colour.moss, colour.shade, 1, 1);
                     mesh.SetNormal(v, n.X, n.Y, n.Z);
                 }
             }
@@ -1255,6 +1259,92 @@ namespace GuWorld.Core.Gen.Flora
             }
         }
 
+        /// <summary>
+        /// The angles a ring's vertices stand at: evenly round a plain limb; round a buttressed trunk,
+        /// a set on each fin (its crest, its flanks, its feet) and the hollows between filled evenly —
+        /// so a fin is never caught between two vertices, which made its edge a staircase.
+        /// </summary>
+        static float[] Angles(TrunkShape shape, int sides, int lod)
+        {
+            if (shape == null || shape.Angle.Length == 0 || lod > 1)
+            {
+                var even = new float[sides];
+
+                for (var s = 0; s < sides; s++)
+                {
+                    even[s] = s / (float)sides * Build.Tau;
+                }
+
+                return even;
+            }
+
+            var offsets = lod == 0 ? new[] { 0f, 0.22f, 0.5f, 0.9f, 1.45f, 2.2f, 3.2f } : new[] { 0f, 0.45f, 1.1f, 2.2f };
+            var set = new List<float>();
+
+            for (var i = 0; i < shape.Angle.Length; i++)
+            {
+                foreach (var o in offsets)
+                {
+                    set.Add(Turn(shape.Angle[i] + o * shape.Width[i]));
+
+                    if (o > 0)
+                    {
+                        set.Add(Turn(shape.Angle[i] - o * shape.Width[i]));
+                    }
+                }
+            }
+
+            set.Sort();
+            // Where two fins' sets overlap, keep them apart...
+            var kept = new List<float>();
+            var least = Build.Tau / sides * 0.3f;
+
+            foreach (var a in set)
+            {
+                if (kept.Count == 0 || a - kept[kept.Count - 1] > least)
+                {
+                    kept.Add(a);
+                }
+            }
+
+            if (kept.Count > 1 && kept[0] + Build.Tau - kept[kept.Count - 1] <= least)
+            {
+                kept.RemoveAt(kept.Count - 1);
+            }
+
+            // ...and fill the hollows between, no wider apart than the plain ring would be.
+            var most = Build.Tau / sides * 1.5f;
+            var result = new List<float>();
+
+            for (var i = 0; i < kept.Count; i++)
+            {
+                var a = kept[i];
+                var b = i + 1 < kept.Count ? kept[i + 1] : kept[0] + Build.Tau;
+                var parts = Math.Max(1, (int)Math.Ceiling((b - a) / most));
+
+                for (var k = 0; k < parts; k++)
+                {
+                    var at = a + (b - a) * k / parts;
+
+                    if (at < Build.Tau)
+                    {
+                        result.Add(at);
+                    }
+                }
+            }
+
+            result.Sort();
+
+            return result.ToArray();
+        }
+
+        static float Turn(float a)
+        {
+            a %= Build.Tau;
+
+            return a < 0 ? a + Build.Tau : a;
+        }
+
         /// <summary>The moss's weight (0-1) and the shade (0-1) of the bark at a point.</summary>
         static (float moss, float shade) BarkColour(Work w, Limb limb, V3 p, V3 n, float proud, float along)
         {
@@ -1269,7 +1359,8 @@ namespace GuWorld.Core.Gen.Flora
             // the buttresses, on the roots and along the limbs' backs; then broken into patches, so
             // bark always shows through somewhere.
             var want = wet * Math.Max((0.3f + 0.7f * low) * (limb.Root ? 1.15f : limb.Depth == 0 ? 1 : 0.5f) + 0.25f * (1 - proud) * low, back * limbs * (0.55f + 0.3f * low));
-            var moss = want * 0.95f + (wide - 0.5f) * 1.3f + (patch - 0.5f) * 0.7f + (fine - 0.5f) * 0.3f - 0.22f;
+            // (A weight of a half is half covered: the shader breaks it up by the moss's and the bark's own heights.)
+            var moss = want * 0.8f + (wide - 0.5f) * 1.4f + (patch - 0.5f) * 0.8f + (fine - 0.5f) * 0.3f - 0.2f - 0.12f * (proud - 0.35f) * low;
 
             if (want < 0.03f)
             {

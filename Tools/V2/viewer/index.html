@@ -68,10 +68,9 @@ td.num { font-family: var(--mono); font-variant-numeric: tabular-nums; }
 <div class="wrap">
   <header>
     <h1>Генераторы <em>GU World</em></h1>
-    <p class="lede">Каждое дерево и каждый житель здесь выращены кодом из семени и параметров, тем же кодом, что строит мир в игре. Вращайте мышью, колесо — приближение.</p>
+    <p class="lede">Каждое дерево выращено кодом из семени и параметров — тем же кодом, что строит лес в игре: ствол на корнях-контрфорсах, толстые ветви, по которым можно лазать, кора и листва с текстурами. Красный столбик у подножия — человек, 1,75 м.</p>
     <nav role="tablist">
       <button role="tab" id="tab-trees" data-tab="trees">Деревья</button>
-      <button role="tab" id="tab-people" data-tab="people">Люди</button>
       <button role="tab" id="tab-biomes" data-tab="biomes">Биомы</button>
     </nav>
   </header>
@@ -93,7 +92,7 @@ td.num { font-family: var(--mono); font-variant-numeric: tabular-nums; }
   <section class="biomes" id="pane-biomes" hidden>
     <figure>
       <img src="biomes.png" alt="Участки каждого биома в 3D: земля, деревья библиотеки, подлесок" loading="lazy" width="960" height="1500">
-      <figcaption>Участок 150 × 150 м каждого биома: та же раскладка, те же варианты из библиотеки, тот же поворот по ветру и масштаб по росту, что в игре. В подписи — координаты, высота над морем и «величие» места (G): больше единицы — роща великанов.</figcaption>
+      <figcaption>Участок 280 × 280 м каждого биома (черновой рендер без движка): та же раскладка, те же варианты из библиотеки, тот же поворот по ветру и масштаб по росту, что в игре. В подписи — координаты, высота над морем и «величие» места (G): больше единицы — роща великанов.</figcaption>
     </figure>
     <figure>
       <img src="biome-map.png" alt="Карта биомов мира 16 × 16 км и поле величия" loading="lazy" width="1280" height="640">
@@ -109,7 +108,7 @@ td.num { font-family: var(--mono); font-variant-numeric: tabular-nums; }
 <script src="https://cdn.jsdelivr.net/npm/three@0.147.0/examples/js/loaders/GLTFLoader.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/three@0.147.0/examples/js/controls/OrbitControls.js"></script>
 <script>
-const KINDS = { pine: 'Горная сосна', fir: 'Пихта', cypress: 'Кипарис', camphor: 'Камфорное дерево', maple: 'Клён', plum: 'Слива', willow: 'Ива', birch: 'Берёза', deadwood: 'Сухостой', ancient: 'Древнее дерево', bamboo: 'Бамбук' };
+const KINDS = { pine: 'Старая красная сосна', fir: 'Пихта', cypress: 'Кипарис', camphor: 'Камфорное дерево', maple: 'Клён', plum: 'Слива', willow: 'Ива', birch: 'Берёза', deadwood: 'Сухостой', ancient: 'Древнее дерево', bamboo: 'Гигантский бамбук' };
 const ROLES = { villager: 'житель', farmer: 'крестьянин', porter: 'носильщик', trader: 'торговец', merchant: 'купец', guard: 'страж', student: 'ученик', elder: 'старейшина', child: 'ребёнок', cook: 'повар', herbalist: 'травник', smith: 'кузнец', scribe: 'писарь', bandit: 'разбойник', gambler: 'игрок', judge: 'судья', watch: 'ночной дозор', keeper: 'хранитель' };
 const AGES = { Child: 'ребёнок', Teen: 'юный', Adult: 'взрослый', Elder: 'пожилой' };
 const CLANS = { gu_yue: 'Гу Юэ', bai: 'Бай', xiong: 'Сюн', none: 'без клана' };
@@ -132,21 +131,24 @@ const renderer = new THREE.WebGLRenderer({ canvas, antialias: true });
 renderer.outputEncoding = THREE.sRGBEncoding;
 renderer.setPixelRatio(Math.min(2, window.devicePixelRatio || 1));
 const scene = new THREE.Scene();
-scene.background = new THREE.Color(0x0b0d12);
-scene.fog = new THREE.Fog(0x0b0d12, 60, 220);
+scene.background = new THREE.Color(0x33425a);
+scene.fog = new THREE.Fog(0x33425a, 200, 900);
 const camera = new THREE.PerspectiveCamera(35, 1.6, 0.05, 600);
 const controls = new THREE.OrbitControls(camera, canvas);
 controls.enableDamping = true;
-scene.add(new THREE.HemisphereLight(0xbfd0ff, 0x30281e, 0.75));
-const sun = new THREE.DirectionalLight(0xfff0d8, 1.25);
+scene.add(new THREE.HemisphereLight(0xcfdcff, 0x4a4030, 1.15));
+const sun = new THREE.DirectionalLight(0xfff0d8, 1.7);
 sun.position.set(6, 12, 8);
 scene.add(sun);
-const ground = new THREE.Mesh(new THREE.CircleGeometry(80, 64), new THREE.MeshStandardMaterial({ color: 0x10140e, roughness: 1 }));
+const ground = new THREE.Mesh(new THREE.CircleGeometry(600, 96), new THREE.MeshStandardMaterial({ color: 0x0f180b, roughness: 1 }));
 ground.rotation.x = -Math.PI / 2;
 scene.add(ground);
-const grid = new THREE.PolarGridHelper(40, 8, 8, 64, 0x2a3326, 0x232a20);
+const grid = new THREE.PolarGridHelper(100, 8, 10, 64, 0x2a3326, 0x232a20);
 grid.position.y = 0.01;
 scene.add(grid);
+const person = new THREE.Group();
+{ const m = new THREE.MeshStandardMaterial({ color: 0xc0392b, roughness: 0.8 }); const b = new THREE.Mesh(new THREE.CylinderGeometry(0.22, 0.22, 1.5, 12), m); b.position.y = 0.75; const h = new THREE.Mesh(new THREE.SphereGeometry(0.14, 12, 8), m); h.position.y = 1.62; person.add(b, h); }
+scene.add(person);
 
 const loader = new THREE.GLTFLoader();
 let current = null, data = { trees: [], people: [] }, tab = 'trees', kind = 'pine', role = 'all', lod = 0, pose = 'rest', selected = null;
@@ -171,33 +173,34 @@ function frameObject(height, wide) {
   controls.update();
 }
 
-function load(entry) {
+function load(entry, keepView) {
   selected = entry;
-  $('status').textContent = 'загрузка ' + entry.file + '…';
-  loader.load(entry.file, (gltf) => {
+  const file = tab === 'trees' ? `${entry.file}_lod${lod}.glb` : entry.file;
+  $('status').textContent = 'загрузка ' + file + '…';
+  loader.load(file, (gltf) => {
+    if (selected !== entry) return;
     if (current) scene.remove(current);
     current = gltf.scene;
     current.traverse((o) => {
-      if (o.isMesh) {
-        o.material.side = THREE.DoubleSide;
-        o.material.roughness = 0.9;
-        o.material.metalness = 0;
-      }
+      if (!o.isMesh) return;
+      if (tab !== 'trees') { o.material.side = THREE.DoubleSide; o.material.roughness = 0.9; }
+      o.material.metalness = 0;
+      if (o.material.normalMap) o.material.normalScale.set(1.4, 1.4);
+      if (o.material.map) o.material.map.anisotropy = 8;
+      if (o.material.emissive && o.name.includes('glow')) o.material.emissiveIntensity = 2.5;
     });
     scene.add(current);
-    applyLod();
     applyPose();
-    frameObject(entry.height, tab === 'trees' ? 1 : 1);
+    if (!keepView) frameObject(entry.height, 1);
+    person.visible = tab === 'trees';
+    if (tab === 'trees') person.position.set((entry.foot || 2) * 0.5 + 1.5, 0, (entry.foot || 2) * 0.5 + 1.5);
     $('status').textContent = '';
-  }, undefined, (err) => { $('status').textContent = 'не загрузилось: ' + entry.file; });
+  }, undefined, (err) => { $('status').textContent = 'не загрузилось: ' + file; });
   describe(entry);
   for (const el of document.querySelectorAll('.item')) el.setAttribute('aria-current', el.dataset.file === entry.file ? 'true' : 'false');
 }
 
-function applyLod() {
-  if (!current || tab !== 'trees') return;
-  current.traverse((o) => { if (o.isMesh) o.visible = o.name === 'LOD' + lod || (o.parent && o.parent.name === 'LOD' + lod); });
-}
+function applyLod() { if (selected && tab === 'trees') load(selected, true); }
 
 const POSES = {
   rest: {},
@@ -220,8 +223,9 @@ function cell(label, value) { return `<div><span>${label}</span><b>${value}</b><
 
 function describe(e) {
   if (tab === 'trees') {
-    $('about').textContent = `${KINDS[e.kind] || e.kind}, семя ${e.seed}. Высота задана ${e.height} м, наклон ${e.lean}° по ветру, теснота ${e.crowding} (0 — на просторе, 1 — в чаще), возраст ${e.age}.`;
-    $('ledger').innerHTML = cell('Высота', e.height + ' м') + cell('Крона', 'R ' + e.crown + ' м') + cell('Наклон', e.lean + '°') + cell('Теснота', e.crowding) + cell('Возраст', e.age)
+    $('about').textContent = `${KINDS[e.kind] || e.kind}, семя ${e.seed}. Параметры генерации: высота ${e.height} м, наклон ${e.lean}°, теснота ${e.crowding} (0 — на просторе, 1 — в чаще), возраст ${e.age} (толщина, наросты, корни), влажность ${e.wet} (мох и лишайник), упадок ${e.decay} (сухие сучья, грибы).`;
+    $('ledger').innerHTML = cell('Высота', e.height + ' м') + cell('Ствол', (e.trunk * 2).toFixed(1) + ' м в толщину') + cell('Подножие', e.foot.toFixed(1) + ' м') + cell('Крона', (e.crown * 2).toFixed(0) + ' м в ширину')
+      + cell('Ветвей для лазания', e.climb) + cell('Всего ветвей', e.limbs.toLocaleString('ru')) + cell('Веток листвы', e.cards.toLocaleString('ru'))
       + cell('Треугольники', e.tris.map((t, i) => 'L' + i + ' ' + t.toLocaleString('ru')).join(' · '));
   } else {
     $('about').textContent = `${ROLES[e.role] || e.role}, ${e.sex === 'Female' ? 'женщина' : 'мужчина'}, ${AGES[e.age] || e.age}, клан ${CLANS[e.clan] || e.clan}. ${ru(e.about)}.`;
@@ -258,7 +262,7 @@ function list(pickFirst) {
   const l = $('list');
   const items = tab === 'trees' ? data.trees.filter((t) => t.kind === kind) : data.people.filter((p) => role === 'all' || p.role === role);
   l.innerHTML = items.map((e) => tab === 'trees'
-    ? `<button class="item" role="option" data-file="${e.file}"><span>${KINDS[e.kind]} · семя ${e.seed}</span><span class="n">${e.height} м</span><small>наклон ${e.lean}°, теснота ${e.crowding}, возраст ${e.age}</small></button>`
+    ? `<button class="item" role="option" data-file="${e.file}"><span>${KINDS[e.kind]} · семя ${e.seed}</span><span class="n">${e.height} м</span><small>наклон ${e.lean}°, теснота ${e.crowding}, возраст ${e.age}, влажность ${e.wet}, упадок ${e.decay}</small></button>`
     : `<button class="item" role="option" data-file="${e.file}"><span>${ROLES[e.role] || e.role} · ${e.sex === 'Female' ? 'ж' : 'м'} · ${AGES[e.age]}</span><span class="n">${e.height} м</span><small>${CLANS[e.clan] || e.clan} · ${ru(e.about.split(';')[1] || '')}</small></button>`).join('');
   l.querySelectorAll('.item').forEach((b) => b.onclick = () => load(items.find((e) => e.file === b.dataset.file)));
   if (pickFirst && items.length) load(items[0]);
@@ -274,15 +278,15 @@ function show(next) {
 }
 
 document.querySelectorAll('nav button').forEach((b) => b.onclick = () => show(b.dataset.tab));
-window.addEventListener('hashchange', () => { const h = location.hash.slice(1); if (['trees', 'people', 'biomes'].includes(h) && h !== tab) show(h); });
+window.addEventListener('hashchange', () => { const h = location.hash.slice(1); if (['trees', 'biomes'].includes(h) && h !== tab) show(h); });
 
 $('biome-table').innerHTML = '<thead><tr><th>Биом</th><th>Деревья</th><th>Плотность /1000 м²</th><th>Рост в диапазоне</th><th>Теснота</th><th>Ветер, °</th><th>Пятнистость</th></tr></thead><tbody>'
   + BIOMES.map((b) => `<tr><td><span class="swatch" style="background:${b[1]}"></span>${b[0]}</td><td>${b[2]}</td><td class="num">${b[3]}</td><td class="num">${b[4]}</td><td class="num">${b[5]}</td><td class="num">${b[6]}</td><td class="num">${b[7]}</td></tr>`).join('') + '</tbody>';
 
-Promise.all([fetch('trees.json').then((r) => r.json()), fetch('people.json').then((r) => r.json())]).then(([t, p]) => {
-  data.trees = t; data.people = p;
+fetch('trees.json').then((r) => r.json()).then((t) => {
+  data.trees = t; data.people = [];
   const h = location.hash.slice(1);
-  show(['trees', 'people', 'biomes'].includes(h) ? h : 'trees');
+  show(['trees', 'biomes'].includes(h) ? h : 'trees');
 }).catch(() => { $('status').textContent = 'не загрузились списки моделей'; });
 
 (function loop() {

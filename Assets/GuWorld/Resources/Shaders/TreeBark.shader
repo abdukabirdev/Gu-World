@@ -115,7 +115,7 @@ Shader "GuWorld/TreeBark"
                 half mossHeight = SAMPLE_TEXTURE2D(_MossHeight, sampler_BaseMap, mossUV).r;
 
                 // Moss where the vertices call for it, creeping up out of the bark's hollows first.
-                half cover = saturate((input.colour.r * 2 - 1 + mossHeight * 0.7 + (1 - barkHeight) * 0.3) * 2.5);
+                half cover = saturate((input.colour.r * 2 - 1 + (mossHeight - 0.5) * 0.9 + (0.5 - barkHeight) * 0.5) * 3 + 0.5);
                 half3 albedo = lerp(bark, moss, cover) * input.colour.g;
                 float height = lerp(barkHeight, 0.55 + mossHeight * 0.45, cover) * _Bump;
 

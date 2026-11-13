@@ -315,7 +315,7 @@ sealed class Raster
                                 Sample(mossTex, u * 1.7f, v * 1.7f, out mr, out mg, out mb, out mh);
                             }
 
-                            var k = Math.Clamp((moss * 2 - 1 + mh) * 2.5f, 0, 1);
+                            var k = Math.Clamp((moss * 2 - 1 + mh - 0.5f) * 3 + 0.5f, 0, 1);
                             tr = (tr * (1 - k) + mr * k) * shade;
                             tg = (tg * (1 - k) + mg * k) * shade;
                             tb = (tb * (1 - k) + mb * k) * shade;
