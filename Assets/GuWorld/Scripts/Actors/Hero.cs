@@ -17,7 +17,7 @@ namespace GuWorld.Actors
         public const float RunSpeed = 5.4f;
         public const float SprintSpeed = 7.8f;
 
-        enum Mode { Free, Striking, Casting, Rolling, Dashing, Hurt, Dead, Sitting }
+        enum Mode { Free, Striking, Casting, Rolling, Dashing, Hurt, Dead, Sitting, Climbing }
 
         Mode mode;
         float modeTime;
@@ -40,6 +40,8 @@ namespace GuWorld.Actors
         public bool Airborne => !Grounded && transform.position.y - Game.Ground(transform.position).y > 0.45f;
         public bool Sprinting { get; private set; }
         public bool Sitting => mode == Mode.Sitting;
+        /// <summary>On a tree's bark, hand over hand.</summary>
+        public bool Climbing => mode == Mode.Climbing;
         /// <summary>Seconds since the hero last struck or was struck (the HUD and the camera ease after a fight).</summary>
         public float SinceFight { get; private set; } = 99;
 
@@ -139,6 +141,9 @@ namespace GuWorld.Actors
                     break;
                 case Mode.Free:
                     Free(dt, free);
+                    break;
+                case Mode.Climbing:
+                    Climb(dt, free);
                     break;
                 case Mode.Striking:
                     Striking(dt, free);
@@ -321,10 +326,19 @@ namespace GuWorld.Actors
                 return;
             }
 
-            if (Bindings.Down("jump") && Grounded)
+            // Jump — or, facing a tree's bark, take hold of it and climb (from the ground or out of the air).
+            if (Bindings.Down("jump"))
             {
-                fallSpeed = 7.2f;
-                Animate("jump", 0.08f, 1, true);
+                if (TryClimb(moving ? wish.normalized : transform.forward))
+                {
+                    return;
+                }
+
+                if (Grounded)
+                {
+                    fallSpeed = 7.2f;
+                    Animate("jump", 0.08f, 1, true);
+                }
             }
 
             if ((Keys.RightDown || Bindings.Down("roll")) && Grounded)
@@ -387,6 +401,123 @@ namespace GuWorld.Actors
             if (Bindings.Down("use"))
             {
                 Game.Interact();
+            }
+        }
+
+        // ------------------------------------------------------------------ Climbing
+
+        Vector3 climbNormal;
+
+        /// <summary>The bark of a tree along a ray (a tree's solid: trunk, roots, limbs), if it is within reach.</summary>
+        static bool Bark(Vector3 from, Vector3 direction, float reach, out RaycastHit hit)
+        {
+            return Physics.Raycast(from, direction, out hit, reach, ~0, QueryTriggerInteraction.Ignore) && hit.collider.GetComponentInParent<World.TreeSolid>() != null;
+        }
+
+        /// <summary>Takes hold of a tree's bark in front of the hero, if there is any steep enough to need climbing.</summary>
+        bool TryClimb(Vector3 toward)
+        {
+            toward.y = 0;
+
+            if (toward.sqrMagnitude < 0.001f)
+            {
+                return false;
+            }
+
+            toward.Normalize();
+            var chest = transform.position + Vector3.up * 1.0f;
+
+            if (!Bark(chest, toward, Radius + 0.9f, out var hit) || hit.normal.y > 0.7f)
+            {
+                return false;
+            }
+
+            climbNormal = hit.normal;
+            fallSpeed = 0;
+            SetMode(Mode.Climbing);
+            Moving = false;
+            Guarding = false;
+
+            return true;
+        }
+
+        /// <summary>
+        /// Climbing: the hero keeps to the bark before them — up and down by forward and back, round
+        /// the trunk by left and right — until they come over onto something to stand on (a limb's
+        /// back, the top of a root), step down to the ground, or jump off.
+        /// </summary>
+        void Climb(float dt, bool free)
+        {
+            var keys = free ? Keys.Move : Vector2.zero;
+            var chest = transform.position + Vector3.up * 1.0f;
+
+            if (!Bark(chest + climbNormal * 0.5f, -climbNormal, 1.7f, out var hit))
+            {
+                // Nothing before the chest: over the edge of a limb or the top of a stump. Step up onto it, if it is there.
+                var over = chest - climbNormal * 0.7f + Vector3.up * 1.2f;
+
+                if (Bark(over, Vector3.down, 2.6f, out var top) && top.normal.y > 0.5f)
+                {
+                    Teleport(top.point + Vector3.up * 0.06f);
+                }
+
+                SetMode(Mode.Free);
+
+                return;
+            }
+
+            climbNormal = Vector3.Slerp(climbNormal, hit.normal, Mathf.Min(1, 12 * dt)).normalized;
+
+            // The bark has turned underfoot into something to stand on.
+            if (hit.normal.y > 0.74f)
+            {
+                Teleport(hit.point + Vector3.up * 0.06f);
+                SetMode(Mode.Free);
+
+                return;
+            }
+
+            var up = Vector3.up - climbNormal * Vector3.Dot(Vector3.up, climbNormal);
+            up = up.sqrMagnitude < 0.01f ? transform.forward : up.normalized;
+            var right = Vector3.Cross(Vector3.up, -climbNormal);
+            right = right.sqrMagnitude < 0.01f ? transform.right : right.normalized;
+            var fast = Bindings.Held("sprint") && Session.Stamina > 1;
+            Sprinting = fast && keys.sqrMagnitude > 0.01f;
+            var speed = (fast ? 5.2f : 3.2f) * Session.SpeedFactor;
+            var move = (up * keys.y + right * keys.x) * speed;
+            // Held a hand's breadth off the bark.
+            var hold = hit.point + climbNormal * (Radius + 0.1f) - chest;
+            fallSpeed = 0;
+
+            if (body != null && body.enabled)
+            {
+                body.Move(move * dt + hold * Mathf.Min(1, 10 * dt));
+            }
+
+            Face(-climbNormal, 540, dt);
+            Moving = keys.sqrMagnitude > 0.01f;
+            Animate("climb", 0.15f, Moving ? (fast ? 1.6f : 1.1f) : 0f);
+
+            // Down to the ground: let go.
+            if (keys.y < -0.1f && transform.position.y - Game.Ground(transform.position).y < 0.3f)
+            {
+                SetMode(Mode.Free);
+
+                return;
+            }
+
+            // A jump pushes off the bark.
+            if (free && Bindings.Down("jump") && modeTime > 0.25f)
+            {
+                if (body != null && body.enabled)
+                {
+                    body.Move(climbNormal * 0.7f);
+                }
+
+                fallSpeed = 6.5f;
+                Face(climbNormal, 100000, 1);
+                Animate("jump", 0.08f, 1, true);
+                SetMode(Mode.Free);
             }
         }
 

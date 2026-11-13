@@ -2,110 +2,125 @@ using System.Collections.Generic;
 
 namespace GuWorld.Core.Gen.Flora
 {
-    /// <summary>How the crown is laid out: the length of the branches up the trunk.</summary>
+    /// <summary>How the crown is laid out: the length of the limbs up the trunk.</summary>
     public enum CrownShape
     {
-        /// <summary>Longest at the bottom (firs, young pines).</summary>
+        /// <summary>Longest at the bottom (firs).</summary>
         Cone,
-        /// <summary>Longest a third of the way up (camphor, maple).</summary>
+        /// <summary>Longest a third of the way up (camphor, maple, the ancient trees).</summary>
         Dome,
         /// <summary>Short all the way up (cypress).</summary>
         Column,
-        /// <summary>Longest at the top: a flat crown on a bare trunk (old mountain pines).</summary>
-        Umbrella,
+        /// <summary>Tiers of level limbs, long low and shorter above (the old red pines).</summary>
+        Tiers,
         /// <summary>A dome whose twigs hang (willow).</summary>
         Weeping,
-        /// <summary>Spreading from low down, wider upwards (plum, old deadwood).</summary>
+        /// <summary>Spreading from low down, wider upwards (plum, the dead trees).</summary>
         Vase,
     }
 
-    /// <summary>What the leaves are made as.</summary>
-    public enum Leafage
+    /// <summary>How the foliage's cards are set on the twigs.</summary>
+    public enum LeafStyle
     {
-        /// <summary>Lumpy clumps of broad leaves.</summary>
-        Broad,
-        /// <summary>Flat cloud-like pads of needles on top of the branches (the mountain pines of paintings).</summary>
-        Pads,
-        /// <summary>Drooping sprays along the branches (firs).</summary>
+        /// <summary>Sprays of broad leaves standing off the twig, crossed for volume.</summary>
         Sprays,
-        /// <summary>Tight scale-leaf clumps round the trunk (cypress).</summary>
+        /// <summary>Flat pads lying level on the twig, in layers (pine).</summary>
+        Pads,
+        /// <summary>Flat fronds drooping along the twig (fir).</summary>
+        Fronds,
+        /// <summary>Curtains hanging straight down from the twig (willow).</summary>
+        Hanging,
+        /// <summary>Dense upright sprays hugging the limbs (cypress).</summary>
         Scales,
-        /// <summary>Small clumps of blossom and a few leaves (plum).</summary>
-        Blossom,
-        /// <summary>Hanging strands and soft clumps (willow).</summary>
-        Strands,
         /// <summary>None: a dead tree.</summary>
         None,
-        /// <summary>A clump of bamboo culms with sprays of narrow leaves at their nodes.</summary>
-        Bamboo,
     }
 
     /// <summary>
-    /// A kind of tree as a set of numbers the generator grows from. Every tree of the kind is
-    /// different (its seed, its height, its lean, how crowded it grew), but all of them read as the
-    /// kind. Heights in metres; angles in degrees; ratios of the tree's height unless said.
+    /// A kind of tree as the numbers the generator grows it from. Every tree of the kind differs (its
+    /// seed, its height, its lean, how crowded and how old it grew, how wet its place is), but all read
+    /// as the kind. Metres and degrees; "per metre of height" where said.
     /// </summary>
     public sealed class TreeSpecies
     {
         public string Id;
         public string Name;
-        public float MinHeight = 8, MaxHeight = 20;
-        /// <summary>The trunk's radius at the base, per metre of height.</summary>
-        public float Girth = 0.018f;
-        /// <summary>How the trunk thins upwards (1: evenly to a point; more: thick low, thin high).</summary>
-        public float Taper = 1.1f;
-        /// <summary>How much the base swells into the ground (0 none, 1 twice as wide).</summary>
-        public float Flare = 0.4f;
-        /// <summary>How much the trunk wanders (0 straight as a mast).</summary>
-        public float Wander = 0.06f;
-        /// <summary>How twisted and knotted the limbs are (0 smooth).</summary>
-        public float Gnarl = 0.1f;
-        /// <summary>Where the branches begin, as a share of the height, for a tree grown in the open.</summary>
+
+        // ---- The size.
+        public float MinHeight = 20, MaxHeight = 40;
+
+        // ---- The trunk.
+        /// <summary>The trunk's radius above its flare, per metre of height (a 40 m pine at 0.03 is 1.2 m: 2.4 m through).</summary>
+        public float Girth = 0.03f;
+        /// <summary>How the trunk thins upwards (below 1 it stays thick high up; above 1 it thins early).</summary>
+        public float Taper = 0.8f;
+        /// <summary>How far the foot spreads into the ground (0 a pole; 1 the foot is over twice the trunk).</summary>
+        public float Flare = 0.8f;
+        /// <summary>Buttresses: ridges round the foot that run out into roots.</summary>
+        public int Buttresses = 6;
+        /// <summary>How high the buttresses climb the trunk, in trunk radii.</summary>
+        public float ButtressHeight = 2.2f;
+        /// <summary>How far the roots run over the ground, in trunk radii.</summary>
+        public float RootReach = 4;
+        /// <summary>How much the trunk wanders (0 a mast).</summary>
+        public float Wander = 0.04f;
+        /// <summary>How twisted and knotted the limbs are.</summary>
+        public float Gnarl = 0.15f;
+        /// <summary>Burls and knots swelling the trunk (for an old tree; fewer on young).</summary>
+        public int Burls = 4;
+        /// <summary>The most a trunk leans of itself, before the wind and the slope.</summary>
+        public float Lean = 4;
+        /// <summary>Stems from one root.</summary>
+        public int MinTrunks = 1, MaxTrunks = 1;
+        /// <summary>The chance the top has snapped off, and the share of limbs that are dead stubs.</summary>
+        public float Broken, DeadLimbs = 0.06f;
+
+        // ---- The crown.
+        /// <summary>Where the limbs begin, as a share of the height, for a tree grown in the open.</summary>
         public float CrownBase = 0.3f;
         public CrownShape Shape = CrownShape.Dome;
-        /// <summary>The longest branch's length per metre of height.</summary>
-        public float Spread = 0.35f;
-        /// <summary>Main branches on the trunk (for a tree of middle height).</summary>
-        public int Branches = 14;
-        /// <summary>Branches set in whorls of this many at one height (0: one at a time, in a spiral).</summary>
-        public int Whorl;
-        /// <summary>The angle of the main branches from the trunk.</summary>
-        public float Angle = 55;
-        /// <summary>Twigs on each main branch and their angle.</summary>
-        public int Twigs = 5;
-        public float TwigAngle = 40;
-        /// <summary>Whether twigs branch once more (bigger, finer trees).</summary>
-        public bool ThirdLevel = true;
-        /// <summary>How the tips turn up to the light (positive) or sag (negative).</summary>
-        public float Rise = 0.25f;
-        /// <summary>The most a trunk leans, before the wind and the slope add theirs.</summary>
-        public float Lean = 6;
-        /// <summary>Trunks from one root (plums and bamboo stand in clumps).</summary>
-        public int MinTrunks = 1, MaxTrunks = 1;
-        /// <summary>Buttress roots at the base (big old trees).</summary>
-        public int Roots;
-        /// <summary>The chance the top has snapped off.</summary>
-        public float Broken;
+        /// <summary>The longest limb's length per metre of height.</summary>
+        public float Spread = 0.32f;
+        /// <summary>Limbs on the trunk; in whorls of this many at one height (0: one at a time, in a spiral).</summary>
+        public int Limbs = 14, Whorl;
+        /// <summary>The limbs' angle from the trunk (90 is level).</summary>
+        public float Angle = 60;
+        /// <summary>A limb's thickness where it leaves the trunk, as a share of the trunk's there (thick limbs are walked on).</summary>
+        public float LimbGirth = 0.4f;
+        /// <summary>Levels of branching past the trunk (3: limb, branch, twig).</summary>
+        public int Levels = 3;
+        /// <summary>Branches on each limb (and twigs on each branch), and their angle.</summary>
+        public int Twigs = 6;
+        public float TwigAngle = 50;
+        /// <summary>How the tips turn up to the light (positive) or hang (negative), and how much long limbs sag.</summary>
+        public float Rise = 0.25f, Sag = 0.1f;
 
-        public Leafage Leaves = Leafage.Broad;
-        /// <summary>A leaf clump's radius per metre of height.</summary>
-        public float Clump = 0.07f;
-        /// <summary>Leaf clumps per twig.</summary>
-        public float Density = 1.2f;
+        // ---- The foliage.
+        public LeafStyle Leaves = LeafStyle.Sprays;
+        /// <summary>The foliage's texture (Resources/Trees), and a second one mixed in by the season (a maple's green among its red).</summary>
+        public string Leaf = "leaf_broad", Leaf2;
+        /// <summary>The share of the foliage that wears the first texture when two are given (autumn, blossom).</summary>
+        public float Turned = 1;
+        /// <summary>A spray's size in metres (the card's side), and sprays at each place on a twig.</summary>
+        public float LeafSize = 3, LeafCards = 3;
+        /// <summary>The foliage's tint, from this to that, card by card.</summary>
+        public Tint LeafTint = new Tint(1, 1, 1), LeafTint2 = new Tint(0.82f, 0.9f, 0.78f);
 
-        public Tint Bark = Tint.Hex(0x5a4a3c);
-        public Tint BarkDark = Tint.Hex(0x2e2620);
-        public Tint Leaf = Tint.Hex(0x3e5a2a);
-        public Tint Leaf2 = Tint.Hex(0x58702e);
-        /// <summary>The leaves in autumn (maples) or the blossom (plums).</summary>
-        public Tint Accent = Tint.Hex(0xb03a24);
-        /// <summary>How far the leaves have turned to the accent (0 summer green, 1 all turned).</summary>
-        public float Turned;
-        /// <summary>Moss on the trunk's upper faces low down (0 none).</summary>
-        public float Moss = 0.2f;
-        public Tint MossColour = Tint.Hex(0x4c6a2c);
-        /// <summary>Pale bark with dark scars (birch).</summary>
-        public bool Pale;
+        // ---- The bark and what lives on it.
+        public string Bark = "bark_broad";
+        /// <summary>How many metres one tile of the bark's texture covers on the trunk.</summary>
+        public float BarkTile = 3;
+        public Tint BarkTint = new Tint(1, 1, 1);
+        /// <summary>Moss over the foot, the buttresses and the limbs' backs (0 none, 1 thick), before the place's wetness.</summary>
+        public float Moss = 0.4f;
+        /// <summary>Beards of lichen hanging under the limbs (0 none, 1 many).</summary>
+        public float Lichen = 0.2f;
+        /// <summary>Shelves of bracket fungus on the trunk.</summary>
+        public int Fungus = 3;
+        /// <summary>Vines climbing the trunk, leafed with ivy.</summary>
+        public int Vines;
+        /// <summary>Glowing moss in the bark's hollows (the ancient trees).</summary>
+        public bool Glow;
     }
 
     /// <summary>The kinds of tree of the mountain, by id.</summary>
@@ -113,104 +128,103 @@ namespace GuWorld.Core.Gen.Flora
     {
         public static readonly TreeSpecies Pine = new TreeSpecies
         {
-            // The mountain's pine of the old paintings: a straight-ish trunk with orange-brown plates,
-            // branches nearly level and turned up at the tips, flat cloud-pads of needles on top.
-            Id = "pine", Name = "Mountain pine", MinHeight = 12, MaxHeight = 30, Girth = 0.02f, Taper = 1.2f, Flare = 0.35f,
-            Wander = 0.07f, Gnarl = 0.18f, CrownBase = 0.42f, Shape = CrownShape.Umbrella, Spread = 0.3f, Branches = 13, Whorl = 3,
-            Angle = 78, Twigs = 4, TwigAngle = 45, ThirdLevel = false, Rise = 0.35f, Lean = 9, Leaves = Leafage.Pads, Clump = 0.06f, Density = 1.4f,
-            Bark = Tint.Hex(0x7a4a30), BarkDark = Tint.Hex(0x3a2418), Leaf = Tint.Hex(0x23402a), Leaf2 = Tint.Hex(0x355a32), Moss = 0.15f,
+            // The old red pine: a mast of plated red bark on spreading buttresses, tiers of level limbs,
+            // each carrying flat clouds of needles.
+            Id = "pine", Name = "Old red pine", MinHeight = 28, MaxHeight = 62, Girth = 0.04f, Taper = 0.75f, Flare = 0.9f, Buttresses = 6, ButtressHeight = 2.4f,
+            RootReach = 4, Wander = 0.03f, Gnarl = 0.22f, Burls = 3, Lean = 5, CrownBase = 0.3f, Shape = CrownShape.Tiers, Spread = 0.3f, Limbs = 17, Angle = 84,
+            LimbGirth = 0.36f, Levels = 3, Twigs = 7, TwigAngle = 55, Rise = 0.28f, Sag = 0.04f, Leaves = LeafStyle.Pads, Leaf = "needle_pine", LeafSize = 4.2f, LeafCards = 3,
+            LeafTint2 = new Tint(0.8f, 0.9f, 0.85f), Bark = "bark_pine", BarkTile = 2.0f, Moss = 0.35f, Lichen = 0.12f, Fungus = 3,
         };
 
         public static readonly TreeSpecies Fir = new TreeSpecies
         {
-            // A dark spire of the high slopes: whorls of drooping branches, longest at the bottom.
-            Id = "fir", Name = "Fir", MinHeight = 14, MaxHeight = 34, Girth = 0.016f, Taper = 1f, Flare = 0.3f, Wander = 0.02f, Gnarl = 0.05f,
-            CrownBase = 0.06f, Shape = CrownShape.Cone, Spread = 0.25f, Branches = 36, Whorl = 4, Angle = 84, Twigs = 4, TwigAngle = 50,
-            ThirdLevel = false, Rise = -0.1f, Lean = 3, Leaves = Leafage.Sprays, Clump = 0.06f, Density = 2f,
-            Bark = Tint.Hex(0x4a3e36), BarkDark = Tint.Hex(0x221c18), Leaf = Tint.Hex(0x1a3424), Leaf2 = Tint.Hex(0x274632), Moss = 0.3f,
+            // A dark spire of the high slopes: whorl on whorl of drooping limbs to the ground, bearded with lichen.
+            Id = "fir", Name = "Fir", MinHeight = 32, MaxHeight = 75, Girth = 0.026f, Taper = 0.95f, Flare = 0.55f, Buttresses = 5, ButtressHeight = 1.8f, RootReach = 3,
+            Wander = 0.012f, Gnarl = 0.08f, Burls = 1, Lean = 2, CrownBase = 0.12f, Shape = CrownShape.Cone, Spread = 0.2f, Limbs = 52, Angle = 84,
+            LimbGirth = 0.2f, Levels = 3, Twigs = 8, TwigAngle = 58, Rise = -0.08f, Sag = 0.22f, Leaves = LeafStyle.Fronds, Leaf = "needle_fir", LeafSize = 3.4f, LeafCards = 3,
+            Bark = "bark_broad", BarkTile = 2.6f, BarkTint = new Tint(0.8f, 0.8f, 0.86f), Moss = 0.5f, Lichen = 0.55f, Fungus = 2,
         };
 
         public static readonly TreeSpecies Cypress = new TreeSpecies
         {
-            // A dark flame of a tree, planted by halls and graves.
-            Id = "cypress", Name = "Cypress", MinHeight = 9, MaxHeight = 22, Girth = 0.017f, Taper = 1f, Flare = 0.25f, Wander = 0.03f,
-            Gnarl = 0.12f, CrownBase = 0.06f, Shape = CrownShape.Column, Spread = 0.09f, Branches = 22, Angle = 32, Twigs = 2, TwigAngle = 30,
-            ThirdLevel = false, Rise = 0.6f, Lean = 3, Leaves = Leafage.Scales, Clump = 0.06f, Density = 1.6f,
-            Bark = Tint.Hex(0x6a4a3a), BarkDark = Tint.Hex(0x34241c), Leaf = Tint.Hex(0x1f3a26), Leaf2 = Tint.Hex(0x2c4a2c), Moss = 0.1f,
+            // A dark flame of a tree, by halls and graves: fibrous red bark, the foliage close about the stem.
+            Id = "cypress", Name = "Cypress", MinHeight = 22, MaxHeight = 50, Girth = 0.031f, Taper = 0.9f, Flare = 0.7f, Buttresses = 7, ButtressHeight = 2, RootReach = 2.5f,
+            Wander = 0.02f, Gnarl = 0.15f, Burls = 2, Lean = 2, CrownBase = 0.1f, Shape = CrownShape.Column, Spread = 0.085f, Limbs = 30, Angle = 34,
+            LimbGirth = 0.24f, Levels = 2, Twigs = 6, TwigAngle = 32, Rise = 0.6f, Sag = 0, Leaves = LeafStyle.Scales, Leaf = "scale_cypress", LeafSize = 2.8f, LeafCards = 3,
+            Bark = "bark_broad", BarkTile = 2.2f, BarkTint = new Tint(1.15f, 0.86f, 0.74f), Moss = 0.2f, Lichen = 0.05f, Fungus = 1,
         };
 
         public static readonly TreeSpecies Camphor = new TreeSpecies
         {
-            // The great shade tree of the valley: a short thick trunk that forks into a huge dome.
-            Id = "camphor", Name = "Camphor", MinHeight = 14, MaxHeight = 30, Girth = 0.03f, Taper = 1.4f, Flare = 0.6f, Wander = 0.1f,
-            Gnarl = 0.2f, CrownBase = 0.25f, Shape = CrownShape.Dome, Spread = 0.42f, Branches = 9, Angle = 48, Twigs = 6, TwigAngle = 42,
-            ThirdLevel = true, Rise = 0.25f, Lean = 8, Roots = 5, Leaves = Leafage.Broad, Clump = 0.07f, Density = 1.1f,
-            Bark = Tint.Hex(0x5a4c40), BarkDark = Tint.Hex(0x2a221c), Leaf = Tint.Hex(0x355626), Leaf2 = Tint.Hex(0x58782e), Moss = 0.35f,
+            // The great shade tree of the valleys: a vast furrowed bole on high buttresses, limbs thick as
+            // lesser trees held nearly level, a dome of glossy leaves, vines up its sides.
+            Id = "camphor", Name = "Camphor", MinHeight = 40, MaxHeight = 80, Girth = 0.044f, Taper = 0.7f, Flare = 1.1f, Buttresses = 7, ButtressHeight = 2.6f, RootReach = 4.5f,
+            Wander = 0.05f, Gnarl = 0.24f, Burls = 6, Lean = 5, CrownBase = 0.26f, Shape = CrownShape.Dome, Spread = 0.44f, Limbs = 17, Angle = 68,
+            LimbGirth = 0.46f, Levels = 4, Twigs = 6, TwigAngle = 48, Rise = 0.22f, Sag = 0.08f, Leaves = LeafStyle.Sprays, Leaf = "leaf_camphor", LeafSize = 4.8f, LeafCards = 3,
+            Bark = "bark_broad", BarkTile = 3.2f, Moss = 0.6f, Lichen = 0.3f, Fungus = 5, Vines = 2,
         };
 
         public static readonly TreeSpecies Maple = new TreeSpecies
         {
-            // A rounded maple turning red: the colour of the mountain's autumn.
-            Id = "maple", Name = "Maple", MinHeight = 8, MaxHeight = 18, Girth = 0.022f, Taper = 1.2f, Flare = 0.35f, Wander = 0.1f,
-            Gnarl = 0.15f, CrownBase = 0.3f, Shape = CrownShape.Dome, Spread = 0.4f, Branches = 9, Angle = 50, Twigs = 6, TwigAngle = 45,
-            ThirdLevel = true, Rise = 0.2f, Lean = 8, Leaves = Leafage.Broad, Clump = 0.08f, Density = 1.1f,
-            Bark = Tint.Hex(0x585048), BarkDark = Tint.Hex(0x2c2824), Leaf = Tint.Hex(0x4a6a26), Leaf2 = Tint.Hex(0x7a8a2a),
-            Accent = Tint.Hex(0xb8341e), Turned = 0.8f, Moss = 0.2f,
+            // A broad maple, turned red and gold: the colour of the mountain's autumn.
+            Id = "maple", Name = "Maple", MinHeight = 18, MaxHeight = 40, Girth = 0.036f, Taper = 0.85f, Flare = 0.6f, Buttresses = 5, ButtressHeight = 1.6f, RootReach = 3.5f,
+            Wander = 0.07f, Gnarl = 0.2f, Burls = 3, Lean = 6, CrownBase = 0.26f, Shape = CrownShape.Dome, Spread = 0.4f, Limbs = 10, Angle = 55,
+            LimbGirth = 0.46f, Levels = 4, Twigs = 6, TwigAngle = 48, Rise = 0.25f, Sag = 0.06f, Leaves = LeafStyle.Sprays, Leaf = "leaf_maple_red", Leaf2 = "leaf_maple_green", Turned = 0.85f,
+            LeafSize = 3.2f, LeafCards = 3, LeafTint2 = new Tint(0.9f, 0.86f, 0.8f), Bark = "bark_smooth", BarkTile = 1.8f, Moss = 0.3f, Lichen = 0.1f, Fungus = 2,
         };
 
         public static readonly TreeSpecies Plum = new TreeSpecies
         {
-            // A small crooked plum of the gardens and the lower slopes, in blossom.
-            Id = "plum", Name = "Plum", MinHeight = 3.5f, MaxHeight = 8, Girth = 0.03f, Taper = 1.3f, Flare = 0.4f, Wander = 0.22f,
-            Gnarl = 0.45f, CrownBase = 0.32f, Shape = CrownShape.Vase, Spread = 0.45f, Branches = 6, Angle = 45, Twigs = 5, TwigAngle = 50,
-            ThirdLevel = true, Rise = 0.3f, Lean = 14, MinTrunks = 1, MaxTrunks = 2, Leaves = Leafage.Blossom, Clump = 0.07f, Density = 1.1f,
-            Bark = Tint.Hex(0x3e3230), BarkDark = Tint.Hex(0x1e1818), Leaf = Tint.Hex(0x5a7a34), Leaf2 = Tint.Hex(0x6e8a3e),
-            Accent = Tint.Hex(0xf0c4cc), Turned = 0.75f, Moss = 0.25f,
+            // A crooked old plum of the gardens and the lower slopes, in blossom on bare black wood.
+            Id = "plum", Name = "Plum", MinHeight = 6, MaxHeight = 14, Girth = 0.034f, Taper = 0.9f, Flare = 0.35f, Buttresses = 3, ButtressHeight = 1.2f, RootReach = 3,
+            Wander = 0.2f, Gnarl = 0.5f, Burls = 3, Lean = 12, MinTrunks = 1, MaxTrunks = 2, CrownBase = 0.26f, Shape = CrownShape.Vase, Spread = 0.5f, Limbs = 7, Angle = 48,
+            LimbGirth = 0.5f, Levels = 3, Twigs = 6, TwigAngle = 52, Rise = 0.3f, Sag = 0.04f, Leaves = LeafStyle.Sprays, Leaf = "blossom_plum", LeafSize = 1.9f, LeafCards = 3,
+            LeafTint2 = new Tint(0.95f, 0.9f, 0.92f), Bark = "bark_smooth", BarkTile = 1.1f, BarkTint = new Tint(0.8f, 0.76f, 0.78f), Moss = 0.3f, Lichen = 0.05f, Fungus = 1,
         };
 
         public static readonly TreeSpecies Willow = new TreeSpecies
         {
-            // A weeping willow leaning over the water.
-            Id = "willow", Name = "Willow", MinHeight = 8, MaxHeight = 16, Girth = 0.03f, Taper = 1.3f, Flare = 0.45f, Wander = 0.14f,
-            Gnarl = 0.3f, CrownBase = 0.32f, Shape = CrownShape.Weeping, Spread = 0.38f, Branches = 8, Angle = 45, Twigs = 5, TwigAngle = 35,
-            ThirdLevel = false, Rise = 0.4f, Lean = 16, Leaves = Leafage.Strands, Clump = 0.06f, Density = 1.2f,
-            Bark = Tint.Hex(0x4e4638), BarkDark = Tint.Hex(0x26221c), Leaf = Tint.Hex(0x6a8a3a), Leaf2 = Tint.Hex(0x8aa04a), Moss = 0.3f,
+            // A great willow over the water: a short leaning bole, limbs flung wide, curtains to the ground.
+            Id = "willow", Name = "Willow", MinHeight = 16, MaxHeight = 34, Girth = 0.042f, Taper = 0.85f, Flare = 0.7f, Buttresses = 5, ButtressHeight = 1.6f, RootReach = 4,
+            Wander = 0.12f, Gnarl = 0.32f, Burls = 5, Lean = 14, CrownBase = 0.24f, Shape = CrownShape.Weeping, Spread = 0.42f, Limbs = 9, Angle = 50,
+            LimbGirth = 0.5f, Levels = 3, Twigs = 7, TwigAngle = 40, Rise = 0.35f, Sag = 0.25f, Leaves = LeafStyle.Hanging, Leaf = "hang_willow", LeafSize = 4.6f, LeafCards = 2,
+            Bark = "bark_broad", BarkTile = 2.4f, BarkTint = new Tint(0.95f, 0.92f, 0.8f), Moss = 0.5f, Lichen = 0.1f, Fungus = 4,
         };
 
         public static readonly TreeSpecies Birch = new TreeSpecies
         {
-            // A pale birch of the cold slopes, thin and light-crowned.
-            Id = "birch", Name = "Birch", MinHeight = 10, MaxHeight = 22, Girth = 0.012f, Taper = 1f, Flare = 0.2f, Wander = 0.08f,
-            Gnarl = 0.1f, CrownBase = 0.35f, Shape = CrownShape.Dome, Spread = 0.22f, Branches = 12, Angle = 40, Twigs = 5, TwigAngle = 40,
-            ThirdLevel = false, Rise = 0.1f, Lean = 7, MinTrunks = 1, MaxTrunks = 3, Leaves = Leafage.Broad, Clump = 0.055f, Density = 1f,
-            Bark = Tint.Hex(0xd8d4cc), BarkDark = Tint.Hex(0x2a2826), Leaf = Tint.Hex(0x5a7e30), Leaf2 = Tint.Hex(0x7e9a38),
-            Accent = Tint.Hex(0xd8a630), Turned = 0.12f, Moss = 0f, Pale = true,
+            // A tall white birch of the cold slopes, light-crowned, its twigs drooping.
+            Id = "birch", Name = "Birch", MinHeight = 20, MaxHeight = 42, Girth = 0.016f, Taper = 0.95f, Flare = 0.3f, Buttresses = 3, ButtressHeight = 1.4f, RootReach = 3,
+            Wander = 0.06f, Gnarl = 0.12f, Burls = 1, Lean = 6, MinTrunks = 1, MaxTrunks = 3, CrownBase = 0.4f, Shape = CrownShape.Dome, Spread = 0.2f, Limbs = 14, Angle = 42,
+            LimbGirth = 0.3f, Levels = 3, Twigs = 6, TwigAngle = 42, Rise = 0.05f, Sag = 0.2f, Leaves = LeafStyle.Sprays, Leaf = "leaf_birch", LeafSize = 2.8f, LeafCards = 3,
+            Bark = "bark_birch", BarkTile = 1.6f, Moss = 0.08f, Lichen = 0.05f, Fungus = 2,
         };
 
         public static readonly TreeSpecies Deadwood = new TreeSpecies
         {
-            // A dead, silvered snag: often broken, its limbs bare and twisted.
-            Id = "deadwood", Name = "Deadwood", MinHeight = 6, MaxHeight = 20, Girth = 0.034f, Taper = 1.2f, Flare = 0.5f, Wander = 0.15f,
-            Gnarl = 0.5f, CrownBase = 0.28f, Shape = CrownShape.Vase, Spread = 0.34f, Branches = 10, Angle = 50, Twigs = 4, TwigAngle = 45,
-            ThirdLevel = true, Rise = 0.15f, Lean = 12, Broken = 0.5f, Roots = 3, Leaves = Leafage.None,
-            Bark = Tint.Hex(0x8a8478), BarkDark = Tint.Hex(0x3a3630), Moss = 0.15f,
+            // A dead giant, silvered and charred: often snapped, its limbs bare stubs, bearded with lichen, shelved with fungus.
+            Id = "deadwood", Name = "Deadwood", MinHeight = 15, MaxHeight = 45, Girth = 0.042f, Taper = 0.8f, Flare = 0.8f, Buttresses = 6, ButtressHeight = 2, RootReach = 3.5f,
+            Wander = 0.06f, Gnarl = 0.4f, Burls = 5, Lean = 8, Broken = 0.6f, DeadLimbs = 0.45f, CrownBase = 0.22f, Shape = CrownShape.Vase, Spread = 0.26f, Limbs = 14, Angle = 62,
+            LimbGirth = 0.34f, Levels = 2, Twigs = 4, TwigAngle = 50, Rise = 0.15f, Sag = 0.05f, Leaves = LeafStyle.None, Bark = "bark_dead", BarkTile = 2.6f, Moss = 0.2f, Lichen = 0.6f, Fungus = 7,
         };
 
         public static readonly TreeSpecies Ancient = new TreeSpecies
         {
-            // A tree older than the clan: a vast trunk on buttress roots, its crown a forest of its own.
-            Id = "ancient", Name = "Ancient tree", MinHeight = 38, MaxHeight = 55, Girth = 0.045f, Taper = 1.5f, Flare = 0.9f, Wander = 0.1f,
-            Gnarl = 0.35f, CrownBase = 0.3f, Shape = CrownShape.Dome, Spread = 0.5f, Branches = 11, Angle = 52, Twigs = 7, TwigAngle = 45,
-            ThirdLevel = true, Rise = 0.3f, Lean = 4, Roots = 9, Leaves = Leafage.Broad, Clump = 0.05f, Density = 1.1f,
-            Bark = Tint.Hex(0x5c5044), BarkDark = Tint.Hex(0x241e18), Leaf = Tint.Hex(0x2e4c24), Leaf2 = Tint.Hex(0x4a6a2a), Moss = 0.5f,
+            // A tree older than the clans: a hundred metres of it, a bole like a tower on roots like walls, its
+            // limbs a forest in the air; moss, vines, fungus, and a faint glow in its hollows.
+            Id = "ancient", Name = "Ancient tree", MinHeight = 85, MaxHeight = 110, Girth = 0.041f, Taper = 0.68f, Flare = 1.15f, Buttresses = 9, ButtressHeight = 3, RootReach = 5.5f,
+            Wander = 0.04f, Gnarl = 0.3f, Burls = 10, Lean = 3, CrownBase = 0.24f, Shape = CrownShape.Dome, Spread = 0.42f, Limbs = 21, Angle = 70,
+            LimbGirth = 0.48f, Levels = 4, Twigs = 7, TwigAngle = 48, Rise = 0.25f, Sag = 0.08f, Leaves = LeafStyle.Sprays, Leaf = "leaf_broad", LeafSize = 5.8f, LeafCards = 3,
+            LeafTint2 = new Tint(0.75f, 0.86f, 0.74f), Bark = "bark_broad", BarkTile = 3.6f, BarkTint = new Tint(0.9f, 0.88f, 0.84f), Moss = 0.8f, Lichen = 0.6f, Fungus = 9, Vines = 4, Glow = true,
         };
 
         public static readonly TreeSpecies Bamboo = new TreeSpecies
         {
-            // A clump of culms from one root, arching out, sprays of leaves at the upper nodes.
-            Id = "bamboo", Name = "Bamboo", MinHeight = 6, MaxHeight = 14, Girth = 0.005f, Taper = 0.4f, Flare = 0, Wander = 0.03f, Gnarl = 0,
-            CrownBase = 0.4f, Spread = 0.1f, Rise = 0, Lean = 8, MinTrunks = 7, MaxTrunks = 15, Leaves = Leafage.Bamboo, Clump = 0.06f, Density = 1f,
-            Bark = Tint.Hex(0x7a9a3a), BarkDark = Tint.Hex(0x3e5422), Leaf = Tint.Hex(0x4e7a2a), Leaf2 = Tint.Hex(0x7a9a36), Moss = 0,
+            // A clump of giant bamboo: jointed green culms arching out from one root, fans of blades at their nodes.
+            Id = "bamboo", Name = "Giant bamboo", MinHeight = 10, MaxHeight = 24, Girth = 0.0065f, Taper = 0.5f, Flare = 0, Buttresses = 0, RootReach = 0, Wander = 0.02f, Gnarl = 0.02f,
+            Burls = 0, Lean = 7, MinTrunks = 8, MaxTrunks = 16, DeadLimbs = 0, CrownBase = 0.38f, Shape = CrownShape.Column, Spread = 0.1f, Limbs = 12, Angle = 55,
+            LimbGirth = 0.3f, Levels = 1, Twigs = 0, Rise = 0, Sag = 0.3f, Leaves = LeafStyle.Sprays, Leaf = "leaf_bamboo", LeafSize = 2, LeafCards = 2,
+            Bark = "bark_bamboo", BarkTile = 0.8f, Moss = 0, Lichen = 0, Fungus = 0,
         };
 
         /// <summary>Every kind of tree, in a fixed order (variants are numbered by it).</summary>

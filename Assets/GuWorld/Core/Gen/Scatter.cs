@@ -238,7 +238,7 @@ namespace GuWorld.Core.Gen
         /// <summary>How far apart trees stand, centre to centre: about their crowns' width, less where crowded.</summary>
         static float Room(TreeSpecies species, float height, float crowd)
         {
-            var crown = height * species.Spread * (species.Leaves == Leafage.Bamboo ? 4 : 1);
+            var crown = height * species.Spread * (species.MaxTrunks > 4 ? 4 : 1.15f);
 
             return Math.Max(2.5f, crown * (1.1f - 0.5f * crowd));
         }

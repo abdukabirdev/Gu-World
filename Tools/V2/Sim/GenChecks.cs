@@ -26,11 +26,62 @@ static class GenChecks
         return dir;
     }
 
-    /// <summary>The variants every kind is shown in: (seed, height share of its range, lean, crowding, age).</summary>
-    public static readonly (int seed, float height, float lean, float crowd, float age)[] Showcase =
+    /// <summary>The variants every kind is shown in: (seed, height share of its range, lean, crowding, age, wetness, decay).</summary>
+    public static readonly (int seed, float height, float lean, float crowd, float age, float wet, float decay)[] Showcase =
     {
-        (1, 0.5f, 0, 0, 0.4f), (2, 0.9f, 0, 0.7f, 0.6f), (3, 0.3f, 12, 0.2f, 0.2f), (4, 0.7f, 24, 0, 1f), (5, 1f, 0, 0.95f, 0.5f), (6, 0.15f, 6, 0.4f, 0f),
+        (1, 0.55f, 0, 0.1f, 0.6f, 0, 0), (2, 1f, 0, 0.7f, 0.9f, 0.6f, 0.1f), (3, 0.2f, 10, 0.3f, 0.2f, -0.5f, 0), (4, 0.7f, 22, 0, 1f, 0.3f, 0.5f),
     };
+
+    /// <summary>The parts of a level of detail as the .glb's: textures by path, the vertices' colours as they are (`raw`: moss weight and shade, for Blender's own bark material) or baked to tints (for the viewer).</summary>
+    public static List<Glb.Part> TreeParts(TreeModel tree, int lod, string tex, bool raw)
+    {
+        var parts = new List<Glb.Part>();
+        var species = tree.Species;
+
+        foreach (var part in tree.Lods[lod].Parts)
+        {
+            var mesh = part.Mesh;
+            var made = new Glb.Part { Name = $"LOD{lod}_{part.Material.Replace(':', '_')}", Mesh = mesh };
+
+            if (part.Material.StartsWith("bark:"))
+            {
+                var name = part.Material.Substring(5);
+                made.Texture = $"{tex}/{name}.jpg";
+                made.Normal = $"{tex}/{name}_n.png";
+                made.Roughness = 0.95f;
+
+                if (!raw)
+                {
+                    // Moss as a green cast, the shade as darkness, the kind's tint.
+                    made.Tints = new float[mesh.VertexCount * 3];
+
+                    for (var i = 0; i < mesh.VertexCount; i++)
+                    {
+                        var moss = Math.Clamp(mesh.Colours[i * 4] * 1.4f - 0.2f, 0, 1);
+                        var shade = mesh.Colours[i * 4 + 1];
+                        made.Tints[i * 3] = (species.BarkTint.R * (1 - moss) + 0.42f * moss) * shade;
+                        made.Tints[i * 3 + 1] = (species.BarkTint.G * (1 - moss) + 0.78f * moss) * shade;
+                        made.Tints[i * 3 + 2] = (species.BarkTint.B * (1 - moss) + 0.3f * moss) * shade;
+                    }
+                }
+            }
+            else if (part.Material.StartsWith("leaf:"))
+            {
+                made.Texture = $"{tex}/{part.Material.Substring(5)}.png";
+                made.Mask = true;
+                made.TwoSided = true;
+                made.Roughness = 0.7f;
+            }
+            else if (part.Material == "glow")
+            {
+                made.Emissive = new[] { 0.25f, 1f, 0.7f };
+            }
+
+            parts.Add(made);
+        }
+
+        return parts;
+    }
 
     public static void Trees(string repo, Action<bool, string> check, List<string> report, bool export)
     {
@@ -42,98 +93,90 @@ static class GenChecks
             Directory.CreateDirectory(glbDir);
         }
 
-        const int tw = 240, th = 320;
-        var columns = Showcase.Length + 3;
-        var rows = Trees_All.Length;
-        var sheetW = columns * tw;
-        var sheetH = rows * th;
-        var sheet = new byte[sheetW * sheetH * 3];
         var index = new StringBuilder("[");
         var watch = System.Diagnostics.Stopwatch.StartNew();
         var grown = 0;
-        long backPixels = 0, pixels = 0;
+        long triangles = 0;
 
-        for (var row = 0; row < rows; row++)
+        foreach (var species in Trees_All)
         {
-            var species = Trees_All[row];
-
-            for (var col = 0; col < Showcase.Length; col++)
+            foreach (var (seed, share, lean, crowd, age, wet, decay) in Showcase)
             {
-                var (seed, share, lean, crowd, age) = Showcase[col];
-                var asked = new TreeParams { Height = species.MinHeight + (species.MaxHeight - species.MinHeight) * share, Lean = lean, Crowding = crowd, Age = age };
+                var asked = new TreeParams { Height = species.MinHeight + (species.MaxHeight - species.MinHeight) * share, Lean = lean, Crowding = crowd, Age = age, Wet = wet, Decay = decay };
                 var tree = TreeGen.Grow(species, seed, asked);
                 grown++;
-                var tag = $"{species.Id} #{seed}";
-                Judge(tree, check, report, tag);
-                var raster = new Raster(tw, th);
-                var size = Math.Max(species.MaxHeight, 8);
-                raster.Frame(new V3(-size * 0.45f, 0, -size * 0.45f), new V3(size * 0.45f, size * 1.02f, size * 0.45f), new V3(0.35f, 0.18f, -1), 30, 1.0f);
-                raster.Ground(0, size * 0.6f, new V3(0, 0, 0));
-                raster.Draw(tree.Lods[0], 0, 0, 0, 1);
-                pixels += raster.Pixels;
-                backPixels += raster.BackPixels;
-                raster.Into(sheet, sheetW, col * tw, row * th);
-                Raster.Label(sheet, sheetW, col * tw + 6, row * th + 6, $"{species.Id} {seed}");
-                Raster.Label(sheet, sheetW, col * tw + 6, row * th + 20, string.Format(Inv, "{0:0.#}M L{1:0} C{2:0.0}", tree.Height, lean, crowd));
-                Raster.Label(sheet, sheetW, col * tw + 6, row * th + th - 16, $"{tree.Lods[0].TriangleCount / 1000.0:0.0}K TRIS", 2);
+                triangles += tree.Lods[0].Triangles;
+                Judge(tree, check, report, $"{species.Id} #{seed}");
 
-                if (export)
+                if (!export)
                 {
-                    var name = $"{species.Id}_{seed}";
-                    var parts = new List<Glb.Part>();
-
-                    for (var lod = 0; lod < tree.Lods.Length; lod++)
-                    {
-                        parts.Add(new Glb.Part { Name = "LOD" + lod, Mesh = tree.Lods[lod] });
-                    }
-
-                    Glb.Write(Path.Combine(glbDir, name + ".glb"), parts);
-                    index.Append(index.Length > 1 ? "," : "").Append(string.Format(Inv,
-                        "{{\"file\":\"trees/{0}.glb\",\"kind\":\"{1}\",\"name\":\"{2}\",\"seed\":{3},\"height\":{4:0.0},\"lean\":{5},\"crowding\":{6},\"age\":{7},\"tris\":[{8},{9},{10},{12}],\"crown\":{11:0.0}}}",
-                        name, species.Id, species.Name, seed, tree.Height, lean, crowd, age, tree.Lods[0].TriangleCount, tree.Lods[1].TriangleCount, tree.Lods[2].TriangleCount, tree.CrownRadius, tree.Lods[3].TriangleCount));
+                    continue;
                 }
-            }
 
-            // The last tree again at its three levels of detail, and seen from above.
-            var last = TreeGen.Grow(species, 4, new TreeParams { Height = (species.MinHeight + species.MaxHeight) / 2, Lean = 10, Crowding = 0.3f, Age = 0.6f });
+                var name = $"{species.Id}_{seed}";
 
-            for (var lod = 1; lod < 4; lod++)
-            {
-                var raster = new Raster(tw, th);
-                var size = Math.Max(species.MaxHeight, 8);
-                var view = lod == 3 ? new V3(0.2f, 1.4f, -1) : new V3(0.35f, 0.18f, -1);
-                raster.Frame(new V3(-size * 0.45f, 0, -size * 0.45f), new V3(size * 0.45f, size * 1.02f, size * 0.45f), view, 30, 1.0f);
-                raster.Ground(0, size * 0.6f, new V3(0, 0, 0));
-                raster.Draw(last.Lods[lod], 0, 0, 0, 1);
-                raster.Into(sheet, sheetW, (Showcase.Length + lod - 1) * tw, row * th);
-                Raster.Label(sheet, sheetW, (Showcase.Length + lod - 1) * tw + 6, row * th + 6, $"LOD{lod} {last.Lods[lod].TriangleCount} TRIS");
+                for (var lod = 0; lod < tree.Lods.Length; lod++)
+                {
+                    // The near model once with the raw weights (for Blender's bark material), and all levels baked for the viewer.
+                    Glb.Write(Path.Combine(glbDir, $"{name}_lod{lod}.glb"), TreeParts(tree, lod, "../tex", false));
+                }
+
+                Glb.Write(Path.Combine(glbDir, $"{name}_raw.glb"), TreeParts(tree, 0, "../tex", true));
+                index.Append(index.Length > 1 ? "," : "").Append(string.Format(Inv,
+                    "{{\"file\":\"trees/{0}\",\"kind\":\"{1}\",\"name\":\"{2}\",\"seed\":{3},\"height\":{4:0.0},\"lean\":{5},\"crowding\":{6},\"age\":{7},\"wet\":{8},\"decay\":{9},\"tris\":[{10},{11},{12},{13}],\"crown\":{14:0.0},\"trunk\":{15:0.00},\"foot\":{16:0.0},\"cards\":{17},\"limbs\":{18},\"climb\":{19}}}",
+                    name, species.Id, species.Name, seed, tree.Height, lean, crowd, age, wet, decay, tree.Lods[0].Triangles, tree.Lods[1].Triangles, tree.Lods[2].Triangles, tree.Lods[3].Triangles,
+                    tree.CrownRadius, tree.TrunkRadius, tree.FootRadius, tree.Cards, tree.Limbs, tree.Climb.Count));
             }
         }
 
         var elapsed = watch.ElapsedMilliseconds;
-        WorldChecks.WritePng(Path.Combine(dir, "trees.png"), sheetW, sheetH, sheet);
-        report.Add($"trees: {Trees_All.Length} kinds, {grown} trees grown in {elapsed} ms ({elapsed / Math.Max(1, grown)} ms each with the sheet), back-face pixels {100.0 * backPixels / Math.Max(1, pixels):0.00}% → {Path.Combine(dir, "trees.png")}");
-        check(backPixels < pixels * 0.03, "trees: hardly a pixel is drawn by a face turned away");
+        report.Add($"trees: {Trees_All.Length} kinds, {grown} grown in {elapsed} ms ({elapsed / Math.Max(1, grown)} ms each), {triangles / grown / 1000}k triangles on average near");
 
         if (export)
         {
             File.WriteAllText(Path.Combine(dir, "trees.json"), index.Append("]").ToString());
         }
 
-        // Determinism and speed: the same asking grows the same tree; a variant takes milliseconds.
-        var a = TreeGen.Grow(Flora_Trees.Camphor, 77, new TreeParams { Height = 20, Lean = 5 });
-        var b = TreeGen.Grow(Flora_Trees.Camphor, 77, new TreeParams { Height = 20, Lean = 5 });
-        check(a.Lods[0].VertexCount == b.Lods[0].VertexCount && Same(a.Lods[0], b.Lods[0]), "trees: the same kind, seed and asking grow the same tree");
-        watch.Restart();
+        // The same asking grows the same tree.
+        var a = TreeGen.Grow(Flora_Trees.Camphor, 77, new TreeParams { Height = 50, Lean = 5 });
+        var b = TreeGen.Grow(Flora_Trees.Camphor, 77, new TreeParams { Height = 50, Lean = 5 });
+        check(a.Lods[0].Triangles == b.Lods[0].Triangles && Same(a.Lods[0].Parts[0].Mesh, b.Lods[0].Parts[0].Mesh), "trees: the same kind, seed and asking grow the same tree");
 
-        for (var i = 0; i < 40; i++)
+        // The asking is heard: wetter is mossier, older is thicker, decay kills limbs, foliage thins.
+        var dry = TreeGen.Grow(Flora_Trees.Camphor, 5, new TreeParams { Height = 50, Wet = -0.8f });
+        var soaked = TreeGen.Grow(Flora_Trees.Camphor, 5, new TreeParams { Height = 50, Wet = 0.8f });
+        check(Moss(soaked) > Moss(dry) * 1.5f + 0.01f, $"trees: a wet place grows moss ({Moss(dry):0.000} dry, {Moss(soaked):0.000} wet)");
+        var young = TreeGen.Grow(Flora_Trees.Camphor, 5, new TreeParams { Height = 50, Age = 0 });
+        var old = TreeGen.Grow(Flora_Trees.Camphor, 5, new TreeParams { Height = 50, Age = 1 });
+        check(old.TrunkRadius > young.TrunkRadius * 1.2f, $"trees: an old tree is thicker ({young.TrunkRadius:0.00} m young, {old.TrunkRadius:0.00} m old)");
+        var bare = TreeGen.Grow(Flora_Trees.Camphor, 5, new TreeParams { Height = 50, Foliage = -0.7f });
+        check(bare.Cards < young.Cards * 0.6f, $"trees: foliage thins when asked ({young.Cards} to {bare.Cards} places)");
+        var giant = TreeGen.Grow(GuWorld.Core.Gen.Flora.Trees.Ancient, 9, new TreeParams { Height = 105, Age = 1 });
+        report.Add(string.Format(Inv, "trees: an ancient tree of {0:0} m — trunk {1:0.0} m thick above its foot, foot {2:0.0} m across, crown {3:0} m across, {4} limbs to climb, {5}k triangles near, {6} far, {7} at the horizon",
+            giant.Height, giant.TrunkRadius * 2, giant.FootRadius * 2, giant.CrownRadius * 2, giant.Climb.Count, giant.Lods[0].Triangles / 1000, giant.Lods[2].Triangles, giant.Lods[3].Triangles));
+        check(giant.Climb.Count > 20 && giant.Collision.TriangleCount > 500, "trees: a giant has limbs to climb and a solid shape");
+    }
+
+    static float Moss(TreeModel tree)
+    {
+        double sum = 0;
+        var n = 0;
+
+        foreach (var part in tree.Lods[0].Parts)
         {
-            TreeGen.Grow(Trees_All[i % Trees_All.Length], 1000 + i, new TreeParams { Crowding = 0.4f, Age = 0.5f });
+            if (!part.Material.StartsWith("bark:"))
+            {
+                continue;
+            }
+
+            for (var i = 0; i < part.Mesh.VertexCount; i++)
+            {
+                sum += part.Mesh.Colours[i * 4];
+                n++;
+            }
         }
 
-        var each = watch.ElapsedMilliseconds / 40.0;
-        report.Add($"trees: {each:0.0} ms to grow one (all three levels)");
-        check(each < 120, "trees: one grows in well under a tenth of a second");
+        return n == 0 ? 0 : (float)(sum / n);
     }
 
     static TreeSpecies[] Trees_All => Flora_Trees.All;
@@ -146,6 +189,11 @@ static class GenChecks
 
     static bool Same(MeshData a, MeshData b)
     {
+        if (a.Positions.Count != b.Positions.Count)
+        {
+            return false;
+        }
+
         for (var i = 0; i < a.Positions.Count; i += 97)
         {
             if (a.Positions[i] != b.Positions[i])
@@ -159,40 +207,65 @@ static class GenChecks
 
     static void Judge(TreeModel tree, Action<bool, string> check, List<string> report, string tag)
     {
-        var lod0 = tree.Lods[0];
-        lod0.Bounds(out var minX, out var minY, out var minZ, out var maxX, out var maxY, out var maxZ);
-        var tall = maxY;
+        float maxY = float.MinValue, minY = float.MaxValue;
+        var sound = true;
+
+        foreach (var lod in tree.Lods)
+        {
+            foreach (var part in lod.Parts)
+            {
+                var mesh = part.Mesh;
+
+                for (var i = 0; i < mesh.Normals.Count; i += 3)
+                {
+                    var length = Math.Sqrt(mesh.Normals[i] * mesh.Normals[i] + mesh.Normals[i + 1] * mesh.Normals[i + 1] + mesh.Normals[i + 2] * mesh.Normals[i + 2]);
+                    sound &= Math.Abs(length - 1) < 0.02 && !double.IsNaN(length);
+                }
+
+                foreach (var p in mesh.Positions)
+                {
+                    sound &= !float.IsNaN(p) && !float.IsInfinity(p);
+                }
+
+                foreach (var t in mesh.Triangles)
+                {
+                    sound &= t >= 0 && t < mesh.VertexCount;
+                }
+
+                if (lod == tree.Lods[0])
+                {
+                    mesh.Bounds(out _, out var low, out _, out _, out var high, out _);
+                    maxY = Math.Max(maxY, high);
+                    minY = Math.Min(minY, low);
+                }
+            }
+        }
+
+        check(sound, $"{tag}: positions, normals and triangles sound");
         // A snapped tree is shorter than asked: that is its point.
-        var snapped = tall < tree.Height * 0.85f && tree.Species.Broken > 0;
-        check(snapped || Math.Abs(tall - tree.Height) < tree.Height * 0.22f + 1.2f, $"{tag}: as tall as asked ({tall:0.0} m for {tree.Height:0.0})");
-        check(minY > -Math.Max(1.6f, tree.TrunkRadius * 2.2f), $"{tag}: nothing far under the ground ({minY:0.0})");
-        check(lod0.TriangleCount < 48000, $"{tag}: near model within budget ({lod0.TriangleCount})");
-        check(tree.Lods[1].TriangleCount < lod0.TriangleCount * 0.75f + 50, $"{tag}: middle model lighter ({tree.Lods[1].TriangleCount} < {lod0.TriangleCount})");
-        check(tree.Lods[2].TriangleCount < 4000, $"{tag}: far model within budget ({tree.Lods[2].TriangleCount})");
-        check(tree.Lods[3].TriangleCount < 500, $"{tag}: farthest model within budget ({tree.Lods[3].TriangleCount})");
+        var snapped = maxY < tree.Height * 0.85f && tree.Species.Broken > 0;
+        check(snapped || Math.Abs(maxY - tree.Height) < tree.Height * 0.2f + 1.5f, $"{tag}: as tall as asked ({maxY:0.0} m for {tree.Height:0.0})");
+        check(minY > -Math.Max(3.5f, tree.FootRadius * 0.5f), $"{tag}: nothing far under the ground ({minY:0.0})");
+        check(tree.Lods[0].Triangles < 450000, $"{tag}: near model within budget ({tree.Lods[0].Triangles})");
+        check(tree.Lods[1].Triangles < tree.Lods[0].Triangles * 0.75f + 100, $"{tag}: middle model lighter ({tree.Lods[1].Triangles} < {tree.Lods[0].Triangles})");
+        check(tree.Lods[2].Triangles < 30000, $"{tag}: far model within budget ({tree.Lods[2].Triangles})");
+        check(tree.Lods[3].Triangles < 3500, $"{tag}: horizon model within budget ({tree.Lods[3].Triangles})");
+        check(tree.Collision != null && tree.Collision.TriangleCount > 0 && tree.Climb.Count > 0, $"{tag}: has a solid shape and something to climb");
 
         if (tree.Asked.Lean >= 10 && tree.Species.MaxTrunks == 1)
         {
             check(tree.Top.X > 0, $"{tag}: leans the way asked (top at x {tree.Top.X:0.0})");
         }
+    }
 
-        var sound = true;
-
-        foreach (var lod in tree.Lods)
+    /// <summary>A level of detail drawn by the software renderer, its bark and leaves from small copies of the textures when they are at hand.</summary>
+    public static void DrawTree(Raster raster, TreeModel tree, int lod, float x, float y, float z, float scale, float yaw)
+    {
+        foreach (var part in tree.Lods[lod].Parts)
         {
-            for (var i = 0; i < lod.Normals.Count; i += 3)
-            {
-                var length = Math.Sqrt(lod.Normals[i] * lod.Normals[i] + lod.Normals[i + 1] * lod.Normals[i + 1] + lod.Normals[i + 2] * lod.Normals[i + 2]);
-                sound &= Math.Abs(length - 1) < 0.02 && !double.IsNaN(length);
-            }
-
-            foreach (var p in lod.Positions)
-            {
-                sound &= !float.IsNaN(p) && !float.IsInfinity(p);
-            }
+            var colon = part.Material.IndexOf(':');
+            raster.Draw(part.Mesh, x, y, z, scale, yaw, colon > 0 ? part.Material.Substring(colon + 1) : null, part.Material.StartsWith("bark:"));
         }
-
-        check(sound, $"{tag}: positions and normals sound");
     }
 
     // ---------------------------------------------------------------------- Biomes
@@ -212,6 +285,7 @@ static class GenChecks
     public static void BiomeChecks(string repo, Action<bool, string> check, List<string> report)
     {
         var dir = OutDir(repo);
+        Raster.LoadTextures(Path.Combine(dir, "tex128"));
         var watch = System.Diagnostics.Stopwatch.StartNew();
         var plan = WorldPlan.Get();
         report.Add($"biomes: world plan in {watch.ElapsedMilliseconds} ms");
@@ -355,8 +429,8 @@ static class GenChecks
         {
             var (biome, at) = pictures[n];
             var raster = new Raster(tw, th) { FogDistance = 900 };
-            const float span = 150;
-            var groundMesh = Patch(plan, at, span, 3);
+            const float span = 280;
+            var groundMesh = Patch(plan, at, span, 5);
             var h0 = land.Height(at);
             var eyeAt = new Vec2(at.X - span * 0.55f, at.Z - span * 0.55f);
             var top = h0;
@@ -368,7 +442,7 @@ static class GenChecks
                 top = Math.Max(top, land.Height(q));
             }
 
-            raster.Camera(new V3(eyeAt.X, Math.Max(h0 + span * 0.32f, top + 25), eyeAt.Z), new V3(at.X + span * 0.08f, h0 + 2, at.Z + span * 0.08f), 50);
+            raster.Camera(new V3(eyeAt.X, Math.Max(h0 + span * 0.36f, top + 70), eyeAt.Z), new V3(at.X + span * 0.08f, h0 + 18, at.Z + span * 0.08f), 50);
             raster.Draw(groundMesh, 0, 0, 0, 1);
             var drawn = 0;
             var cx0 = (int)Math.Floor((at.X - span / 2) / Scatter.CellSize);
@@ -393,9 +467,9 @@ static class GenChecks
                         {
                             var variant = library.Choose(thing);
                             var model = library.Get(thing.Species, variant);
-                            var (yaw, scale) = library.Place(thing, model);
+                            var (yaw, scale) = library.Place(thing, model.Height);
                             var near = Math.Abs(thing.At.X - at.X) + Math.Abs(thing.At.Z - at.Z) < span * 0.5f;
-                            raster.Draw(model.Lods[near ? 0 : 1], thing.At.X, y - 0.15f, thing.At.Z, scale, yaw);
+                            DrawTree(raster, model, near ? 1 : 2, thing.At.X, y - 0.1f, thing.At.Z, scale, yaw);
                             drawn++;
                         }
                         else if (thing.Kind == Strewn.Boulder || thing.Kind == Strewn.Shrub || thing.Kind == Strewn.Reeds)

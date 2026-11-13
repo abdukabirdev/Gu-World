@@ -8,18 +8,25 @@ using UnityEngine.Rendering;
 
 namespace GuWorld.World
 {
+    /// <summary>A grown tree's solid shape in the world: what the hero stands on and climbs (see Hero's climbing).</summary>
+    public class TreeSolid : MonoBehaviour
+    {
+        public TreeSpecies Species;
+        public float Height;
+    }
+
     /// <summary>
     /// The woods, groves and rocks of the plan's scatter, round the hero. Every tree is grown by the
-    /// generator (Core/Gen/Flora): a library of variants per kind — open and crowded, straight and
-    /// leaning, a few seeds of each — is grown on a worker thread at load, and each tree of the map
-    /// wears the variant nearest its asking, turned so it leans where its wind and slope push it and
-    /// scaled to its height. Nothing is a GameObject but the solids near the hero (a capsule round
-    /// each trunk, the boulders' own shapes): everything is drawn in instanced batches by its
-    /// variant and its level of detail, picked by distance (four of them, the farthest a few dozen
-    /// triangles). Boulders, shrubs and reeds are shapes made in code, drawn the same way.
+    /// generator (Core/Gen/Flora): variants of each kind — open and crowded, straight and leaning,
+    /// a few seeds — are grown on a worker thread as the hero comes near woods that need them, and
+    /// each tree of the map wears the variant nearest its asking, turned so it leans where its wind
+    /// and slope push it and scaled to its height.
     ///
-    /// The scatter's cells and the library are worked out on worker threads; the main thread only
-    /// turns grown meshes into the engine's, places solids and draws.
+    /// A variant is several materials: its bark (with moss), its foliage (cut out), what lives on
+    /// it. Each level of detail is one mesh with a sub-mesh per material, drawn in instanced
+    /// batches; the level is picked by distance. Near the hero every tree also has a solid — its
+    /// trunk, roots and thick limbs as a mesh collider — to walk on and climb. Boulders, shrubs
+    /// and reeds are shapes made in code, drawn the same way.
     /// </summary>
     public class Forest : MonoBehaviour
     {
@@ -37,31 +44,48 @@ namespace GuWorld.World
         System.Threading.Thread worker, grower;
         volatile bool stopping;
 
-        // The trees' variants, grown on their own thread; their meshes made on the main thread as first needed.
+        // The trees' variants: asked for by the main thread, grown on their own thread, then turned into the engine's meshes a level a frame.
         TreeLibrary library;
-        readonly Dictionary<int, Mesh[]> treeMeshes = new Dictionary<int, Mesh[]>();
+        readonly Queue<int> toGrow = new Queue<int>();
+        readonly HashSet<int> wanted = new HashSet<int>();
+        readonly Queue<(int key, TreeModel model)> grownNow = new Queue<(int, TreeModel)>();
 
-        // Near: solids kept by cell (trunks' capsules, boulders' shapes).
+        sealed class Variant
+        {
+            public TreeModel Model;
+            public Mesh[] Lods;
+            public Material[][] Materials;
+            public Mesh Solid;
+            public int Uploaded;
+            public float Height, TrunkRadius;
+            public bool Ready => Uploaded >= 4;
+        }
+
+        readonly Dictionary<int, Variant> variants = new Dictionary<int, Variant>();
+        readonly List<Variant> uploading = new List<Variant>();
+
+        // Near: solids kept by cell.
         readonly Dictionary<long, List<GameObject>> placed = new Dictionary<long, List<GameObject>>();
-        readonly Stack<GameObject> trunks = new Stack<GameObject>();
+        readonly Dictionary<int, Stack<GameObject>> solids = new Dictionary<int, Stack<GameObject>>();
         readonly Dictionary<string, Stack<GameObject>> rocks = new Dictionary<string, Stack<GameObject>>();
 
         // Everything drawn: batches of matrices by mesh.
         class Batch
         {
             public Mesh Mesh;
-            public Material Material;
+            public Material[] Materials;
             public ShadowCastingMode Shadows;
             public readonly List<Matrix4x4> Matrices = new List<Matrix4x4>();
         }
 
         readonly Dictionary<long, Batch> batches = new Dictionary<long, Batch>();
         readonly Dictionary<int, Mesh> shapes = new Dictionary<int, Mesh>();
-        Material vertexLit, swaying, trees;
+        readonly Dictionary<string, Material> materials = new Dictionary<string, Material>();
+        Material vertexLit, swaying;
         readonly Matrix4x4[] chunk = new Matrix4x4[1023];
 
         public static int Drawn { get; private set; }
-        public static string Count() => $"{Drawn} trees and shapes drawn; tree variants grown {(instance != null && instance.library != null ? instance.Grown() : 0)}";
+        public static string Count() => $"{Drawn} trees and shapes drawn; tree variants ready {(instance != null ? instance.ReadyCount() : 0)}";
         static Forest instance;
 
         static long Key(int x, int z) => ((long)x << 32) ^ (uint)z;
@@ -73,14 +97,13 @@ namespace GuWorld.World
             var forest = root.AddComponent<Forest>();
             instance = forest;
             forest.plan = plan;
-            forest.near = Quality.Level >= 2 ? 240 : Quality.Level == 1 ? 170 : 110;
-            forest.far = Quality.Level >= 2 ? 1300 : Quality.Level == 1 ? 800 : 450;
+            forest.near = Quality.Level >= 2 ? 260 : Quality.Level == 1 ? 180 : 120;
+            forest.far = Quality.Level >= 2 ? 1500 : Quality.Level == 1 ? 900 : 500;
             // Where each level of detail gives way to the next.
-            forest.lodReach = Quality.Level >= 2 ? new[] { 70f, 180f, 380f } : Quality.Level == 1 ? new[] { 50f, 130f, 280f } : new[] { 32f, 90f, 190f };
+            forest.lodReach = Quality.Level >= 2 ? new[] { 130f, 320f, 700f } : Quality.Level == 1 ? new[] { 80f, 200f, 420f } : new[] { 45f, 120f, 260f };
             forest.vertexLit = Models.VertexLit(Color.white, 0);
             forest.swaying = Models.VertexLit(Color.white, 0.04f);
-            forest.trees = Models.VertexLit(Color.white, 0.012f);
-            forest.library = new TreeLibrary(Quality.Level >= 2 ? 3 : 2);
+            forest.library = new TreeLibrary(Quality.Level >= 2 ? 3 : Quality.Level == 1 ? 2 : 1);
             forest.worker = new System.Threading.Thread(forest.Work) { IsBackground = true, Name = "GU World forest" };
             forest.worker.Start();
             forest.grower = new System.Threading.Thread(forest.GrowTrees) { IsBackground = true, Name = "GU World trees", Priority = System.Threading.ThreadPriority.BelowNormal };
@@ -98,10 +121,27 @@ namespace GuWorld.World
                 System.Threading.Monitor.PulseAll(toWork);
             }
 
+            lock (toGrow)
+            {
+                System.Threading.Monitor.PulseAll(toGrow);
+            }
+
             if (instance == this)
             {
                 instance = null;
             }
+        }
+
+        int ReadyCount()
+        {
+            var n = 0;
+
+            foreach (var variant in variants.Values)
+            {
+                n += variant.Ready ? 1 : 0;
+            }
+
+            return n;
         }
 
         // ------------------------------------------------------------------ The workers
@@ -146,48 +186,251 @@ namespace GuWorld.World
             }
         }
 
-        /// <summary>Grows the library: the commonest kinds' first variants first, so the woods fill in soon after load.</summary>
+        /// <summary>Grows the variants the main thread asks for, in the order asked (nearest woods first).</summary>
         void GrowTrees()
         {
-            try
+            while (!stopping)
             {
-                var count = library.VariantsPerKind;
+                int key;
 
-                for (var v = 0; v < count && !stopping; v++)
+                lock (toGrow)
                 {
-                    for (var kind = 0; kind < Trees.All.Length && !stopping; kind++)
+                    while (toGrow.Count == 0 && !stopping)
                     {
-                        library.Get(kind, v);
+                        System.Threading.Monitor.Wait(toGrow);
+                    }
 
-                        lock (grown)
-                        {
-                            grown.Add(kind * 64 + v);
-                        }
+                    if (stopping)
+                    {
+                        return;
+                    }
+
+                    key = toGrow.Dequeue();
+                }
+
+                try
+                {
+                    var model = library.Get(key / 64, key % 64);
+
+                    lock (grownNow)
+                    {
+                        grownNow.Enqueue((key, model));
                     }
                 }
-            }
-            catch (System.Exception error)
-            {
-                Debug.LogError($"GU World: growing the trees failed: {error}");
-            }
-        }
-
-        readonly HashSet<int> grown = new HashSet<int>();
-
-        int Grown()
-        {
-            lock (grown)
-            {
-                return grown.Count;
+                catch (System.Exception error)
+                {
+                    Debug.LogError($"GU World: growing tree {Trees.All[key / 64].Id} variant {key % 64} failed: {error}");
+                }
             }
         }
 
-        bool IsGrown(int kind, int variant)
+        /// <summary>Asks for a variant (once); null until it is grown and its meshes are made.</summary>
+        Variant VariantOf(int kind, int variant)
         {
-            lock (grown)
+            var key = kind * 64 + variant;
+
+            if (variants.TryGetValue(key, out var found))
             {
-                return grown.Contains(kind * 64 + variant);
+                return found.Ready ? found : null;
             }
+
+            if (wanted.Add(key))
+            {
+                lock (toGrow)
+                {
+                    toGrow.Enqueue(key);
+                    System.Threading.Monitor.Pulse(toGrow);
+                }
+            }
+
+            return null;
+        }
+
+        /// <summary>Takes what the grower has grown and turns it into the engine's meshes: one level of one variant a frame, so no frame stalls.</summary>
+        void Upload()
+        {
+            lock (grownNow)
+            {
+                while (grownNow.Count > 0)
+                {
+                    var (key, model) = grownNow.Dequeue();
+                    var variant = new Variant { Model = model, Lods = new Mesh[4], Materials = new Material[4][], Height = model.Height, TrunkRadius = model.TrunkRadius };
+                    variants[key] = variant;
+                    uploading.Add(variant);
+                }
+            }
+
+            if (uploading.Count == 0)
+            {
+                return;
+            }
+
+            var next = uploading[0];
+            var model0 = next.Model;
+            // The far levels first: a wood shows as soon as its distant shape is ready.
+            var lod = 3 - next.Uploaded;
+
+            if (lod >= 0)
+            {
+                next.Lods[lod] = MeshOf(model0.Lods[lod], $"{model0.Species.Id} LOD{lod}", out var parts);
+                next.Materials[lod] = new Material[parts.Count];
+
+                for (var i = 0; i < parts.Count; i++)
+                {
+                    next.Materials[lod][i] = MaterialFor(model0.Species, parts[i]);
+                }
+
+                // The generator's copy of this level is not needed again.
+                model0.Lods[lod] = null;
+                next.Uploaded++;
+            }
+
+            if (next.Uploaded >= 4)
+            {
+                next.Solid = Meshes.From(model0.Collision, model0.Species.Id + " solid");
+                model0.Collision = null;
+                uploading.RemoveAt(0);
+            }
+        }
+
+        /// <summary>A level of detail as one mesh, a sub-mesh per material.</summary>
+        static Mesh MeshOf(TreeLod lod, string name, out List<string> parts)
+        {
+            parts = new List<string>();
+            var total = 0;
+
+            foreach (var part in lod.Parts)
+            {
+                total += part.Mesh.VertexCount;
+            }
+
+            var vertices = new Vector3[total];
+            var normals = new Vector3[total];
+            var uvs = new Vector2[total];
+            var colours = new Color32[total];
+            var mesh = new Mesh { name = name };
+
+            if (total > 65000)
+            {
+                mesh.indexFormat = IndexFormat.UInt32;
+            }
+
+            var at = 0;
+            var triangles = new List<int[]>();
+
+            foreach (var part in lod.Parts)
+            {
+                var data = part.Mesh;
+                var count = data.VertexCount;
+
+                for (var i = 0; i < count; i++)
+                {
+                    vertices[at + i] = new Vector3(data.Positions[i * 3], data.Positions[i * 3 + 1], data.Positions[i * 3 + 2]);
+                    normals[at + i] = new Vector3(data.Normals[i * 3], data.Normals[i * 3 + 1], data.Normals[i * 3 + 2]);
+                    uvs[at + i] = new Vector2(data.Uvs[i * 2], data.Uvs[i * 2 + 1]);
+                    colours[at + i] = new Color32((byte)(Mathf.Clamp01(data.Colours[i * 4]) * 255), (byte)(Mathf.Clamp01(data.Colours[i * 4 + 1]) * 255),
+                        (byte)(Mathf.Clamp01(data.Colours[i * 4 + 2]) * 255), (byte)(Mathf.Clamp01(data.Colours[i * 4 + 3]) * 255));
+                }
+
+                var indices = new int[data.Triangles.Count];
+
+                for (var i = 0; i < indices.Length; i++)
+                {
+                    indices[i] = data.Triangles[i] + at;
+                }
+
+                triangles.Add(indices);
+                parts.Add(part.Material);
+                at += count;
+            }
+
+            mesh.vertices = vertices;
+            mesh.normals = normals;
+            mesh.uv = uvs;
+            mesh.colors32 = colours;
+            mesh.subMeshCount = triangles.Count;
+
+            for (var i = 0; i < triangles.Count; i++)
+            {
+                mesh.SetTriangles(triangles[i], i, false);
+            }
+
+            mesh.RecalculateBounds();
+            // The foliage sways past the mesh's own bounds.
+            var bounds = mesh.bounds;
+            bounds.Expand(2);
+            mesh.bounds = bounds;
+
+            return mesh;
+        }
+
+        /// <summary>The material of one part of a kind of tree: its bark (with the moss), its foliage, the rest.</summary>
+        Material MaterialFor(TreeSpecies species, string part)
+        {
+            var key = part.StartsWith("bark:") ? part + "|" + species.Id : part;
+
+            if (materials.TryGetValue(key, out var material))
+            {
+                return material;
+            }
+
+            if (part.StartsWith("bark:"))
+            {
+                var name = part.Substring(5);
+                var shader = Resources.Load<Shader>("Shaders/TreeBark");
+                var texture = Resources.Load<Texture2D>("Trees/" + name);
+
+                if (shader != null && texture != null)
+                {
+                    material = new Material(shader) { name = "Bark " + name + " " + species.Id };
+                    material.SetTexture("_BaseMap", texture);
+                    material.SetTexture("_HeightMap", Resources.Load<Texture2D>("Trees/" + name + "_h"));
+                    material.SetTexture("_MossMap", Resources.Load<Texture2D>("Trees/moss"));
+                    material.SetTexture("_MossHeight", Resources.Load<Texture2D>("Trees/moss_h"));
+                    material.SetColor("_BaseColor", new Color(species.BarkTint.R, species.BarkTint.G, species.BarkTint.B, 1));
+                }
+                else
+                {
+                    Debug.LogWarning($"GU World: no bark shader or texture for {name}; the tree is drawn plain");
+                    material = new Material(vertexLit) { name = "Bark (plain) " + name };
+                    material.SetColor("_BaseColor", new Color(0.36f, 0.3f, 0.25f, 1));
+                }
+            }
+            else if (part.StartsWith("leaf:"))
+            {
+                var name = part.Substring(5);
+                var shader = Resources.Load<Shader>("Shaders/TreeLeaf");
+                var texture = Resources.Load<Texture2D>("Trees/" + name);
+
+                if (shader != null && texture != null)
+                {
+                    material = new Material(shader) { name = "Foliage " + name };
+                    texture.wrapMode = TextureWrapMode.Clamp;
+                    material.SetTexture("_BaseMap", texture);
+                    // Curtains and beards swing more than sprays.
+                    material.SetFloat("_Sway", name.StartsWith("hang_") ? 0.35f : 0.16f);
+                }
+                else
+                {
+                    Debug.LogWarning($"GU World: no foliage shader or texture for {name}; the tree is drawn plain");
+                    material = new Material(vertexLit) { name = "Foliage (plain) " + name };
+                    material.SetColor("_BaseColor", new Color(0.25f, 0.45f, 0.2f, 1));
+                }
+            }
+            else if (part == "glow")
+            {
+                var shader = Resources.Load<Shader>("Shaders/TreeGlow");
+                material = shader != null ? new Material(shader) { name = "Glowing moss" } : new Material(vertexLit);
+            }
+            else
+            {
+                material = vertexLit;
+            }
+
+            material.enableInstancing = true;
+            materials[key] = material;
+
+            return material;
         }
 
         // ------------------------------------------------------------------ Every frame
@@ -197,9 +440,10 @@ namespace GuWorld.World
             var focus = Game.Hero != null ? Game.Hero.transform.position : Game.Rig != null ? Game.Rig.transform.position : Vector3.zero;
             var cell = new Vector2Int(Mathf.FloorToInt(focus.x / Scatter.CellSize), Mathf.FloorToInt(focus.z / Scatter.CellSize));
             wait -= Time.unscaledDeltaTime;
+            Upload();
 
             // Again when the cell changes, every second, or when the hero has gone far enough that the levels of detail are stale.
-            if (cell != lastCell || wait <= 0 || (focus - lastFocus).sqrMagnitude > lodReach[0] * lodReach[0] * 0.09f)
+            if (cell != lastCell || wait <= 0 || (focus - lastFocus).sqrMagnitude > lodReach[0] * lodReach[0] * 0.04f)
             {
                 wait = 1;
                 lastCell = cell;
@@ -256,7 +500,7 @@ namespace GuWorld.World
                 }
             }
 
-            // Near cells: solids placed (once their cell is worked out); cells that left the near ring: back to the pools.
+            // Near cells: solids placed (once their cell is worked out and their trees grown); cells that left the near ring: back to the pools.
             foreach (var key in new List<long>(placed.Keys))
             {
                 if (!wantNear.Contains(key))
@@ -357,7 +601,9 @@ namespace GuWorld.World
                             continue;
                         }
 
-                        var lod = distance < lodReach[0] * detail ? 0 : distance < lodReach[1] * detail ? 1 : distance < lodReach[2] * detail ? 2 : 3;
+                        // A giant holds its detail farther than a sapling.
+                        var size = Mathf.Clamp(thing.Height / 40f, 0.6f, 2.2f);
+                        var lod = distance < lodReach[0] * detail * size ? 0 : distance < lodReach[1] * detail * size ? 1 : distance < lodReach[2] * detail * size ? 2 : 3;
 
                         if (AddTree(thing, lod))
                         {
@@ -387,7 +633,7 @@ namespace GuWorld.World
             Drawn = drawn;
         }
 
-        /// <summary>A tree into its variant's batch at a level of detail; false if its variant is not grown yet.</summary>
+        /// <summary>A tree into its variant's batch at a level of detail; false if its variant is not ready yet.</summary>
         bool AddTree(in Instance thing, int lod)
         {
             if (thing.Species < 0 || thing.Species >= Trees.All.Length)
@@ -395,47 +641,35 @@ namespace GuWorld.World
                 return false;
             }
 
-            var variant = library.Choose(thing);
+            var index = library.Choose(thing);
+            var variant = VariantOf(thing.Species, index);
 
-            if (!IsGrown(thing.Species, variant))
+            if (variant == null)
             {
                 return false;
             }
 
-            var model = library.Get(thing.Species, variant);
-            var meshes = TreeMeshes(thing.Species, variant, model);
-            var (yaw, scale) = library.Place(thing, model);
+            var (yaw, scale) = library.Place(thing, variant.Height);
             var shadows = lod == 0 || (lod == 1 && Quality.Level >= 1) || (lod == 2 && Quality.Level >= 2) ? ShadowCastingMode.On : ShadowCastingMode.Off;
-            var batch = BatchOf(((long)(thing.Species * 64 + variant) << 3) | (long)lod, meshes[lod], trees, shadows);
+            var key = ((long)(thing.Species * 64 + index) << 3) | (long)lod;
+
+            if (!batches.TryGetValue(key, out var batch))
+            {
+                batch = new Batch { Mesh = variant.Lods[lod], Materials = variant.Materials[lod] };
+                batches[key] = batch;
+            }
+
+            batch.Shadows = shadows;
             batch.Matrices.Add(Matrix4x4.TRS(new Vector3(thing.At.X, Ground.HeightAt(thing.At.X, thing.At.Z) - 0.1f, thing.At.Z), Quaternion.Euler(0, yaw, 0), Vector3.one * scale));
 
             return true;
-        }
-
-        Mesh[] TreeMeshes(int kind, int variant, TreeModel model)
-        {
-            var key = kind * 64 + variant;
-
-            if (!treeMeshes.TryGetValue(key, out var meshes))
-            {
-                meshes = new Mesh[model.Lods.Length];
-
-                for (var i = 0; i < meshes.Length; i++)
-                {
-                    meshes[i] = Meshes.From(model.Lods[i], $"{model.Species.Id} {variant} LOD{i}");
-                }
-
-                treeMeshes[key] = meshes;
-            }
-
-            return meshes;
         }
 
         Batch BatchOf(long key, Mesh mesh, Material material, ShadowCastingMode shadows)
         {
             if (!batches.TryGetValue(key, out var batch))
             {
-                batch = new Batch { Mesh = mesh, Material = material };
+                batch = new Batch { Mesh = mesh, Materials = new[] { material } };
                 batches[key] = batch;
             }
 
@@ -467,7 +701,7 @@ namespace GuWorld.World
             {
                 var matrices = batch.Matrices;
 
-                if (matrices.Count == 0 || batch.Mesh == null || batch.Material == null)
+                if (matrices.Count == 0 || batch.Mesh == null || batch.Materials == null)
                 {
                     continue;
                 }
@@ -476,7 +710,14 @@ namespace GuWorld.World
                 {
                     var count = Mathf.Min(chunk.Length, matrices.Count - start);
                     matrices.CopyTo(start, chunk, 0, count);
-                    Graphics.DrawMeshInstanced(batch.Mesh, 0, batch.Material, chunk, count, null, batch.Shadows, true);
+
+                    for (var s = 0; s < batch.Materials.Length && s < batch.Mesh.subMeshCount; s++)
+                    {
+                        if (batch.Materials[s] != null)
+                        {
+                            Graphics.DrawMeshInstanced(batch.Mesh, s, batch.Materials[s], chunk, count, null, batch.Shadows, true);
+                        }
+                    }
                 }
             }
         }
@@ -491,7 +732,7 @@ namespace GuWorld.World
             {
                 var mesh = Shape(thing);
                 var name = "boulder " + thing.Seed % 6;
-                var rock = Take(rocks, name);
+                var rock = rocks.TryGetValue(name, out var stack) && stack.Count > 0 ? stack.Pop() : null;
 
                 if (rock == null)
                 {
@@ -512,47 +753,43 @@ namespace GuWorld.World
                 return null;
             }
 
-            var variant = library.Choose(thing);
+            var index = library.Choose(thing);
+            var variant = VariantOf(thing.Species, index);
 
-            if (!IsGrown(thing.Species, variant))
+            if (variant == null)
             {
                 complete = false;
 
                 return null;
             }
 
-            var model = library.Get(thing.Species, variant);
-            var (yaw, scale) = library.Place(thing, model);
-            var lean = TreeLibrary.Leans[library.Split(variant).lean];
+            // Thin stems (bamboo, saplings) are walked through.
+            var (yaw, scale) = library.Place(thing, variant.Height);
 
-            // Thin stems (bamboo, saplings) are walked through; a trunk is a capsule to its crown.
-            if (model.TrunkRadius * scale < 0.07f)
+            if (variant.TrunkRadius * scale < 0.07f || variant.Solid == null)
             {
                 return null;
             }
 
-            var trunk = trunks.Count > 0 ? trunks.Pop() : null;
+            var key = thing.Species * 64 + index;
+            var tree = solids.TryGetValue(key, out var pool) && pool.Count > 0 ? pool.Pop() : null;
 
-            if (trunk == null)
+            if (tree == null)
             {
-                trunk = new GameObject("Trunk");
-                trunk.transform.SetParent(transform, false);
-                trunk.AddComponent<CapsuleCollider>();
+                tree = new GameObject("Tree " + key);
+                tree.transform.SetParent(transform, false);
+                tree.AddComponent<MeshCollider>().sharedMesh = variant.Solid;
+                var solid = tree.AddComponent<TreeSolid>();
+                solid.Species = Trees.All[thing.Species];
             }
 
-            var capsule = trunk.GetComponent<CapsuleCollider>();
-            var height = Mathf.Clamp(model.CrownBase * scale, 2.5f, 14);
-            capsule.radius = Mathf.Clamp(model.TrunkRadius * scale * 0.9f, 0.12f, 2.5f);
-            capsule.height = Mathf.Max(height, capsule.radius * 2 + 0.1f);
-            capsule.center = new Vector3(0, height / 2 - 0.2f, 0);
-            // Tilted along the variant's lean (its +X), as the trunk is near its foot.
-            trunk.transform.SetPositionAndRotation(at, Quaternion.Euler(0, yaw, 0) * Quaternion.Euler(0, 0, -lean * 0.85f));
-            trunk.SetActive(true);
+            tree.GetComponent<TreeSolid>().Height = variant.Height * scale;
+            tree.transform.SetPositionAndRotation(at - new Vector3(0, 0.1f, 0), Quaternion.Euler(0, yaw, 0));
+            tree.transform.localScale = Vector3.one * scale;
+            tree.SetActive(true);
 
-            return trunk;
+            return tree;
         }
-
-        static GameObject Take(Dictionary<string, Stack<GameObject>> pool, string name) => pool.TryGetValue(name, out var stack) && stack.Count > 0 ? stack.Pop() : null;
 
         void Release(GameObject made)
         {
@@ -563,9 +800,16 @@ namespace GuWorld.World
 
             made.SetActive(false);
 
-            if (made.name == "Trunk")
+            if (made.name.StartsWith("Tree "))
             {
-                trunks.Push(made);
+                var key = int.Parse(made.name.Substring(5));
+
+                if (!solids.TryGetValue(key, out var pool))
+                {
+                    solids[key] = pool = new Stack<GameObject>();
+                }
+
+                pool.Push(made);
 
                 return;
             }

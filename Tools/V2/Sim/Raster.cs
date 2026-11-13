@@ -142,8 +142,52 @@ sealed class Raster
     }
 
     /// <summary>Draws a mesh placed at (x, y, z), turned `yaw` degrees about the vertical, scaled.</summary>
-    public void Draw(MeshData mesh, float px, float py, float pz, float scale, float yaw = 0)
+    /// <summary>Small copies of the textures (name → 128 × 128 RGBA), for drawing textured parts: loaded from a folder of .rgba files.</summary>
+    public static readonly Dictionary<string, byte[]> Textures = new Dictionary<string, byte[]>();
+    public const int TextureSize = 128;
+
+    public static void LoadTextures(string folder)
     {
+        if (!System.IO.Directory.Exists(folder))
+        {
+            return;
+        }
+
+        foreach (var file in System.IO.Directory.GetFiles(folder, "*.rgba"))
+        {
+            Textures[System.IO.Path.GetFileNameWithoutExtension(file)] = System.IO.File.ReadAllBytes(file);
+        }
+    }
+
+    static void Sample(byte[] texture, float u, float v, out float r, out float g, out float b, out float a)
+    {
+        var x = (int)((u - (float)Math.Floor(u)) * TextureSize) % TextureSize;
+        // The engine's V runs up the picture; the file's rows run down.
+        var y = (int)((1 - (v - (float)Math.Floor(v))) * TextureSize) % TextureSize;
+        var i = (y * TextureSize + x) * 4;
+        r = texture[i] / 255f;
+        g = texture[i + 1] / 255f;
+        b = texture[i + 2] / 255f;
+        a = texture[i + 3] / 255f;
+    }
+
+    /// <summary>
+    /// Draws a mesh placed at (x, y, z), turned `yaw` degrees about the vertical, scaled. With a
+    /// texture's name: foliage is cut out by the texture's alpha and tinted by the vertices; bark
+    /// (`bark`) takes the texture, moss over it by the vertices' red, shade by their green.
+    /// </summary>
+    public void Draw(MeshData mesh, float px, float py, float pz, float scale, float yaw = 0, string texture = null, bool bark = false)
+    {
+        byte[] tex = null, mossTex = null;
+
+        if (texture != null)
+        {
+            Textures.TryGetValue(texture, out tex);
+            Textures.TryGetValue("moss", out mossTex);
+        }
+
+        var cutout = texture != null && !bark;
+
         var count = mesh.VertexCount;
         var screen = new (float x, float y, float z)[count];
         var world = new V3[count];
@@ -225,28 +269,87 @@ sealed class Raster
                         continue;
                     }
 
+                    float tr = 1, tg = 1, tb = 1;
+
+                    if (texture != null)
+                    {
+                        var u = mesh.Uvs[ia * 2] * pz0 + mesh.Uvs[ib * 2] * pz1 + mesh.Uvs[ic * 2] * pz2;
+                        var v = mesh.Uvs[ia * 2 + 1] * pz0 + mesh.Uvs[ib * 2 + 1] * pz1 + mesh.Uvs[ic * 2 + 1] * pz2;
+
+                        if (tex != null)
+                        {
+                            Sample(tex, u, v, out tr, out tg, out tb, out var ta);
+
+                            if (cutout && ta < 0.4f)
+                            {
+                                continue;
+                            }
+                        }
+                        else if (cutout)
+                        {
+                            // No picture at hand: a rough oval of leaf.
+                            if ((u - 0.5f) * (u - 0.5f) + (v - 0.55f) * (v - 0.55f) > 0.16f)
+                            {
+                                continue;
+                            }
+
+                            tr = 0.25f;
+                            tg = 0.45f;
+                            tb = 0.18f;
+                        }
+                        else
+                        {
+                            tr = 0.36f;
+                            tg = 0.29f;
+                            tb = 0.23f;
+                        }
+
+                        if (bark)
+                        {
+                            var moss = mesh.Colours[ia * 4] * pz0 + mesh.Colours[ib * 4] * pz1 + mesh.Colours[ic * 4] * pz2;
+                            var shade = mesh.Colours[ia * 4 + 1] * pz0 + mesh.Colours[ib * 4 + 1] * pz1 + mesh.Colours[ic * 4 + 1] * pz2;
+                            float mr = 0.2f, mg = 0.34f, mb = 0.1f, mh = 0.5f;
+
+                            if (mossTex != null)
+                            {
+                                Sample(mossTex, u * 1.7f, v * 1.7f, out mr, out mg, out mb, out mh);
+                            }
+
+                            var k = Math.Clamp((moss * 2 - 1 + mh) * 2.5f, 0, 1);
+                            tr = (tr * (1 - k) + mr * k) * shade;
+                            tg = (tg * (1 - k) + mg * k) * shade;
+                            tb = (tb * (1 - k) + mb * k) * shade;
+                        }
+                    }
+
                     depth[at] = zz;
                     drawn[at] = true;
                     var light = la * pz0 + lb * pz1 + lc * pz2;
                     float r = 0, g = 0, bl = 0;
 
-                    if (isBack && PaintBackFaces)
+                    if (isBack && PaintBackFaces && texture == null)
                     {
                         r = 1;
                         bl = 1;
                     }
-                    else if (isBack)
+                    else if (isBack && texture == null)
                     {
                         // Seen from inside (a sleeve, a hem): the cloth's own colour, in shadow.
                         r = (mesh.Colours[ia * 4] * pz0 + mesh.Colours[ib * 4] * pz1 + mesh.Colours[ic * 4] * pz2) * 0.4f;
                         g = (mesh.Colours[ia * 4 + 1] * pz0 + mesh.Colours[ib * 4 + 1] * pz1 + mesh.Colours[ic * 4 + 1] * pz2) * 0.4f;
                         bl = (mesh.Colours[ia * 4 + 2] * pz0 + mesh.Colours[ib * 4 + 2] * pz1 + mesh.Colours[ic * 4 + 2] * pz2) * 0.4f;
                     }
+                    else if (bark)
+                    {
+                        r = tr * light;
+                        g = tg * light;
+                        bl = tb * light;
+                    }
                     else
                     {
-                        r = (mesh.Colours[ia * 4] * pz0 + mesh.Colours[ib * 4] * pz1 + mesh.Colours[ic * 4] * pz2) * light;
-                        g = (mesh.Colours[ia * 4 + 1] * pz0 + mesh.Colours[ib * 4 + 1] * pz1 + mesh.Colours[ic * 4 + 1] * pz2) * light;
-                        bl = (mesh.Colours[ia * 4 + 2] * pz0 + mesh.Colours[ib * 4 + 2] * pz1 + mesh.Colours[ic * 4 + 2] * pz2) * light;
+                        r = (mesh.Colours[ia * 4] * pz0 + mesh.Colours[ib * 4] * pz1 + mesh.Colours[ic * 4] * pz2) * light * tr;
+                        g = (mesh.Colours[ia * 4 + 1] * pz0 + mesh.Colours[ib * 4 + 1] * pz1 + mesh.Colours[ic * 4 + 1] * pz2) * light * tg;
+                        bl = (mesh.Colours[ia * 4 + 2] * pz0 + mesh.Colours[ib * 4 + 2] * pz1 + mesh.Colours[ic * 4 + 2] * pz2) * light * tb;
                     }
 
                     if (FogDistance > 0)

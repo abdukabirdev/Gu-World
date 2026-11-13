@@ -190,6 +190,21 @@ def roll_over(t):
     return pose
 
 
+def climb(t):
+    """Hand over hand up a trunk: one arm reaching while the other pulls, the opposite knee lifting, the face turned up."""
+    phase = t * 2 * math.pi
+    pose = blank()
+    pose['free'] = True
+    torso(pose, lean=-3, twist=6 * math.sin(phase), head=(-22, 0, 0))
+    for side, shift in (('L', 0.0), ('R', math.pi)):
+        reach = 0.5 + 0.5 * math.sin(phase + shift)
+        arm(pose, side, swing=92 + 62 * reach, out=16, elbow=98 - 66 * reach, wrist=-18)
+        leg(pose, side, swing=16 + 54 * (1 - reach), knee=28 + 72 * (1 - reach), foot=-12, spread=11)
+        pose['fingers_' + side] = 0.7
+    pose['offset'] = (0, 0, 0.02 * math.sin(2 * phase))
+    return pose
+
+
 def keyed(keys):
     """A clip from key poses: [(time 0-1, pose)], eased between."""
     def at(t):
@@ -397,6 +412,7 @@ CLIPS = [
     ('death', 1.1, False, lambda t: fallen(min(1.0, t / 0.8))),
     ('guard', 1.6, True, lambda t: keyed([(0, G), (0.5, dict(G, offset=(0, 0, G['offset'][2] - 0.015))), (1, G)])(t)),
     ('sit', 4.0, True, sit),
+    ('climb', 1.0, True, climb),
 ]
 
 FINGERS = ['index', 'middle', 'ring', 'pinky']

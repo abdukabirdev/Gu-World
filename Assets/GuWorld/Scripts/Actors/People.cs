@@ -14,8 +14,8 @@ namespace GuWorld.Actors
     /// </summary>
     public static class People
     {
-        /// <summary>Whether the game's people are generated (on by default; off falls back to the one hand-made model, dyed).</summary>
-        public static bool Enabled = true;
+        /// <summary>Whether the game's people are generated. Off: the author found them ugly beside the hero's model; people are to be remade from that model (see Docs/V2/GENERATORS.md). The hand-made model, dyed, stands in.</summary>
+        public static bool Enabled = false;
 
         static Material material;
         static int hipsIndex = -1;
