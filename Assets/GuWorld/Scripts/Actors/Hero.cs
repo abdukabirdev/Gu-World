@@ -80,6 +80,10 @@ namespace GuWorld.Actors
 
         // ------------------------------------------------------------------ Every frame
 
+        Vector3 lastSafe;
+        bool hasSafe;
+        float safeWait;
+
         void Update()
         {
             if (Game.Frozen || Session == null)
@@ -99,6 +103,26 @@ namespace GuWorld.Actors
             {
                 Walk(Vector3.zero, dt);
                 return;
+            }
+
+            // A net under the world and the rooms: lost through a hole, the hero is put back where they last stood firm.
+            safeWait -= dt;
+
+            if (safeWait <= 0)
+            {
+                safeWait = 0.5f;
+
+                if (Physics.Raycast(transform.position + Vector3.up * 0.4f, Vector3.down, 0.9f, ~0, QueryTriggerInteraction.Ignore))
+                {
+                    lastSafe = transform.position;
+                    hasSafe = true;
+                }
+                else if (hasSafe && transform.position.y < lastSafe.y - 100)
+                {
+                    Teleport(lastSafe + Vector3.up * 0.3f);
+                    fallSpeed = 0;
+                    Game.Say("Земля вернула тебя на место");
+                }
             }
 
             // On the big world, the ground under the hero may not be there yet: they wait for it, without falling.
