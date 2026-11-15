@@ -18,7 +18,7 @@ namespace GuWorld.Core.Gen.Buildings
             "haystack", "drying_rack", "scarecrow", "wattle", "shrine", "stele", "signpost", "lantern_post",
             "banner_pole", "barricade", "well", "woodpile", "cart", "grave",
             "jars", "washing", "hide_rack", "weapon_rack", "dummy", "stall", "table", "barrels", "garden",
-            "training", "herbs", "hives", "censer", "plaza",
+            "training", "ring", "herbs", "hives", "censer", "plaza",
         };
 
         /// <summary>The room a thing takes on the ground (width × depth, metres).</summary>
@@ -49,6 +49,7 @@ namespace GuWorld.Core.Gen.Buildings
                 case "barrels": return (2f, 1.6f);
                 case "garden": return (8f, 6f);
                 case "training": return (22f, 16f);
+                case "ring": return (14f, 14f);
                 case "herbs": return (8f, 6f);
                 case "hives": return (6.4f, 1.8f);
                 case "censer": return (2.6f, 2.6f);
@@ -99,7 +100,8 @@ namespace GuWorld.Core.Gen.Buildings
                     case "barrels": Barrels(c); break;
                     case "garden": Garden(c, false); break;
                     case "herbs": Garden(c, true); break;
-                    case "training": Training(c, seed, p); break;
+                    case "training": Training(c, seed, p, false); break;
+                    case "ring": Training(c, seed, p, true); break;
                     case "hives": Hives(c); break;
                     case "censer": Censer(c); break;
                     case "plaza": Plaza(c); break;
@@ -924,12 +926,12 @@ namespace GuWorld.Core.Gen.Buildings
         /// row, racks of weapons, stone weights, a banner in the corner. The Xiong's is a wrestling ring:
         /// a round of earth edged with stones, the weights heavier.
         /// </summary>
-        static void Training(Ctx c, int seed, FortParams p)
+        static void Training(Ctx c, int seed, FortParams p, bool ring)
         {
             var mud = c.M("mud");
-            var w = 10.6f;
-            var d = 7.6f;
-            var xiong = Factions.Clan(p.Clan) == "xiong";
+            var xiong = ring;
+            var w = xiong ? 6.6f : 10.6f;
+            var d = xiong ? 6.6f : 7.6f;
             Quad(c, mud, new V3(-w, 0.04f, -d), new V3(w, 0.04f, -d), new V3(w, 0.04f, d), new V3(-w, 0.04f, d), V3.Up, new Tint(0.62f, 0.52f, 0.4f), "mud");
 
             void Add(string kind, V3 at, float yaw, int k)
@@ -978,10 +980,10 @@ namespace GuWorld.Core.Gen.Buildings
 
                 for (var i = 0; i < dummies; i++)
                 {
-                    Add("dummy", new V3(xiong ? -w + 2 : -6 + i * 3, 0, xiong ? -3 + i * 6 : d - 2.2f), xiong ? 90 : 180, i);
+                    Add("dummy", new V3(xiong ? w - 0.8f : -6 + i * 3, 0, xiong ? -4 + i * 8 : d - 2.2f), xiong ? -90 : 180, i);
                 }
 
-                Add("weapon_rack", new V3(-w + 1.1f, 0, xiong ? 4.5f : -2), -90, 10);
+                Add("weapon_rack", new V3(xiong ? -4.6f : -w + 1.1f, 0, xiong ? w - 0.8f : -2), xiong ? 0 : -90, 10);
 
                 if (!xiong)
                 {
@@ -992,7 +994,7 @@ namespace GuWorld.Core.Gen.Buildings
                 for (var i = 0; i < (xiong ? 5 : 3); i++)
                 {
                     var k = (xiong ? 1.5f : 1) * (0.8f + 0.4f * c.R(i, 6));
-                    var at = new V3(w - 1.6f - (i % 2) * 0.9f, 0, d - 1.6f - i * 1.1f);
+                    var at = xiong ? new V3(-w + 0.8f + (i % 2) * 0.9f, 0, -3 + i * 1.3f) : new V3(w - 1.6f - (i % 2) * 0.9f, 0, d - 1.6f - i * 1.1f);
                     Lathe(c, c.M("stone"), at, new[] { (0f, 0.22f * k), (0.1f * k, 0.3f * k), (0.32f * k, 0.28f * k), (0.42f * k, 0.12f * k), (0.48f * k, 0.12f * k), (0.5f * k, 0.02f) }, Sides(c, 10), White.Times(0.8f), "stone");
                 }
 

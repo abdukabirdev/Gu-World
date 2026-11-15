@@ -288,7 +288,7 @@ namespace GuWorld.Core.Gen.Buildings
         public static readonly ClanTown Xiong = new ClanTown
         {
             Clan = "xiong",
-            HeartRampart = "palisade",
+            HeartWall = false,
             Factions = new[]
             {
                 new Faction { Id = "head", Clan = "xiong", Name = "Линия главы клана Сюн", Accent = new Tint(0.42f, 0.2f, 0.08f), Lantern = new Tint(1f, 0.45f, 0.15f), Weight = 1.2f, Fields = "vegetables",
@@ -308,18 +308,17 @@ namespace GuWorld.Core.Gen.Buildings
                 new Tier { Index = 4, Name = "Бедные окраины", UpTo = 1.01f, Lots = new[] { new LotKind("hut", 3, 8, 7.5f, 0, 2), new LotKind("stilt", 1, 9, 9, 0, 2) } },
             },
             Main = new Landmark("great_hall", "hall", "Медвежий зал клана Сюн", 30, 22, 0, 8) { Things = new[] { "hide_rack", "banner_pole" } },
+            // (Its council hall, shop, tavern, smithy, granary and nursery stand round the plaza: Regions' Must.)
             Landmarks = new[]
             {
-                new Landmark("academy", "academy", "Двор учеников", 38, 42, 0, 6),
-                new Landmark("hall", "hall", "Зал старейшин", 20, 14, 0, 7),
+                new Landmark("academy", "academy", "Двор учеников", 32, 36, 0, 6) { Pad = false },
                 new Landmark("tavern", "inn", "Винокурня медвежьего вина", 15, 12, 2, 5) { Things = new[] { "barrels", "jars" }, Pad = false },
-                new Landmark("smithy", "smithy", "Кузня", 13, 10, 3, 3) { Things = new[] { "woodpile" }, Pad = false },
                 new Landmark("lodging", "inn", "Ночлежка", 11, 9, 4, 1) { Pad = false, Wear = 7 },
             },
             District = new[]
             {
-                new Landmark("manor", "hall", "Двор рода", 30, 34, 1, 7) { Pad = false },
-                new Landmark("training", "yard", "Борцовский круг", 18, 18, 1, 5),
+                new Landmark("manor", "hall", "Двор рода", 26, 30, 1, 7) { Pad = false },
+                new Landmark("training", "yard", "Борцовский круг", 14, 14, 1, 5),
             },
         };
 
@@ -333,6 +332,7 @@ namespace GuWorld.Core.Gen.Buildings
         public static readonly ClanTown Bai = new ClanTown
         {
             Clan = "bai",
+            HeartWall = false,
             Factions = new[]
             {
                 new Faction { Id = "head", Clan = "bai", Name = "Линия главы клана Бай", Accent = new Tint(0.82f, 0.82f, 0.8f), Lantern = new Tint(1f, 0.9f, 0.75f), Weight = 1.2f, Fields = "rice",
@@ -352,10 +352,10 @@ namespace GuWorld.Core.Gen.Buildings
                 new Tier { Index = 4, Name = "Бедные окраины", UpTo = 1.01f, Lots = new[] { new LotKind("cottage", 2, 10, 10, 0, 2), new LotKind("stilt", 2, 9, 9, 0, 2) } },
             },
             Main = new Landmark("great_hall", "hall", "Белый зал клана Бай", 28, 21, 0, 8) { Things = new[] { "lantern_post", "banner_pole" } },
+            // (Its council hall, shop, pavilion, herbalist, nursery and inn stand round the plaza: Regions' Must.)
             Landmarks = new[]
             {
-                new Landmark("academy", "academy", "Двор учеников", 38, 42, 0, 7),
-                new Landmark("hall", "hall", "Зал старейшин", 20, 14, 0, 7),
+                new Landmark("academy", "academy", "Двор учеников", 32, 36, 0, 7) { Pad = false },
                 new Landmark("tavern", "inn", "Винокурня «Белое зерно»", 15, 12, 2, 6) { Things = new[] { "jars", "barrels" }, Pad = false },
                 new Landmark("lodging", "inn", "Постоялый дом", 12, 10, 4, 2) { Pad = false, Wear = 6 },
             },

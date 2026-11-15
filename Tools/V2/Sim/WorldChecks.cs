@@ -155,6 +155,7 @@ static class WorldChecks
             var ring = settlement.Buildings.Where(b => b.Model.StartsWith("fort:")).GroupBy(b => b.Model.Split(':')[1] + " " + b.Model.Split(':')[2]).Select(g => $"{g.Key} {g.Count()}");
             var outside = settlement.Buildings.Where(b => b.Model.StartsWith("thing:")).GroupBy(b => b.Model.Split(':')[1]).Select(g => $"{g.Key} {g.Count()}");
             report.Add($"  {settlement.Def.Id}: ring {string.Join(", ", ring)}; outside {string.Join(", ", outside)}");
+            Districts(settlement, check, report);
             if (settlement.Def.Clan == "bai" || settlement.Def.Clan == "xiong")
             {
                 check(settlement.Walkers.Count >= 30 && settlement.Walkers.All(w => w.Clan == settlement.Def.Clan), $"world: {settlement.Def.Id} has its people out ({settlement.Walkers.Count})");

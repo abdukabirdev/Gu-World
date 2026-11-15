@@ -211,115 +211,7 @@ namespace GuWorld.Core.Gen
 
             if (Buildings.GenHouses.Mountain)
             {
-                // On the mountain: lanes along the slope at each bench (the contours, so they bend as the
-                // mountain does), and stairs straight down the slope between them every so often.
-                var lowest = float.MaxValue;
-                var highest = float.MinValue;
-
-                for (var a = 0; a < 36; a++)
-                {
-                    for (var r = def.Core; r <= def.Radius; r += 30)
-                    {
-                        var p = plan.Centre + Vec2.FromYaw(a * 10) * r;
-                        var h = ground.Height(p.X, p.Z);
-                        lowest = Math.Min(lowest, h);
-                        highest = Math.Max(highest, h);
-                    }
-                }
-
-                // A lane every second bench: room for a row of houses each side between.
-                var bench = 11f;
-
-                for (var level = (float)Math.Ceiling(lowest / bench) * bench + bench * 0.5f; level < highest; level += bench)
-                {
-                    // Trace the contour across the town, west to east: at each step the point north or south where the ground is at this level.
-                    var lane = new List<Vec2>();
-
-                    for (var x = -def.Radius; x <= def.Radius; x += 4)
-                    {
-                        var half = (float)Math.Sqrt(Math.Max(0, def.Radius * def.Radius - x * x)) - 8;
-                        var found = false;
-                        var p = default(Vec2);
-
-                        if (half > 10)
-                        {
-                            var lo = plan.Centre.Z - half;
-                            var hi = plan.Centre.Z + half;
-                            var hlo = ground.Height(plan.Centre.X + x, lo) - level;
-                            var hhi = ground.Height(plan.Centre.X + x, hi) - level;
-
-                            if (hlo * hhi < 0)
-                            {
-                                for (var k = 0; k < 18; k++)
-                                {
-                                    var mid = (lo + hi) * 0.5f;
-                                    var hm = ground.Height(plan.Centre.X + x, mid) - level;
-
-                                    if (hm * hlo > 0)
-                                    {
-                                        lo = mid;
-                                        hlo = hm;
-                                    }
-                                    else
-                                    {
-                                        hi = mid;
-                                    }
-                                }
-
-                                p = new Vec2(plan.Centre.X + x, (lo + hi) * 0.5f);
-                                found = Vec2.Distance(p, plan.Centre) > def.Core + 6 && !Taken(p, 5) && (lane.Count == 0 || Vec2.Distance(p, lane[lane.Count - 1]) < 12);
-                            }
-                        }
-
-                        if (found)
-                        {
-                            lane.Add(p);
-                        }
-                        else
-                        {
-                            if (AddPiece(plan, lane, 2.0f))
-                            {
-                                lanes++;
-                            }
-
-                            lane = new List<Vec2>();
-
-                            if (half > 10 && Vec2.Distance(p, plan.Centre) > def.Core + 6 && p.X != 0 && !Taken(p, 5))
-                            {
-                                lane.Add(p);
-                            }
-                        }
-                    }
-
-                    if (AddPiece(plan, lane, 2.0f))
-                    {
-                        lanes++;
-                    }
-                }
-
-                // Stairs down the slope: straight down the fall of the ground from bench to bench, every 45–75 m across the town.
-                for (var x = -def.Radius + rng.Range(15f, 35f); x < def.Radius - 15; x += rng.Range(32f, 52f))
-                {
-                    var stair = new List<Vec2>();
-                    var half = (float)Math.Sqrt(Math.Max(0, def.Radius * def.Radius - x * x)) - 8;
-
-                    for (var z = -half; z <= half; z += 4)
-                    {
-                        var p = new Vec2(plan.Centre.X + x + 6 * (float)Math.Sin(z * 0.02f + x), plan.Centre.Z + z);
-
-                        if (Vec2.Distance(p, plan.Centre) < def.Core + 6 || Taken(p, 4))
-                        {
-                            AddPiece(plan, stair, 1.5f);
-                            stair = new List<Vec2>();
-                        }
-                        else
-                        {
-                            stair.Add(p);
-                        }
-                    }
-
-                    AddPiece(plan, stair, 1.5f);
-                }
+                lanes = ContourLanes(plan, def.Radius, def.Core, ground, Taken, 11f, 2.0f, 32f, 52f, ref rng);
             }
             else
             {
@@ -994,7 +886,7 @@ namespace GuWorld.Core.Gen
         /// clear of the others, the streets, the water and the valley's places, on ground that does not fall more
         /// than a storey under it. Adds the pad the house stands on.
         /// </summary>
-        static bool Place(SettlementPlan plan, List<Box> placed, ShapeIndex<Box> index, SegmentIndex streets, IGround ground, Waters waters,
+        internal static bool Place(SettlementPlan plan, List<Box> placed, ShapeIndex<Box> index, SegmentIndex streets, IGround ground, Waters waters,
             string model, Vec2 centre, float yaw, string role, float gap, bool pad = true, bool onStreet = false, float fall = 0)
         {
             if (!Catalog.TryGet(model, out var footprint))

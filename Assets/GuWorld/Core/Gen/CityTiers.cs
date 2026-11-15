@@ -19,7 +19,7 @@ namespace GuWorld.Core.Gen
         static readonly CultureInfo Inv = CultureInfo.InvariantCulture;
 
         /// <summary>A clan town's rings and its factions' bearings, and what they say of a point.</summary>
-        sealed class Tiers
+        internal sealed class Tiers
         {
             public readonly ClanTown Town;
             public readonly Vec2 Centre;
@@ -29,15 +29,17 @@ namespace GuWorld.Core.Gen
             /// <summary>The faction holding each 2° of bearing in the factions' ring (-1: none).</summary>
             public readonly int[] Sector = new int[180];
             public float PavilionBearing;
+            /// <summary>A village round its plaza (not levelled: everything stands down to the slope), not a town round a hand-made middle.</summary>
+            public bool Village;
             readonly IGround ground;
             readonly Dictionary<(int, int), bool> beyond = new Dictionary<(int, int), bool>();
 
-            public Tiers(ClanTown town, SettlementDef def, IGround ground)
+            public Tiers(ClanTown town, SettlementDef def, IGround ground, float core = -1)
             {
                 Town = town;
                 Centre = def.At;
                 Radius = def.Radius;
-                Core = def.Core;
+                Core = core >= 0 ? core : def.Core;
                 this.ground = ground;
                 Edges = new float[town.Tiers.Length];
 
@@ -161,7 +163,18 @@ namespace GuWorld.Core.Gen
                     {
                         all++;
                         var p = Centre + Vec2.FromYaw(bearing) * r;
-                        good += r < Radius - 5 && !ground.Blocked(p, 4) && !Beyond(p) ? 1 : 0;
+                        var ok = r < Radius - 5 && !ground.Blocked(p, 4) && !Beyond(p);
+
+                        // (A village's factions keep to ground a yard can stand on: not where it falls half its length.)
+                        if (ok && Village)
+                        {
+                            var across = Vec2.FromYaw(bearing + 90) * 10;
+                            var outward = Vec2.FromYaw(bearing) * 10;
+                            ok = Math.Abs(ground.Height((p + across).X, (p + across).Z) - ground.Height((p - across).X, (p - across).Z)) < 10 &&
+                                 Math.Abs(ground.Height((p + outward).X, (p + outward).Z) - ground.Height((p - outward).X, (p - outward).Z)) < 10;
+                        }
+
+                        good += ok ? 1 : 0;
                     }
 
                     if (good * 2 >= all)
@@ -239,6 +252,126 @@ namespace GuWorld.Core.Gen
 
         static float Span(float from, float to) => Mod(to - from, 360);
 
+        /// <summary>
+        /// Lanes along the slope at every bench of its height (the contours, so they bend as the mountain
+        /// does) and stairs straight down the slope between them every so often, across a disc of `radius`
+        /// outside `inner`; cut where `taken`. The slope's way found from the ground over the disc. Returns the lanes made.
+        /// </summary>
+        internal static int ContourLanes(SettlementPlan plan, float radius, float inner, IGround ground, Func<Vec2, float, bool> taken, float bench, float laneHalf, float stairsFrom, float stairsTo, ref Rng rng)
+        {
+            var centre = plan.Centre;
+            var lowest = float.MaxValue;
+            var highest = float.MinValue;
+            var gx = 0f;
+            var gz = 0f;
+
+            for (var a = 0; a < 36; a++)
+            {
+                for (var r = Math.Max(inner, radius * 0.1f); r <= radius; r += radius / 12)
+                {
+                    var p = centre + Vec2.FromYaw(a * 10) * r;
+                    var h = ground.Height(p.X, p.Z);
+                    lowest = Math.Min(lowest, h);
+                    highest = Math.Max(highest, h);
+                    gx += (p.X - centre.X) * h;
+                    gz += (p.Z - centre.Z) * h;
+                }
+            }
+
+            // Uphill and along the slope.
+            var up = new Vec2(gx, gz).Length > 1e-3f ? new Vec2(gx, gz) * (1 / new Vec2(gx, gz).Length) : new Vec2(0, 1);
+            var along = up.Right;
+            var lanes = 0;
+
+            for (var level = (float)Math.Ceiling(lowest / bench) * bench + bench * 0.5f; level < highest; level += bench)
+            {
+                // Trace the contour across, at each step along the slope the point up or down it where the ground is at this level.
+                var lane = new List<Vec2>();
+
+                for (var t = -radius; t <= radius; t += 4)
+                {
+                    var half = (float)Math.Sqrt(Math.Max(0, radius * radius - t * t)) - 8;
+                    var found = false;
+                    var p = default(Vec2);
+
+                    if (half > 10)
+                    {
+                        Vec2 At(float s) => centre + along * t + up * s;
+                        var lo = -half;
+                        var hi = half;
+                        var hlo = ground.Height(At(lo).X, At(lo).Z) - level;
+                        var hhi = ground.Height(At(hi).X, At(hi).Z) - level;
+
+                        if (hlo * hhi < 0)
+                        {
+                            for (var k = 0; k < 18; k++)
+                            {
+                                var mid = (lo + hi) * 0.5f;
+                                var hm = ground.Height(At(mid).X, At(mid).Z) - level;
+
+                                if (hm * hlo > 0)
+                                {
+                                    lo = mid;
+                                    hlo = hm;
+                                }
+                                else
+                                {
+                                    hi = mid;
+                                }
+                            }
+
+                            p = At((lo + hi) * 0.5f);
+                            found = Vec2.Distance(p, centre) > inner + 6 && !taken(p, 5) && (lane.Count == 0 || Vec2.Distance(p, lane[lane.Count - 1]) < 12);
+                        }
+                    }
+
+                    if (found)
+                    {
+                        lane.Add(p);
+                    }
+                    else
+                    {
+                        lanes += AddSmoothed(plan, lane, laneHalf);
+
+                        lane = new List<Vec2>();
+
+                        if (half > 10 && Vec2.Distance(p, centre) > inner + 6 && t != 0 && !taken(p, 5))
+                        {
+                            lane.Add(p);
+                        }
+                    }
+                }
+
+                lanes += AddSmoothed(plan, lane, laneHalf);
+            }
+
+            // Stairs down the slope: straight down its fall from bench to bench, every so often across.
+            for (var t = -radius + rng.Range(15f, 35f); t < radius - 15; t += rng.Range(stairsFrom, stairsTo))
+            {
+                var stair = new List<Vec2>();
+                var half = (float)Math.Sqrt(Math.Max(0, radius * radius - t * t)) - 8;
+
+                for (var s = -half; s <= half; s += 4)
+                {
+                    var p = centre + along * (t + 6 * (float)Math.Sin(s * 0.02f + t)) + up * s;
+
+                    if (Vec2.Distance(p, centre) < inner + 6 || taken(p, 4))
+                    {
+                        AddPiece(plan, stair, 1.5f);
+                        stair = new List<Vec2>();
+                    }
+                    else
+                    {
+                        stair.Add(p);
+                    }
+                }
+
+                AddPiece(plan, stair, 1.5f);
+            }
+
+            return lanes;
+        }
+
         static string Generated(bool pad, string style, int variant, string tag, int wealth, int wear, float w, float d) =>
             string.Format(Inv, "{0}:{1}:{2}:{3}:{4}:{5}:{6:0.0}:{7:0.0}", pad ? "gen" : "hill", style, variant, tag, Math.Max(0, Math.Min(9, wealth)), Math.Max(0, Math.Min(9, wear)), w, d);
 
@@ -269,11 +402,14 @@ namespace GuWorld.Core.Gen
             var (squareW, squareD) = ThingGen.Footprint("plaza");
             var candidates = new List<(Vec2 at, float bearing, float score)>();
 
+            var core = tiers.Core;
+
             for (var bearing = 0f; bearing < 360; bearing += 5)
             {
-                var nearest = def.Core + 6 + squareD + main.Depth * 0.5f;
+                // A town's great building stands back from its hand-made middle behind its own square; a village's faces its plaza.
+                var nearest = tiers.Village ? core + 3 + main.Depth * 0.5f : core + 6 + squareD + main.Depth * 0.5f;
 
-                for (var r = nearest; r < Math.Max(nearest + 30, tiers.Edges[0] - main.Depth * 0.5f - 4); r += 7)
+                for (var r = nearest; r < Math.Max(nearest + (tiers.Village ? 40 : 30), tiers.Village ? 0 : tiers.Edges[0] - main.Depth * 0.5f - 4); r += tiers.Village ? 4 : 7)
                 {
                     var p = plan.Centre + Vec2.FromYaw(bearing) * r;
 
@@ -289,10 +425,10 @@ namespace GuWorld.Core.Gen
                     {
                         var q = p + Vec2.FromYaw(k * 22.5f) * 70;
                         var dq = Vec2.Distance(q, plan.Centre);
-                        round += dq < def.Core || dq < def.Radius - 10 && !ground.Blocked(q, 4) && !tiers.Beyond(q) ? 1 : 0;
+                        round += dq < core || dq < def.Radius - 10 && !ground.Blocked(q, 4) && !tiers.Beyond(q) ? 1 : 0;
                     }
 
-                    candidates.Add((p, bearing, ground.Height(p.X, p.Z) - (r - def.Core) * 0.12f - (16 - round) * 3));
+                    candidates.Add((p, bearing, ground.Height(p.X, p.Z) - (r - core) * (tiers.Village ? 0.5f : 0.12f) - (16 - round) * 3));
                 }
             }
 
@@ -305,26 +441,26 @@ namespace GuWorld.Core.Gen
                 var forward = Vec2.FromYaw(yaw);
                 var square = new Box(p + forward * (main.Depth * 0.5f + squareD * 0.5f + 1), new Vec2(squareW * 0.5f, squareD * 0.5f), yaw);
                 float low = float.MaxValue, high = float.MinValue;
-                var clear = !Crowded(index, square);
+                var clear = tiers.Village || !Crowded(index, square);
 
                 foreach (var corner in square.Corners())
                 {
                     var d = Vec2.Distance(corner, plan.Centre);
-                    clear &= d > def.Core + 1 && d < def.Radius - 4 && !ground.Blocked(corner, 2);
+                    clear &= tiers.Village || d > core + 1 && d < def.Radius - 4 && !ground.Blocked(corner, 2);
                     var h = ground.Height(corner.X, corner.Z);
                     low = Math.Min(low, h);
                     high = Math.Max(high, h);
                 }
 
-                if (!clear || high - low > 7)
+                if (!clear || !tiers.Village && high - low > 7)
                 {
                     continue;
                 }
 
-                var model = Generated(true, main.Style, 1 + rng.Range(0, 24), town.Clan, main.Wealth, main.Wear, main.Width, main.Depth);
+                var model = Generated(!tiers.Village, main.Style, 1 + rng.Range(0, 24), town.Clan, main.Wealth, main.Wear, main.Width, main.Depth);
 
-                // The clan's terrace may be cut deep into the slope.
-                if (!Place(plan, placed, index, avenues, ground, waters, model, p, yaw, main.Role, 1.5f, true, false, 8))
+                // The clan's terrace may be cut deep into the slope (a village's hall stands down to it on its podium).
+                if (!Place(plan, placed, index, avenues, ground, waters, model, p, yaw, main.Role, 1.5f, !tiers.Village, false, tiers.Village ? 10 : 8))
                 {
                     continue;
                 }
@@ -332,6 +468,14 @@ namespace GuWorld.Core.Gen
                 var pavilion = plan.Buildings[plan.Buildings.Count - 1];
                 pavilion.Name = main.Name;
                 pavilion.District = heartId;
+
+                if (tiers.Village)
+                {
+                    Beside(plan, placed, index, avenues, ground, waters, pavilion, main.Things, town.Clan, ref rng);
+                    tiers.Divide(bearing);
+                    found = true;
+                    break;
+                }
 
                 // The square: levelled, paved by the ground's own stone layer, kept clear; a censer in its middle, lanterns and banners.
                 plan.Pads.Add((square, (low + high) * 0.5f));
@@ -377,7 +521,7 @@ namespace GuWorld.Core.Gen
                 for (var n = 0; n < landmark.Count; n++)
                 {
                     var near = landmark.Role == "hall" || landmark.Role == "herbalist";
-                    var lo = def.Core + 6 + landmark.Depth * 0.5f;
+                    var lo = core + 6 + landmark.Depth * 0.5f;
                     var hi = Math.Max(lo + 25, tiers.Edges[0] - 3 - landmark.Depth * 0.5f);
 
                     for (var attempt = 0; attempt < 300; attempt++)
@@ -388,9 +532,10 @@ namespace GuWorld.Core.Gen
                         // Facing the middle, or (a long yard that will not take the slope that way) turned along it.
                         var yaw = (float)Math.Round((plan.Centre - p).Yaw / 5) * 5 + (attempt % 3 == 0 ? 0 : attempt % 3 == 1 ? 90 : -90);
                         var tag = landmark.Faction.Length > 0 ? town.Clan + "." + landmark.Faction : town.Clan;
-                        var model = Generated(landmark.Pad, landmark.Style, 1 + rng.Range(0, 24), tag, landmark.Wealth, landmark.Wear, landmark.Width, landmark.Depth);
+                        var pad = landmark.Pad && !tiers.Village;
+                        var model = Generated(pad, landmark.Style, 1 + rng.Range(0, 24), tag, landmark.Wealth, landmark.Wear, landmark.Width, landmark.Depth);
 
-                        if (tiers.Beyond(p) || !Place(plan, placed, index, avenues, ground, waters, model, p, yaw, landmark.Role, 2f, landmark.Pad, false, landmark.Pad ? 6 : 10))
+                        if (tiers.Beyond(p) || !Place(plan, placed, index, avenues, ground, waters, model, p, yaw, landmark.Role, 2f, pad, false, pad ? 6 : 10))
                         {
                             continue;
                         }
@@ -456,13 +601,16 @@ namespace GuWorld.Core.Gen
                     var thing = landmark.Style == "training";
                     var manor = landmark.Style == "manor";
 
-                    for (var attempt = 0; attempt < 400; attempt++)
+                    for (var attempt = 0; attempt < 700; attempt++)
                     {
                         // The manor in the middle of the bearings near the heart (a smaller one where none will go); the rest about it.
-                        var scale = manor ? 1 - 0.13f * (attempt / 100) : 1;
-                        var t = manor ? 0.5f + rng.Range(-0.5f, 0.5f) * Math.Min(1, 0.15f + (attempt % 100) * 0.012f) : rng.Range(0.08f, 0.92f);
+                        // Where the faction's own ground will not take it (steep, crowded), beside it, a ring farther out.
+                        var astray = attempt >= 400;
+                        var scale = manor ? 1 - 0.13f * (Math.Min(399, attempt) / 100) : 1;
+                        var t = astray ? rng.Range(-0.4f, 1.4f) : manor ? 0.5f + rng.Range(-0.5f, 0.5f) * Math.Min(1, 0.15f + (attempt % 100) * 0.012f) : rng.Range(0.08f, 0.92f);
                         var bearing = from + span * t;
-                        var r = manor ? tiers.Edges[0] + 4 + landmark.Depth * 0.5f * scale + (attempt % 100) * 0.009f * (tiers.Edges[1] - tiers.Edges[0]) : rng.Range(tiers.Edges[0] + 6, tiers.Edges[1] - 8);
+                        var r = astray ? rng.Range(tiers.Edges[0] + 4, tiers.Edges[Math.Min(2, tiers.Edges.Length - 1)]) :
+                            manor ? tiers.Edges[0] + 4 + landmark.Depth * 0.5f * scale + (attempt % 100) * 0.009f * (tiers.Edges[1] - tiers.Edges[0]) : rng.Range(tiers.Edges[0] + 6, tiers.Edges[1] - 8);
                         var p = plan.Centre + Vec2.FromYaw(bearing) * r;
 
                         if (hasSeat && !manor && Vec2.Distance(p, seat) > 30 + attempt * 0.5f)
@@ -470,17 +618,19 @@ namespace GuWorld.Core.Gen
                             continue;
                         }
 
-                        if (tiers.TierOf(p) != 1 || tiers.FactionOf(p) != f)
+                        if (!astray && (tiers.TierOf(p) != 1 || tiers.FactionOf(p) != f) || astray && tiers.TierOf(p) == 0)
                         {
                             continue;
                         }
 
                         var yaw = (float)Math.Round((plan.Centre - p).Yaw / 5) * 5 + (attempt % 3 == 0 ? 0 : attempt % 3 == 1 ? 90 : -90);
+                        var pad = landmark.Pad && !tiers.Village;
                         var model = thing
-                            ? $"thing:training:{def.Seed * 7 + f}:{faction.Tag}"
-                            : Generated(landmark.Pad, landmark.Style, 1 + rng.Range(0, 24), faction.Tag, landmark.Wealth, landmark.Wear, (float)Math.Round(landmark.Width * scale), (float)Math.Round(landmark.Depth * scale));
+                            ? $"thing:{(town.Clan == "xiong" ? "ring" : "training")}:{def.Seed * 7 + f}:{faction.Tag}"
+                            : Generated(pad, landmark.Style, 1 + rng.Range(0, 24), faction.Tag, landmark.Wealth, landmark.Wear, (float)Math.Round(landmark.Width * scale), (float)Math.Round(landmark.Depth * scale));
 
-                        if (!Place(plan, placed, index, avenues, ground, waters, model, p, yaw, landmark.Role, 2f, landmark.Pad || thing, false, thing ? 5 : landmark.Pad ? 6 : 10))
+                        // (A training ground is levelled into the slope.)
+                        if (!Place(plan, placed, index, avenues, ground, waters, model, p, yaw, landmark.Role, 2f, pad || thing, false, thing ? (tiers.Village ? 7 : 6) : pad ? 6 : tiers.Village ? 12 : 10))
                         {
                             continue;
                         }
@@ -554,7 +704,7 @@ namespace GuWorld.Core.Gen
                             for (var k = -1; k <= 1; k++)
                             {
                                 var at = p + Vec2.FromYaw(yaw + 90) * (k * (w + 1.2f));
-                                any |= Place(plan, placed, index, streets, ground, waters, $"thing:{kind}:{rng.Range(1, 9)}:{faction.Tag}", at, yaw, "prop", 0.4f, kind == "herbs");
+                                any |= Place(plan, placed, index, streets, ground, waters, $"thing:{kind}:{rng.Range(1, 9)}:{faction.Tag}", at, yaw, "prop", 0.4f, kind == "herbs", false, 3);
 
                                 if (any)
                                 {
@@ -782,6 +932,273 @@ namespace GuWorld.Core.Gen
                 var f = tier == 1 ? tiers.FactionOf(p) : -1;
                 building.District = f >= 0 ? tiers.Town.Factions[f].Tag : tiers.Town.Clan + ":tier" + tier;
             }
+        }
+
+        /// <summary>
+        /// A traced lane eased (each point the mean of its neighbours) and cut where it still turns
+        /// sharply (rough ground folds a contour back on itself): the pieces long enough are added.
+        /// </summary>
+        static int AddSmoothed(SettlementPlan plan, List<Vec2> lane, float half)
+        {
+            if (lane.Count < 5)
+            {
+                return 0;
+            }
+
+            var eased = new List<Vec2>(lane);
+
+            for (var pass = 0; pass < 2; pass++)
+            {
+                var next = new List<Vec2>(eased);
+
+                for (var i = 2; i < eased.Count - 2; i++)
+                {
+                    next[i] = (eased[i - 2] + eased[i - 1] + eased[i] + eased[i + 1] + eased[i + 2]) * 0.2f;
+                }
+
+                eased = next;
+            }
+
+            var made = 0;
+            var piece = new List<Vec2> { eased[0] };
+
+            for (var i = 1; i < eased.Count; i++)
+            {
+                if (piece.Count >= 2)
+                {
+                    var a = eased[i - 1] - eased[i - 2 < 0 ? 0 : i - 2];
+                    var b = eased[i] - eased[i - 1];
+                    var turn = Math.Abs(Mod(b.Yaw - a.Yaw + 180, 360) - 180);
+
+                    if (turn > 45)
+                    {
+                        made += AddPiece(plan, piece, half) ? 1 : 0;
+                        piece = new List<Vec2> { eased[i - 1] };
+                    }
+                }
+
+                piece.Add(eased[i]);
+            }
+
+            made += AddPiece(plan, piece, half) ? 1 : 0;
+
+            return made;
+        }
+
+        /// <summary>
+        /// A mountain village's lanes as its people wore them: from the main street every so often,
+        /// both ways, a lane that walks along the slope (across its fall, turning as the ground turns,
+        /// never sharply) until the village's edge, a building or another lane; from the lanes, every
+        /// so often, a stair straight up the fall to the lane above. Rough ground gives winding lanes,
+        /// never a tangle. Returns the lanes made.
+        /// </summary>
+        internal static int ContourBranches(SettlementPlan plan, float radius, float inner, IGround ground, Func<Vec2, float, bool> taken, float spacing, float half, ref Rng rng)
+        {
+            var centre = plan.Centre;
+            var made = 0;
+            var lanes = new SegmentIndex(Regions.Half, 32, 16);
+            var count = 0;
+
+            foreach (var street in plan.Streets)
+            {
+                lanes.Add(street.Points, count++);
+            }
+
+            Vec2 Fall(Vec2 p)
+            {
+                var e = 3f;
+                return new Vec2(ground.Height(p.X + e, p.Z) - ground.Height(p.X - e, p.Z), ground.Height(p.X, p.Z + e) - ground.Height(p.X, p.Z - e)) * (1 / (2 * e));
+            }
+
+            bool Inside(Vec2 p) => Vec2.Distance(p, centre) < radius && Vec2.Distance(p, centre) > inner;
+
+            // Walks from a point in a direction, along the slope or up it; stops at the edge, a building, a lane met (joining it).
+            List<Vec2> Walk(Vec2 from, Vec2 heading, bool up, float most)
+            {
+                var line = new List<Vec2> { from };
+                var p = from;
+                var dir = heading;
+
+                for (var step = 0; step < most / 4; step++)
+                {
+                    var g = Fall(p);
+                    var want = dir;
+
+                    if (g.Length > 0.02f)
+                    {
+                        var n = g * (1 / g.Length);
+                        want = up ? n : Vec2.Dot(n.Right, dir) >= 0 ? n.Right : n.Left;
+                    }
+
+                    var turned = dir * 0.65f + want * 0.35f;
+                    dir = turned * (1 / Math.Max(1e-3f, turned.Length));
+                    p += dir * 4;
+
+                    if (!Inside(p) || taken(p, 4))
+                    {
+                        break;
+                    }
+
+                    line.Add(p);
+
+                    // Met another lane (not the one it left): joins it there.
+                    if (line.Count > 4 && lanes.Nearest(p, out var d, out _, out _) && d < 6)
+                    {
+                        break;
+                    }
+                }
+
+                return line;
+            }
+
+            var mains = plan.Streets.FindAll(x => x.Main);
+            var branches = new List<List<Vec2>>();
+
+            foreach (var street in mains)
+            {
+                var length = Lines.Length(street.Points);
+
+                for (var along = rng.Range(8f, 16f); along < length - 8; along += spacing * rng.Range(0.8f, 1.2f))
+                {
+                    var p = Lines.At(street.Points, along, out var direction);
+
+                    if (!Inside(p))
+                    {
+                        continue;
+                    }
+
+                    foreach (var side in new[] { -1, 1 })
+                    {
+                        var start = p + direction.Right * side * (street.HalfWidth + 1);
+                        var line = Walk(start, direction.Right * side, false, radius * 1.4f);
+
+                        if (line.Count >= 5)
+                        {
+                            line.Insert(0, p);
+                            AddPiece(plan, line, half);
+                            lanes.Add(line, count++);
+                            branches.Add(line);
+                            made++;
+                        }
+                    }
+                }
+            }
+
+            // Stairs up the fall from the lanes, to the lane above (or as far as the slope goes).
+            foreach (var line in branches)
+            {
+                var length = Lines.Length(line);
+
+                for (var along = spacing * 0.6f; along < length - 6; along += spacing * rng.Range(1.1f, 1.6f))
+                {
+                    var p = Lines.At(line, along, out _);
+                    var stair = Walk(p, Fall(p), true, spacing * 1.6f);
+
+                    if (AddPiece(plan, stair, 1.4f))
+                    {
+                        lanes.Add(stair, count++);
+                    }
+                }
+            }
+
+            return made;
+        }
+
+        /// <summary>A clan village being laid out by its tiers: what its two steps share.</summary>
+        internal sealed class VillageLayout
+        {
+            internal Tiers Tiers;
+            internal ShapeIndex<Box> Index;
+            internal int Known;
+        }
+
+        static SegmentIndex StreetIndex(SettlementPlan plan)
+        {
+            var segments = new SegmentIndex(Regions.Half, 32, 12);
+
+            for (var i = 0; i < plan.Streets.Count; i++)
+            {
+                segments.Add(plan.Streets[i].Points, i);
+            }
+
+            return segments;
+        }
+
+        /// <summary>
+        /// A clan's village of the mountain by its tiers, first step (once its main street is laid, before
+        /// anything else stands): the clan's hall facing the plaza from the high side, the heart's other
+        /// buildings, the factions' seats.
+        /// </summary>
+        internal static VillageLayout VillageHeart(SettlementPlan plan, ClanTown town, List<Box> placed, IGround ground, Waters waters, ref Rng rng)
+        {
+            var layout = new VillageLayout { Index = new ShapeIndex<Box>(Regions.Half, 32), Tiers = new Tiers(town, plan.Def, ground, plan.PlazaRadius + 2) { Village = true } };
+
+            foreach (var box in placed)
+            {
+                layout.Index.Add(box.Centre, box.Radius, box);
+            }
+
+            var main = StreetIndex(plan);
+            Heart(plan, layout.Tiers, placed, layout.Index, main, ground, waters, ref rng);
+            layout.Known = placed.Count;
+
+            return layout;
+        }
+
+        /// <summary>
+        /// The second step, once the clan's buildings stand round the plaza: the factions' seats; lanes
+        /// along the slope round them all; the factions' grounds, the lots ring by ring with the named
+        /// ones first, the banners. Returns the houses made.
+        /// </summary>
+        internal static int VillageRest(SettlementPlan plan, VillageLayout layout, List<Box> placed, IGround ground, Waters waters, ref Rng rng)
+        {
+            var def = plan.Def;
+            var tiers = layout.Tiers;
+            var index = layout.Index;
+
+            for (var i = layout.Known; i < placed.Count; i++)
+            {
+                index.Add(placed[i].Centre, placed[i].Radius, placed[i]);
+            }
+
+            FactionSeats(plan, tiers, placed, index, StreetIndex(plan), ground, waters, ref rng);
+
+            // Lanes along the slope, round the clan's buildings; then lanes from the main street to where those did not reach.
+            var great = new List<Box>();
+
+            foreach (var box in placed)
+            {
+                great.Add(box.Grown(3));
+            }
+
+            bool Taken(Vec2 p, float margin)
+            {
+                if (ground.Blocked(p, margin))
+                {
+                    return true;
+                }
+
+                foreach (var box in great)
+                {
+                    if (box.Distance(p) < margin)
+                    {
+                        return true;
+                    }
+                }
+
+                return false;
+            }
+
+            plan.Lanes = ContourLanes(plan, def.Radius - 10, plan.PlazaRadius + 2, ground, Taken, 8f, 1.8f, 26f, 40f, ref rng);
+            plan.Lanes += ContourBranches(plan, def.Radius - 10, plan.PlazaRadius + 2, ground, Taken, 34f, 1.8f, ref rng);
+            var streets = StreetIndex(plan);
+            FactionGrounds(plan, tiers, placed, index, streets, ground, waters, ref rng);
+            var houses = Lots.Fill(plan, def.Houses, tiers.At, 1.8f, 1.4f, 0.85f, 0.5f, (model, centre, yaw, role) =>
+                Place(plan, placed, index, streets, ground, waters, model, centre, yaw, role, 0.6f, false), ref rng, plan.PlazaRadius + 4, Specials(tiers.Town));
+            FactionBanners(plan, tiers, placed, index, streets, ground, waters, ref rng);
+            Rings(plan, tiers);
+
+            return houses;
         }
 
         /// <summary>The buildings of the outer tiers placed by name on lots (the taverns, the inn, the market rows, the lodging).</summary>

@@ -134,20 +134,22 @@ namespace GuWorld.Core.Gen
 
         static readonly string[] Clutter = { "prop_barrels", "prop_firewood_stack", "prop_drying_rack", "prop_bench_wood", "prop_market_goods" };
 
-        public static SettlementPlan Plan(SettlementDef def, float level, IList<float> roadsIn, Waters waters)
+        public static SettlementPlan Plan(SettlementDef def, float level, IList<float> roadsIn, Waters waters, CityPlanner.IGround ground = null)
         {
             var plan = new SettlementPlan { Def = def, Level = level, Centre = def.At };
             var rng = new Rng(def.Seed * 7919 + 13);
             var big = def.Radius >= 90;
             plan.PlazaRadius = big ? 14 : def.Style == SettlementStyle.Camp ? 9 : 7;
             var axis = roadsIn.Count > 0 ? roadsIn[0] : def.Axis;
+            // A clan's village of the mountain is laid out by its tiers (CityPlanner.TieredVillage): lanes along the slope, its rings round the plaza.
+            var town = ground != null && Buildings.GenHouses.Enabled && Buildings.GenHouses.Mountain ? Buildings.ClanTown.For(def.Clan) : null;
 
             // The streets.
             var mainHalf = big ? 3.2f : 2.4f;
             plan.Streets.Add(Bent(plan.Centre, axis, def.Radius * 1.02f, mainHalf, true, ref rng));
             var crosses = new List<float>();
 
-            if (big)
+            if (big && town == null)
             {
                 foreach (var along in new[] { -0.5f, 0.48f })
                 {
@@ -177,6 +179,8 @@ namespace GuWorld.Core.Gen
             }
 
             var placed = new List<Box>();
+            // A clan village by its tiers: its hall takes the high side of the plaza first.
+            var layout = town != null ? CityPlanner.VillageHeart(plan, town, placed, ground, waters, ref rng) : null;
 
             // The clan's buildings round the plaza, facing it.
             var mustAngle = axis + 45;
@@ -230,7 +234,12 @@ namespace GuWorld.Core.Gen
                 (lots[i], lots[j]) = (lots[j], lots[i]);
             }
 
-            if (Buildings.GenHouses.Enabled)
+            if (town != null)
+            {
+                houses = CityPlanner.VillageRest(plan, layout, placed, ground, waters, ref rng);
+                lots.Clear();
+            }
+            else if (Buildings.GenHouses.Enabled)
             {
                 // Generated buildings on lots by the clan's template, densest at the plaza.
                 var template = Buildings.TownTemplate.For(def.Clan, def.Style.ToString());
@@ -311,7 +320,7 @@ namespace GuWorld.Core.Gen
                 TryPlace(plan, placed, "prop_moon_lantern_post", point + side, direction.Yaw, "lamp", waters, 0.2f, true);
             }
 
-            Ring(plan, placed, roadsIn, axis, waters, ref rng);
+            Ring(plan, placed, roadsIn, axis, waters, ref rng, town != null);
 
             if (def.Fields)
             {
@@ -451,7 +460,7 @@ namespace GuWorld.Core.Gen
         }
 
         /// <summary>The wall (or fence) round the settlement, with gaps where the streets leave it, and a gate at the main one.</summary>
-        static void Ring(SettlementPlan plan, List<Box> placed, IList<float> roadsIn, float axis, Waters waters, ref Rng rng)
+        static void Ring(SettlementPlan plan, List<Box> placed, IList<float> roadsIn, float axis, Waters waters, ref Rng rng, bool mainOnly = false)
         {
             var def = plan.Def;
             var walled = def.Walled;
@@ -469,6 +478,12 @@ namespace GuWorld.Core.Gen
 
             foreach (var street in plan.Streets)
             {
+                // (A village of lanes along the slope: only its main street goes out through the wall; the lanes end inside it.)
+                if (mainOnly && !street.Main)
+                {
+                    continue;
+                }
+
                 foreach (var end in new[] { street.Points[0], street.Points[street.Points.Count - 1] })
                 {
                     if (Vec2.Distance(end, plan.Centre) > radius - 6)

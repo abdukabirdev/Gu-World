@@ -185,12 +185,12 @@ namespace GuWorld.Core
             },
             new SettlementDef
             {
-                Id = "bai_village", Name = "Деревня Бай", At = new MapPoint(-1120, 3330), Radius = 125, Style = SettlementStyle.Bai, Clan = "bai", Axis = 120, Houses = 58,
+                Id = "bai_village", Name = "Деревня Бай", At = new MapPoint(-1120, 3330), Radius = 150, Style = SettlementStyle.Bai, Clan = "bai", Axis = 120, Houses = 80,
                 Must = new[] { "prop_council_hall", "prop_shop", "prop_teahouse_octagon", "prop_herbalist", "prop_gu_nursery", "prop_inn" }, Walled = true, Seed = 11, Colour = 0x9FE8FF
             },
             new SettlementDef
             {
-                Id = "xiong_village", Name = "Деревня Сюн", At = new MapPoint(1900, -1700), Radius = 120, Style = SettlementStyle.Xiong, Clan = "xiong", Axis = 300, Houses = 54,
+                Id = "xiong_village", Name = "Деревня Сюн", At = new MapPoint(1900, -1700), Radius = 150, Style = SettlementStyle.Xiong, Clan = "xiong", Axis = 300, Houses = 72,
                 Must = new[] { "prop_council_hall", "prop_shop", "prop_tavern", "prop_smithy", "prop_granary", "prop_gu_nursery" }, Walled = true, Seed = 23, Colour = 0xE0A070
             },
             new SettlementDef { Id = "willow", Name = "Ивовый хутор", At = new MapPoint(-1650, -760), Radius = 55, Style = SettlementStyle.Mortal, Clan = "mortal", Axis = 40, Houses = 9, Fields = true, Seed = 31 },

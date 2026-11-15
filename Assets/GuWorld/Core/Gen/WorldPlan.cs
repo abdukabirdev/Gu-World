@@ -78,8 +78,10 @@ namespace GuWorld.Core.Gen
                 }
 
                 var flat = Land.FlatOf(def.Id);
-                var village = Planner.Plan(def, flat != null ? flat.Level : Land.Shaped(def.At.X, def.At.Z), RoadsInto(def), Waters);
+                var village = Planner.Plan(def, flat != null ? flat.Level : Land.Shaped(def.At.X, def.At.Z), RoadsInto(def), Waters, Buildings.ClanTown.For(def.Clan) != null ? new TownGround(Land, Waters, def) : null);
                 Settlements.Add(village);
+                // A clan village's levelled grounds (its training grounds, its herb beds) cut into the slope.
+                Land.SetPads(village.Pads);
 
                 // A clan's village has its people out too (fewer than the town).
                 if (def.Houses >= 20 && !string.IsNullOrEmpty(def.Clan) && def.Clan != "bandit")
