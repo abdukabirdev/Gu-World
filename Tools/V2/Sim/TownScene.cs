@@ -80,6 +80,27 @@ static class TownScene
             return;
         }
 
+        var profile = Arg("profile", "");
+
+        if (profile.Length > 0)
+        {
+            // The ground along a line, every 6 m (the land as the planners see it, and as the game has it).
+            var v = profile.Split(',');
+            var a = new Vec2(float.Parse(v[0], CultureInfo.InvariantCulture), float.Parse(v[1], CultureInfo.InvariantCulture));
+            var b = new Vec2(float.Parse(v[2], CultureInfo.InvariantCulture), float.Parse(v[3], CultureInfo.InvariantCulture));
+            var samples = (int)(Vec2.Distance(a, b) / 6);
+            var line = new System.Text.StringBuilder("profile:");
+
+            for (var i = 0; i <= samples; i++)
+            {
+                var p = a + (b - a) * (i / (float)samples);
+                line.Append($" {land.Shaped(p.X, p.Z):0}");
+            }
+
+            report.Add(line.ToString());
+            return;
+        }
+
         if (Array.Exists(args, a => a == "relief"))
         {
             // The ground's fall over each settlement (the unlevelled land and as the game has it).

@@ -93,7 +93,7 @@ static class WorldChecks
         foreach (var settlement in plan.Settlements)
         {
             var houses = settlement.Buildings.Count(b => b.Role == "house");
-            var solid = settlement.Buildings.Where(b => b.Role != "wall" && b.Role != "fence" && b.Role != "gate" && b.Role != "tower" && b.Role != "lamp" && !b.Model.StartsWith("thing:")).ToList();
+            var solid = settlement.Buildings.Where(b => b.Role != "wall" && b.Role != "fence" && b.Role != "gate" && b.Role != "tower" && b.Role != "lamp" && b.Role != "ground" && !b.Model.StartsWith("thing:")).ToList();
             var overlaps = 0;
 
             for (var i = 0; i < solid.Count; i++)
@@ -142,6 +142,7 @@ static class WorldChecks
                 check(settlement.WallPieces >= 150 && settlement.Gates.Count >= 2, $"world: {settlement.Def.Id} is walled ({settlement.WallPieces} pieces, {settlement.Gates.Count} gates)");
                 report.Add($"  town {settlement.Def.Id}, its wall: {settlement.WallPieces} pieces, {settlement.Gates.Count} gates; generated: " +
                            string.Join(", ", settlement.Buildings.Where(b => b.Model.StartsWith("fort:")).GroupBy(b => b.Model.Split(':')[1] + " " + b.Model.Split(':')[2]).Select(g => $"{g.Key} {g.Count()}")));
+                Districts(settlement, check, report);
                 CrowdChecks(settlement, check, report);
                 check(settlement.Buildings.Count(b => b.Model.StartsWith("code:paifang")) >= 2, $"world: {settlement.Def.Id} has archways over its avenues");
                 continue;
@@ -238,13 +239,73 @@ static class WorldChecks
         report.Add($"  pictures in {outDir}");
     }
 
+    /// <summary>
+    /// A clan's village by its tiers (Docs/V2/PLAN-TOWNS.md): its heart has the clan's great building
+    /// and its halls, each faction its district with a manor, a kitchen, a storehouse and a training
+    /// ground; the named buildings of the outer tiers (taverns, the inn, the lodging) are there.
+    /// </summary>
+    static void Districts(SettlementPlan settlement, Action<bool, string> check, List<string> report)
+    {
+        var town = GuWorld.Core.Gen.Buildings.ClanTown.For(settlement.Def.Clan);
+
+        if (town == null || !GuWorld.Core.Gen.Buildings.GenHouses.Enabled)
+        {
+            return;
+        }
+
+        var id = settlement.Def.Id;
+        check(settlement.Buildings.Any(b => b.Name == town.Main.Name), $"world: {id} has its {town.Main.Name}");
+        var main = settlement.Buildings.FirstOrDefault(b => b.Name == town.Main.Name);
+
+        if (main != null)
+        {
+            report.Add($"  {id}, {town.Main.Name} at ({main.Footprint.Centre.X:0}, {main.Footprint.Centre.Z:0}) facing {main.Yaw:0}°, {settlement.Districts.Count} districts");
+        }
+
+        foreach (var landmark in town.Landmarks)
+        {
+            var count = settlement.Buildings.Count(b => b.Name == landmark.Name);
+            check(count >= Math.Max(1, landmark.Count - 1), $"world: {id} has its {landmark.Name} ({count} of {landmark.Count})");
+        }
+
+        foreach (var faction in town.Factions)
+        {
+            var district = settlement.Districts.FirstOrDefault(d => d.Tag == faction.Tag);
+            check(district != null, $"world: {id} gives {faction.Name} a district");
+
+            if (district == null)
+            {
+                continue;
+            }
+
+            var inside = settlement.Buildings.Where(b => b.District == faction.Tag).ToList();
+            check(district.HasSeat, $"world: {faction.Name} has its manor in {id}");
+
+            foreach (var landmark in town.District)
+            {
+                check(inside.Any(b => b.Name != null && b.Name.StartsWith(landmark.Name)), $"world: {faction.Name} has its {landmark.Name} in {id}");
+            }
+
+            report.Add($"  {id}, {faction.Name}: {Span(district.From, district.To):0}° from {district.From:0}°, manor by ({district.Seat.X:0}, {district.Seat.Z:0}), {inside.Count(b => b.Role == "house")} houses, {inside.Count} pieces in all, {inside.Count(b => b.Model.StartsWith("thing:banner"))} banners");
+        }
+
+        foreach (var district in settlement.Districts.Where(d => d.Tag == town.Clan))
+        {
+            var inside = settlement.Buildings.Where(b => b.District == district.Id).ToList();
+            report.Add($"  {id}, {district.Name} ({district.Inner:0}–{district.Outer:0} m): {inside.Count(b => b.Role == "house")} houses, {inside.Count(b => b.Role == "shop")} shops; " +
+                       string.Join(", ", inside.Where(b => b.Name != null).GroupBy(b => b.Name).Select(g => g.Count() > 1 ? $"{g.Key} ×{g.Count()}" : g.Key)));
+        }
+
+        static float Span(float from, float to) => ((to - from) % 360 + 360) % 360;
+    }
+
     /// <summary>The wider world's people and things are placed where they can be reached: on dry, walkable ground, out of the buildings.</summary>
     static void Atlas(WorldPlan plan, Action<bool, string> check, List<string> report)
     {
         check(GuWorld.Core.Atlas.Big, "world: the atlas is resolved once the world is laid out");
         var land = plan.Land;
 
-        bool InBuilding(SettlementPlan settlement, Vec2 p) => settlement.Buildings.Any(b => b.Role != "lamp" && b.Footprint.Contains(p));
+        bool InBuilding(SettlementPlan settlement, Vec2 p) => settlement.Buildings.Any(b => b.Role != "lamp" && b.Role != "ground" && b.Footprint.Contains(p));
 
         foreach (var npc in RegionPeople.All.Where(n => n.Home != ""))
         {
@@ -368,7 +429,29 @@ static class WorldChecks
             }
         }
 
-        // Buildings as their footprints, filled.
+        // Buildings as their footprints, filled; a clan village's by its districts (the heart gold, each faction its colour, the rings out paler and greyer).
+        int DistrictColour(Placed building)
+        {
+            var faction = GuWorld.Core.Gen.Buildings.Factions.Of(building.District);
+
+            if (faction != null)
+            {
+                var a = faction.Accent;
+                int C(float v) => (int)Noise.Clamp(60 + v * 300, 0, 255);
+                return (C(a.R) << 16) | (C(a.G) << 8) | C(a.B);
+            }
+
+            switch (building.District?.Substring(building.District.IndexOf(':') + 1))
+            {
+                case "tier0": return 0xFFD040;
+                case "tier1": return 0xE8B8A0;
+                case "tier2": return 0x9FD0E8;
+                case "tier3": return 0xE0D8C0;
+                case "tier4": return 0x9A8C80;
+                default: return 0xD8C8A8;
+            }
+        }
+
         foreach (var settlement in plan.Settlements)
         {
             foreach (var building in settlement.Buildings)
@@ -376,12 +459,53 @@ static class WorldChecks
                 var box = building.Footprint;
                 var colour = building.Role == "house" ? 0xD8C8A8 : building.Role == "wall" || building.Role == "fence" ? 0x4A3A2A : building.Role == "prop" || building.Role == "lamp" ? 0xB08060 : 0xF0D070;
 
+                if (building.District != null && building.Role != "wall" && building.Role != "lamp" && !(building.Role == "prop" && building.Model.StartsWith("code:")))
+                {
+                    colour = building.Name != null ? 0xFFFFFF : DistrictColour(building);
+                }
+
                 for (var u = -box.Half.X; u <= box.Half.X; u += step * 0.7f)
                 {
                     for (var v = -box.Half.Z; v <= box.Half.Z; v += step * 0.7f)
                     {
                         var w = box.World(new Vec2(u, v));
                         Dot(w.X, w.Z, colour, 0);
+                    }
+                }
+            }
+        }
+
+        // A clan village's rings and its factions' bearings, dotted.
+        foreach (var settlement in plan.Settlements)
+        {
+            foreach (var district in settlement.Districts)
+            {
+                var full = district.To - district.From >= 359.9f;
+                var arc = full ? 360 : ((district.To - district.From) % 360 + 360) % 360;
+
+                for (var a = 0f; a <= arc; a += 0.6f)
+                {
+                    var bearing = district.From + a;
+
+                    foreach (var r in new[] { district.Outer })
+                    {
+                        if ((int)(a / 1.2f) % 2 == 0)
+                        {
+                            var p = settlement.Centre + Vec2.FromYaw(bearing) * r;
+                            Dot(p.X, p.Z, full ? 0x303030 : 0xFFFFFF, 0);
+                        }
+                    }
+                }
+
+                if (!full)
+                {
+                    foreach (var bearing in new[] { district.From, district.To })
+                    {
+                        for (var r = district.Inner; r <= district.Outer; r += step * 2)
+                        {
+                            var p = settlement.Centre + Vec2.FromYaw(bearing) * r;
+                            Dot(p.X, p.Z, 0xFFFFFF, 0);
+                        }
                     }
                 }
             }

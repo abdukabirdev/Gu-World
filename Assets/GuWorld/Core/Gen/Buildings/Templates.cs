@@ -13,8 +13,10 @@ namespace GuWorld.Core.Gen.Buildings
         public int Poorest, Richest;
         /// <summary>A shop or a market row: its role in the plan is "shop".</summary>
         public bool Shop;
+        /// <summary>How worn (0–9), or -1: by the variant.</summary>
+        public int Wear;
 
-        public LotKind(string style, float weight, float width, float depth, int poorest, int richest, bool shop = false)
+        public LotKind(string style, float weight, float width, float depth, int poorest, int richest, bool shop = false, int wear = -1)
         {
             Style = style;
             Weight = weight;
@@ -23,6 +25,7 @@ namespace GuWorld.Core.Gen.Buildings
             Poorest = poorest;
             Richest = richest;
             Shop = shop;
+            Wear = wear;
         }
     }
 
@@ -161,10 +164,30 @@ namespace GuWorld.Core.Gen.Buildings
         {
             var variant = rng.Range(1, GenHouses.Variants + 1);
             var wealth = lot.Poorest + variant % (lot.Richest - lot.Poorest + 1);
-            var wear = 2 + variant * 7 % 4;
+            var wear = lot.Wear >= 0 ? lot.Wear : 2 + variant * 7 % 4;
 
             return string.Format(CultureInfo.InvariantCulture, "{7}:{0}:{1}:{2}:{3}:{4}:{5:0.0}:{6:0.0}", lot.Style, variant, clan ?? "", wealth, wear, lot.Width, lot.Depth, GenHouses.Mountain ? "hill" : "gen");
         }
+    }
+
+    /// <summary>What a settlement's layout says of a point: the lots it takes, the tag its buildings wear (a clan, or a clan's faction), its tier.</summary>
+    public struct LotPlace
+    {
+        public LotKind[] Lots;
+        public string Tag;
+        public int Tier;
+    }
+
+    /// <summary>A building of a tier put on a lot by name (a tavern, the inn, the shabby lodging): placed before the ordinary lots.</summary>
+    public sealed class SpecialLot
+    {
+        public LotKind Lot;
+        public string Role, Name, Tag;
+        public int Tier;
+        /// <summary>Only on a main street (a market row).</summary>
+        public bool Main;
+        public string[] Things = new string[0];
+        public bool Done;
     }
 
     /// <summary>
@@ -181,7 +204,20 @@ namespace GuWorld.Core.Gen.Buildings
         public static int Fill(SettlementPlan plan, TownTemplate template, int most, string clan, Func<string, Vec2, float, string, bool> place, ref Rng rng, float keepFromMiddle)
         {
             var radius = plan.Def.Radius;
-            var candidates = new List<(Vec2 point, Vec2 normal, float halfWidth, float distance, LotKind lot)>();
+            var centre = plan.Centre;
+
+            return Fill(plan, most, (p, main) => new LotPlace { Lots = template.At(Vec2.Distance(p, centre) / radius, main), Tag = clan, Tier = -1 },
+                template.Gap, template.Setback, template.Fill, template.Gardens, place, ref rng, keepFromMiddle, null);
+        }
+
+        /// <summary>
+        /// Fills by a layout (`at(point, onMainStreet)`: a clan town's tiers and factions' districts),
+        /// the special lots first, each in its tier somewhere along its streets, kept apart from others of its kind.
+        /// </summary>
+        public static int Fill(SettlementPlan plan, int most, Func<Vec2, bool, LotPlace> at, float gapBetween, float setback, float fill, float gardens,
+            Func<string, Vec2, float, string, bool> place, ref Rng rng, float keepFromMiddle, List<SpecialLot> specials)
+        {
+            var candidates = new List<(Vec2 point, Vec2 normal, float halfWidth, float distance, LotKind lot, LotPlace where, bool main)>();
 
             foreach (var street in plan.Streets)
             {
@@ -195,12 +231,13 @@ namespace GuWorld.Core.Gen.Buildings
                     {
                         var point = Lines.At(street.Points, along, out var direction);
                         var distance = Vec2.Distance(point, plan.Centre);
-                        var lot = TownTemplate.Pick(template.At(distance / radius, street.Main), ref rng);
+                        var where = at(point, street.Main);
+                        var lot = TownTemplate.Pick(where.Lots, ref rng);
                         var normal = side < 0 ? direction.Left : direction.Right;
                         // The lot's middle along the street is half its width on.
                         var middle = Lines.At(street.Points, Math.Min(length - 1, along + lot.Width * 0.5f), out _);
-                        candidates.Add((middle, normal, street.HalfWidth, distance, lot));
-                        along += lot.Width + template.Gap;
+                        candidates.Add((middle, normal, street.HalfWidth, distance, lot, where, street.Main));
+                        along += lot.Width + gapBetween;
                     }
                 }
             }
@@ -209,14 +246,76 @@ namespace GuWorld.Core.Gen.Buildings
             var placed = 0;
             var done = new bool[candidates.Count];
 
+            // The special lots: each tried on lots of its tier in a shuffled order, away from its kind.
+            if (specials != null)
+            {
+                var order = new int[candidates.Count];
+
+                for (var i = 0; i < order.Length; i++)
+                {
+                    order[i] = i;
+                }
+
+                for (var i = order.Length - 1; i > 0; i--)
+                {
+                    var j = rng.Range(0, i + 1);
+                    (order[i], order[j]) = (order[j], order[i]);
+                }
+
+                var made = new List<(string style, Vec2 at)>();
+
+                foreach (var special in specials)
+                {
+                    // On a main street if it wants one; failing that, on any of its tier.
+                    for (var k = 0; k < order.Length * 2 && !special.Done; k++)
+                    {
+                        var i = order[k % order.Length];
+                        var (point, normal, halfWidth, distance, _, where, main) = candidates[i];
+
+                        if (done[i] || where.Tier != special.Tier || special.Main && !main && k < order.Length || distance < keepFromMiddle || made.Exists(m => m.style == special.Lot.Style && Vec2.Distance(m.at, point) < 70))
+                        {
+                            continue;
+                        }
+
+                        var kind = special.Lot;
+                        var model = TownTemplate.Name(kind, special.Tag ?? where.Tag, ref rng);
+                        var centre = point + normal * (halfWidth + setback + kind.Depth * 0.5f);
+
+                        if (!place(model, centre, (-normal).Yaw, special.Role))
+                        {
+                            continue;
+                        }
+
+                        done[i] = true;
+                        special.Done = true;
+                        made.Add((kind.Style, point));
+                        var building = plan.Buildings[plan.Buildings.Count - 1];
+                        building.Name = special.Name;
+
+                        // Its things by its side (jars of wine, tables, a cart).
+                        var n = 0;
+
+                        foreach (var thing in special.Things)
+                        {
+                            var side = (n % 2 == 0 ? 1 : -1) * (kind.Width * 0.5f + 1.6f);
+                            var beside = centre + normal.Right * side - normal * (kind.Depth * 0.5f - 1.5f - n / 2 * 2.5f);
+                            place($"thing:{thing}:{rng.Range(1, 9)}:{special.Tag ?? where.Tag}", beside, (-normal).Yaw, "prop");
+                            n++;
+                        }
+
+                        break;
+                    }
+                }
+            }
+
             // A first pass leaves gaps (gardens, trees) as the template says; a second fills them if the settlement is still short of houses.
             for (var pass = 0; pass < 2 && placed < most; pass++)
             {
                 for (var i = 0; i < candidates.Count && placed < most; i++)
                 {
-                    var (point, normal, halfWidth, distance, lot) = candidates[i];
+                    var (point, normal, halfWidth, distance, lot, where, _) = candidates[i];
 
-                    if (done[i] || distance < keepFromMiddle || pass == 0 && !rng.Chance(template.Fill))
+                    if (done[i] || distance < keepFromMiddle || pass == 0 && !rng.Chance(fill))
                     {
                         continue;
                     }
@@ -225,8 +324,8 @@ namespace GuWorld.Core.Gen.Buildings
 
                     for (var attempt = 0; attempt < 2; attempt++)
                     {
-                        var model = TownTemplate.Name(kind, clan, ref rng);
-                        var centre = point + normal * (halfWidth + template.Setback + kind.Depth * 0.5f);
+                        var model = TownTemplate.Name(kind, where.Tag, ref rng);
+                        var centre = point + normal * (halfWidth + setback + kind.Depth * 0.5f);
 
                         if (place(model, centre, (-normal).Yaw, kind.Shop ? "shop" : "house"))
                         {
@@ -234,10 +333,10 @@ namespace GuWorld.Core.Gen.Buildings
                             done[i] = true;
 
                             // A vegetable garden behind it.
-                            if (!kind.Shop && kind.Style != "courtyard" && rng.Chance(template.Gardens))
+                            if (!kind.Shop && kind.Style != "courtyard" && rng.Chance(gardens))
                             {
                                 var garden = centre + normal * (kind.Depth * 0.5f + 4f);
-                                place($"thing:garden:{rng.Range(1, 9)}:{clan}", garden, (-normal).Yaw, "prop");
+                                place($"thing:garden:{rng.Range(1, 9)}:{where.Tag}", garden, (-normal).Yaw, "prop");
                             }
 
                             break;
@@ -246,7 +345,7 @@ namespace GuWorld.Core.Gen.Buildings
                         // A smaller lot of the district's where the big one did not fit.
                         var smallest = kind;
 
-                        foreach (var other in template.At(distance / radius, false))
+                        foreach (var other in where.Lots)
                         {
                             if (other.Width * other.Depth < smallest.Width * smallest.Depth)
                             {

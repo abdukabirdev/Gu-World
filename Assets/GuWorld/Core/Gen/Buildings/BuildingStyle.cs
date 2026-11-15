@@ -73,7 +73,7 @@ namespace GuWorld.Core.Gen.Buildings
         public float Chimney;
         /// <summary>A forge in the open front: a hearth of glowing coals, an anvil, a water trough.</summary>
         public bool Forge;
-        /// <summary>Not one building but a walled yard of them (CompoundGen): 1 a family's courtyard house, 2 an academy, 3 a temple.</summary>
+        /// <summary>Not one building but a walled yard of them (CompoundGen): 1 a family's courtyard house, 2 an academy, 3 a faction's manor.</summary>
         public int Compound;
         /// <summary>A villager's house that grew as its family did: each seed its own roof, cover, walls, storeys, gallery and lean-to (BuildingGen.Vary).</summary>
         public bool Varied;
@@ -302,7 +302,60 @@ namespace GuWorld.Core.Gen.Buildings
             Roof = RoofKind.HipGable, Cover = RoofCover.Tile, Pitch = 0.7f, Curve = 0.4f, Upturn = 1.1f, Overhang = 1.6f, Ornament = 0.9f, Lacquer = true,
         };
 
-        public static readonly BuildingStyle[] All = { Hut, Cottage, Stilt, House, Townhouse, Shop, Inn, Hall, GreatHall, Tower, Watchtower, Pavilion, Gate, Granary, Smithy, Temple, MarketRow, Dorm, Nursery, Courtyard, Academy };
+        public static readonly BuildingStyle Bamboo = new BuildingStyle
+        {
+            // The Gu Yue's house (ch. 3): tall, of green bamboo and wood, at least two storeys — the first
+            // of massive wooden stakes driven into the uneven ground, the family living on the second; a
+            // gallery along its front. Each family's its own (BuildingGen.Vary).
+            Id = "bamboo", Name = "Bamboo house", MinBaysX = 3, MaxBaysX = 3, MinBaysZ = 2, MaxBaysZ = 2, Bay = 2.9f, MinStoreys = 1, MaxStoreys = 2, StoreyHeight = 2.8f, Plinth = 2.7f, Stilts = true,
+            Roof = RoofKind.HipGable, Cover = RoofCover.Tile, Pitch = 0.66f, Curve = 0.25f, Upturn = 0.4f, Overhang = 1.1f, Walls = WallKind.Bamboo, Dado = WallKind.Bamboo,
+            Veranda = 1.4f, Balcony = 0.6f, Windows = 0.55f, Ornament = 0.15f, Lanterns = 2, Varied = true, Annex = 0.35f,
+        };
+
+        public static readonly BuildingStyle ClanPavilion = new BuildingStyle
+        {
+            // The clan's pavilion in the middle of the village (ch. 1, 4): five storeys under sharp tilted
+            // roofs on a high stone podium; the ancestors' tablets inside, the clan heads living in it, the
+            // elders' council; from its third floor half the village is seen. Under it the stair down to the spring.
+            Id = "clan_pavilion", Name = "Clan pavilion", MinBaysX = 5, MaxBaysX = 5, MinBaysZ = 3, MaxBaysZ = 3, Bay = 4.0f, MinStoreys = 5, MaxStoreys = 5, StoreyHeight = 4.0f, Plinth = 2.4f,
+            Roof = RoofKind.HipGable, Cover = RoofCover.Tile, Pitch = 0.8f, Curve = 0.52f, Upturn = 2.1f, Overhang = 2.1f, Walls = WallKind.Plaster, Dado = WallKind.Brick,
+            Veranda = 2.6f, Balcony = 1, Windows = 0.75f, LatticeFront = true, Brackets = 2, Ornament = 1, Shrink = 0.85f, Lanterns = 6, Lacquer = true, Sign = true,
+        };
+
+        public static readonly BuildingStyle Kitchen = new BuildingStyle
+        {
+            // A faction's kitchen: a long brick hall, two chimneys, a gallery where the food is handed out.
+            Id = "kitchen", Name = "Kitchen", MinBaysX = 4, MaxBaysX = 5, MinBaysZ = 2, MaxBaysZ = 2, Bay = 3.0f, StoreyHeight = 3.3f, Plinth = 0.35f,
+            Roof = RoofKind.Gable, Cover = RoofCover.Tile, Pitch = 0.6f, Curve = 0.2f, Upturn = 0.25f, Overhang = 1.2f, Walls = WallKind.Brick, Dado = WallKind.Stone,
+            Veranda = 1.8f, Windows = 0.6f, Ornament = 0.15f, Lanterns = 2, Chimney = 2,
+        };
+
+        public static readonly BuildingStyle Tavern = new BuildingStyle
+        {
+            // A tavern (ch. 12): two storeys of bamboo and planks, its front open to the lane, a board over it, lanterns at every post.
+            Id = "tavern", Name = "Tavern", MinBaysX = 3, MaxBaysX = 4, MinBaysZ = 2, MaxBaysZ = 3, Bay = 3.0f, MinStoreys = 2, MaxStoreys = 2, StoreyHeight = 3.0f, Plinth = 0.4f,
+            Roof = RoofKind.HipGable, Cover = RoofCover.Tile, Pitch = 0.62f, Curve = 0.32f, Upturn = 0.6f, Overhang = 1.3f, Walls = WallKind.Bamboo, Dado = WallKind.Plank,
+            OpenFront = true, Balcony = 1, Windows = 0.6f, Brackets = 1, Ornament = 0.4f, Shrink = 0.3f, Lanterns = 6, Sign = true, Chimney = 1,
+        };
+
+        public static readonly BuildingStyle Lodging = new BuildingStyle
+        {
+            // A shabby bamboo building let by the day (ch. 90, where Fang Yuan lived after leaving home):
+            // rooms on two floors over its stakes, galleries along them, a thin thatch.
+            Id = "lodging", Name = "Lodging", MinBaysX = 4, MaxBaysX = 4, MinBaysZ = 2, MaxBaysZ = 2, Bay = 2.6f, MinStoreys = 2, MaxStoreys = 2, StoreyHeight = 2.5f, Plinth = 2.4f, Stilts = true,
+            Roof = RoofKind.Gable, Cover = RoofCover.Thatch, Pitch = 0.75f, Curve = 0.1f, Upturn = 0.1f, Overhang = 0.9f, Walls = WallKind.Bamboo, Dado = WallKind.Bamboo,
+            Veranda = 1.2f, Balcony = 1, Windows = 0.7f, Ornament = 0, Shrink = 0, Lanterns = 1, Sign = true, Annex = 0.3f,
+        };
+
+        public static readonly BuildingStyle Manor = new BuildingStyle
+        {
+            // A faction's manor (the Chi's, the Mo's branch home, ch. 21, 29): a walled yard with its hall at
+            // the head, the branch's houses down the sides, its kitchen and storehouse by the gate, a yard to train in.
+            Id = "manor", Name = "Manor", Bay = 3.4f, StoreyHeight = 4.0f, Plinth = 1.0f, Walls = WallKind.Plaster, Dado = WallKind.Brick, Compound = 3,
+            Roof = RoofKind.HipGable, Cover = RoofCover.Tile, Pitch = 0.7f, Curve = 0.4f, Upturn = 1.0f, Overhang = 1.5f, Ornament = 0.8f, Lacquer = true,
+        };
+
+        public static readonly BuildingStyle[] All = { Hut, Cottage, Stilt, House, Townhouse, Shop, Inn, Hall, GreatHall, Tower, Watchtower, Pavilion, Gate, Granary, Smithy, Temple, MarketRow, Dorm, Nursery, Courtyard, Academy, Bamboo, ClanPavilion, Kitchen, Tavern, Lodging, Manor };
 
         public static BuildingStyle Get(string id)
         {

@@ -12,10 +12,10 @@ namespace GuWorld.Core.Gen
     /// lamps and stalls where streets meet. It keeps clear of the valley's places, the rivers and
     /// cliffs. Deterministic: the same town comes out every time.
     /// </summary>
-    public static class CityPlanner
+    public static partial class CityPlanner
     {
         /// <summary>The districts, by distance from the middle.</summary>
-        enum District { Clan, Town, Outskirts }
+        enum Quarter { Clan, Town, Outskirts }
 
         static readonly string[] ClanHouses = { "kit_courtyard", "kit_courtyard_blue", "kit_two_storey_stone", "kit_shop_house_plaster", "kit_courtyard", "guyue_bamboo_house" };
         static readonly string[] TownHouses = { "kit_two_storey", "kit_shop_house", "kit_artisan", "kit_artisan_ochre", "kit_l_kitchen", "kit_l_kitchen_grey", "guyue_bamboo_house", "kit_two_storey_stone", "kit_shop_house_plaster", "kit_courtyard" };
@@ -140,7 +140,19 @@ namespace GuWorld.Core.Gen
                 avenues.Add(plan.Streets[i].Points, i);
             }
 
-            foreach (var (model, role, from, to) in Landmarks)
+            // A clan's town by its tiers (Core/Gen/CityTiers): the heart round its pavilion and square, the factions' seats.
+            var town = Buildings.GenHouses.Enabled ? Buildings.ClanTown.For(def.Clan) : null;
+            Tiers tiers = null;
+            var heartSquares = new List<Box>();
+
+            if (town != null)
+            {
+                tiers = new Tiers(town, def, ground);
+                heartSquares = Heart(plan, tiers, placed, index, avenues, ground, waters, ref rng);
+                FactionSeats(plan, tiers, placed, index, avenues, ground, waters, ref rng);
+            }
+
+            foreach (var (model, role, from, to) in tiers != null ? new (string, string, float, float)[0] : Landmarks)
             {
                 if (!Catalog.TryGet(model, out var footprint))
                 {
@@ -169,7 +181,12 @@ namespace GuWorld.Core.Gen
 
             foreach (var building in plan.Buildings)
             {
-                great.Add(building.Footprint.Grown(4));
+                great.Add(building.Footprint.Grown(building.Model.StartsWith("thing:") ? 1 : 4));
+            }
+
+            foreach (var square in heartSquares)
+            {
+                great.Add(square.Grown(2));
             }
 
             bool Taken(Vec2 p, float margin)
@@ -389,7 +406,18 @@ namespace GuWorld.Core.Gen
 
             var houses = 0;
 
-            if (Buildings.GenHouses.Enabled)
+            if (tiers != null)
+            {
+                // The heart's wall, the factions' fields and banners, then the lots ring by ring: the taverns, the inn, the lodging first.
+                HeartWall(plan, tiers, index, streets, ground);
+                FactionGrounds(plan, tiers, placed, index, streets, ground, waters, ref rng);
+                var taken = placed;
+                var streetIndex = streets;
+                houses = Buildings.Lots.Fill(plan, def.Houses, tiers.At, 1.0f, 1.2f, 0.92f, 0.25f, (model, centre, yaw, role) =>
+                    Place(plan, taken, index, streetIndex, ground, waters, model, centre, yaw, role, 0.5f, !model.StartsWith("hill:")), ref rng, def.Core + 8, Specials(town));
+                FactionBanners(plan, tiers, placed, index, streets, ground, waters, ref rng);
+            }
+            else if (Buildings.GenHouses.Enabled)
             {
                 // Generated buildings on lots by the clan's template, densest at the middle.
                 var template = Buildings.TownTemplate.For(def.Clan, def.Style.ToString());
@@ -429,14 +457,14 @@ namespace GuWorld.Core.Gen
 
                 var point = Lines.At(street.Points, along, out var direction);
                 var fromMiddle = Vec2.Distance(point, plan.Centre);
-                var district = fromMiddle < 175 ? District.Clan : fromMiddle < 300 ? District.Town : District.Outskirts;
+                var district = fromMiddle < 175 ? Quarter.Clan : fromMiddle < 300 ? Quarter.Town : Quarter.Outskirts;
                 var normal = side < 0 ? direction.Left : direction.Right;
 
                 for (var attempt = 0; attempt < 3; attempt++)
                 {
                     var model = Pick(district, street.Main, ground, point, ref rng);
                     var footprint = Catalog.Get(model);
-                    var setback = street.HalfWidth + 1.4f + rng.Range(0f, district == District.Outskirts ? 3f : 1.2f);
+                    var setback = street.HalfWidth + 1.4f + rng.Range(0f, district == Quarter.Outskirts ? 3f : 1.2f);
                     var yaw = (-normal).Yaw;
                     var centre = point + normal * (setback + footprint.Deep * 0.5f);
 
@@ -448,9 +476,9 @@ namespace GuWorld.Core.Gen
                     houses++;
 
                     // A yard's clutter beside some of them.
-                    if (rng.Chance(district == District.Outskirts ? 0.45f : 0.25f))
+                    if (rng.Chance(district == Quarter.Outskirts ? 0.45f : 0.25f))
                     {
-                        var prop = rng.Pick(district == District.Outskirts ? new[] { "prop_firewood_stack", "prop_drying_rack", "prop_barrels" } : new[] { "prop_barrels", "prop_bench_wood", "prop_lotus_vat", "prop_bonsai_pine" });
+                        var prop = rng.Pick(district == Quarter.Outskirts ? new[] { "prop_firewood_stack", "prop_drying_rack", "prop_barrels" } : new[] { "prop_barrels", "prop_bench_wood", "prop_lotus_vat", "prop_bonsai_pine" });
                         var beside = centre + Vec2.FromYaw(yaw + 90) * (footprint.Across * 0.5f + 1.8f) * (rng.Chance(0.5f) ? 1 : -1);
                         Place(plan, placed, index, streets, ground, waters, prop, beside, yaw, "prop", 0.3f, false);
                     }
@@ -534,6 +562,11 @@ namespace GuWorld.Core.Gen
 
             Wall(plan, index, roads, ground, waters);
 
+            if (tiers != null)
+            {
+                Rings(plan, tiers);
+            }
+
             // ---------------------------------------------------------------- People and their spots
 
             var doors = 0;
@@ -542,7 +575,7 @@ namespace GuWorld.Core.Gen
             {
                 plan.Population += Occupants(building.Model);
 
-                if (building.Role != "house" && building.Role != "prop" && building.Role != "lamp")
+                if (building.Role != "house" && building.Role != "prop" && building.Role != "lamp" && building.Role != "ground")
                 {
                     plan.Spots.Add(new Spot { At = building.Door, Facing = building.Yaw, Role = building.Role });
                 }
@@ -923,14 +956,14 @@ namespace GuWorld.Core.Gen
         }
 
         /// <summary>A house for a lot: by district, a shop on the avenues, a terrace house where the ground falls away.</summary>
-        static string Pick(District district, bool avenue, IGround ground, Vec2 at, ref Rng rng)
+        static string Pick(Quarter district, bool avenue, IGround ground, Vec2 at, ref Rng rng)
         {
-            if (avenue && district != District.Outskirts && rng.Chance(0.3f))
+            if (avenue && district != Quarter.Outskirts && rng.Chance(0.3f))
             {
                 return rng.Pick(Shops);
             }
 
-            if (district == District.Outskirts)
+            if (district == Quarter.Outskirts)
             {
                 var fall = Math.Abs(ground.Height(at.X + 6, at.Z) - ground.Height(at.X - 6, at.Z)) + Math.Abs(ground.Height(at.X, at.Z + 6) - ground.Height(at.X, at.Z - 6));
 
@@ -940,7 +973,7 @@ namespace GuWorld.Core.Gen
                 }
             }
 
-            return rng.Pick(district == District.Clan ? ClanHouses : district == District.Town ? TownHouses : OutskirtHouses);
+            return rng.Pick(district == Quarter.Clan ? ClanHouses : district == Quarter.Town ? TownHouses : OutskirtHouses);
         }
 
         static bool Crowded(ShapeIndex<Box> index, Box box)
@@ -962,7 +995,7 @@ namespace GuWorld.Core.Gen
         /// than a storey under it. Adds the pad the house stands on.
         /// </summary>
         static bool Place(SettlementPlan plan, List<Box> placed, ShapeIndex<Box> index, SegmentIndex streets, IGround ground, Waters waters,
-            string model, Vec2 centre, float yaw, string role, float gap, bool pad = true, bool onStreet = false)
+            string model, Vec2 centre, float yaw, string role, float gap, bool pad = true, bool onStreet = false, float fall = 0)
         {
             if (!Catalog.TryGet(model, out var footprint))
             {
@@ -998,13 +1031,13 @@ namespace GuWorld.Core.Gen
             high = Math.Max(high, middle);
 
             // A house on a slope gets a pad cut in; more than a storey of fall is too much.
-            if (pad && high - low > (footprint.Across > 30 ? 6 : 4.2f))
+            if (pad && high - low > (fall > 0 ? fall : footprint.Across > 30 ? 6 : 4.2f))
             {
                 return false;
             }
 
             // A house of the mountain stands down the slope on its own posts and stone: not over a cliff.
-            if (!pad && high - low > 9)
+            if (!pad && high - low > (fall > 0 ? fall : 9))
             {
                 return false;
             }

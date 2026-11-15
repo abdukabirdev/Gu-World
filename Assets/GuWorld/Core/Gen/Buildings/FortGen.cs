@@ -147,16 +147,16 @@ namespace GuWorld.Core.Gen.Buildings
     {
         static Ctx Context(RampartStyle style, int seed, int lod, FortParams p, Func<float, float, float> ground)
         {
-            var clan = p.Clan ?? "";
+            var clan = Factions.Clan(p.Clan);
             var frame = new Tint(0.2f, 0.135f, 0.095f);
-            var accent = clan == "gu_yue" ? new Tint(0.52f, 0.085f, 0.065f) : clan == "xiong" ? new Tint(0.46f, 0.27f, 0.11f) : clan == "bai" ? new Tint(0.86f, 0.86f, 0.84f) : new Tint(0.3f, 0.13f, 0.09f);
+            var accent = Factions.Accent(p.Clan);
             var wall = clan == "xiong" ? new Tint(0.78f, 0.63f, 0.43f) : new Tint(0.92f, 0.9f, 0.85f);
 
             return new Ctx
             {
                 S = Buildings.House, Seed = seed, Lod = lod, Out = new TreeLod(), Noise = new Noise(seed), Wealth = Build.Clamp01(p.Wealth), Wear = Build.Clamp01(p.Wear),
                 Frame = frame, Accent = accent, Wall = wall, Roof = clan == "bai" ? new Tint(1.15f, 1.15f, 1.18f) : new Tint(1, 1, 1), Leaf = accent.Times(0.85f),
-                WallTex = "plaster", DadoTex = "brick", RoofTexName = "tile", Moon = clan == "gu_yue", Floor = ground,
+                WallTex = "plaster", DadoTex = "brick", RoofTexName = "tile", Moon = clan == "gu_yue", Floor = ground, Paper = Factions.Lantern(p.Clan),
             };
         }
 

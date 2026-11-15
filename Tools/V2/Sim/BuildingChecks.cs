@@ -24,6 +24,10 @@ static class BuildingChecks
         (3, 0.2f, 0.8f, ""),
         (4, 0.6f, 0.4f, "xiong"),
         (5, 0.7f, 0.2f, "bai"),
+        // The Gu Yue's factions in their colours: the Chi's vermilion, the Mo's ink, the medicine faction's jade.
+        (6, 0.8f, 0.2f, "gu_yue.chi"),
+        (7, 0.8f, 0.3f, "gu_yue.mo"),
+        (8, 0.7f, 0.2f, "gu_yue.yao"),
     };
 
     public static List<Glb.Part> Parts(BuildingModel model, int lod, string tex) => Parts(model.Lods[lod], tex, $"LOD{lod}");

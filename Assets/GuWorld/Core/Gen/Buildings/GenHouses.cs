@@ -107,6 +107,11 @@ namespace GuWorld.Core.Gen.Buildings
                 case "hut": return 3;
                 case "shop": return 3;
                 case "dorm": return 24;
+                // A Gu Yue's bamboo house: a family over its stakes, two for the better off; the manor: a branch's head, its elders, servants.
+                case "bamboo": return 6;
+                case "lodging": return 10;
+                case "manor": return 30;
+                case "tavern": return 3;
                 default: return 0;
             }
         }

@@ -11,11 +11,17 @@ namespace GuWorld.Core.Gen
         public float Yaw;
         public float Scale = 1;
         public Box Footprint;
-        /// <summary>What it is for in the settlement: "house", "hall", "shop", "inn", "smithy", "herbalist", "nursery", "prop", "wall", "gate", "fence", "lamp".</summary>
+        /// <summary>What it is for in the settlement: "house", "hall", "shop", "inn", "smithy", "herbalist", "nursery", "prop", "wall", "gate", "fence", "lamp", "ground" (paving walked on).</summary>
         public string Role = "house";
 
         /// <summary>The hand-made model it stood for before a generated building took its place (GenHouses), or null.</summary>
         public string Origin;
+
+        /// <summary>Its own name, for a building known by one (the clan's pavilion, a tavern), or null.</summary>
+        public string Name;
+
+        /// <summary>The district it stands in (a tier of a clan's village, a faction's district: SettlementPlan.Districts), or null.</summary>
+        public string District;
 
         /// <summary>The point before its door, a step out from its front.</summary>
         public Vec2 Door => Footprint.World(new Vec2(0, Footprint.Half.Z + 1.6f));
@@ -35,6 +41,24 @@ namespace GuWorld.Core.Gen
         public Vec2 At;
         public float Facing;
         public string Role;
+    }
+
+    /// <summary>
+    /// A district of a clan's village: a tier (the heart, the Gu Masters' houses, the poor edge) or a
+    /// faction's district within its tier, as a ring between two distances from the middle and (for a
+    /// faction) between two bearings; its seat (the faction's manor, the clan's pavilion).
+    /// </summary>
+    public sealed class District
+    {
+        public string Id, Name;
+        /// <summary>The tag its buildings wear: the clan's, or a faction's ("gu_yue.chi").</summary>
+        public string Tag;
+        public int Tier;
+        public float Inner, Outer;
+        /// <summary>Its bearings (degrees, 0 north, clockwise) for a faction's district; 0 and 360 for a whole ring. A district may wrap past north.</summary>
+        public float From, To = 360;
+        public Vec2 Seat;
+        public bool HasSeat;
     }
 
     /// <summary>A settlement as laid out: its streets, plaza, buildings, props, wall and gates, fields, and where its people stand.</summary>
@@ -62,6 +86,9 @@ namespace GuWorld.Core.Gen
         public int Population;
         public int Lanes;
 
+        /// <summary>A clan village's tiers and its factions' districts (Docs/V2/PLAN-TOWNS.md), empty for others.</summary>
+        public readonly List<District> Districts = new List<District>();
+
         public Placed Find(string role) => Buildings.Find(b => b.Role == role);
 
         /// <summary>True if a point is at least this far from every building's footprint (people and lanterns stand there).</summary>
@@ -69,7 +96,7 @@ namespace GuWorld.Core.Gen
         {
             foreach (var building in Buildings)
             {
-                if (building.Role != "lamp" && building.Footprint.Distance(at) < margin)
+                if (building.Role != "lamp" && building.Role != "ground" && building.Footprint.Distance(at) < margin)
                 {
                     return false;
                 }

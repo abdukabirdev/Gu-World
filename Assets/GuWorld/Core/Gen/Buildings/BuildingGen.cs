@@ -30,6 +30,8 @@ namespace GuWorld.Core.Gen.Buildings
             public Tint Frame, Accent, Wall, Roof, Leaf;
             public string WallTex, DadoTex, RoofTexName;
             public bool Moon;
+            /// <summary>The paper of the lanterns (the clan's red, a faction's own); bamboo walls' tint (the Gu Yue's green).</summary>
+            public Tint Paper = Lantern, Bamboo = White;
             /// <summary>The ground's height under a point (for the dirt at a wall's foot on sloping ground); null: the model's own zero.</summary>
             public Func<float, float, float> Floor;
             /// <summary>How far the plinth goes down below the model's zero (a terrace on a slope).</summary>
@@ -117,27 +119,29 @@ namespace GuWorld.Core.Gen.Buildings
             }
 
             var storeys = asked.Storeys > 0 ? asked.Storeys : rng.Range(style.MinStoreys, style.MaxStoreys + 1);
-            var clan = asked.Clan ?? "";
+            // The clan's colours, or a faction's of the clan ("gu_yue.chi": the Chi's vermilion lacquer and lanterns).
+            var clan = Factions.Clan(asked.Clan);
             var frame = new Tint(0.2f, 0.135f, 0.095f);
-            var accent = new Tint(0.3f, 0.13f, 0.09f);
+            var accent = Factions.Accent(asked.Clan);
             var wall = new Tint(0.9f, 0.87f, 0.8f);
             var roof = new Tint(1, 1, 1);
+            var bamboo = White;
 
             if (clan == "gu_yue")
             {
-                accent = new Tint(0.52f, 0.085f, 0.065f);
+                // The Gu Yue's houses are of green bamboo: fresh and pale green, yellowing as they age (ch. 1, 3).
+                var age = Build.Clamp01(asked.Wear);
+                bamboo = new Tint(0.9f + 0.18f * age, 1.16f - 0.14f * age, 0.78f + 0.04f * age).Times(rng.Range(0.94f, 1.06f));
             }
             else if (clan == "xiong")
             {
                 frame = new Tint(0.27f, 0.18f, 0.115f);
-                accent = new Tint(0.46f, 0.27f, 0.11f);
                 wall = new Tint(0.78f, 0.63f, 0.43f);
                 roof = new Tint(0.95f, 0.84f, 0.74f);
             }
             else if (clan == "bai")
             {
                 frame = new Tint(0.6f, 0.58f, 0.55f);
-                accent = new Tint(0.86f, 0.86f, 0.84f);
                 wall = new Tint(1, 1, 0.98f);
                 roof = new Tint(1.2f, 1.2f, 1.22f);
             }
@@ -153,7 +157,7 @@ namespace GuWorld.Core.Gen.Buildings
                     S = style, Seed = seed, Lod = lod, Out = new TreeLod(), Noise = new Noise(seed), Wealth = wealth, Wear = Build.Clamp01(asked.Wear),
                     Frame = style.Lacquer ? accent : frame, Accent = accent, Wall = wall, Roof = roof, Leaf = style.Lacquer ? accent.Times(0.8f) : frame.Times(1.15f),
                     WallTex = Tex(style.Walls), DadoTex = Tex(style.Dado), RoofTexName = style.Cover == RoofCover.Tile ? "tile" : style.Cover == RoofCover.Thatch ? "thatch" : "shingle",
-                    Moon = clan == "gu_yue", Terrace = Math.Max(0, asked.Terrace),
+                    Moon = clan == "gu_yue", Terrace = Math.Max(0, asked.Terrace), Paper = Factions.Lantern(asked.Clan), Bamboo = bamboo,
                 };
 
                 if (!style.Lacquer)
@@ -341,10 +345,12 @@ namespace GuWorld.Core.Gen.Buildings
                 LeanTo(c, kw, kd, plinth, eave);
             }
 
+            for (var chimney = 0; chimney < (s.Chimney > 1.5f ? 2 : 1); chimney++)
+            {
             if (c.Lod <= 2 && c.R(5, 5) < s.Chimney)
             {
                 var brick = c.M("brick");
-                var x = kw * (c.R(5, 6) < 0.5f ? -0.55f : 0.55f);
+                var x = kw * ((c.R(5, 6) < 0.5f) == (chimney == 0) ? -0.55f : 0.55f);
                 var z = kd * 0.3f;
                 var top = eave + rise * (1 - 0.3f / Math.Max(0.5f, kd)) + 1.1f;
                 Box(c, brick, new V3(x - 0.38f, plinth, z - 0.38f), new V3(x + 0.38f, top, z + 0.38f), White, "brick");
@@ -354,6 +360,7 @@ namespace GuWorld.Core.Gen.Buildings
                     Box(c, c.M("stone"), new V3(x - 0.48f, top, z - 0.48f), new V3(x + 0.48f, top + 0.12f, z + 0.48f), White.Times(0.8f), "stone");
                     Quad(c, c.Plain, new V3(x - 0.26f, top + 0.121f, z - 0.26f), new V3(x + 0.26f, top + 0.121f, z - 0.26f), new V3(x + 0.26f, top + 0.121f, z + 0.26f), new V3(x - 0.26f, top + 0.121f, z + 0.26f), V3.Up, new Tint(0.02f, 0.02f, 0.02f), null);
                 }
+            }
             }
 
             if (s.Forge && c.Lod <= 2)
@@ -380,7 +387,7 @@ namespace GuWorld.Core.Gen.Buildings
                 return;
             }
 
-            var clan = model.Asked.Clan ?? "";
+            var clan = Factions.Clan(model.Asked.Clan);
 
             foreach (var door in model.Doors)
             {
@@ -451,7 +458,7 @@ namespace GuWorld.Core.Gen.Buildings
             var r = new Rng(seed * 2654435 + kind.Id.Length * 977);
             var v = kind.Clone();
             var wealth = Build.Clamp01(asked.Wealth);
-            var clan = asked.Clan ?? "";
+            var clan = Factions.Clan(asked.Clan);
             var thatch = (1 - wealth) * 0.55f + (clan == "xiong" ? 0.15f : 0) - (clan == "bai" ? 0.25f : 0);
             var roll = r.Value();
             v.Cover = roll < thatch ? RoofCover.Thatch : roll < thatch + 0.3f ? RoofCover.Shingle : RoofCover.Tile;
@@ -473,6 +480,18 @@ namespace GuWorld.Core.Gen.Buildings
                 v.MaxStoreys = 2;
                 v.MinStoreys = 2;
                 v.Shrink = r.Range(-0.2f, 0.4f);
+            }
+
+            if (kind.Id == "bamboo")
+            {
+                // Bamboo above its stakes (planks here and there where a wall was mended); one floor to live on, two for the better off.
+                v.Walls = r.Chance(0.82f) ? WallKind.Bamboo : WallKind.Plank;
+                v.Dado = v.Walls;
+                v.MinStoreys = v.MaxStoreys = r.Chance(0.25f + 0.6f * wealth) ? 2 : 1;
+                v.Shrink = r.Range(-0.15f, 0.25f);
+                v.Plinth = kind.Plinth * r.Range(0.85f, 1.2f);
+                v.Veranda = r.Chance(0.65f) ? r.Range(1.1f, 1.7f) : 0;
+                v.Roof = r.Chance(0.45f) ? RoofKind.HipGable : v.Roof;
             }
 
             v.StoreyHeight = kind.StoreyHeight * r.Range(0.9f, 1.08f);
@@ -503,7 +522,7 @@ namespace GuWorld.Core.Gen.Buildings
             var low = floor + 2.0f;
             var plank = c.M(s.Walls == WallKind.Mud ? "mud" : s.Walls == WallKind.Bamboo ? "bamboo" : "plank");
             var tex = s.Walls == WallKind.Mud ? "mud" : s.Walls == WallKind.Bamboo ? "bamboo" : "plank";
-            var tint = tex == "plank" ? c.Frame.Times(2.3f) : White;
+            var tint = tex == "plank" ? c.Frame.Times(2.3f) : tex == "bamboo" ? c.Bamboo : White;
             var outward = new V3(side, 0, 0);
             // The walls: the outer side, the front and the back.
             Quad(c, plank, new V3(x1, floor - 0.4f, z0), new V3(x1, floor - 0.4f, kd), new V3(x1, low, kd), new V3(x1, low, z0), outward, tint, tex);
@@ -633,7 +652,8 @@ namespace GuWorld.Core.Gen.Buildings
 
             // A clan's hall keeps its podium; a house sits just over the high side.
             var stone = !s.Stilts && (s.Walls == WallKind.Brick || s.Walls == WallKind.Stone || s.Lacquer && s.Plinth >= 0.9f || s.Compound > 0);
-            var floor = high + (stone ? plinth : 0.35f + 0.15f * c.Wealth);
+            // A house on stilts keeps its storey of stakes even on the high side (the Gu Yue's: the first floor massive stakes, ch. 3).
+            var floor = high + (stone || s.Stilts ? plinth : 0.35f + 0.15f * c.Wealth);
             var wood = c.M("wood");
             var log = c.M("log");
             var rock = c.M("stone");
@@ -646,7 +666,7 @@ namespace GuWorld.Core.Gen.Buildings
             var columns = c.Lod == 0 ? 10 : c.Lod == 1 ? 6 : 3;
             var corners = new[] { new V3(-ex, 0, -ez), new V3(ex, 0, -ez), new V3(ex, 0, ez), new V3(-ex, 0, ez) };
             var outs = new[] { new V3(0, 0, -1), new V3(1, 0, 0), new V3(0, 0, 1), new V3(-1, 0, 0) };
-            var stoneUpTo = stone ? 1e6f : 1.4f;
+            var stoneUpTo = stone ? 1e6f : s.Stilts ? 0 : 1.4f;
 
             for (var k = 0; k < 4; k++)
             {
@@ -711,7 +731,7 @@ namespace GuWorld.Core.Gen.Buildings
                             continue;
                         }
 
-                        Post(c, log, x, z, g - 0.3f, floor - 0.3f, 0.13f + 0.02f * c.Wealth, sides, bark.Times(0.8f + 0.25f * c.R(i * 7 + j, 31)));
+                        Post(c, log, x, z, g - 0.3f, floor - 0.3f, (s.Stilts ? 0.2f : 0.13f) + 0.03f * c.Wealth, sides, bark.Times(0.8f + 0.25f * c.R(i * 7 + j, 31)));
 
                         if (c.Lod <= 1)
                         {
@@ -1118,7 +1138,7 @@ namespace GuWorld.Core.Gen.Buildings
                     return;
                 }
 
-                var tint = c.WallTex == "plaster" || c.WallTex == "plank" ? (c.WallTex == "plank" ? c.Frame.Times(2.4f) : c.Wall) : White;
+                var tint = c.WallTex == "plaster" || c.WallTex == "plank" ? (c.WallTex == "plank" ? c.Frame.Times(2.4f) : c.Wall) : c.WallTex == "bamboo" ? c.Bamboo : White;
 
                 if (dado > 0 && v0 < dado)
                 {
@@ -1489,7 +1509,7 @@ namespace GuWorld.Core.Gen.Buildings
                     var a1 = Build.Tau * (i + 1) / sides;
                     V3 At((float y, float w) ring, float a) => new V3(top.X + (float)Math.Cos(a) * radius * ring.w, cy + ring.y * radius * 1.15f, top.Z + (float)Math.Sin(a) * radius * ring.w);
                     var mid = new V3((float)Math.Cos((a0 + a1) * 0.5f), 0, (float)Math.Sin((a0 + a1) * 0.5f));
-                    Quad(c, glow, At(rings[r], a0), At(rings[r], a1), At(rings[r + 1], a1), At(rings[r + 1], a0), mid, Lantern, null);
+                    Quad(c, glow, At(rings[r], a0), At(rings[r], a1), At(rings[r + 1], a1), At(rings[r + 1], a0), mid, c.Paper, null);
                 }
             }
 
@@ -1974,7 +1994,7 @@ namespace GuWorld.Core.Gen.Buildings
         static void GableWalls(Ctx c, RoofShape r, float kw, float kd, bool turn)
         {
             var wall = c.M(c.WallTex);
-            var tint = c.WallTex == "plaster" ? c.Wall : c.WallTex == "plank" ? c.Frame.Times(2.4f) : White;
+            var tint = c.WallTex == "plaster" ? c.Wall : c.WallTex == "plank" ? c.Frame.Times(2.4f) : c.WallTex == "bamboo" ? c.Bamboo : White;
             var columns = c.Lod <= 1 ? 8 : 2;
             V3 Place(float x, float y, float z) => turn ? new V3(z, y, x) : new V3(x, y, z);
             float Top(float z) => r.Y0 + r.Rise * (float)Math.Pow(Build.Clamp01((r.Hd - Math.Abs(z)) / r.Hd), 1 + r.Curve) - r.Th;

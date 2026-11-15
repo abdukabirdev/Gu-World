@@ -18,6 +18,7 @@ namespace GuWorld.Core.Gen.Buildings
             "haystack", "drying_rack", "scarecrow", "wattle", "shrine", "stele", "signpost", "lantern_post",
             "banner_pole", "barricade", "well", "woodpile", "cart", "grave",
             "jars", "washing", "hide_rack", "weapon_rack", "dummy", "stall", "table", "barrels", "garden",
+            "training", "herbs", "hives", "censer", "plaza",
         };
 
         /// <summary>The room a thing takes on the ground (width × depth, metres).</summary>
@@ -47,6 +48,11 @@ namespace GuWorld.Core.Gen.Buildings
                 case "table": return (2.4f, 2.4f);
                 case "barrels": return (2f, 1.6f);
                 case "garden": return (8f, 6f);
+                case "training": return (22f, 16f);
+                case "herbs": return (8f, 6f);
+                case "hives": return (6.4f, 1.8f);
+                case "censer": return (2.6f, 2.6f);
+                case "plaza": return (36f, 24f);
                 default: return (2.4f, 3.2f);
             }
         }
@@ -59,13 +65,13 @@ namespace GuWorld.Core.Gen.Buildings
 
             for (var lod = 0; lod < 4; lod++)
             {
-                var clan = p.Clan ?? "";
-                var accent = clan == "gu_yue" ? new Tint(0.52f, 0.085f, 0.065f) : clan == "xiong" ? new Tint(0.46f, 0.27f, 0.11f) : clan == "bai" ? new Tint(0.86f, 0.86f, 0.84f) : new Tint(0.3f, 0.13f, 0.09f);
+                var clan = Factions.Clan(p.Clan);
+                var accent = Factions.Accent(p.Clan);
                 var c = new Ctx
                 {
                     S = Buildings.House, Seed = seed, Lod = lod, Out = new TreeLod(), Noise = new Noise(seed), Wealth = Build.Clamp01(p.Wealth), Wear = Build.Clamp01(p.Wear),
                     Frame = new Tint(0.2f, 0.135f, 0.095f), Accent = accent, Wall = new Tint(0.92f, 0.9f, 0.85f), Roof = new Tint(1, 1, 1), Leaf = accent.Times(0.85f),
-                    WallTex = "plaster", DadoTex = "brick", RoofTexName = "tile", Moon = clan == "gu_yue",
+                    WallTex = "plaster", DadoTex = "brick", RoofTexName = "tile", Moon = clan == "gu_yue", Paper = Factions.Lantern(p.Clan),
                 };
 
                 switch (kind)
@@ -91,7 +97,12 @@ namespace GuWorld.Core.Gen.Buildings
                     case "stall": Stall(c, size); break;
                     case "table": Table(c); break;
                     case "barrels": Barrels(c); break;
-                    case "garden": Garden(c); break;
+                    case "garden": Garden(c, false); break;
+                    case "herbs": Garden(c, true); break;
+                    case "training": Training(c, seed, p); break;
+                    case "hives": Hives(c); break;
+                    case "censer": Censer(c); break;
+                    case "plaza": Plaza(c); break;
                     default: Grave(c, size); break;
                 }
 
@@ -812,18 +823,51 @@ namespace GuWorld.Core.Gen.Buildings
             Log(c, wood, new V3(-0.4f, 0.32f, -0.55f), new V3(0.5f, 0.32f, -0.55f), 0.32f, Sides(c, 10), tint.Times(0.95f));
         }
 
-        static void Garden(Ctx c)
+        static void Garden(Ctx c, bool herbs)
         {
             // A vegetable plot: dug earth in ridges, rows of greens (cabbages, leeks, beans on poles), a wattle edge.
+            // The medicine faction's beds of herbs: tufts in rows of their own colours (lavender, gold flowers, dark leaves), a stake naming each.
             var mud = c.M("mud");
             var w = 3.8f;
             var d = 2.8f;
             Quad(c, mud, new V3(-w, 0.04f, -d), new V3(w, 0.04f, -d), new V3(w, 0.04f, d), new V3(-w, 0.04f, d), V3.Up, new Tint(0.55f, 0.45f, 0.35f), "mud");
-            var rows = 7;
+            var rows = herbs ? 6 : 7;
 
             for (var r = 0; r < rows; r++)
             {
                 var z = -d + 0.4f + r * (2 * d - 0.8f) / (rows - 1);
+
+                if (herbs)
+                {
+                    var colours = new[] { new Tint(0.48f, 0.4f, 0.62f), new Tint(0.75f, 0.62f, 0.18f), new Tint(0.16f, 0.32f, 0.18f), new Tint(0.7f, 0.72f, 0.75f), new Tint(0.62f, 0.22f, 0.2f) };
+                    var herb = colours[(int)(c.R(r, 9) * colours.Length) % colours.Length];
+                    Beam(c, mud, new V3(-w + 0.3f, 0.06f, z), new V3(w - 0.3f, 0.06f, z), 0.5f, 0.14f, new Tint(0.45f, 0.36f, 0.28f), true, "mud");
+
+                    for (var x = -w + 0.45f; x < w - 0.4f; x += c.Lod == 0 ? 0.32f : c.Lod == 1 ? 0.6f : 2 * w)
+                    {
+                        var k = 0.75f + 0.5f * c.R((int)(x * 10), r + 40);
+                        var leaf = new Tint(0.22f, 0.42f, 0.2f).Times(0.85f + 0.3f * c.R(r, (int)(x * 9)));
+
+                        if (c.Lod >= 2)
+                        {
+                            Quad(c, c.Plain, new V3(-w + 0.3f, 0.16f, z - 0.2f), new V3(w - 0.3f, 0.16f, z - 0.2f), new V3(w - 0.3f, 0.16f, z + 0.2f), new V3(-w + 0.3f, 0.16f, z + 0.2f), V3.Up, herb.Times(0.8f), null);
+                            break;
+                        }
+
+                        Lathe(c, c.Plain, new V3(x, 0.12f, z), new[] { (0f, 0.05f * k), (0.22f * k, 0.16f * k), (0.38f * k, 0.12f * k), (0.46f * k, 0.03f) }, c.Lod == 0 ? 6 : 4, leaf, null);
+                        Lathe(c, c.Plain, new V3(x, 0.12f + 0.36f * k, z), new[] { (0f, 0.1f * k), (0.1f * k, 0.12f * k), (0.18f * k, 0.02f) }, c.Lod == 0 ? 6 : 4, herb, null);
+                    }
+
+                    if (c.Lod <= 1)
+                    {
+                        // A stake with a little board naming the row.
+                        Post(c, c.M("wood"), -w + 0.15f, z, 0, 0.7f, 0.025f, 4, c.Frame.Times(1.8f));
+                        Box(c, c.M("wood"), new V3(-w + 0.05f, 0.5f, z - 0.12f), new V3(-w + 0.08f, 0.68f, z + 0.12f), new Tint(0.85f, 0.8f, 0.7f), "wood");
+                    }
+
+                    continue;
+                }
+
                 var crop = (int)(c.R(r, 1) * 3);
                 var green = new[] { new Tint(0.3f, 0.5f, 0.2f), new Tint(0.4f, 0.55f, 0.25f), new Tint(0.25f, 0.42f, 0.2f) }[crop];
                 // The ridge of earth the row grows on.
@@ -871,6 +915,198 @@ namespace GuWorld.Core.Gen.Buildings
 
                     Beam(c, c.M("wood"), a + V3.Up * 0.5f, b + V3.Up * 0.5f, 0.04f, 0.05f, new Tint(0.55f, 0.43f, 0.32f), false);
                     Beam(c, c.M("wood"), a + V3.Up * 0.3f, b + V3.Up * 0.3f, 0.04f, 0.05f, new Tint(0.55f, 0.43f, 0.32f), false);
+                }
+            }
+        }
+
+        /// <summary>
+        /// A training ground: beaten earth inside a rail of logs, open at its front; posts to strike in a
+        /// row, racks of weapons, stone weights, a banner in the corner. The Xiong's is a wrestling ring:
+        /// a round of earth edged with stones, the weights heavier.
+        /// </summary>
+        static void Training(Ctx c, int seed, FortParams p)
+        {
+            var mud = c.M("mud");
+            var w = 10.6f;
+            var d = 7.6f;
+            var xiong = Factions.Clan(p.Clan) == "xiong";
+            Quad(c, mud, new V3(-w, 0.04f, -d), new V3(w, 0.04f, -d), new V3(w, 0.04f, d), new V3(-w, 0.04f, d), V3.Up, new Tint(0.62f, 0.52f, 0.4f), "mud");
+
+            void Add(string kind, V3 at, float yaw, int k)
+            {
+                var thing = Make(kind, seed * 31 + k, p);
+                Compose.Add(c.Out, thing.Lods[c.Lod], at, yaw);
+            }
+
+            if (xiong)
+            {
+                // The ring: stones round a circle of trodden earth.
+                var r = 5.2f;
+                var n = c.Lod == 0 ? 28 : c.Lod == 1 ? 16 : 8;
+
+                for (var i = 0; i < n; i++)
+                {
+                    var a = Build.Tau * i / n;
+                    var x = (float)Math.Cos(a) * r;
+                    var z = (float)Math.Sin(a) * r;
+                    Lathe(c, c.M("stone"), new V3(x, 0, z), new[] { (-0.1f, 0.32f), (0.15f, 0.3f), (0.3f, 0.12f) }, 5, White.Times(0.85f + 0.2f * c.R(i, 2)), "stone");
+                }
+
+                Lathe(c, mud, new V3(0, 0, 0), new[] { (0.04f, r - 0.2f), (0.08f, r - 0.4f), (0.09f, 0.1f) }, Sides(c, 24), new Tint(0.55f, 0.42f, 0.3f), "mud");
+            }
+            else if (c.Lod <= 2)
+            {
+                // The rail: posts every two metres, a log along them; the front left open in its middle.
+                foreach (var (a, b, front) in new[] { (new V3(-w, 0, -d), new V3(-2.5f, 0, -d), true), (new V3(2.5f, 0, -d), new V3(w, 0, -d), true), (new V3(w, 0, -d), new V3(w, 0, d), false), (new V3(w, 0, d), new V3(-w, 0, d), false), (new V3(-w, 0, d), new V3(-w, 0, -d), false) })
+                {
+                    var length = (b - a).Length;
+                    var posts = Math.Max(1, (int)(length / 2.2f));
+
+                    for (var k = 0; k <= posts; k++)
+                    {
+                        var q = V3.Lerp(a, b, k / (float)posts);
+                        Post(c, c.M("log"), q.X, q.Z, -0.2f, 1.05f, 0.07f, Sides(c, 6), Bark.Times(0.85f));
+                    }
+
+                    Beam(c, c.M("log"), a + V3.Up * 0.95f, b + V3.Up * 0.95f, 0.08f, 0.08f, Bark.Times(0.8f), true, "log");
+                }
+            }
+
+            if (c.Lod <= 1)
+            {
+                var dummies = xiong ? 2 : 5;
+
+                for (var i = 0; i < dummies; i++)
+                {
+                    Add("dummy", new V3(xiong ? -w + 2 : -6 + i * 3, 0, xiong ? -3 + i * 6 : d - 2.2f), xiong ? 90 : 180, i);
+                }
+
+                Add("weapon_rack", new V3(-w + 1.1f, 0, xiong ? 4.5f : -2), -90, 10);
+
+                if (!xiong)
+                {
+                    Add("weapon_rack", new V3(w - 1.1f, 0, -2), 90, 11);
+                }
+
+                // Stone weights to lift: lathed stones with a grip, the Xiong's twice as big.
+                for (var i = 0; i < (xiong ? 5 : 3); i++)
+                {
+                    var k = (xiong ? 1.5f : 1) * (0.8f + 0.4f * c.R(i, 6));
+                    var at = new V3(w - 1.6f - (i % 2) * 0.9f, 0, d - 1.6f - i * 1.1f);
+                    Lathe(c, c.M("stone"), at, new[] { (0f, 0.22f * k), (0.1f * k, 0.3f * k), (0.32f * k, 0.28f * k), (0.42f * k, 0.12f * k), (0.48f * k, 0.12f * k), (0.5f * k, 0.02f) }, Sides(c, 10), White.Times(0.8f), "stone");
+                }
+
+                Add("banner_pole", new V3(-w + 1, 0, -d + 1), 0, 12);
+            }
+        }
+
+        /// <summary>Bee hives of straw on a bench under a lean-to of shingles (the Xiong's honey for their Gu).</summary>
+        static void Hives(Ctx c)
+        {
+            var wood = c.M("wood");
+            Box(c, c.M("plank"), new V3(-3.0f, 0.55f, -0.45f), new V3(3.0f, 0.65f, 0.45f), c.Frame.Times(2f), "plank");
+
+            foreach (var x in new[] { -2.8f, 0f, 2.8f })
+            {
+                Post(c, wood, x, -0.3f, 0, 0.55f, 0.06f, Sides(c, 6), c.Frame.Times(1.6f));
+                Post(c, wood, x, 0.3f, 0, 0.55f, 0.06f, Sides(c, 6), c.Frame.Times(1.6f));
+            }
+
+            for (var i = 0; i < 5; i++)
+            {
+                var x = -2.4f + i * 1.2f;
+                var k = 0.9f + 0.2f * c.R(i, 3);
+                Lathe(c, c.M("thatch"), new V3(x, 0.65f, 0), new[] { (0f, 0.42f * k), (0.3f * k, 0.4f * k), (0.55f * k, 0.3f * k), (0.72f * k, 0.12f * k), (0.76f * k, 0.01f) }, Sides(c, 12), new Tint(1.1f, 1.0f, 0.75f), "thatch");
+
+                if (c.Lod <= 1)
+                {
+                    Box(c, c.Plain, new V3(x - 0.08f, 0.66f, -0.43f * k), new V3(x + 0.08f, 0.74f, -0.4f * k), new Tint(0.05f, 0.04f, 0.03f), null);
+                }
+            }
+
+            if (c.Lod <= 1)
+            {
+                // A shingled lean-to over them, on two posts at the back.
+                foreach (var x in new[] { -3.1f, 3.1f })
+                {
+                    Post(c, wood, x, 0.8f, 0, 2.2f, 0.06f, Sides(c, 6), c.Frame.Times(1.5f));
+                    Post(c, wood, x, -0.8f, 0, 1.75f, 0.05f, Sides(c, 6), c.Frame.Times(1.5f));
+                }
+
+                Quad(c, c.M("shingle"), new V3(-3.3f, 1.75f, -1.0f), new V3(3.3f, 1.75f, -1.0f), new V3(3.3f, 2.25f, 0.95f), new V3(-3.3f, 2.25f, 0.95f), new V3(0, 1, -0.25f), new Tint(0.9f, 0.85f, 0.78f), "shingle");
+                Quad(c, c.M("shingle"), new V3(3.3f, 1.72f, -1.0f), new V3(-3.3f, 1.72f, -1.0f), new V3(-3.3f, 2.22f, 0.95f), new V3(3.3f, 2.22f, 0.95f), new V3(0, -1, 0.25f), new Tint(0.7f, 0.65f, 0.6f), "shingle");
+            }
+        }
+
+        /// <summary>The paving of a square (before the clan's pavilion, on its levelled terrace): flags in rows, a kerb round it, a path of long slabs down its middle.</summary>
+        static void Plaza(Ctx c)
+        {
+            var stone = c.M("stone");
+            var w = 18f;
+            var d = 12f;
+
+            if (c.Lod >= 2)
+            {
+                Quad(c, stone, new V3(-w, 0.06f, -d), new V3(w, 0.06f, -d), new V3(w, 0.06f, d), new V3(-w, 0.06f, d), V3.Up, White.Times(0.85f), "stone");
+                return;
+            }
+
+            var size = 2.4f;
+
+            for (var x = -w; x < w - 0.01f; x += size)
+            {
+                for (var z = -d; z < d - 0.01f; z += size)
+                {
+                    var middle = Math.Abs(x + size * 0.5f) < size;
+                    var tone = (middle ? 0.95f : 0.78f) + 0.12f * c.R((int)(x * 3), (int)(z * 3));
+                    var y = 0.05f + 0.02f * c.R((int)(x * 5), (int)(z * 5));
+                    var gap = c.Lod == 0 ? 0.03f : 0;
+                    Quad(c, stone, new V3(x + gap, y, z + gap), new V3(x + size - gap, y, z + gap), new V3(x + size - gap, y, z + size - gap), new V3(x + gap, y, z + size - gap), V3.Up, White.Times(tone), "stone");
+                }
+            }
+
+            if (c.Lod == 0)
+            {
+                // The joints: dark earth showing between the flags.
+                Quad(c, c.M("mud"), new V3(-w, 0.03f, -d), new V3(w, 0.03f, -d), new V3(w, 0.03f, d), new V3(-w, 0.03f, d), V3.Up, new Tint(0.4f, 0.36f, 0.3f), "mud");
+            }
+
+            // The kerb.
+            foreach (var (a, b) in new[] { (new V3(-w, 0, -d), new V3(w, 0, -d)), (new V3(w, 0, -d), new V3(w, 0, d)), (new V3(w, 0, d), new V3(-w, 0, d)), (new V3(-w, 0, d), new V3(-w, 0, -d)) })
+            {
+                Beam(c, stone, a + V3.Up * 0.02f, b + V3.Up * 0.02f, 0.35f, 0.22f, White.Times(0.7f), true, "stone");
+            }
+        }
+
+        /// <summary>A bronze cauldron for incense before the clan's hall: three legs, two loop handles, on a stone step.</summary>
+        static void Censer(Ctx c)
+        {
+            var bronze = new Tint(0.32f, 0.27f, 0.17f);
+            Box(c, c.M("stone"), new V3(-1.2f, 0, -1.2f), new V3(1.2f, 0.3f, 1.2f), White.Times(0.9f), "stone");
+
+            for (var i = 0; i < 3; i++)
+            {
+                var a = Build.Tau * i / 3 + 0.5f;
+                Beam(c, c.Plain, new V3((float)Math.Cos(a) * 0.55f, 0.3f, (float)Math.Sin(a) * 0.55f), new V3((float)Math.Cos(a) * 0.6f, 0.85f, (float)Math.Sin(a) * 0.6f), 0.1f, 0.1f, bronze.Times(0.9f), true, null);
+            }
+
+            Lathe(c, c.Plain, new V3(0, 0.75f, 0), new[] { (0f, 0.3f), (0.15f, 0.62f), (0.5f, 0.72f), (0.75f, 0.68f), (0.8f, 0.76f), (0.86f, 0.74f) }, Sides(c, 16), bronze, null);
+            Quad(c, c.Plain, new V3(-0.6f, 1.55f, -0.6f), new V3(0.6f, 1.55f, -0.6f), new V3(0.6f, 1.55f, 0.6f), new V3(-0.6f, 1.55f, 0.6f), V3.Up, new Tint(0.35f, 0.33f, 0.3f), null);
+
+            foreach (var side in new[] { -1, 1 })
+            {
+                Beam(c, c.Plain, new V3(side * 0.7f, 1.58f, -0.2f), new V3(side * 0.7f, 1.95f, -0.15f), 0.07f, 0.07f, bronze, true, null);
+                Beam(c, c.Plain, new V3(side * 0.7f, 1.95f, -0.15f), new V3(side * 0.7f, 1.95f, 0.15f), 0.07f, 0.07f, bronze, true, null);
+                Beam(c, c.Plain, new V3(side * 0.7f, 1.95f, 0.15f), new V3(side * 0.7f, 1.58f, 0.2f), 0.07f, 0.07f, bronze, true, null);
+            }
+
+            if (c.Lod <= 1)
+            {
+                // Sticks of incense standing in the ash.
+                for (var i = 0; i < 5; i++)
+                {
+                    var x = -0.3f + 0.15f * i;
+                    Beam(c, c.Plain, new V3(x, 1.55f, 0.05f * (i % 2)), new V3(x, 2.0f, 0.05f * (i % 2)), 0.015f, 0.015f, new Tint(0.6f, 0.2f, 0.12f), false, null);
                 }
             }
         }

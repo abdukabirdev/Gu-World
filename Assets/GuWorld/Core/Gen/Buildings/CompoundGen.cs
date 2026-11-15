@@ -72,7 +72,9 @@ namespace GuWorld.Core.Gen.Buildings
     /// gate, wings down the sides facing each other, a front row along the street for the rich; a
     /// paved yard with a well or a tree, jars, a woodpile, washing), or the clan's academy (a great
     /// yard for bouts, the lecture hall at its head on a high plinth, dormitories down its sides,
-    /// a gatehouse, weapon racks). Its front toward -Z, its lot `Width` × `Depth`.
+    /// a gatehouse, weapon racks), or a faction's manor (its hall at the head, the branch's houses down
+    /// the sides, kitchen and storehouse by the gate, a yard to train in under its banners). Its front
+    /// toward -Z, its lot `Width` × `Depth`.
     /// </summary>
     public static class CompoundGen
     {
@@ -80,22 +82,25 @@ namespace GuWorld.Core.Gen.Buildings
         {
             var rng = new Rng(seed * 4099 + 17);
             var academy = style.Compound == 2;
+            var manor = style.Compound == 3;
             var wealth = Build.Clamp01(asked.Wealth);
-            var width = asked.Width > 0 ? asked.Width : academy ? 56 : rng.Range(17f, 24f) + 8 * wealth;
-            var depth = asked.Depth > 0 ? asked.Depth : academy ? 64 : rng.Range(19f, 26f) + 8 * wealth;
-            width = Math.Max(academy ? 30 : 12, width);
-            depth = Math.Max(academy ? 34 : 14, depth);
-            var clan = asked.Clan ?? "";
+            var width = asked.Width > 0 ? asked.Width : academy ? 56 : manor ? 40 : rng.Range(17f, 24f) + 8 * wealth;
+            var depth = asked.Depth > 0 ? asked.Depth : academy ? 64 : manor ? 46 : rng.Range(19f, 26f) + 8 * wealth;
+            width = Math.Max(academy ? 30 : manor ? 28 : 12, width);
+            depth = Math.Max(academy ? 34 : manor ? 32 : 14, depth);
+            // The tag carries a faction ("gu_yue.chi"): passed on whole to the buildings and things, the clan alone decides the build.
+            var tag = asked.Clan ?? "";
+            var clan = Factions.Clan(tag);
             var model = new BuildingModel { Style = style, Seed = seed, Asked = asked, Width = width, Depth = depth, EaveWidth = width, EaveDepth = depth, Storeys = 1 };
             var hw = width * 0.5f;
             var hd = depth * 0.5f;
-            var fortParams = new FortParams { Clan = clan, Wealth = wealth, Wear = asked.Wear };
-            var yardWall = clan == "bai" || clan == "gu_yue" && wealth > 0.35f || academy ? Ramparts.YardPlaster : Ramparts.YardEarth;
+            var fortParams = new FortParams { Clan = tag, Wealth = wealth, Wear = asked.Wear };
+            var yardWall = clan == "bai" || clan == "gu_yue" && wealth > 0.35f || academy || manor && clan != "xiong" ? Ramparts.YardPlaster : Ramparts.YardEarth;
             var pieces = new List<(TreeLod[] lods, V3 at, float yaw, MeshData solid)>();
             Func<float, float, float> flat = (x, z) => 0;
-            var gateWidth = academy ? 9f : 3.4f;
-            // The gate: in the middle for the academy, off to the east (the right, seen from the street) for a house.
-            var gateX = academy ? 0 : hw * (rng.Chance(0.5f) ? 0.45f : -0.45f);
+            var gateWidth = academy ? 9f : manor ? 5.5f : 3.4f;
+            // The gate: in the middle for the academy and a manor, off to the east (the right, seen from the street) for a house.
+            var gateX = academy || manor ? 0 : hw * (rng.Chance(0.5f) ? 0.45f : -0.45f);
 
             void Wall(float x0, float x1, float z, float yaw)
             {
@@ -129,7 +134,7 @@ namespace GuWorld.Core.Gen.Buildings
 
             void Building(BuildingStyle kind, float w, float d, V3 at, float yaw, int k, float storeysWealth = -1)
             {
-                var made = BuildingGen.Make(kind, seed * 13 + k, new BuildingParams { Width = w, Depth = d, Wealth = storeysWealth >= 0 ? storeysWealth : wealth, Wear = asked.Wear, Clan = clan, Storeys = asked.Storeys > 0 && kind != Buildings.Gate ? asked.Storeys : 0 });
+                var made = BuildingGen.Make(kind, seed * 13 + k, new BuildingParams { Width = w, Depth = d, Wealth = storeysWealth >= 0 ? storeysWealth : wealth, Wear = asked.Wear, Clan = tag, Storeys = asked.Storeys > 0 && kind != Buildings.Gate ? asked.Storeys : 0 });
                 pieces.Add((made.Lods, at, yaw, made.Collision));
                 model.Height = Math.Max(model.Height, made.Height);
 
@@ -140,14 +145,33 @@ namespace GuWorld.Core.Gen.Buildings
             }
 
             // The gatehouse in the gap: a deep roof over doors.
-            var gate = BuildingGen.Make(Buildings.Gate, seed * 7 + 1, new BuildingParams { Width = gateWidth + (academy ? 4 : 1.2f), Depth = academy ? 6 : 3.2f, Wealth = wealth, Wear = asked.Wear, Clan = clan });
+            var gate = BuildingGen.Make(Buildings.Gate, seed * 7 + 1, new BuildingParams { Width = gateWidth + (academy ? 4 : manor ? 2.5f : 1.2f), Depth = academy || manor ? 6 : 3.2f, Wealth = wealth, Wear = asked.Wear, Clan = tag });
             pieces.Add((gate.Lods, new V3(gateX, 0, -hd), 0, gate.Collision));
             model.Doors.Add(new BuildingDoor { At = new V3(gateX, 0, -hd - 1), Facing = new V3(0, 0, -1) });
 
             var inner = 0.9f;
             var houseStyle = academy ? Buildings.Hall : wealth > 0.7f && clan == "gu_yue" ? Buildings.Townhouse : clan == "xiong" ? Buildings.Cottage : Buildings.House;
 
-            if (academy)
+            if (manor)
+            {
+                // The branch's hall across the head of the yard on its plinth; the branch's houses down both
+                // sides facing in; the kitchen and the storehouse along the front wall either side of the gate;
+                // the yard between them to train in.
+                var hallDepth = Math.Min(13, depth * 0.27f);
+                var hallWidth = width * 0.5f;
+                Building(clan == "xiong" ? Buildings.GreatHall : Buildings.Hall, hallWidth, hallDepth, new V3(0, 0, hd - hallDepth * 0.5f - inner), 0, 1);
+                var houseDepth = Math.Min(8, width * 0.2f);
+                var houseLength = Math.Min(14, depth * 0.3f);
+                var houseZ = hd - hallDepth - inner - houseLength * 0.5f - 0.5f;
+                var side = clan == "xiong" ? Buildings.Cottage : Buildings.Townhouse;
+                Building(side, houseLength, houseDepth, new V3(-hw + houseDepth * 0.5f + inner, 0, houseZ), -90, 2, wealth * 0.85f);
+                Building(side, houseLength, houseDepth, new V3(hw - houseDepth * 0.5f - inner, 0, houseZ), 90, 3, wealth * 0.85f);
+                var rowLength = hw - gateWidth * 0.5f - 2.2f - inner;
+                var rowDepth = 6.5f;
+                Building(Buildings.Kitchen, rowLength, rowDepth, new V3(-hw + inner + rowLength * 0.5f, 0, -hd + rowDepth * 0.5f + inner), 180, 4, wealth * 0.6f);
+                Building(Buildings.Granary, rowLength, rowDepth, new V3(hw - inner - rowLength * 0.5f, 0, -hd + rowDepth * 0.5f + inner), 180, 5, wealth * 0.7f);
+            }
+            else if (academy)
             {
                 // The lecture hall across the head of the yard; dormitories down both sides; the yard open for bouts.
                 var hallDepth = Math.Min(18, depth * 0.3f);
@@ -196,7 +220,29 @@ namespace GuWorld.Core.Gen.Buildings
             var yard = new TreeLod[4];
             var things = new List<(string kind, V3 at, float yaw)>();
 
-            if (academy)
+            if (manor)
+            {
+                // The branch's banners either side of the gate inside; its training yard: posts to strike, racks, (for the Xiong) hides.
+                var front = -hd + 6.5f + inner + 2.5f;
+                things.Add(("banner_pole", new V3(-gateWidth * 0.5f - 0.8f, 0, front - 1.2f), 0));
+                things.Add(("banner_pole", new V3(gateWidth * 0.5f + 0.8f, 0, front - 1.2f), 0));
+                things.Add(("dummy", new V3(-4.5f, 0, front + 4), 180));
+                things.Add(("dummy", new V3(-1.5f, 0, front + 4), 180));
+                things.Add(("dummy", new V3(1.5f, 0, front + 4), 180));
+                things.Add(("dummy", new V3(4.5f, 0, front + 4), 180));
+                things.Add(("weapon_rack", new V3(-hw + 9.5f, 0, front + 1), -90));
+                things.Add(("weapon_rack", new V3(hw - 9.5f, 0, front + 1), 90));
+                things.Add(("lantern_post", new V3(-3.2f, 0, hd - 13 - 3), 0));
+                things.Add(("lantern_post", new V3(3.2f, 0, hd - 13 - 3), 0));
+                things.Add(("jars", new V3(-hw + 3, 0, front - 0.5f), 0));
+                things.Add(("well", new V3(-hw + 4.5f, 0, front + 5.5f), 0));
+
+                if (clan == "xiong")
+                {
+                    things.Add(("hide_rack", new V3(hw - 4.5f, 0, front + 6), 90));
+                }
+            }
+            else if (academy)
             {
                 things.Add(("banner_pole", new V3(-6, 0, -hd + 7), 0));
                 things.Add(("banner_pole", new V3(6, 0, -hd + 7), 0));
@@ -231,7 +277,7 @@ namespace GuWorld.Core.Gen.Buildings
             {
                 yard[lod] = new TreeLod();
                 var stone = yard[lod].Part("tex:stone");
-                var paving = academy || wealth > 0.4f;
+                var paving = academy || manor || wealth > 0.4f;
 
                 // The yard's floor: flags for the rich and the academy, beaten earth otherwise.
                 var mesh = paving ? stone : yard[lod].Part("tex:mud");
@@ -262,8 +308,8 @@ namespace GuWorld.Core.Gen.Buildings
             // A tree in a corner of the yard: a plum, a camphor for the academy, a maple for the Xiong.
             {
                 var species = academy ? Trees.Camphor : clan == "xiong" ? Trees.Maple : clan == "bai" ? Trees.Bamboo : Trees.Plum;
-                var tree = TreeGen.Grow(species, seed, new TreeParams { Height = academy ? 22 : clan == "xiong" ? 11 : clan == "bai" ? 9 : 7.5f, Crowding = 0.2f, Age = 0.6f, Wet = 0.2f });
-                var spot = academy ? new V3(-hw + 9, 0, hd - 20) : new V3(gateX > 0 ? -hw + 3.5f : hw - 3.5f, 0, -hd + 4.5f);
+                var tree = TreeGen.Grow(species, seed, new TreeParams { Height = academy ? 22 : manor ? 12 : clan == "xiong" ? 11 : clan == "bai" ? 9 : 7.5f, Crowding = 0.2f, Age = 0.6f, Wet = 0.2f });
+                var spot = academy ? new V3(-hw + 9, 0, hd - 20) : manor ? new V3(hw - 4.5f, 0, -hd + 6.5f + 4.5f) : new V3(gateX > 0 ? -hw + 3.5f : hw - 3.5f, 0, -hd + 4.5f);
 
                 for (var lod = 0; lod < 4; lod++)
                 {
