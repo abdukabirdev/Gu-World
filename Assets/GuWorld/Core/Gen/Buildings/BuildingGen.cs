@@ -32,6 +32,8 @@ namespace GuWorld.Core.Gen.Buildings
             public bool Moon;
             /// <summary>The ground's height under a point (for the dirt at a wall's foot on sloping ground); null: the model's own zero.</summary>
             public Func<float, float, float> Floor;
+            /// <summary>How far the plinth goes down below the model's zero (a terrace on a slope).</summary>
+            public float Terrace;
 
             public MeshData M(string tex) => Out.Part("tex:" + tex);
             public MeshData Plain => Out.Part("plain");
@@ -78,6 +80,11 @@ namespace GuWorld.Core.Gen.Buildings
 
         public static BuildingModel Make(BuildingStyle style, int seed, BuildingParams asked)
         {
+            if (style.Compound > 0)
+            {
+                return CompoundGen.Make(style, seed, asked);
+            }
+
             var rng = new Rng(seed * 7919 + 13);
             var model = new BuildingModel { Style = style, Seed = seed, Asked = asked };
             var wealth = Build.Clamp01(asked.Wealth);
@@ -94,6 +101,10 @@ namespace GuWorld.Core.Gen.Buildings
             {
                 baysZ = Math.Max(1, Math.Min(7, (int)Math.Round((asked.Depth - style.Veranda - 2 * style.Overhang * 0.6f) / bay)));
             }
+
+            // A lot much bigger than the kind is not filled by stretching it: a few bays more at most.
+            baysX = Math.Min(baysX, style.MaxBaysX + 2);
+            baysZ = Math.Min(baysZ, style.MaxBaysZ + 1);
 
             if (style.Roof == RoofKind.Pyramid)
             {
@@ -137,7 +148,7 @@ namespace GuWorld.Core.Gen.Buildings
                     S = style, Seed = seed, Lod = lod, Out = new TreeLod(), Noise = new Noise(seed), Wealth = wealth, Wear = Build.Clamp01(asked.Wear),
                     Frame = style.Lacquer ? accent : frame, Accent = accent, Wall = wall, Roof = roof, Leaf = style.Lacquer ? accent.Times(0.8f) : frame.Times(1.15f),
                     WallTex = Tex(style.Walls), DadoTex = Tex(style.Dado), RoofTexName = style.Cover == RoofCover.Tile ? "tile" : style.Cover == RoofCover.Thatch ? "thatch" : "shingle",
-                    Moon = clan == "gu_yue",
+                    Moon = clan == "gu_yue", Terrace = Math.Max(0, asked.Terrace),
                 };
 
                 if (!style.Lacquer)
@@ -298,11 +309,146 @@ namespace GuWorld.Core.Gen.Buildings
                     }
 
                     Roof(c, shape);
+                    Extras(c, model, kw, kd, plinth, y, shape.Rise, veranda);
                     model.Height = y + shape.Rise + 0.5f;
                     model.EaveWidth = hw * 2;
                     model.EaveDepth = hd * 2;
                 }
             }
+        }
+
+        /// <summary>
+        /// What makes a building lived in and its clan's: a chimney through the roof, a forge in a
+        /// smithy's open front; the Xiong's pelts and skulls by the door, the Gu Yue's gilt crescent
+        /// over it.
+        /// </summary>
+        static void Extras(Ctx c, BuildingModel model, float kw, float kd, float plinth, float eave, float rise, float veranda)
+        {
+            var s = c.S;
+
+            if (c.Lod <= 2 && c.R(5, 5) < s.Chimney)
+            {
+                var brick = c.M("brick");
+                var x = kw * (c.R(5, 6) < 0.5f ? -0.55f : 0.55f);
+                var z = kd * 0.3f;
+                var top = eave + rise * (1 - 0.3f / Math.Max(0.5f, kd)) + 1.1f;
+                Box(c, brick, new V3(x - 0.38f, plinth, z - 0.38f), new V3(x + 0.38f, top, z + 0.38f), White, "brick");
+
+                if (c.Lod <= 1)
+                {
+                    Box(c, c.M("stone"), new V3(x - 0.48f, top, z - 0.48f), new V3(x + 0.48f, top + 0.12f, z + 0.48f), White.Times(0.8f), "stone");
+                    Quad(c, c.Plain, new V3(x - 0.26f, top + 0.121f, z - 0.26f), new V3(x + 0.26f, top + 0.121f, z - 0.26f), new V3(x + 0.26f, top + 0.121f, z + 0.26f), new V3(x - 0.26f, top + 0.121f, z + 0.26f), V3.Up, new Tint(0.02f, 0.02f, 0.02f), null);
+                }
+            }
+
+            if (s.Forge && c.Lod <= 2)
+            {
+                // The hearth: a brick block with glowing coals, a hood over it to the chimney; an anvil on a stump; a trough.
+                var brick = c.M("brick");
+                var hx = kw * 0.45f;
+                var hz = -kd + veranda + 1.4f;
+                Box(c, brick, new V3(hx - 0.8f, plinth, hz - 0.6f), new V3(hx + 0.8f, plinth + 0.95f, hz + 0.6f), White, "brick");
+                Box(c, c.Glow, new V3(hx - 0.5f, plinth + 0.951f, hz - 0.35f), new V3(hx + 0.5f, plinth + 0.99f, hz + 0.35f), new Tint(1, 0.42f, 0.1f), null);
+
+                if (c.Lod <= 1)
+                {
+                    Box(c, brick, new V3(hx - 0.7f, plinth + 2.2f, hz - 0.5f), new V3(hx + 0.7f, plinth + 2.9f, hz + 0.5f), White.Times(0.7f), "brick");
+                    Post(c, c.M("log"), -kw * 0.2f, hz, plinth, plinth + 0.6f, 0.28f, 8, new Tint(0.9f, 0.85f, 0.8f));
+                    Box(c, c.Plain, new V3(-kw * 0.2f - 0.3f, plinth + 0.6f, hz - 0.12f), new V3(-kw * 0.2f + 0.35f, plinth + 0.85f, hz + 0.12f), new Tint(0.12f, 0.12f, 0.13f), null);
+                    Box(c, c.M("plank"), new V3(-kw * 0.7f, plinth, hz - 0.3f), new V3(-kw * 0.7f + 1.4f, plinth + 0.55f, hz + 0.3f), c.Frame.Times(2f), "plank");
+                    Quad(c, c.Plain, new V3(-kw * 0.7f + 0.05f, plinth + 0.5f, hz - 0.25f), new V3(-kw * 0.7f + 1.35f, plinth + 0.5f, hz - 0.25f), new V3(-kw * 0.7f + 1.35f, plinth + 0.5f, hz + 0.25f), new V3(-kw * 0.7f + 0.05f, plinth + 0.5f, hz + 0.25f), V3.Up, new Tint(0.05f, 0.08f, 0.1f), null);
+                }
+            }
+
+            if (c.Lod > 1 || model.Doors.Count == 0)
+            {
+                return;
+            }
+
+            var clan = model.Asked.Clan ?? "";
+
+            foreach (var door in model.Doors)
+            {
+                if (Math.Abs(door.Facing.Z + 1) > 0.1f)
+                {
+                    continue;
+                }
+
+                var p = door.At;
+                var z = p.Z - 0.08f;
+
+                if (clan == "xiong")
+                {
+                    // Pelts stretched on the wall either side of the door, a bear's skull over it.
+                    for (var side = -1; side <= 1; side += 2)
+                    {
+                        if (c.R(side + 7, (int)(p.X * 3)) < 0.35f)
+                        {
+                            continue;
+                        }
+
+                        var x = p.X + side * 1.6f;
+                        var y = p.Y + 1.0f;
+                        var pelt = new Tint(0.22f + 0.1f * c.R(side, 1), 0.15f, 0.09f);
+                        var points = new[] { new V3(x - 0.35f, y, z), new V3(x + 0.35f, y, z), new V3(x + 0.55f, y + 0.6f, z), new V3(x + 0.4f, y + 1.3f, z), new V3(x - 0.4f, y + 1.3f, z), new V3(x - 0.55f, y + 0.6f, z) };
+                        Quad(c, c.Plain, points[0], points[1], points[2], points[5], new V3(0, 0, -1), pelt, null);
+                        Quad(c, c.Plain, points[5], points[2], points[3], points[4], new V3(0, 0, -1), pelt.Times(0.9f), null);
+
+                        // The legs, stretched out at the corners.
+                        Beam(c, c.Plain, points[0], points[0] + new V3(-0.25f, -0.2f, 0), 0.12f, 0.02f, pelt, true, null);
+                        Beam(c, c.Plain, points[1], points[1] + new V3(0.25f, -0.2f, 0), 0.12f, 0.02f, pelt, true, null);
+                        Beam(c, c.Plain, points[3], points[3] + new V3(0.25f, 0.2f, 0), 0.12f, 0.02f, pelt, true, null);
+                        Beam(c, c.Plain, points[4], points[4] + new V3(-0.25f, 0.2f, 0), 0.12f, 0.02f, pelt, true, null);
+                    }
+
+                    var bone = new Tint(0.85f, 0.8f, 0.68f);
+                    var sy = p.Y + 2.75f;
+                    Box(c, c.Plain, new V3(p.X - 0.17f, sy, z - 0.3f), new V3(p.X + 0.17f, sy + 0.26f, z), bone, null);
+                    Box(c, c.Plain, new V3(p.X - 0.1f, sy - 0.08f, z - 0.42f), new V3(p.X + 0.1f, sy + 0.1f, z - 0.3f), bone.Times(0.95f), null);
+                    Box(c, c.Plain, new V3(p.X - 0.1f, sy + 0.08f, z - 0.31f), new V3(p.X - 0.04f, sy + 0.14f, z - 0.3f), new Tint(0.05f, 0.04f, 0.03f), null);
+                    Box(c, c.Plain, new V3(p.X + 0.04f, sy + 0.08f, z - 0.31f), new V3(p.X + 0.1f, sy + 0.14f, z - 0.3f), new Tint(0.05f, 0.04f, 0.03f), null);
+                }
+                else if (clan == "gu_yue" && c.Wealth > 0.55f && c.Lod == 0)
+                {
+                    // A gilt crescent over the door.
+                    var centre = new V3(p.X, p.Y + 2.85f + 0.3f * c.Wealth, z - 0.04f);
+
+                    for (var i = 0; i < 8; i++)
+                    {
+                        var a0 = (float)Math.PI * (0.62f + 1.76f * i / 8f);
+                        var a1 = (float)Math.PI * (0.62f + 1.76f * (i + 1) / 8f);
+                        var q0 = centre + new V3((float)Math.Cos(a0) * 0.22f, (float)Math.Sin(a0) * 0.22f, 0);
+                        var q1 = centre + new V3((float)Math.Cos(a1) * 0.22f, (float)Math.Sin(a1) * 0.22f, 0);
+                        Beam(c, c.Plain, q0, q1, 0.03f, 0.03f + 0.04f * (float)Math.Sin(Math.PI * (i + 0.5f) / 8), Gold, true, null);
+                    }
+                }
+            }
+        }
+
+        /// <summary>A platform of stone (a terrace under a yard on a slope): from the ground's low side to `height`, steps up at the gate.</summary>
+        public static TreeLod Platform(int seed, int lod, float hw, float hd, float height, float gateX, float gateWidth)
+        {
+            var c = new Ctx { S = Buildings.House, Seed = seed, Lod = lod, Out = new TreeLod(), Noise = new Noise(seed), Frame = new Tint(0.2f, 0.135f, 0.095f), Accent = new Tint(0.3f, 0.13f, 0.09f), Wall = White, Roof = White, Leaf = White, WallTex = "stone", DadoTex = "stone", RoofTexName = "tile" };
+            var stone = c.M("stone");
+            Box(c, stone, new V3(-hw, -0.3f, -hd), new V3(hw, height, hd), White, "stone");
+
+            if (lod <= 1)
+            {
+                Box(c, stone, new V3(-hw - 0.06f, height - 0.16f, -hd - 0.06f), new V3(hw + 0.06f, height + 0.02f, hd + 0.06f), White.Times(0.85f), "stone");
+            }
+
+            if (lod <= 2)
+            {
+                var steps = Math.Max(1, (int)Math.Ceiling(height / 0.17f));
+                var w = gateWidth * 0.5f + 0.3f;
+
+                for (var i = 0; i < steps; i++)
+                {
+                    Box(c, stone, new V3(gateX - w, -0.3f, -hd - (steps - i) * 0.3f), new V3(gateX + w, height * (i + 1) / steps - 0.01f, -hd + 0.02f), White.Times(0.95f), "stone");
+                }
+            }
+
+            return c.Out;
         }
 
         static float Thickness(BuildingStyle s) => s.Cover == RoofCover.Thatch ? 0.36f : s.Cover == RoofCover.Shingle ? 0.1f : 0.15f;
@@ -313,16 +459,25 @@ namespace GuWorld.Core.Gen.Buildings
         {
             var stone = c.M("stone");
             var margin = 0.45f + 0.35f * c.Wealth;
-            Box(c, stone, new V3(-fw - margin, 0, -fd - margin), new V3(fw + margin, height, fd + margin), White, "stone");
+            // On a slope the plinth goes down to the low side: a terrace of stone.
+            var y0 = -c.Terrace;
+            var total = height - y0;
+            Box(c, stone, new V3(-fw - margin, y0, -fd - margin), new V3(fw + margin, height, fd + margin), White, "stone");
 
             if (c.Lod <= 1)
             {
                 // A foot course, proud of the plinth.
-                Box(c, stone, new V3(-fw - margin - 0.08f, 0, -fd - margin - 0.08f), new V3(fw + margin + 0.08f, Math.Min(0.16f, height * 0.4f), fd + margin + 0.08f), White.Times(0.9f), "stone");
+                Box(c, stone, new V3(-fw - margin - 0.08f, y0, -fd - margin - 0.08f), new V3(fw + margin + 0.08f, y0 + Math.Min(0.16f, total * 0.4f), fd + margin + 0.08f), White.Times(0.9f), "stone");
+
+                if (c.Terrace > 0.6f)
+                {
+                    // A coping where the terrace's wall ends under the plinth's top.
+                    Box(c, stone, new V3(-fw - margin - 0.06f, height - 0.18f, -fd - margin - 0.06f), new V3(fw + margin + 0.06f, height, fd + margin + 0.06f), White.Times(0.85f), "stone");
+                }
             }
 
             // Steps to the door.
-            var steps = Math.Max(1, (int)Math.Ceiling(height / 0.17f));
+            var steps = Math.Max(1, (int)Math.Ceiling(total / 0.17f));
             var width = doorBay * 0.5f + 0.5f + 0.6f * c.Wealth;
             var z0 = -fd - margin;
 
@@ -330,24 +485,26 @@ namespace GuWorld.Core.Gen.Buildings
             {
                 for (var i = 0; i < steps; i++)
                 {
-                    Box(c, stone, new V3(-width, 0, z0 - (steps - i) * 0.3f), new V3(width, height * (i + 1) / steps - 0.01f, z0 + 0.02f), White.Times(0.96f), "stone");
+                    Box(c, stone, new V3(-width, y0, z0 - (steps - i) * 0.3f), new V3(width, y0 + total * (i + 1) / steps - 0.01f, z0 + 0.02f), White.Times(0.96f), "stone");
                 }
             }
+
+            height = total;
 
             if (height > 1 && c.Lod <= 1)
             {
                 // A high plinth: cheeks beside the steps, a balustrade round its edge.
                 var run = steps * 0.3f;
-                Box(c, stone, new V3(-width - 0.4f, 0, z0 - run), new V3(-width, height * 0.5f, z0), White.Times(0.9f), "stone");
-                Box(c, stone, new V3(width, 0, z0 - run), new V3(width + 0.4f, height * 0.5f, z0), White.Times(0.9f), "stone");
+                Box(c, stone, new V3(-width - 0.4f, y0, z0 - run), new V3(-width, y0 + height * 0.5f, z0), White.Times(0.9f), "stone");
+                Box(c, stone, new V3(width, y0, z0 - run), new V3(width + 0.4f, y0 + height * 0.5f, z0), White.Times(0.9f), "stone");
                 var e = margin - 0.15f;
                 var ax = fw + e;
                 var az = fd + e;
-                Balustrade(c, new V3(-ax, height, -az), new V3(-width - 0.2f, height, -az), true);
-                Balustrade(c, new V3(width + 0.2f, height, -az), new V3(ax, height, -az), true);
-                Balustrade(c, new V3(ax, height, -az), new V3(ax, height, az), true);
-                Balustrade(c, new V3(ax, height, az), new V3(-ax, height, az), true);
-                Balustrade(c, new V3(-ax, height, az), new V3(-ax, height, -az), true);
+                Balustrade(c, new V3(-ax, y0 + height, -az), new V3(-width - 0.2f, y0 + height, -az), true);
+                Balustrade(c, new V3(width + 0.2f, y0 + height, -az), new V3(ax, y0 + height, -az), true);
+                Balustrade(c, new V3(ax, y0 + height, -az), new V3(ax, y0 + height, az), true);
+                Balustrade(c, new V3(ax, y0 + height, az), new V3(-ax, y0 + height, az), true);
+                Balustrade(c, new V3(-ax, y0 + height, az), new V3(-ax, y0 + height, -az), true);
             }
         }
 

@@ -107,7 +107,7 @@ static class WorldChecks
 
             foreach (var must in settlement.Def.Must)
             {
-                check(settlement.Buildings.Any(b => b.Model == must), $"world: {settlement.Def.Id} has its {must}");
+                check(settlement.Buildings.Any(b => b.Model == must || b.Origin == must), $"world: {settlement.Def.Id} has its {must}");
             }
 
             if (settlement.Def.City)

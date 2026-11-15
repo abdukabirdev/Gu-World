@@ -294,7 +294,7 @@ namespace GuWorld.World
 
                 for (var i = 0; i < far.subMeshCount && i < mats.Length; i++)
                 {
-                    parts.Add(new Batch { Mesh = far, Submesh = i, Material = mats[i], Local = Matrix4x4.identity });
+                    parts.Add(new Batch { Mesh = far, Submesh = i, Material = mats[i], Local = GenBuilding.Is(model) ? GenBuilding.Turn : Matrix4x4.identity });
                 }
 
                 return parts;

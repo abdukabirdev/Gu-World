@@ -17,6 +17,7 @@ namespace GuWorld.Core.Gen.Buildings
         {
             "haystack", "drying_rack", "scarecrow", "wattle", "shrine", "stele", "signpost", "lantern_post",
             "banner_pole", "barricade", "well", "woodpile", "cart", "grave",
+            "jars", "washing", "hide_rack", "weapon_rack", "dummy", "stall", "table", "barrels",
         };
 
         /// <summary>The room a thing takes on the ground (width × depth, metres).</summary>
@@ -37,6 +38,14 @@ namespace GuWorld.Core.Gen.Buildings
                 case "well": return (3.4f, 3.4f);
                 case "woodpile": return (3.2f, 1.4f);
                 case "cart": return (2f, 4.4f);
+                case "jars": return (2.2f, 1.4f);
+                case "washing": return (5f, 0.8f);
+                case "hide_rack": return (2.6f, 1.2f);
+                case "weapon_rack": return (3f, 0.9f);
+                case "dummy": return (1f, 1f);
+                case "stall": return (3.4f, 2.6f);
+                case "table": return (2.4f, 2.4f);
+                case "barrels": return (2f, 1.6f);
                 default: return (2.4f, 3.2f);
             }
         }
@@ -73,6 +82,14 @@ namespace GuWorld.Core.Gen.Buildings
                     case "well": Well(c); break;
                     case "woodpile": Woodpile(c); break;
                     case "cart": Cart(c); break;
+                    case "jars": Jars(c); break;
+                    case "washing": Washing(c); break;
+                    case "hide_rack": HideRack(c); break;
+                    case "weapon_rack": WeaponRack(c); break;
+                    case "dummy": Dummy(c); break;
+                    case "stall": Stall(c, size); break;
+                    case "table": Table(c); break;
+                    case "barrels": Barrels(c); break;
                     default: Grave(c, size); break;
                 }
 
@@ -561,6 +578,236 @@ namespace GuWorld.Core.Gen.Buildings
                     Lathe(c, c.M("thatch"), at, new[] { (0f, 0.25f), (0.25f, 0.3f), (0.5f, 0.22f), (0.58f, 0.08f) }, Sides(c, 8), new Tint(0.75f, 0.68f, 0.58f), "thatch");
                 }
             }
+        }
+
+        static void Jars(Ctx c)
+        {
+            // Big glazed jars for pickles and wine, lidded, in a row; a small one in front.
+            var n = 2 + (int)(c.R(1, 1) * 2);
+
+            for (var i = 0; i < n; i++)
+            {
+                var x = -0.75f + i * 0.62f;
+                var s = 0.85f + 0.3f * c.R(i, 2);
+                var glaze = c.R(i, 3) < 0.5f ? new Tint(0.16f, 0.12f, 0.09f) : new Tint(0.3f, 0.2f, 0.12f);
+                Lathe(c, c.Plain, new V3(x, 0, 0), new[] { (0f, 0.16f * s), (0.1f, 0.24f * s), (0.38f, 0.3f * s), (0.62f, 0.24f * s), (0.72f, 0.14f * s), (0.76f, 0.15f * s) }, Sides(c, 12), glaze, null);
+                Lathe(c, c.M("wood"), new V3(x, 0.76f * s, 0), new[] { (0f, 0.17f * s), (0.04f, 0.17f * s), (0.06f, 0.05f) }, Sides(c, 10), c.Frame.Times(1.6f), "wood");
+            }
+
+            Lathe(c, c.Plain, new V3(0.1f, 0, -0.5f), new[] { (0f, 0.08f), (0.12f, 0.13f), (0.24f, 0.1f), (0.3f, 0.06f) }, Sides(c, 8), new Tint(0.55f, 0.35f, 0.2f), null);
+        }
+
+        static void Washing(Ctx c)
+        {
+            // A line between two poles, cloths and a robe hung on it.
+            var log = c.M("log");
+            Post(c, log, -2.3f, 0, -0.3f, 2.1f, 0.05f, Sides(c, 6), Bark);
+            Post(c, log, 2.3f, 0, -0.3f, 2.1f, 0.05f, Sides(c, 6), Bark);
+            Box(c, c.Plain, new V3(-2.3f, 1.98f, -0.01f), new V3(2.3f, 2.0f, 0.01f), new Tint(0.5f, 0.45f, 0.35f), null);
+            var colours = new[] { new Tint(0.75f, 0.73f, 0.68f), new Tint(0.25f, 0.33f, 0.45f), new Tint(0.55f, 0.2f, 0.15f), new Tint(0.4f, 0.42f, 0.3f) };
+            var x = -1.9f;
+            var i = 0;
+
+            while (x < 1.9f)
+            {
+                var w = 0.4f + 0.5f * c.R(i, 4);
+                var h = 0.6f + 0.6f * c.R(i, 5);
+                var tint = colours[(int)(c.R(i, 6) * colours.Length) % colours.Length];
+                var sway = 0.05f * (c.R(i, 7) - 0.5f);
+                Quad(c, c.Plain, new V3(x, 1.99f, 0), new V3(x + w, 1.99f, 0), new V3(x + w, 1.99f - h, sway), new V3(x, 1.99f - h, sway), new V3(0, 0, -1), tint, null);
+                Quad(c, c.Plain, new V3(x + w, 1.99f, 0.005f), new V3(x, 1.99f, 0.005f), new V3(x, 1.99f - h, sway + 0.005f), new V3(x + w, 1.99f - h, sway + 0.005f), new V3(0, 0, 1), tint.Times(0.85f), null);
+                x += w + 0.15f + 0.2f * c.R(i, 8);
+                i++;
+            }
+        }
+
+        static void HideRack(Ctx c)
+        {
+            // A frame of poles with a bear's hide stretched in it to dry (the Xiong).
+            var log = c.M("log");
+            Beam(c, log, new V3(-1.1f, 0, 0), new V3(-1.0f, 2.3f, 0), 0.09f, 0.09f, Bark, true, "log");
+            Beam(c, log, new V3(1.1f, 0, 0), new V3(1.0f, 2.3f, 0), 0.09f, 0.09f, Bark, true, "log");
+            Beam(c, log, new V3(-1.2f, 2.15f, 0), new V3(1.2f, 2.15f, 0), 0.08f, 0.08f, Bark, true, "log");
+            Beam(c, log, new V3(-1.2f, 0.35f, 0), new V3(1.2f, 0.35f, 0), 0.08f, 0.08f, Bark, true, "log");
+            var hide = new Tint(0.2f, 0.13f, 0.08f);
+            var pts = new[] { new V3(-0.55f, 0.55f, -0.04f), new V3(0.55f, 0.55f, -0.04f), new V3(0.8f, 1.2f, -0.04f), new V3(0.6f, 1.95f, -0.04f), new V3(-0.6f, 1.95f, -0.04f), new V3(-0.8f, 1.2f, -0.04f) };
+
+            for (var side = -1; side <= 1; side += 2)
+            {
+                var off = new V3(0, 0, side * 0.004f);
+                var n = new V3(0, 0, side * -1);
+                Quad(c, c.Plain, pts[0] + off, pts[1] + off, pts[2] + off, pts[5] + off, n, hide, null);
+                Quad(c, c.Plain, pts[5] + off, pts[2] + off, pts[3] + off, pts[4] + off, n, hide.Times(0.9f), null);
+            }
+
+            if (c.Lod <= 1)
+            {
+                // Thongs from its edges to the frame.
+                foreach (var (a, b) in new[] { (pts[0], new V3(-1.0f, 0.35f, 0)), (pts[1], new V3(1.0f, 0.35f, 0)), (pts[3], new V3(1.0f, 2.15f, 0)), (pts[4], new V3(-1.0f, 2.15f, 0)), (pts[2], new V3(1.05f, 1.2f, 0)), (pts[5], new V3(-1.05f, 1.2f, 0)) })
+                {
+                    Beam(c, c.Plain, a, b, 0.015f, 0.015f, new Tint(0.4f, 0.32f, 0.22f), false, null);
+                }
+            }
+        }
+
+        static void WeaponRack(Ctx c)
+        {
+            // A lacquered rack of spears, halberds and staves.
+            var wood = c.M("wood");
+            Box(c, wood, new V3(-1.4f, 0, -0.35f), new V3(1.4f, 0.15f, 0.35f), c.Accent.Times(0.8f), "wood");
+
+            for (var side = -1; side <= 1; side += 2)
+            {
+                Beam(c, wood, new V3(side * 1.35f, 0.15f, 0), new V3(side * 1.35f, 2.2f, 0), 0.1f, 0.1f, c.Accent);
+            }
+
+            Beam(c, wood, new V3(-1.45f, 1.7f, 0), new V3(1.45f, 1.7f, 0), 0.08f, 0.12f, c.Accent);
+
+            for (var i = 0; i < 7; i++)
+            {
+                var x = -1.05f + i * 0.35f;
+                var h = 2.5f + 0.5f * c.R(i, 1);
+                Beam(c, wood, new V3(x, 0.15f, -0.05f), new V3(x, h, 0.02f), 0.04f, 0.04f, c.Frame.Times(1.5f), true);
+
+                if (c.Lod <= 1)
+                {
+                    var steel = new Tint(0.55f, 0.57f, 0.6f);
+                    Beam(c, c.Plain, new V3(x, h, 0.02f), new V3(x, h + 0.35f, 0.02f), 0.02f, 0.07f, steel, true, null);
+
+                    if (i % 3 == 1)
+                    {
+                        // A halberd's blade and a red tassel.
+                        Beam(c, c.Plain, new V3(x, h - 0.15f, 0.02f), new V3(x + 0.2f, h + 0.05f, 0.02f), 0.015f, 0.18f, steel, true, null);
+                        Box(c, c.Plain, new V3(x - 0.04f, h - 0.4f, -0.02f), new V3(x + 0.04f, h - 0.15f, 0.06f), new Tint(0.6f, 0.1f, 0.08f), null);
+                    }
+                }
+            }
+        }
+
+        static void Dummy(Ctx c)
+        {
+            // A wooden training dummy: a post with three arms and a leg, on a stand.
+            var wood = c.M("wood");
+            var tint = c.Frame.Times(1.8f);
+            Box(c, wood, new V3(-0.45f, 0, -0.45f), new V3(0.45f, 0.12f, 0.45f), tint.Times(0.8f), "wood");
+            Post(c, wood, 0, 0, 0.12f, 1.75f, 0.14f, Sides(c, 10), tint);
+            Beam(c, wood, new V3(-0.05f, 1.35f, -0.1f), new V3(-0.25f, 1.4f, -0.5f), 0.05f, 0.05f, tint.Times(0.9f));
+            Beam(c, wood, new V3(0.05f, 1.35f, -0.1f), new V3(0.25f, 1.4f, -0.5f), 0.05f, 0.05f, tint.Times(0.9f));
+            Beam(c, wood, new V3(0, 1.05f, -0.1f), new V3(0, 1.0f, -0.48f), 0.05f, 0.05f, tint.Times(0.9f));
+            Beam(c, wood, new V3(0, 0.55f, -0.1f), new V3(0, 0.3f, -0.45f), 0.06f, 0.06f, tint.Times(0.9f));
+        }
+
+        static void Stall(Ctx c, float size)
+        {
+            // A market stall: a counter, four posts, a cloth awning sloping to the front, goods laid out.
+            var wood = c.M("wood");
+            var plank = c.M("plank");
+            var w = 1.5f * size;
+            var cloth = c.Plain;
+            var colours = new[] { new Tint(0.6f, 0.15f, 0.1f), new Tint(0.2f, 0.3f, 0.45f), new Tint(0.75f, 0.65f, 0.4f), new Tint(0.3f, 0.4f, 0.25f) };
+            var awning = colours[(int)(c.R(1, 1) * colours.Length) % colours.Length];
+
+            foreach (var (x, z, h) in new[] { (-w, -1.1f, 2.3f), (w, -1.1f, 2.3f), (-w, 1.0f, 2.7f), (w, 1.0f, 2.7f) })
+            {
+                Post(c, wood, x, z, 0, h, 0.05f, Sides(c, 6), c.Frame.Times(1.6f));
+            }
+
+            Box(c, plank, new V3(-w + 0.1f, 0, -0.9f), new V3(w - 0.1f, 0.9f, -0.4f), c.Frame.Times(2.2f), "plank");
+            Box(c, plank, new V3(-w + 0.05f, 0.9f, -0.95f), new V3(w - 0.05f, 0.96f, -0.35f), c.Frame.Times(2f), "plank");
+            var sag = c.Lod <= 1 ? 4 : 1;
+
+            for (var k = 0; k < sag; k++)
+            {
+                var t0 = k / (float)sag;
+                var t1 = (k + 1) / (float)sag;
+                float Y(float t) => 2.7f - 0.5f * t - 0.06f * (float)Math.Sin(Math.PI * t);
+                float Z(float t) => 1.05f - 2.4f * t;
+                Quad(c, cloth, new V3(-w - 0.1f, Y(t0), Z(t0)), new V3(w + 0.1f, Y(t0), Z(t0)), new V3(w + 0.1f, Y(t1), Z(t1)), new V3(-w - 0.1f, Y(t1), Z(t1)), new V3(0, 1, -0.2f), awning, null);
+                Quad(c, cloth, new V3(w + 0.1f, Y(t0) - 0.01f, Z(t0)), new V3(-w - 0.1f, Y(t0) - 0.01f, Z(t0)), new V3(-w - 0.1f, Y(t1) - 0.01f, Z(t1)), new V3(w + 0.1f, Y(t1) - 0.01f, Z(t1)), new V3(0, -1, 0), awning.Times(0.7f), null);
+            }
+
+            if (c.Lod <= 1)
+            {
+                // A valance along the front edge; goods on the counter: baskets, bundles, jars.
+                Quad(c, cloth, new V3(-w - 0.1f, 2.2f, -1.36f), new V3(w + 0.1f, 2.2f, -1.36f), new V3(w + 0.1f, 1.95f, -1.38f), new V3(-w - 0.1f, 1.95f, -1.38f), new V3(0, 0, -1), awning.Times(0.85f), null);
+
+                for (var i = 0; i < 5; i++)
+                {
+                    var x = -w + 0.35f + i * (2 * w - 0.7f) / 4;
+                    var kind = (int)(c.R(i, 9) * 3);
+                    var goods = new[] { new Tint(0.7f, 0.55f, 0.3f), new Tint(0.45f, 0.6f, 0.3f), new Tint(0.65f, 0.25f, 0.15f), new Tint(0.8f, 0.78f, 0.7f) }[(int)(c.R(i, 10) * 4) % 4];
+
+                    if (kind == 0)
+                    {
+                        Lathe(c, c.M("thatch"), new V3(x, 0.96f, -0.65f), new[] { (0f, 0.14f), (0.12f, 0.2f), (0.14f, 0.18f) }, Sides(c, 8), new Tint(0.8f, 0.7f, 0.5f), "thatch");
+                        Lathe(c, c.Plain, new V3(x, 1.05f, -0.65f), new[] { (0f, 0.16f), (0.06f, 0.12f), (0.1f, 0.01f) }, Sides(c, 8), goods, null);
+                    }
+                    else if (kind == 1)
+                    {
+                        Box(c, c.Plain, new V3(x - 0.15f, 0.96f, -0.8f), new V3(x + 0.15f, 1.1f, -0.5f), goods, null);
+                    }
+                    else
+                    {
+                        Lathe(c, c.Plain, new V3(x, 0.96f, -0.65f), new[] { (0f, 0.06f), (0.08f, 0.1f), (0.2f, 0.08f), (0.24f, 0.04f) }, Sides(c, 8), goods.Times(0.6f), null);
+                    }
+                }
+            }
+        }
+
+        static void Table(Ctx c)
+        {
+            // A square table with four stools (a teahouse's or a noodle stall's, set out in the street).
+            var wood = c.M("wood");
+            var tint = c.Frame.Times(1.7f);
+            Box(c, wood, new V3(-0.5f, 0.72f, -0.5f), new V3(0.5f, 0.78f, 0.5f), tint, "wood", true);
+
+            foreach (var (x, z) in new[] { (-0.42f, -0.42f), (0.42f, -0.42f), (0.42f, 0.42f), (-0.42f, 0.42f) })
+            {
+                Box(c, wood, new V3(x - 0.04f, 0, z - 0.04f), new V3(x + 0.04f, 0.72f, z + 0.04f), tint.Times(0.85f), "wood");
+            }
+
+            foreach (var (x, z) in new[] { (0f, -0.9f), (0.9f, 0f), (0f, 0.9f), (-0.9f, 0f) })
+            {
+                Lathe(c, wood, new V3(x, 0, z), new[] { (0f, 0.16f), (0.42f, 0.14f), (0.45f, 0.18f) }, Sides(c, 8), tint.Times(0.9f), "wood");
+            }
+
+            if (c.Lod <= 1)
+            {
+                // A teapot and cups.
+                Lathe(c, c.Plain, new V3(0, 0.78f, 0), new[] { (0f, 0.06f), (0.06f, 0.09f), (0.12f, 0.06f), (0.15f, 0.02f) }, 8, new Tint(0.35f, 0.25f, 0.18f), null);
+
+                for (var i = 0; i < 3; i++)
+                {
+                    var a = i * 2.1f;
+                    Lathe(c, c.Plain, new V3((float)Math.Cos(a) * 0.25f, 0.78f, (float)Math.Sin(a) * 0.25f), new[] { (0f, 0.025f), (0.05f, 0.035f) }, 6, new Tint(0.85f, 0.85f, 0.8f), null);
+                }
+            }
+        }
+
+        static void Barrels(Ctx c)
+        {
+            // Barrels of wine or oil, hooped, one lying on its side.
+            var wood = c.M("wood");
+            var tint = c.Frame.Times(2f);
+            var profile = new[] { (0f, 0.3f), (0.2f, 0.36f), (0.45f, 0.38f), (0.7f, 0.36f), (0.9f, 0.3f) };
+            Lathe(c, wood, new V3(-0.45f, 0, 0.1f), profile, Sides(c, 12), tint, "wood");
+            Lathe(c, wood, new V3(0.35f, 0, 0.25f), profile, Sides(c, 12), tint.Times(0.9f), "wood");
+
+            if (c.Lod <= 1)
+            {
+                foreach (var x in new[] { -0.45f, 0.35f })
+                {
+                    var z = x < 0 ? 0.1f : 0.25f;
+                    Lathe(c, c.Plain, new V3(x, 0.89f, z), new[] { (0f, 0.3f), (0.01f, 0.01f) }, Sides(c, 12), tint.Times(0.7f), null);
+
+                    foreach (var y in new[] { 0.12f, 0.75f })
+                    {
+                        Lathe(c, c.Plain, new V3(x, y, z), new[] { (0f, 0.35f + 0.02f * (y < 0.4f ? 0 : 1)), (0.05f, 0.36f + 0.02f * (y < 0.4f ? 0 : 1)) }, Sides(c, 12), new Tint(0.15f, 0.14f, 0.13f), null);
+                    }
+                }
+            }
+
+            Log(c, wood, new V3(-0.4f, 0.32f, -0.55f), new V3(0.5f, 0.32f, -0.55f), 0.32f, Sides(c, 10), tint.Times(0.95f));
         }
 
         static void Grave(Ctx c, float size)

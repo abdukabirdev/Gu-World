@@ -41,7 +41,31 @@ static class BuildingChecks
 
             var made = new Glb.Part { Name = $"{prefix}_{part.Material.Replace(':', '_')}", Mesh = part.Mesh };
 
-            if (part.Material.StartsWith("tex:"))
+            if (part.Material.StartsWith("bark:") || part.Material.StartsWith("leaf:"))
+            {
+                // A yard's tree: its textures from the trees' folder beside.
+                var name = part.Material.Substring(5);
+                var leaf = part.Material.StartsWith("leaf:");
+                made.Texture = $"{tex}/../tex/{name}.{(leaf ? "png" : "jpg")}";
+                made.Mask = leaf;
+                made.TwoSided = leaf;
+
+                if (!leaf)
+                {
+                    made.Normal = $"{tex}/../tex/{name}_n.png";
+                    made.Tints = new float[part.Mesh.VertexCount * 3];
+
+                    for (var i = 0; i < part.Mesh.VertexCount; i++)
+                    {
+                        var moss = Math.Clamp(part.Mesh.Colours[i * 4] * 1.4f - 0.2f, 0, 1);
+                        var shade = part.Mesh.Colours[i * 4 + 1];
+                        made.Tints[i * 3] = (1 - moss * 0.58f) * shade;
+                        made.Tints[i * 3 + 1] = (1 - moss * 0.22f) * shade;
+                        made.Tints[i * 3 + 2] = (1 - moss * 0.7f) * shade;
+                    }
+                }
+            }
+            else if (part.Material.StartsWith("tex:"))
             {
                 var name = part.Material.Substring(4);
                 made.Texture = $"{tex}/{name}.jpg";

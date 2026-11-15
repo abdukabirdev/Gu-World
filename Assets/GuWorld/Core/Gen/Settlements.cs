@@ -14,6 +14,9 @@ namespace GuWorld.Core.Gen
         /// <summary>What it is for in the settlement: "house", "hall", "shop", "inn", "smithy", "herbalist", "nursery", "prop", "wall", "gate", "fence", "lamp".</summary>
         public string Role = "house";
 
+        /// <summary>The hand-made model it stood for before a generated building took its place (GenHouses), or null.</summary>
+        public string Origin;
+
         /// <summary>The point before its door, a step out from its front.</summary>
         public Vec2 Door => Footprint.World(new Vec2(0, Footprint.Half.Z + 1.6f));
     }

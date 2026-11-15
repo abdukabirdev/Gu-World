@@ -145,13 +145,13 @@ namespace GuWorld.Actors
 
             if (!string.IsNullOrEmpty(made.TopModel))
             {
-                // The building on a tower or over a gate, facing into the settlement as the piece faces out.
+                // The building on a tower or over a gate, facing into the settlement (+Z of the piece) as the piece faces out.
                 var bits = model.Split(':');
                 var clan = bits.Length > 4 ? bits[4] : "";
                 var top = $"{GenBuilding.Prefix}{made.TopModel}:{(bits.Length > 3 ? bits[3] : "1")}:{clan}:6:3:{made.TopWidth.ToString("0.0", System.Globalization.CultureInfo.InvariantCulture)}:{made.TopDepth.ToString("0.0", System.Globalization.CultureInfo.InvariantCulture)}";
                 var building = GenBuilding.Make(top, root.transform, Vector3.zero, 0);
                 building.transform.localPosition = new Vector3(0, made.TopY, 0);
-                building.transform.localRotation = Quaternion.Euler(0, 180, 0);
+                building.transform.localRotation = Quaternion.identity;
             }
 
             return root;

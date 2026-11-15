@@ -93,6 +93,12 @@ namespace GuWorld.Core.Gen
                 }
             }
 
+            // Generated buildings in the places of the hand-made ones (their roles, doors and spots kept).
+            foreach (var settlement in Settlements)
+            {
+                Buildings.GenHouses.Convert(settlement);
+            }
+
             Stage("settlements");
             Surface = new Surface(this);
             Scatter = new Scatter(this);

@@ -88,6 +88,18 @@ namespace GuWorld.Core.Gen.Buildings
 
         public static readonly RampartStyle[] All = { Stone, Earth, Plaster, Palisade, Bamboo };
 
+        /// <summary>A courtyard's wall: white plaster under a tiled cap.</summary>
+        public static readonly RampartStyle YardPlaster = new RampartStyle
+        {
+            Id = "yard_plaster", Name = "Yard wall", Kind = RampartKind.Plaster, Height = 2.8f, Thickness = 0.45f, Batter = 0, Footing = 0.7f, Cap = true, Piece = 9,
+        };
+
+        /// <summary>A poorer courtyard's wall: rammed earth under a tiled cap.</summary>
+        public static readonly RampartStyle YardEarth = new RampartStyle
+        {
+            Id = "yard_earth", Name = "Earth yard wall", Kind = RampartKind.Earth, Height = 2.4f, Thickness = 0.6f, Batter = 0.06f, Footing = 0.5f, Cap = true, Piece = 9,
+        };
+
         public static RampartStyle Get(string id)
         {
             foreach (var style in All)
@@ -98,7 +110,7 @@ namespace GuWorld.Core.Gen.Buildings
                 }
             }
 
-            return Earth;
+            return id == "yard_plaster" ? YardPlaster : id == "yard_earth" ? YardEarth : Earth;
         }
 
         /// <summary>The ring a settlement gets: by its clan and its size.</summary>

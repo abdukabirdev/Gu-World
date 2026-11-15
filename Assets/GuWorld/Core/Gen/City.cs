@@ -54,6 +54,11 @@ namespace GuWorld.Core.Gen
         /// <summary>How many people live in a building of a model.</summary>
         public static int Occupants(string model)
         {
+            if (model != null && model.StartsWith("gen:", StringComparison.Ordinal))
+            {
+                return Buildings.GenHouses.Occupants(model);
+            }
+
             switch (model)
             {
                 case "kit_courtyard":

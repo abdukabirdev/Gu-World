@@ -68,6 +68,12 @@ namespace GuWorld.Core.Gen.Buildings
         public bool Sign;
         /// <summary>The frame's wood: lacquered in the clan's colour (true) or left dark.</summary>
         public bool Lacquer;
+        /// <summary>The chance of a chimney of brick through the roof (a kitchen, a forge: 1).</summary>
+        public float Chimney;
+        /// <summary>A forge in the open front: a hearth of glowing coals, an anvil, a water trough.</summary>
+        public bool Forge;
+        /// <summary>Not one building but a walled yard of them (CompoundGen): 1 a family's courtyard house, 2 an academy, 3 a temple.</summary>
+        public int Compound;
     }
 
     /// <summary>What is asked of one building.</summary>
@@ -83,6 +89,8 @@ namespace GuWorld.Core.Gen.Buildings
         public float Wear;
         /// <summary>The clan whose colours it wears: "gu_yue" (red lacquer, gold moon), "xiong" (raw dark timber, ochre), "bai" (white), "" (none).</summary>
         public string Clan;
+        /// <summary>How far the ground falls away under the building, metres: it stands on a terrace of stone that high.</summary>
+        public float Terrace;
     }
 
     /// <summary>A door of a building: where it is and which way it faces (the model's space).</summary>
@@ -117,7 +125,7 @@ namespace GuWorld.Core.Gen.Buildings
             // A poor family's hut: mud walls, a thick thatch, hardly a window.
             Id = "hut", Name = "Mud hut", MinBaysX = 2, MaxBaysX = 3, MinBaysZ = 1, MaxBaysZ = 2, Bay = 2.6f, StoreyHeight = 2.5f, Plinth = 0.2f,
             Roof = RoofKind.Hip, Cover = RoofCover.Thatch, Pitch = 0.85f, Curve = 0.08f, Upturn = 0, Overhang = 0.8f, Walls = WallKind.Mud, Dado = WallKind.Mud,
-            Windows = 0.25f, Ornament = 0, Lanterns = 0,
+            Windows = 0.25f, Ornament = 0, Lanterns = 0, Chimney = 0.5f,
         };
 
         public static readonly BuildingStyle Cottage = new BuildingStyle
@@ -125,7 +133,7 @@ namespace GuWorld.Core.Gen.Buildings
             // A villager's house of planks under shingles, a porch along its front.
             Id = "cottage", Name = "Plank cottage", MinBaysX = 3, MaxBaysX = 3, MinBaysZ = 2, MaxBaysZ = 2, Bay = 2.8f, StoreyHeight = 2.7f, Plinth = 0.35f,
             Roof = RoofKind.Gable, Cover = RoofCover.Shingle, Pitch = 0.7f, Curve = 0.12f, Upturn = 0.12f, Overhang = 0.9f, Walls = WallKind.Plank, Dado = WallKind.Plank,
-            Veranda = 1.5f, Windows = 0.45f, Ornament = 0.05f, Lanterns = 1,
+            Veranda = 1.5f, Windows = 0.45f, Ornament = 0.05f, Lanterns = 1, Chimney = 0.6f,
         };
 
         public static readonly BuildingStyle Stilt = new BuildingStyle
@@ -141,7 +149,7 @@ namespace GuWorld.Core.Gen.Buildings
             // A clansman's house: white plaster in a dark frame, grey tiles.
             Id = "house", Name = "Clan house", MinBaysX = 3, MaxBaysX = 5, MinBaysZ = 2, MaxBaysZ = 2, Bay = 3.0f, StoreyHeight = 3.0f, Plinth = 0.45f,
             Roof = RoofKind.Gable, Cover = RoofCover.Tile, Pitch = 0.62f, Curve = 0.28f, Upturn = 0.35f, Overhang = 1.0f, Walls = WallKind.Plaster, Dado = WallKind.Brick,
-            Windows = 0.5f, Brackets = 0, Ornament = 0.3f, Lanterns = 2,
+            Windows = 0.5f, Brackets = 0, Ornament = 0.3f, Lanterns = 2, Chimney = 0.5f,
         };
 
         public static readonly BuildingStyle Townhouse = new BuildingStyle
@@ -165,7 +173,7 @@ namespace GuWorld.Core.Gen.Buildings
             // An inn or a tavern: broad, three storeys of galleries, lanterns at every post.
             Id = "inn", Name = "Inn", MinBaysX = 5, MaxBaysX = 5, MinBaysZ = 3, MaxBaysZ = 3, Bay = 3.2f, MinStoreys = 2, MaxStoreys = 3, StoreyHeight = 3.1f, Plinth = 0.6f,
             Roof = RoofKind.HipGable, Cover = RoofCover.Tile, Pitch = 0.66f, Curve = 0.34f, Upturn = 0.8f, Overhang = 1.3f, Walls = WallKind.Plank, Dado = WallKind.Brick,
-            Veranda = 1.8f, Balcony = 1, Windows = 0.7f, Brackets = 2, Ornament = 0.6f, Shrink = 0.7f, Lanterns = 6, Sign = true, Lacquer = true,
+            Veranda = 1.8f, Balcony = 1, Windows = 0.7f, Brackets = 2, Ornament = 0.6f, Shrink = 0.7f, Lanterns = 6, Sign = true, Lacquer = true, Chimney = 1,
         };
 
         public static readonly BuildingStyle Hall = new BuildingStyle
@@ -222,9 +230,64 @@ namespace GuWorld.Core.Gen.Buildings
             Id = "granary", Name = "Storehouse", MinBaysX = 3, MaxBaysX = 4, MinBaysZ = 2, MaxBaysZ = 2, Bay = 3.3f, StoreyHeight = 3.6f, Plinth = 0.7f,
             Roof = RoofKind.Gable, Cover = RoofCover.Tile, Pitch = 0.58f, Curve = 0.2f, Upturn = 0.2f, Overhang = 0.8f, Walls = WallKind.Brick, Dado = WallKind.Stone,
             Windows = 0.15f, Ornament = 0.15f, Lanterns = 1,
+            // (A plain building that cannot be sat in: no chimney.)
         };
 
-        public static readonly BuildingStyle[] All = { Hut, Cottage, Stilt, House, Townhouse, Shop, Inn, Hall, GreatHall, Tower, Watchtower, Pavilion, Gate, Granary };
+        public static readonly BuildingStyle Smithy = new BuildingStyle
+        {
+            // A smithy: open to the street, a forge glowing under a deep eave, a tall brick chimney.
+            Id = "smithy", Name = "Smithy", MinBaysX = 3, MaxBaysX = 3, MinBaysZ = 2, MaxBaysZ = 2, Bay = 3.0f, StoreyHeight = 3.4f, Plinth = 0.3f,
+            Roof = RoofKind.Gable, Cover = RoofCover.Tile, Pitch = 0.55f, Curve = 0.2f, Upturn = 0.2f, Overhang = 1.4f, Walls = WallKind.Brick, Dado = WallKind.Stone,
+            OpenFront = true, Windows = 0.2f, Ornament = 0.1f, Lanterns = 1, Sign = true, Chimney = 1, Forge = true,
+        };
+
+        public static readonly BuildingStyle Temple = new BuildingStyle
+        {
+            // A temple of the ancestors: red walls, a lattice front behind a colonnade, a double-eaved hip-and-gable roof.
+            Id = "temple", Name = "Ancestral temple", MinBaysX = 5, MaxBaysX = 5, MinBaysZ = 3, MaxBaysZ = 3, Bay = 3.6f, MinStoreys = 2, MaxStoreys = 2, StoreyHeight = 4.4f, Plinth = 1.6f,
+            Roof = RoofKind.HipGable, Cover = RoofCover.Tile, Pitch = 0.74f, Curve = 0.45f, Upturn = 1.4f, Overhang = 1.9f, Walls = WallKind.Plaster, Dado = WallKind.Brick,
+            Veranda = 2.4f, Balcony = 0, Windows = 0.3f, LatticeFront = true, Brackets = 2, Ornament = 1, Shrink = 2.0f, Lanterns = 4, Lacquer = true, Sign = true,
+        };
+
+        public static readonly BuildingStyle MarketRow = new BuildingStyle
+        {
+            // A row of shops under one long roof along a street, each open to it.
+            Id = "market_row", Name = "Market row", MinBaysX = 6, MaxBaysX = 9, MinBaysZ = 2, MaxBaysZ = 2, Bay = 3.0f, StoreyHeight = 3.0f, Plinth = 0.3f,
+            Roof = RoofKind.Gable, Cover = RoofCover.Tile, Pitch = 0.55f, Curve = 0.25f, Upturn = 0.35f, Overhang = 1.6f, Walls = WallKind.Plank, Dado = WallKind.Plank,
+            OpenFront = true, Windows = 0.3f, Brackets = 0, Ornament = 0.25f, Lanterns = 6, Sign = true, Lacquer = true,
+        };
+
+        public static readonly BuildingStyle Dorm = new BuildingStyle
+        {
+            // A long dormitory of two storeys, galleries along its front.
+            Id = "dorm", Name = "Dormitory", MinBaysX = 7, MaxBaysX = 9, MinBaysZ = 2, MaxBaysZ = 2, Bay = 3.0f, MinStoreys = 2, MaxStoreys = 2, StoreyHeight = 2.9f, Plinth = 0.5f,
+            Roof = RoofKind.HipGable, Cover = RoofCover.Tile, Pitch = 0.6f, Curve = 0.3f, Upturn = 0.5f, Overhang = 1.1f, Walls = WallKind.Plaster, Dado = WallKind.Brick,
+            Veranda = 1.6f, Balcony = 1, Windows = 0.8f, Brackets = 1, Ornament = 0.4f, Shrink = 0.2f, Lanterns = 4, Lacquer = true, Chimney = 0.5f,
+        };
+
+        public static readonly BuildingStyle Nursery = new BuildingStyle
+        {
+            // A Gu nursery: a long low hall nearly all lattice, for light and air, jars on the shelves inside.
+            Id = "nursery", Name = "Gu nursery", MinBaysX = 5, MaxBaysX = 6, MinBaysZ = 2, MaxBaysZ = 2, Bay = 3.0f, StoreyHeight = 3.2f, Plinth = 0.7f,
+            Roof = RoofKind.HipGable, Cover = RoofCover.Tile, Pitch = 0.6f, Curve = 0.35f, Upturn = 0.7f, Overhang = 1.3f, Walls = WallKind.Plank, Dado = WallKind.Brick,
+            Veranda = 1.5f, Windows = 1, LatticeFront = true, Brackets = 1, Ornament = 0.6f, Lanterns = 2, Lacquer = true,
+        };
+
+        public static readonly BuildingStyle Courtyard = new BuildingStyle
+        {
+            // A family's courtyard house: a wall round a yard, a gate, the main house at the back, wings either side.
+            Id = "courtyard", Name = "Courtyard house", Bay = 3.0f, StoreyHeight = 3.0f, Plinth = 0.45f, Walls = WallKind.Plaster, Dado = WallKind.Brick, Compound = 1,
+            Roof = RoofKind.Gable, Cover = RoofCover.Tile, Pitch = 0.6f, Curve = 0.3f, Upturn = 0.4f, Overhang = 1.0f, Ornament = 0.3f,
+        };
+
+        public static readonly BuildingStyle Academy = new BuildingStyle
+        {
+            // The clan's academy: a great yard for bouts, the lecture hall at its head, dormitories down its sides.
+            Id = "academy", Name = "Academy", Bay = 3.6f, StoreyHeight = 4.0f, Plinth = 1.0f, Walls = WallKind.Plaster, Dado = WallKind.Brick, Compound = 2,
+            Roof = RoofKind.HipGable, Cover = RoofCover.Tile, Pitch = 0.7f, Curve = 0.4f, Upturn = 1.1f, Overhang = 1.6f, Ornament = 0.9f, Lacquer = true,
+        };
+
+        public static readonly BuildingStyle[] All = { Hut, Cottage, Stilt, House, Townhouse, Shop, Inn, Hall, GreatHall, Tower, Watchtower, Pavilion, Gate, Granary, Smithy, Temple, MarketRow, Dorm, Nursery, Courtyard, Academy };
 
         public static BuildingStyle Get(string id)
         {

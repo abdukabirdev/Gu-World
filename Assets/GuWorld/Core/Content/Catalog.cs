@@ -179,6 +179,14 @@ namespace GuWorld.Core
                     var style = Gen.Buildings.Buildings.Get(bits.Length > 1 ? bits[1] : "house");
                     width = style.Bay * (style.MinBaysX + style.MaxBaysX) * 0.5f + 2 * style.Overhang;
                     depth = style.Bay * (style.MinBaysZ + style.MaxBaysZ) * 0.5f + style.Veranda + 2 * style.Overhang;
+
+                    // A lot asked for in the name ("gen:style:seed:clan:wealth:wear:width:depth").
+                    if (bits.Length > 7 && float.TryParse(bits[6], System.Globalization.NumberStyles.Float, System.Globalization.CultureInfo.InvariantCulture, out var w) && w > 0 &&
+                        float.TryParse(bits[7], System.Globalization.NumberStyles.Float, System.Globalization.CultureInfo.InvariantCulture, out var d) && d > 0)
+                    {
+                        width = w;
+                        depth = d;
+                    }
                     height = style.Plinth + style.StoreyHeight * (style.MinStoreys + style.MaxStoreys) * 0.5f + depth * style.Pitch * 0.5f;
                 }
 

@@ -86,6 +86,13 @@ def dress(objects, tex_dir, glow):
         mat = bpy.data.materials.new(name)
         if kind.startswith('tex_'):
             textured(mat, tex_dir, kind[4:])
+        elif kind.startswith('bark_') or kind.startswith('leaf_') or kind.startswith('needle_') or kind.startswith('blossom_') or kind.startswith('hang_') or kind.startswith('scale_'):
+            # A tree in a yard: lit as the tree renders do (raw weights are not kept, so plain textured).
+            tree_dir = os.path.join(os.path.dirname(tex_dir), 'tex')
+            if kind.startswith('bark_'):
+                textured(mat, tree_dir, kind[5:])
+            else:
+                treeshots.leaf_material(mat, tree_dir, kind[5:])
         elif kind == 'ground':
             mat.use_nodes = True
             nodes, links = mat.node_tree.nodes, mat.node_tree.links
@@ -137,18 +144,26 @@ def main():
             objects = load_glb(os.path.join(gen, name + '.glb') if '/' in name else os.path.join(gen, 'buildings', f'{name}_lod{lod}.glb'))
             dress(objects, tex_dir, 2.5 if view == 'd' else 0.9)
             lo, hi = bounds(objects)
-            treeshots.GROUND_Z = -12 if '/' in name else 0
+            treeshots.GROUND_Z = (lo.z - 3) if '/' in name else 0
             mid = (lo + hi) / 2
             r = max(hi.x - lo.x, hi.y - lo.y, hi.z * 0.9)
             front = hi.y + 2.5
             person = (lo.x * 0.25 + 1.2, front - 1.0)
             if '/' in name:
                 # A scene: the gate at the origin, the outside toward +Y; `size` of the view from the scene's name.
-                reach = 140 if 'stone' in name else 30 if 'bamboo' in name else 32 if 'things' in name else 80
+                reach = 150 if 'towns' in name else 140 if 'stone' in name else 30 if 'bamboo' in name else 32 if 'things' in name else 80
                 if 'things' in name:
                     eye = (0, 34, 9) if view != 'f' else (-14, 9, 2.4)
                     target = (0, 3, 0.5) if view != 'f' else (-17, 0, 1.2)
                     lens = 24
+                elif 'towns' in name and view in 'td':
+                    eye = (reach * 0.55, reach * 0.75, reach * 0.42)
+                    target = (0, 0, 0)
+                    lens = 30
+                elif 'towns' in name and view == 'f':
+                    eye = (reach * 0.25, reach * 0.3, reach * 0.12)
+                    target = (-reach * 0.05, -reach * 0.05, 0)
+                    lens = 30
                 elif view in 'td':
                     eye = (reach * 0.42, reach * 0.62, reach * 0.24)
                     target = (0, reach * 0.05, reach * 0.03)

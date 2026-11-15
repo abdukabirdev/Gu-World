@@ -51,6 +51,11 @@ static partial class Program
                 FortChecks.Run(repo, Check, genReport, export);
             }
 
+            if (Array.IndexOf(what, "town") >= 0)
+            {
+                TownScene.Run(repo, Check, genReport, args);
+            }
+
             if (Array.IndexOf(what, "people") >= 0)
             {
                 GenChecks.PeopleChecks(repo, Check, genReport, export);

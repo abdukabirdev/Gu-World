@@ -228,7 +228,7 @@ namespace GuWorld.Editor
                     {
                         var top = GenBuilding.Make($"{GenBuilding.Prefix}{model.TopModel}:1:{clan}:6:3:{model.TopWidth.ToString("0.0", System.Globalization.CultureInfo.InvariantCulture)}:{model.TopDepth.ToString("0.0", System.Globalization.CultureInfo.InvariantCulture)}", root.transform, Vector3.zero, 0);
                         top.transform.localPosition = new Vector3(0, model.TopY, 0);
-                        top.transform.localRotation = Quaternion.Euler(0, 180, 0);
+                        top.transform.localRotation = Quaternion.identity;
                     }
 
                     Save(root, "Rings", $"{style.Id}_{what}");
