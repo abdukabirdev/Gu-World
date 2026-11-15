@@ -179,6 +179,31 @@ Scripts/Actors/GenFort.cs       в игре: "fort:<вид>:<wall|tower|gate>:<�
 **Слабое:** ров и вал не делаются (нужно править рельеф); лестниц на стену изнутри нет; у
 дальних кусков на склоне рельеф не учтён (рисуются как на ровном).
 
+## Деревни по ярусам и подземелье (15.11.2026)
+
+План и что говорит новелла — `Docs/V2/PLAN-TOWNS.md`. Коротко:
+- `Core/Gen/Buildings/ClanTowns.cs` — данные трёх кланов: ярусы (доли застраиваемой земли от
+  центра), фракции (цвет лака и фонарей, поля, люди из новеллы, пометка «новелла / для игры»),
+  главное здание, здания сердца, именные здания внешних ярусов (таверны, постоялый двор, ночлежка).
+- Метка клана может нести фракцию: `gu_yue.chi` — лак, фонари, знамёна ветви Чи (`Factions`).
+- `Core/Gen/CityTiers.cs` — раскладка: сердце (павильон + мощёная площадь, залы), секторы фракций
+  (усадьба, кухня, склад, тренировочная площадка, поля, знамёна), лоты по ярусам; обрыв между
+  местом и центром (берег под городом) — дальше от центра. Деревни Сюн и Бай — тем же кодом
+  (`VillageHeart` / `VillageRest`), их улочки идут по склону (`ContourLanes`, `ContourBranches`).
+- Новые здания: `clan_pavilion`, `bamboo` (зелёный бамбук на сваях, гл. 3), `kitchen`, `tavern`,
+  `lodging`, `manor`; вещи: `training`, `ring`, `herbs`, `hives`, `censer`, `plaza`.
+- `Core/Gen/Buildings/DepthsGen.cs` — подземелье под павильоном: лестница, пещера источника с
+  морем лунных орхидей и постом Тёмного зала, комнаты Гу по рангам, запретная комната, Тайный зал,
+  шахта и кровавый пруд с гробом первого главы (−50 м). В игре — комната `gu_yue_depths`
+  (`Interiors`, `Rooms`, `World/GenDepths.cs`), вход — `door_gu_yue_depths` у ступеней павильона
+  (нужна честь клана «honoured»).
+- Карты (`Logs/V2/gu_yue_town.png`, `bai_village.png`, `xiong_village.png`) красят здания по
+  районам: белое — именные, золото — сердце, цвета фракций, голубое — Гу-мастера, бежевое —
+  простые, серое — бедные.
+
+Картинки: `towns-tiers-map.jpg`, `towns-districts.jpg`, `villages-tiers-map.jpg`,
+`villages-tiers.jpg`, `buildings-tiers.jpg`, `depths.jpg`.
+
 ## Проверки (в облаке, без Unity)
 
 ```
@@ -186,11 +211,16 @@ cd Tools/V2/Sim
 dotnet run -c Release -- gen                    # деревья, биомы: проверки + Logs/V2/gen/biomes.png
 dotnet run -c Release -- gen export only=buildings  # здания → Logs/V2/gen/buildings
 dotnet run -c Release -- gen export only=forts      # стены, башни, ворота, вещи окраин → Logs/V2/gen/forts
+dotnet run -c Release -- gen export only=depths     # подземелье клана → Logs/V2/gen/depths (+ свет и места .json)
+dotnet run -c Release -- gen export only=town town=gu_yue at=x,z size=170  # кусок деревни сценой → Logs/V2/gen/towns
+dotnet run -c Release -- gen only=town profile=x0,z0,x1,z1                # высоты земли по линии через 6 м
 dotnet run -c Release -- gen export only=trees  # + .glb (4 уровня и _raw для Blender) в Logs/V2/gen/trees
 cd ../models
 python treetex.py                               # перерисовать текстуры в Resources/Trees (≈3 мин)
 python treetex.py ../../../Logs/V2/gen/tex - ../../../Logs/V2/gen/tex   # копия для .glb + карты нормалей
 python treeshots.py ../../../Logs/V2/gen out.png pine_1,ancient_2 wfcu  # рендер: целиком, подножие, крона, вид вверх
+python buildshots.py ../../../Logs/V2/gen out.png towns/gu_yue_-115_115 tf   # сцена деревни
+python depthshots.py ../../../Logs/V2/gen out.png                         # подземелье изнутри (8 видов)
 bash ../check.sh                                # всё остальное + компиляция Unity-слоя
 ```
 
@@ -214,6 +244,13 @@ bash ../check.sh                                # всё остальное + к
 - Берёза была «брокколи» — крона облегчена, ветви свисают.
 
 ## Что проверить в Unity (агенту в VS Code) — ничего из этого в движке ещё не запускалось
+
+**Ярусы и подземелье (15.11):** павильон клана с площадью к северо-западу от сердца (≈ −115, 115);
+усадьбы фракций; зелёные бамбуковые дома; FPS города (зданий стало больше — около 1500).
+Подземелье: дать герою честь «honoured» (или временно убрать `Needs` у `door_gu_yue_depths`),
+войти у ступеней павильона, пройти лестницу, пещеру источника, коридор комнат Гу, тёмный ход к
+Тайному залу, шахту и кровавый пруд. Проверить: пол держит везде, свет виден, нет дыр на стыках
+пещер и ходов, новая текстура `Resources/Buildings/rock.jpg` подхватилась.
 
 1. Импорт: `Resources/Trees/*.jpg|png` (обычные текстуры, sRGB), три новых шейдера
    `Resources/Shaders/Tree*.shader`. Ошибки компиляции шейдеров — первым делом.

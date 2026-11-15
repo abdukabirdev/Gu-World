@@ -51,6 +51,12 @@ static class PropChecks
         // The rooms' shells (seen from inside, so a share of their faces turn away from a camera outside: not counted).
         foreach (var room in Interiors.All)
         {
+            // (The clan's underground is dug in code, not a shell: DepthsChecks.)
+            if (room.Style == "depths")
+            {
+                continue;
+            }
+
             var shell = Props.Room(room.Width, room.Depth, room.Height, room.Style);
             check(shell.TriangleCount > 0 && shell.TriangleCount < 24000, $"room {room.Id}: {shell.TriangleCount} triangles");
 

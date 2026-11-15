@@ -94,6 +94,11 @@ namespace GuWorld.Core
                     ("prop_moonlight_gu", 0.3f, 7.1f, 0f), ("prop_white_jade_gu", -0.3f, 7.2f, 0f),
                 }
             },
+            // The clan's underground under its pavilion (Core/Gen/Buildings/DepthsGen): made in code, not furnished.
+            new InteriorDef
+            {
+                Id = "gu_yue_depths", Name = "Подземелье клана Гу Юэ", Width = 150, Depth = 200, Height = 60, Style = "depths", Lights = 0,
+            },
         };
 
         public static InteriorDef Get(string id)
@@ -109,9 +114,14 @@ namespace GuWorld.Core
             return null;
         }
 
-        /// <summary>Where the rooms hang: far above the north-east corner of the world, side by side.</summary>
+        /// <summary>Where the rooms hang: far above the north-east corner of the world, side by side (the clan's underground apart, it is big).</summary>
         public static (float x, float y, float z) Origin(string id)
         {
+            if (Get(id)?.Style == "depths")
+            {
+                return (6900, 2700, 6650);
+            }
+
             var index = 0;
 
             for (var i = 0; i < All.Length; i++)

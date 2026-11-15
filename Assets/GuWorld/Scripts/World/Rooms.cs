@@ -42,7 +42,8 @@ namespace GuWorld.World
             return new Vector3(x, y, z);
         }
 
-        static Vector3 DoorStep(InteriorDef room) => OriginOf(room) + new Vector3(0, 0.15f, -room.Depth / 2 + 1.6f);
+        // (The underground's way in is the top of its stair, at its origin.)
+        static Vector3 DoorStep(InteriorDef room) => OriginOf(room) + (room.Style == "depths" ? new Vector3(0, 0.15f, 0.4f) : new Vector3(0, 0.15f, -room.Depth / 2 + 1.6f));
 
         Enemy partner;
 
@@ -182,6 +183,13 @@ namespace GuWorld.World
             root.SetParent(transform, false);
             root.position = OriginOf(room);
             built[room.Id] = root;
+
+            if (room.Style == "depths")
+            {
+                // The clan's underground, dug in code: its rock, rooms and lights, the Dark Hall's guards.
+                GenDepths.Build(root, "gu_yue", 7);
+                return;
+            }
 
             var mesh = Meshes.From(Props.Room(room.Width, room.Depth, room.Height, room.Style), room.Id);
             var shell = new GameObject("Shell");

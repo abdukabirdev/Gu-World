@@ -421,7 +421,28 @@ def log(rng):
     return shade(base, h, 0.45), h
 
 
-ALL = {'wood': wood, 'plank': plank, 'plaster': plaster, 'mud': mud, 'stone': stone, 'brick': brick, 'bamboo': bamboo, 'tile': tile, 'thatch': thatch, 'shingle': shingle, 'rammed': rammed, 'log': log}
+def rock(rng):
+    """Living rock of a cave: strata running along u, bulges and hollows, a few cracks, damp patches, pale mineral seams; light so a red earth or a grey stone can be tinted in."""
+    u, v = grid()
+    warp = (fbm(rng, 4, 4, 3) - 0.5) * 0.15
+    strata = 0.5 + 0.5 * np.sin((v + warp) * 6.283 * 9 + 4 * fbm(rng, 5, 2, 3))
+    bumps = fbm(rng, 6, 6, 5)
+    knobs = fbm(rng, 18, 18, 4)
+    fine = fbm(rng, 110, 110, 3)
+    f1, f2, ids = voronoi(rng, 18, 1.0, 0.6)
+    crack = (1 - smooth(0.0, 0.0025, f2 - f1)) * smooth(0.5, 0.62, fbm(rng, 5, 5, 3))
+    slab = per(ids, 51, 256)
+    h = 0.5 + 0.3 * (bumps - 0.5) + 0.15 * (knobs - 0.5) + 0.1 * (strata - 0.5) + 0.06 * (slab - 0.5) - 0.3 * crack + 0.06 * (fine - 0.5)
+    base = col((0.58, 0.55, 0.5)) * (0.9 + 0.12 * slab[..., None]) * (0.82 + 0.25 * strata[..., None]) * (0.8 + 0.35 * bumps[..., None]) * (0.88 + 0.2 * fine[..., None])
+    seam = smooth(0.78, 0.82, fbm(rng, 3, 16, 3))
+    base = mix(base, col((0.82, 0.82, 0.78)), seam * 0.35)
+    base = mix(base, col((0.1, 0.09, 0.08)), crack * 0.8)
+    damp = smooth(0.6, 0.8, fbm(rng, 7, 7, 4)) * 0.3
+    base = base * (1 - damp[..., None])
+    return shade(base, h, 0.7), h
+
+
+ALL = {'wood': wood, 'plank': plank, 'plaster': plaster, 'mud': mud, 'stone': stone, 'brick': brick, 'bamboo': bamboo, 'tile': tile, 'thatch': thatch, 'shingle': shingle, 'rammed': rammed, 'log': log, 'rock': rock}
 
 
 def main():

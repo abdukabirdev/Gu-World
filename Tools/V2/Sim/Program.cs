@@ -33,7 +33,7 @@ static partial class Program
         {
             var genReport = new List<string>();
             var export = Array.IndexOf(args, "export") >= 0;
-            var only = Array.Find(args, a => a.StartsWith("only=")) ?? "only=trees,buildings,forts,biomes";
+            var only = Array.Find(args, a => a.StartsWith("only=")) ?? "only=trees,buildings,forts,biomes,depths";
             var what = only.Substring(5).Split(',');
 
             if (Array.IndexOf(what, "trees") >= 0)
@@ -59,6 +59,11 @@ static partial class Program
             if (Array.IndexOf(what, "town") >= 0)
             {
                 TownScene.Run(repo, Check, genReport, args);
+            }
+
+            if (Array.IndexOf(what, "depths") >= 0)
+            {
+                DepthsChecks.Run(repo, Check, genReport, export);
             }
 
             if (Array.IndexOf(what, "people") >= 0)

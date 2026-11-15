@@ -76,6 +76,7 @@ namespace GuWorld.Core.Gen.Buildings
                 case "bamboo": return 1.5f;
                 case "rammed": return 3.0f;
                 case "log": return 1.6f;
+                case "rock": return 4.5f;
                 default: return RoofTex;
             }
         }

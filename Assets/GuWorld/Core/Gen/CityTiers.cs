@@ -499,6 +499,8 @@ namespace GuWorld.Core.Gen
                 // Stone lions at the foot of the pavilion's steps, the male on the left, the female on the right; guards of the Dark Hall by them.
                 Put(plan, "code:stone_lion:0", square.World(new Vec2(-5, squareD * 0.5f - 2.2f)), yaw, "prop", heartId);
                 Put(plan, "code:stone_lion:1", square.World(new Vec2(5, squareD * 0.5f - 2.2f)), yaw, "prop", heartId);
+                // The way down to the spring, by the pavilion's steps (the door thing of the regions stands beside it).
+                plan.Spots.Add(new Spot { At = square.World(new Vec2(-8, squareD * 0.5f - 1.5f)), Facing = yaw + 180, Role = "depths" });
                 plan.Spots.Add(new Spot { At = square.World(new Vec2(-3, squareD * 0.5f - 1.2f)), Facing = yaw + 180, Role = "guard" });
                 plan.Spots.Add(new Spot { At = square.World(new Vec2(3, squareD * 0.5f - 1.2f)), Facing = yaw + 180, Role = "guard" });
                 tiers.Divide(bearing);

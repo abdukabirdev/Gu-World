@@ -126,6 +126,12 @@ namespace GuWorld.Core
                 new ThingDef { Id = "door_academy", Name = "Двери академии", Kind = ThingKind.Door, Content = "interior:academy", Home = "gu_yue", Role = "academy", At = Regions.Settlement("gu_yue").At },
                 new ThingDef { Id = "door_inn_room", Name = "Двери постоялого двора", Kind = ThingKind.Door, Content = "interior:inn_room", Home = "gu_yue", Role = "inn", At = Regions.Settlement("gu_yue").At },
                 new ThingDef { Id = "door_nursery_hall", Name = "Двери питомника", Kind = ThingKind.Door, Content = "interior:nursery_hall", Home = "gu_yue", Role = "nursery", At = Regions.Settlement("gu_yue").At },
+                // The stair down from the clan's pavilion to the spring, the Gu rooms, the Secret Hall and the blood pond (ch. 4, 156–186).
+                new ThingDef
+                {
+                    Id = "door_gu_yue_depths", Name = "Лестница к источнику клана", Kind = ThingKind.Door, Content = "interior:gu_yue_depths", Home = "gu_yue", Role = "depths", At = Regions.Settlement("gu_yue").At,
+                    Needs = "standing:gu_yue=honoured", Locked = "Вход к источнику стережёт Тёмный зал. Вниз пускают старейшин, главу клана и тех, кого клан чтит.",
+                },
 
                 // Houses for sale: the price is in Content.
                 new ThingDef { Id = "home_gu_yue", Name = "Дом во дворе у академии", Kind = ThingKind.Home, Content = "900", Home = "gu_yue", Role = "house", At = Regions.Settlement("gu_yue").At },
