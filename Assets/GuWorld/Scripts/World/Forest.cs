@@ -80,7 +80,7 @@ namespace GuWorld.World
 
         readonly Dictionary<long, Batch> batches = new Dictionary<long, Batch>();
         readonly Dictionary<int, Mesh> shapes = new Dictionary<int, Mesh>();
-        readonly Dictionary<string, Material> materials = new Dictionary<string, Material>();
+        static readonly Dictionary<string, Material> materials = new Dictionary<string, Material>();
         Material vertexLit, swaying;
         readonly Matrix4x4[] chunk = new Matrix4x4[1023];
 
@@ -294,7 +294,7 @@ namespace GuWorld.World
         }
 
         /// <summary>A level of detail as one mesh, a sub-mesh per material.</summary>
-        static Mesh MeshOf(TreeLod lod, string name, out List<string> parts)
+        public static Mesh MeshOf(TreeLod lod, string name, out List<string> parts)
         {
             parts = new List<string>();
             var total = 0;
@@ -365,8 +365,10 @@ namespace GuWorld.World
         }
 
         /// <summary>The material of one part of a kind of tree: its bark (with the moss), its foliage, the rest.</summary>
-        Material MaterialFor(TreeSpecies species, string part)
+        /// <summary>The material for a part of a tree (shared by every forest, and by the editor's baker).</summary>
+        public static Material MaterialFor(TreeSpecies species, string part)
         {
+            var vertexLit = Models.VertexLit(Color.white, 0);
             var key = part.StartsWith("bark:") ? part + "|" + species.Id : part;
 
             if (materials.TryGetValue(key, out var material))

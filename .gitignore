@@ -120,3 +120,7 @@ InitTestScene*.unity*
 # The artist's original models (heavy; the game uses optimized copies under Assets/GuWorld/Models)
 /GLB/
 /Logs/
+
+# Baked from the generators in the editor (Gu World → Generators): made again on each machine, not kept.
+/Assets/GuWorld/Generated/
+/Assets/GuWorld/Generated.meta
