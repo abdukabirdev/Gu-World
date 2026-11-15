@@ -85,6 +85,11 @@ namespace GuWorld.Core.Gen.Buildings
                 return CompoundGen.Make(style, seed, asked);
             }
 
+            if (style.Varied)
+            {
+                style = Vary(style, seed, asked);
+            }
+
             var rng = new Rng(seed * 7919 + 13);
             var model = new BuildingModel { Style = style, Seed = seed, Asked = asked };
             var wealth = Build.Clamp01(asked.Wealth);
@@ -215,7 +220,12 @@ namespace GuWorld.Core.Gen.Buildings
             model.BaysZ = baysZ;
             model.Storeys = storeys;
 
-            if (s.Stilts)
+            if (model.Asked.Ground != null)
+            {
+                // On the mountain: the floor above the highest ground under the house, posts and stone down to the ground.
+                plinth = Foundation(c, model, xs, fw, fd, veranda, plinth, widths[baysX / 2], model.Asked.Ground);
+            }
+            else if (s.Stilts)
             {
                 Stilts(c, xs, fw, fd, plinth);
             }
@@ -326,6 +336,11 @@ namespace GuWorld.Core.Gen.Buildings
         {
             var s = c.S;
 
+            if (c.Lod <= 2 && c.R(3, 16) < s.Annex && model.Storeys >= 1)
+            {
+                LeanTo(c, kw, kd, plinth, eave);
+            }
+
             if (c.Lod <= 2 && c.R(5, 5) < s.Chimney)
             {
                 var brick = c.M("brick");
@@ -425,12 +440,97 @@ namespace GuWorld.Core.Gen.Buildings
             }
         }
 
+        /// <summary>
+        /// A village house as its family built it: from the kind's numbers, each seed its own — the
+        /// roof's form, pitch and sweep, its cover (thatch for the poor, shingles, tiles for the
+        /// better off), the walls (planks, mud, bamboo, plaster), one storey or two, a gallery, a
+        /// lean-to; never the clan's lacquer, and little ornament.
+        /// </summary>
+        static BuildingStyle Vary(BuildingStyle kind, int seed, BuildingParams asked)
+        {
+            var r = new Rng(seed * 2654435 + kind.Id.Length * 977);
+            var v = kind.Clone();
+            var wealth = Build.Clamp01(asked.Wealth);
+            var clan = asked.Clan ?? "";
+            var thatch = (1 - wealth) * 0.55f + (clan == "xiong" ? 0.15f : 0) - (clan == "bai" ? 0.25f : 0);
+            var roll = r.Value();
+            v.Cover = roll < thatch ? RoofCover.Thatch : roll < thatch + 0.3f ? RoofCover.Shingle : RoofCover.Tile;
+            roll = r.Value();
+            v.Roof = roll < 0.5f ? RoofKind.Gable : roll < 0.72f ? RoofKind.Hip : RoofKind.HipGable;
+            v.Pitch = Math.Max(0.42f, kind.Pitch + r.Range(-0.12f, 0.14f) + (v.Cover == RoofCover.Thatch ? 0.18f : 0));
+            v.Curve = v.Cover == RoofCover.Tile ? r.Range(0.1f, 0.38f) : r.Range(0.02f, 0.12f);
+            v.Upturn = v.Cover == RoofCover.Tile ? r.Range(0.05f, 0.55f) : r.Range(0f, 0.12f);
+            v.Overhang = r.Range(0.7f, 1.35f) + (v.Cover == RoofCover.Thatch ? 0.15f : 0);
+            roll = r.Value();
+            var walls = clan == "bai" ? new[] { WallKind.Plaster, WallKind.Plaster, WallKind.Plank, WallKind.Bamboo } :
+                clan == "xiong" ? new[] { WallKind.Plank, WallKind.Plank, WallKind.Mud, WallKind.Mud } :
+                new[] { WallKind.Plank, WallKind.Plank, WallKind.Mud, WallKind.Bamboo, WallKind.Plaster };
+            v.Walls = walls[r.Range(0, walls.Length)];
+            v.Dado = r.Chance(0.5f) ? WallKind.Stone : v.Walls == WallKind.Plaster ? WallKind.Brick : v.Walls;
+
+            if (kind.MaxStoreys < 2 && r.Chance(0.15f + 0.35f * wealth) && kind.Id != "hut")
+            {
+                v.MaxStoreys = 2;
+                v.MinStoreys = 2;
+                v.Shrink = r.Range(-0.2f, 0.4f);
+            }
+
+            v.StoreyHeight = kind.StoreyHeight * r.Range(0.9f, 1.08f);
+            v.Veranda = r.Chance(0.45f) ? r.Range(1.1f, 1.8f) : 0;
+            v.Balcony = r.Range(0f, 1f);
+            v.Windows = Build.Clamp01(kind.Windows + r.Range(-0.2f, 0.2f));
+            v.Lacquer = false;
+            v.Ornament = r.Range(0f, 0.25f);
+            v.Brackets = 0;
+            v.Lanterns = r.Range(0, 3);
+            v.Chimney = 0.6f;
+            v.Annex = kind.Annex;
+
+            return v;
+        }
+
+        /// <summary>A lean-to against one side wall: three plank walls, a single slope of the house's cover from under its eave.</summary>
+        static void LeanTo(Ctx c, float kw, float kd, float floor, float eave)
+        {
+            var s = c.S;
+            var side = c.R(3, 17) < 0.5f ? -1 : 1;
+            var width = 2.0f + 1.2f * c.R(3, 18);
+            var depth = kd * (1.2f + 0.6f * c.R(3, 19));
+            var z0 = kd - depth;
+            var x0 = side * kw;
+            var x1 = side * (kw + width);
+            var high = Math.Min(eave - 0.25f, floor + 2.9f);
+            var low = floor + 2.0f;
+            var plank = c.M(s.Walls == WallKind.Mud ? "mud" : s.Walls == WallKind.Bamboo ? "bamboo" : "plank");
+            var tex = s.Walls == WallKind.Mud ? "mud" : s.Walls == WallKind.Bamboo ? "bamboo" : "plank";
+            var tint = tex == "plank" ? c.Frame.Times(2.3f) : White;
+            var outward = new V3(side, 0, 0);
+            // The walls: the outer side, the front and the back.
+            Quad(c, plank, new V3(x1, floor - 0.4f, z0), new V3(x1, floor - 0.4f, kd), new V3(x1, low, kd), new V3(x1, low, z0), outward, tint, tex);
+            Quad(c, plank, new V3(x0, floor - 0.4f, z0), new V3(x1, floor - 0.4f, z0), new V3(x1, low, z0), new V3(x0, high, z0), new V3(0, 0, -1), tint, tex);
+            Quad(c, plank, new V3(x1, floor - 0.4f, kd), new V3(x0, floor - 0.4f, kd), new V3(x0, high, kd), new V3(x1, low, kd), new V3(0, 0, 1), tint, tex);
+
+            // The roof: from the house's wall down past the outer wall.
+            var cover = c.M(c.RoofTexName);
+            var over = 0.45f;
+            var xo = x1 + side * over;
+            var yo = low - over * (high - low) / width;
+            Quad(c, cover, new V3(x0, high + 0.12f, z0 - over), new V3(xo, yo + 0.12f, z0 - over), new V3(xo, yo + 0.12f, kd + over), new V3(x0, high + 0.12f, kd + over), new V3(side * 0.5f, 1, 0), c.Roof.Times(0.95f), c.RoofTexName);
+
+            if (c.Lod <= 1)
+            {
+                Quad(c, c.M("wood"), new V3(x0, high, z0 - over), new V3(xo, yo, z0 - over), new V3(xo, yo, kd + over), new V3(x0, high, kd + over), new V3(0, -1, 0), c.Frame, "wood");
+                // A small door in its front, a few things leaning by it.
+                Quad(c, c.M("plank"), new V3(x0 + side * 0.4f, floor, z0 - 0.03f), new V3(x0 + side * 1.3f, floor, z0 - 0.03f), new V3(x0 + side * 1.3f, floor + 1.8f, z0 - 0.03f), new V3(x0 + side * 0.4f, floor + 1.8f, z0 - 0.03f), new V3(0, 0, -1), c.Frame.Times(1.4f), "plank");
+            }
+        }
+
         /// <summary>A platform of stone (a terrace under a yard on a slope): from the ground's low side to `height`, steps up at the gate.</summary>
-        public static TreeLod Platform(int seed, int lod, float hw, float hd, float height, float gateX, float gateWidth)
+        public static TreeLod Platform(int seed, int lod, float hw, float hd, float height, float gateX, float gateWidth, float bottom = -0.3f)
         {
             var c = new Ctx { S = Buildings.House, Seed = seed, Lod = lod, Out = new TreeLod(), Noise = new Noise(seed), Frame = new Tint(0.2f, 0.135f, 0.095f), Accent = new Tint(0.3f, 0.13f, 0.09f), Wall = White, Roof = White, Leaf = White, WallTex = "stone", DadoTex = "stone", RoofTexName = "tile" };
             var stone = c.M("stone");
-            Box(c, stone, new V3(-hw, -0.3f, -hd), new V3(hw, height, hd), White, "stone");
+            Box(c, stone, new V3(-hw, bottom, -hd), new V3(hw, height, hd), White, "stone");
 
             if (lod <= 1)
             {
@@ -439,12 +539,12 @@ namespace GuWorld.Core.Gen.Buildings
 
             if (lod <= 2)
             {
-                var steps = Math.Max(1, (int)Math.Ceiling(height / 0.17f));
+                var steps = Math.Max(1, (int)Math.Ceiling((height - bottom) / 0.17f));
                 var w = gateWidth * 0.5f + 0.3f;
 
                 for (var i = 0; i < steps; i++)
                 {
-                    Box(c, stone, new V3(gateX - w, -0.3f, -hd - (steps - i) * 0.3f), new V3(gateX + w, height * (i + 1) / steps - 0.01f, -hd + 0.02f), White.Times(0.95f), "stone");
+                    Box(c, stone, new V3(gateX - w, bottom, -hd - (steps - i) * 0.3f), new V3(gateX + w, bottom + (height - bottom) * (i + 1) / steps - 0.01f, -hd + 0.02f), White.Times(0.95f), "stone");
                 }
             }
 
@@ -506,6 +606,206 @@ namespace GuWorld.Core.Gen.Buildings
                 Balustrade(c, new V3(ax, y0 + height, az), new V3(-ax, y0 + height, az), true);
                 Balustrade(c, new V3(-ax, y0 + height, az), new V3(-ax, y0 + height, -az), true);
             }
+        }
+
+        /// <summary>
+        /// A house on sloping ground: its floor a little above the highest ground under it; under the
+        /// floor, wherever the ground falls away, a stone footing (a short drop) or posts on stone
+        /// feet with braces between them (a long drop: the stilt house of the mountain villages, its
+        /// underside open for firewood and tools); a deck; a stair from the door down to the ground.
+        /// Returns the floor's height.
+        /// </summary>
+        static float Foundation(Ctx c, BuildingModel model, float[] xs, float fw, float fd, float veranda, float plinth, float doorBay, Func<float, float, float> ground)
+        {
+            var s = c.S;
+            var high = float.MinValue;
+            var low = float.MaxValue;
+
+            for (var i = 0; i <= 4; i++)
+            {
+                for (var j = 0; j <= 4; j++)
+                {
+                    var g = ground(-fw + 2 * fw * i / 4, -fd + 2 * fd * j / 4);
+                    high = Math.Max(high, g);
+                    low = Math.Min(low, g);
+                }
+            }
+
+            // A clan's hall keeps its podium; a house sits just over the high side.
+            var stone = !s.Stilts && (s.Walls == WallKind.Brick || s.Walls == WallKind.Stone || s.Lacquer && s.Plinth >= 0.9f || s.Compound > 0);
+            var floor = high + (stone ? plinth : 0.35f + 0.15f * c.Wealth);
+            var wood = c.M("wood");
+            var log = c.M("log");
+            var rock = c.M("stone");
+            var bark = new Tint(0.9f, 0.86f, 0.8f);
+            var margin = stone ? 0.45f + 0.35f * c.Wealth : 0.25f;
+            var ex = fw + margin;
+            var ez = fd + margin;
+
+            // Stone where the drop is short (or under a hall): a wall from the ground up to the floor all round, the ground stepping under it.
+            var columns = c.Lod == 0 ? 10 : c.Lod == 1 ? 6 : 3;
+            var corners = new[] { new V3(-ex, 0, -ez), new V3(ex, 0, -ez), new V3(ex, 0, ez), new V3(-ex, 0, ez) };
+            var outs = new[] { new V3(0, 0, -1), new V3(1, 0, 0), new V3(0, 0, 1), new V3(-1, 0, 0) };
+            var stoneUpTo = stone ? 1e6f : 1.4f;
+
+            for (var k = 0; k < 4; k++)
+            {
+                var a = corners[k];
+                var b = corners[(k + 1) % 4];
+
+                for (var i = 0; i < columns; i++)
+                {
+                    var p0 = V3.Lerp(a, b, i / (float)columns);
+                    var p1 = V3.Lerp(a, b, (i + 1) / (float)columns);
+                    var g0 = ground(p0.X, p0.Z);
+                    var g1 = ground(p1.X, p1.Z);
+
+                    if (floor - Math.Min(g0, g1) > stoneUpTo)
+                    {
+                        // On posts here: a beam along the deck's edge only.
+                        continue;
+                    }
+
+                    Quad(c, rock, new V3(p0.X, g0 - 0.5f, p0.Z), new V3(p1.X, g1 - 0.5f, p1.Z), new V3(p1.X, floor, p1.Z), new V3(p0.X, floor, p0.Z), outs[k], White.Times(0.95f), "stone");
+                }
+            }
+
+            // The deck (and a veranda's) under the floor.
+            if (stone)
+            {
+                Quad(c, rock, new V3(-ex, floor, -ez), new V3(ex, floor, -ez), new V3(ex, floor, ez), new V3(-ex, floor, ez), V3.Up, White.Times(0.88f), "stone");
+            }
+            else
+            {
+                Box(c, c.M("plank"), new V3(-ex, floor - 0.22f, -ez), new V3(ex, floor, ez), c.Frame.Times(2.1f), "plank", true);
+                Beam(c, wood, new V3(-ex, floor - 0.32f, -ez), new V3(ex, floor - 0.32f, -ez), 0.2f, 0.24f, c.Frame);
+                Beam(c, wood, new V3(-ex, floor - 0.32f, ez), new V3(ex, floor - 0.32f, ez), 0.2f, 0.24f, c.Frame);
+                Beam(c, wood, new V3(-ex, floor - 0.32f, -ez), new V3(-ex, floor - 0.32f, ez), 0.2f, 0.24f, c.Frame);
+                Beam(c, wood, new V3(ex, floor - 0.32f, -ez), new V3(ex, floor - 0.32f, ez), 0.2f, 0.24f, c.Frame);
+            }
+
+            // Posts down to the ground where it falls away, on stone feet; braces between the long ones.
+            if (!stone && c.Lod <= 2)
+            {
+                var zs = new List<float>();
+
+                for (var z = -fd; z <= fd + 0.01f; z += Math.Max(1.8f, 2 * fd / Math.Max(1, (int)(2 * fd / 2.6f))))
+                {
+                    zs.Add(z);
+                }
+
+                var sides = c.Lod == 0 ? 8 : c.Lod == 1 ? 6 : 4;
+                var tall = new Dictionary<(int, int), float>();
+
+                for (var i = 0; i < xs.Length; i++)
+                {
+                    for (var j = 0; j < zs.Count; j++)
+                    {
+                        var x = Math.Max(-ex + 0.15f, Math.Min(ex - 0.15f, xs[i]));
+                        var z = zs[j];
+                        var g = ground(x, z);
+                        var drop = floor - g;
+
+                        if (drop < 0.5f || drop <= stoneUpTo && (i == 0 || i == xs.Length - 1 || j == 0 || j == zs.Count - 1))
+                        {
+                            continue;
+                        }
+
+                        Post(c, log, x, z, g - 0.3f, floor - 0.3f, 0.13f + 0.02f * c.Wealth, sides, bark.Times(0.8f + 0.25f * c.R(i * 7 + j, 31)));
+
+                        if (c.Lod <= 1)
+                        {
+                            Box(c, rock, new V3(x - 0.24f, g - 0.3f, z - 0.24f), new V3(x + 0.24f, g + 0.18f, z + 0.24f), White.Times(0.9f), "stone");
+                        }
+
+                        tall[(i, j)] = drop;
+                    }
+                }
+
+                if (c.Lod <= 1)
+                {
+                    foreach (var kv in tall)
+                    {
+                        var (i, j) = kv.Key;
+
+                        // A brace to the next post along x and along z where both are tall.
+                        foreach (var (di, dj) in new[] { (1, 0), (0, 1) })
+                        {
+                            if (!tall.TryGetValue((i + di, j + dj), out var other) || Math.Min(kv.Value, other) < 2.2f)
+                            {
+                                continue;
+                            }
+
+                            var x0 = Math.Max(-ex + 0.15f, Math.Min(ex - 0.15f, xs[i]));
+                            var x1 = Math.Max(-ex + 0.15f, Math.Min(ex - 0.15f, xs[i + di]));
+                            var z0 = zs[j];
+                            var z1 = zs[j + dj];
+                            var low0 = floor - kv.Value + 0.6f;
+                            var low1 = floor - other + 0.6f;
+                            Beam(c, log, new V3(x0, Math.Max(low0, floor - 2.6f), z0), new V3(x1, floor - 0.45f, z1), 0.09f, 0.09f, bark.Times(0.8f), true, "log");
+                            // A rail tying the posts at the height a man stands.
+                            Beam(c, log, new V3(x0, Math.Max(low0, floor - 2.0f), z0), new V3(x1, Math.Max(low1, floor - 2.0f), z1), 0.08f, 0.08f, bark.Times(0.75f), true, "log");
+                        }
+                    }
+                }
+            }
+
+            // The stair from the door down to the ground before it.
+            if (c.Lod <= 2)
+            {
+                var front = -ez - (stone ? 0 : 0);
+                var gFront = ground(0, front - 1.5f);
+                var drop = floor - gFront;
+
+                if (drop > 0.25f)
+                {
+                    var steps = Math.Max(1, (int)Math.Ceiling(drop / 0.19f));
+                    var width = stone ? doorBay * 0.5f + 0.4f : 0.7f;
+                    var run = 0.3f;
+                    var tread = stone ? rock : c.M("plank");
+                    var tint = stone ? White.Times(0.95f) : c.Frame.Times(2f);
+
+                    // A long stair turns along the front, so it does not run far out into the lane.
+                    var along = !stone && steps > 9;
+
+                    for (var i = 0; i < steps; i++)
+                    {
+                        var top = floor - drop * i / steps;
+                        var y0 = top - (stone ? drop : 0.12f);
+
+                        if (along)
+                        {
+                            var x = 0.9f + i * run;
+                            Box(c, tread, new V3(x, top - 0.08f, front - 1.2f), new V3(x + run + 0.02f, top, front - 0.05f), tint, "plank");
+                        }
+                        else
+                        {
+                            var z = front - i * run;
+                            Box(c, tread, new V3(-width, Math.Max(gFront - 0.3f, y0), z - run - 0.02f), new V3(width, top, z), tint, stone ? "stone" : "plank");
+                        }
+                    }
+
+                    if (!stone && c.Lod <= 1)
+                    {
+                        // Its stringers and a handrail.
+                        if (along)
+                        {
+                            Box(c, c.M("plank"), new V3(0.4f, floor - 0.2f, front - 1.25f), new V3(0.95f, floor, front - 0.05f), c.Frame.Times(2f), "plank");
+                            Beam(c, wood, new V3(0.9f, floor + 0.9f, front - 1.25f), new V3(0.9f + steps * run, floor - drop + 0.9f, front - 1.25f), 0.06f, 0.06f, c.Frame);
+                        }
+                        else
+                        {
+                            foreach (var side in new[] { -1, 1 })
+                            {
+                                Beam(c, wood, new V3(side * width, floor - 0.1f, front), new V3(side * width, gFront, front - steps * run), 0.06f, 0.22f, c.Frame);
+                                Beam(c, wood, new V3(side * width, floor + 0.85f, front), new V3(side * width, gFront + 0.85f, front - steps * run), 0.05f, 0.05f, c.Frame);
+                            }
+                        }
+                    }
+                }
+            }
+
+            return floor;
         }
 
         static void Stilts(Ctx c, float[] xs, float fw, float fd, float height)

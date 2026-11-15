@@ -1,3 +1,4 @@
+using System;
 using System.Collections.Generic;
 using GuWorld.Core.Gen.Flora;
 
@@ -74,6 +75,12 @@ namespace GuWorld.Core.Gen.Buildings
         public bool Forge;
         /// <summary>Not one building but a walled yard of them (CompoundGen): 1 a family's courtyard house, 2 an academy, 3 a temple.</summary>
         public int Compound;
+        /// <summary>A villager's house that grew as its family did: each seed its own roof, cover, walls, storeys, gallery and lean-to (BuildingGen.Vary).</summary>
+        public bool Varied;
+        /// <summary>The chance of a lean-to shed against a side wall.</summary>
+        public float Annex;
+
+        public BuildingStyle Clone() => (BuildingStyle)MemberwiseClone();
     }
 
     /// <summary>What is asked of one building.</summary>
@@ -91,6 +98,14 @@ namespace GuWorld.Core.Gen.Buildings
         public string Clan;
         /// <summary>How far the ground falls away under the building, metres: it stands on a terrace of stone that high.</summary>
         public float Terrace;
+        /// <summary>
+        /// The ground under it (x, z in its own frame, front toward -Z; its height relative to its
+        /// origin), or null for level ground. Given, the building finds its floor above the highest
+        /// ground under it and stands down to the ground everywhere else: on stone where the drop is
+        /// small, on posts (a stilt house hanging over the slope) where it is large, a stair down from
+        /// its door.
+        /// </summary>
+        public Func<float, float, float> Ground;
     }
 
     /// <summary>A door of a building: where it is and which way it faces (the model's space).</summary>
@@ -125,7 +140,7 @@ namespace GuWorld.Core.Gen.Buildings
             // A poor family's hut: mud walls, a thick thatch, hardly a window.
             Id = "hut", Name = "Mud hut", MinBaysX = 2, MaxBaysX = 3, MinBaysZ = 1, MaxBaysZ = 2, Bay = 2.6f, StoreyHeight = 2.5f, Plinth = 0.2f,
             Roof = RoofKind.Hip, Cover = RoofCover.Thatch, Pitch = 0.85f, Curve = 0.08f, Upturn = 0, Overhang = 0.8f, Walls = WallKind.Mud, Dado = WallKind.Mud,
-            Windows = 0.25f, Ornament = 0, Lanterns = 0, Chimney = 0.5f,
+            Windows = 0.25f, Ornament = 0, Lanterns = 0, Chimney = 0.5f, Varied = true, Annex = 0.6f,
         };
 
         public static readonly BuildingStyle Cottage = new BuildingStyle
@@ -133,7 +148,7 @@ namespace GuWorld.Core.Gen.Buildings
             // A villager's house of planks under shingles, a porch along its front.
             Id = "cottage", Name = "Plank cottage", MinBaysX = 3, MaxBaysX = 3, MinBaysZ = 2, MaxBaysZ = 2, Bay = 2.8f, StoreyHeight = 2.7f, Plinth = 0.35f,
             Roof = RoofKind.Gable, Cover = RoofCover.Shingle, Pitch = 0.7f, Curve = 0.12f, Upturn = 0.12f, Overhang = 0.9f, Walls = WallKind.Plank, Dado = WallKind.Plank,
-            Veranda = 1.5f, Windows = 0.45f, Ornament = 0.05f, Lanterns = 1, Chimney = 0.6f,
+            Veranda = 1.5f, Windows = 0.45f, Ornament = 0.05f, Lanterns = 1, Chimney = 0.6f, Varied = true, Annex = 0.6f,
         };
 
         public static readonly BuildingStyle Stilt = new BuildingStyle
@@ -141,7 +156,7 @@ namespace GuWorld.Core.Gen.Buildings
             // A mountain house of bamboo on stilts, a ladder to its gallery.
             Id = "stilt", Name = "Stilt house", MinBaysX = 2, MaxBaysX = 3, MinBaysZ = 2, MaxBaysZ = 2, Bay = 2.7f, StoreyHeight = 2.6f, Plinth = 2.1f, Stilts = true,
             Roof = RoofKind.HipGable, Cover = RoofCover.Thatch, Pitch = 0.8f, Curve = 0.12f, Upturn = 0.1f, Overhang = 1.0f, Walls = WallKind.Bamboo, Dado = WallKind.Bamboo,
-            Veranda = 1.4f, Windows = 0.5f, Ornament = 0, Lanterns = 1,
+            Veranda = 1.4f, Windows = 0.5f, Ornament = 0, Lanterns = 1, Varied = true, Annex = 0.6f,
         };
 
         public static readonly BuildingStyle House = new BuildingStyle
@@ -149,7 +164,7 @@ namespace GuWorld.Core.Gen.Buildings
             // A clansman's house: white plaster in a dark frame, grey tiles.
             Id = "house", Name = "Clan house", MinBaysX = 3, MaxBaysX = 5, MinBaysZ = 2, MaxBaysZ = 2, Bay = 3.0f, StoreyHeight = 3.0f, Plinth = 0.45f,
             Roof = RoofKind.Gable, Cover = RoofCover.Tile, Pitch = 0.62f, Curve = 0.28f, Upturn = 0.35f, Overhang = 1.0f, Walls = WallKind.Plaster, Dado = WallKind.Brick,
-            Windows = 0.5f, Brackets = 0, Ornament = 0.3f, Lanterns = 2, Chimney = 0.5f,
+            Windows = 0.5f, Brackets = 0, Ornament = 0.3f, Lanterns = 2, Chimney = 0.5f, Varied = true, Annex = 0.6f,
         };
 
         public static readonly BuildingStyle Townhouse = new BuildingStyle
@@ -157,7 +172,7 @@ namespace GuWorld.Core.Gen.Buildings
             // Two storeys on a street: a balcony over the door, a skirt roof between.
             Id = "townhouse", Name = "Two-storey house", MinBaysX = 3, MaxBaysX = 3, MinBaysZ = 2, MaxBaysZ = 3, Bay = 3.0f, MinStoreys = 2, MaxStoreys = 2, StoreyHeight = 2.9f, Plinth = 0.4f,
             Roof = RoofKind.HipGable, Cover = RoofCover.Tile, Pitch = 0.62f, Curve = 0.3f, Upturn = 0.5f, Overhang = 1.0f, Walls = WallKind.Plaster, Dado = WallKind.Brick,
-            Balcony = 0.8f, Windows = 0.6f, Brackets = 1, Ornament = 0.4f, Shrink = 0.5f, Lanterns = 2, Lacquer = true,
+            Balcony = 0.8f, Windows = 0.6f, Brackets = 1, Ornament = 0.4f, Shrink = 0.5f, Lanterns = 2, Lacquer = true, Varied = true, Annex = 0.6f,
         };
 
         public static readonly BuildingStyle Shop = new BuildingStyle

@@ -127,6 +127,32 @@ namespace GuWorld.Core.Gen
             return top * shape;
         }
 
+        /// <summary>How much Gu Yue's slope raises the ground at a point (see Base).</summary>
+        public float TownSlope(float x, float z)
+        {
+            const float Radius = 430, Rise = 0.16f, Bench = 6.5f;
+            var dx = x;
+            var dz = z;
+
+            if (Math.Abs(dx) > Radius + 420 || dz < -Radius - 360 || dz > Radius + 1700)
+            {
+                return 0;
+            }
+
+            // How far north (uphill), bent a little so the benches curve.
+            var along = dz + 26 * hills.Perlin(dx * 0.004f + 3, 1.7f) + 0.0004f * dx * dx;
+            var ramp = Noise.Clamp((along + Radius + 40) * Rise, 0, (2 * Radius + 80) * Rise);
+            var s = ramp / Bench;
+            var step = (float)Math.Floor(s);
+            var stepped = (step + Noise.Smooth(0.45f, 1f, s - step)) * Bench;
+            // (The benches themselves are the houses' stone terraces and the lanes' cuts; the ground only hints at them.)
+            var value = Noise.Lerp(ramp, stepped, 0.15f);
+            // East of the town the Qing runs down from its falls: the slope stops short of its valley, the riverside below stays low.
+            var weight = Noise.Smooth(Radius + 420, Radius + 40, -dx) * Noise.Smooth(205, 150, dx) * Noise.Smooth(-Radius - 360, -Radius - 20, dz) * Noise.Smooth(Radius + 1700, Radius + 500, dz);
+
+            return value * weight;
+        }
+
         /// <summary>The ground of the mountain itself, before anything is levelled or cut.</summary>
         public float Base(float x, float z)
         {
@@ -176,6 +202,14 @@ namespace GuWorld.Core.Gen
             h += Noise.Smooth(Valley.PlateauZ - 4, Valley.PlateauZ + 4, z) * Noise.Smooth(Valley.PlateauX - 16, Valley.PlateauX + 16, x)
                 * Noise.Smooth(620, 470, x) * Noise.Smooth(1150, 650, z) * Valley.PlateauRise;
 
+            // Gu Yue climbs the mountain's flank: its ground rises northward through the town, in
+            // benches a few metres high (where its lanes run and its houses stand in rows), and stays
+            // up behind it, fading back into the land to the east, the west and far north.
+            if (Buildings.GenHouses.Mountain)
+            {
+                h += TownSlope(x, z);
+            }
+
             // The wild lands beyond the mountain of the story (16 × 16 km): hills that grow into ranges towards the edge.
             var outward = Math.Max(Math.Abs(x), Math.Abs(z));
             var wild = Noise.Smooth(4300, 6400, outward);
@@ -200,7 +234,10 @@ namespace GuWorld.Core.Gen
             {
                 if (!float.IsNaN(place.Level))
                 {
-                    AddFlat(place.Id, place.At, place.Radius, place.Level, place.Blend, place.Cave, false);
+                    // Its level as it was set for the valley, carried up the town's slope with the ground round it.
+                    // On the mountain a place's level blends into the slope within a short way (the clan's court a terrace, not a basin).
+                    var level = Buildings.GenHouses.Mountain && TownSlope(place.At.X, place.At.Z) > 0.5f ? AutoLevel(place.At, place.Radius) : place.Level;
+                    AddFlat(place.Id, place.At, place.Radius, level, Buildings.GenHouses.Mountain ? Math.Min(place.Blend, 34) : place.Blend, place.Cave, false);
                 }
                 else if (place.Flatten)
                 {
@@ -226,8 +263,10 @@ namespace GuWorld.Core.Gen
                     continue;
                 }
 
-                var level = AutoLevel(settlement.At, settlement.Radius);
-                AddFlat(settlement.Id, settlement.At, settlement.Radius + 8, level, 50 + settlement.Radius * 0.4f, false, true);
+                // A village of the mountain is levelled only at its plaza; its houses stand down the slope on their own.
+                var mountain = Buildings.GenHouses.Mountain;
+                var level = mountain ? Base(settlement.At.X, settlement.At.Z) : AutoLevel(settlement.At, settlement.Radius);
+                AddFlat(settlement.Id, settlement.At, mountain ? 16 : settlement.Radius + 8, level, mountain ? 24 : 50 + settlement.Radius * 0.4f, false, true);
             }
         }
 
@@ -309,12 +348,21 @@ namespace GuWorld.Core.Gen
                 h = Waters.Carve(p, h);
             }
 
+            // The houses' pads first, then the roads graded over them (on the mountain a road keeps its own even climb through the town).
+            if (Buildings.GenHouses.Mountain)
+            {
+                h = Padded(p, h);
+            }
+
             if (Roads != null)
             {
                 h = Roads.Grade(p, h, Waters);
             }
 
-            h = Padded(p, h);
+            if (!Buildings.GenHouses.Mountain)
+            {
+                h = Padded(p, h);
+            }
 
             return Noise.Clamp(h, 0.2f, MaxHeight - 1);
         }

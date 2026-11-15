@@ -41,6 +41,68 @@ static class TownScene
 
         var land = plan.Land;
         var half = size * 0.5f;
+
+        var probe = Arg("probe", "");
+
+        if (probe.Length > 0)
+        {
+            var xz = probe.Split(',');
+            var px = float.Parse(xz[0], CultureInfo.InvariantCulture);
+            var pz = float.Parse(xz[1], CultureInfo.InvariantCulture);
+
+            for (var k = -4; k <= 4; k++)
+            {
+                foreach (var (ox, oz) in new[] { (k * 2f, 0f), (0f, k * 2f) })
+                {
+                    report.Add($"probe ({px + ox:0}, {pz + oz:0}): base {land.Base(px + ox, pz + oz):0.0} shaped {land.Shaped(px + ox, pz + oz):0.0} game {land.Height(px + ox, pz + oz):0.0}");
+                }
+            }
+
+            foreach (var f in land.Flats)
+            {
+                if (Vec2.Distance(f.At, new Vec2(px, pz)) < f.Radius + f.Blend + 20)
+                {
+                    report.Add($"probe flat {f.Id} at ({f.At.X:0}, {f.At.Z:0}) r {f.Radius:0} blend {f.Blend:0} level {f.Level:0.0}");
+                }
+            }
+
+            foreach (var r in plan.Roads.All)
+            {
+                for (var i = 0; i < r.Points.Count; i++)
+                {
+                    if (Vec2.Distance(r.Points[i], new Vec2(px, pz)) < 6)
+                    {
+                        report.Add($"probe road {r.From}→{r.To} point {i}/{r.Points.Count}: profile {r.Profile[i]:0.0}, land {land.Shaped(r.Points[i].X, r.Points[i].Z):0.0}");
+                    }
+                }
+            }
+
+            return;
+        }
+
+        if (Array.Exists(args, a => a == "relief"))
+        {
+            // The ground's fall over each settlement (the unlevelled land and as the game has it).
+            foreach (var s in plan.Settlements)
+            {
+                float lo = float.MaxValue, hi = float.MinValue, nlo = float.MaxValue, nhi = float.MinValue;
+
+                for (var a = 0; a < 24; a++)
+                {
+                    for (var r = 0.1f; r <= 1; r += 0.15f)
+                    {
+                        var p = s.Centre + Vec2.FromYaw(a * 15) * (s.Def.Radius * r);
+                        var h = land.Height(p.X, p.Z);
+                        var nb = land.Base(p.X, p.Z);
+                        lo = Math.Min(lo, h); hi = Math.Max(hi, h); nlo = Math.Min(nlo, nb); nhi = Math.Max(nhi, nb);
+                    }
+                }
+
+                report.Add($"relief {s.Def.Id,-14} radius {s.Def.Radius,4:0}: game {lo:0}..{hi:0} m ({hi - lo:0} m), the mountain itself {nlo:0}..{nhi:0} m ({nhi - nlo:0} m)");
+            }
+
+            return;
+        }
         var level = land.Height(at.X, at.Z);
         var scene = new TreeLod();
         var made = new Dictionary<string, TreeLod>();
@@ -61,7 +123,23 @@ static class TownScene
             var place = new V3(building.At.X - at.X, foot - level, building.At.Z - at.Z);
             TreeLod lods;
 
-            if (model.StartsWith("gen:"))
+            if (model.StartsWith("hill:"))
+            {
+                // Stands down to the slope where it is: raised for its place.
+                var bits = model.Split(':');
+                float.TryParse(bits.Length > 6 ? bits[6] : "0", NumberStyles.Float, CultureInfo.InvariantCulture, out var w);
+                float.TryParse(bits.Length > 7 ? bits[7] : "0", NumberStyles.Float, CultureInfo.InvariantCulture, out var dd);
+                // The building's own frame (front -Z) inside the place's (front +Z): turned about.
+                var a = (building.Yaw + 180) * (float)Math.PI / 180;
+                var cos = (float)Math.Cos(a);
+                var sin = (float)Math.Sin(a);
+                var ox = building.At.X;
+                var oz = building.At.Z;
+                var b = BuildingGen.Make(Buildings.Get(bits[1]), int.Parse(bits[2]), new BuildingParams { Clan = bits[3], Wealth = int.Parse(bits[4]) / 9f, Wear = int.Parse(bits[5]) / 9f, Width = w, Depth = dd, Ground = (lx, lz) => land.Height(ox + lx * cos + lz * sin, oz - lx * sin + lz * cos) - foot });
+                Compose.Add(scene, b.Lods[lod], place, building.Yaw + 180);
+                made[model] = b.Lods[lod];
+            }
+            else if (model.StartsWith("gen:"))
             {
                 if (!made.TryGetValue(model, out lods))
                 {

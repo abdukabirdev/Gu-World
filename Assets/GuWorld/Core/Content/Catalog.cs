@@ -155,7 +155,7 @@ namespace GuWorld.Core
             }
 
             // Generated: a building ("gen:style:…"), a piece of a ring ("fort:rampart:what:…"), a thing ("thing:kind:…").
-            if (id != null && (id.StartsWith("gen:", System.StringComparison.Ordinal) || id.StartsWith("fort:", System.StringComparison.Ordinal) || id.StartsWith("thing:", System.StringComparison.Ordinal)))
+            if (id != null && (id.StartsWith("gen:", System.StringComparison.Ordinal) || id.StartsWith("hill:", System.StringComparison.Ordinal) || id.StartsWith("fort:", System.StringComparison.Ordinal) || id.StartsWith("thing:", System.StringComparison.Ordinal)))
             {
                 var bits = id.Split(':');
                 float width, depth, height;

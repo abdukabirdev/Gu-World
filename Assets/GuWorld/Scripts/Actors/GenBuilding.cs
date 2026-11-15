@@ -21,7 +21,10 @@ namespace GuWorld.Actors
     {
         public const string Prefix = "gen:";
 
-        public static bool Is(string model) => model != null && model.StartsWith(Prefix, System.StringComparison.Ordinal);
+        public static bool Is(string model) => model != null && (model.StartsWith(Prefix, System.StringComparison.Ordinal) || model.StartsWith(Hill, System.StringComparison.Ordinal));
+
+        /// <summary>A house of the mountain: as "gen:" but raised where it stands, down to the ground under it (each its own meshes); far, the level one stands in.</summary>
+        public const string Hill = "hill:";
 
         public static string Name(string style, int seed, string clan = "", int wealth = 5, int wear = 3) => $"{Prefix}{style}:{seed}:{clan}:{wealth}:{wear}";
 
@@ -36,9 +39,9 @@ namespace GuWorld.Actors
         static readonly Dictionary<string, Made> made = new Dictionary<string, Made>();
         static readonly Dictionary<string, Material> materials = new Dictionary<string, Material>();
 
-        static BuildingModel Raise(string model)
+        static BuildingModel Raise(string model, System.Func<float, float, float> ground = null)
         {
-            var bits = model.Substring(Prefix.Length).Split(':');
+            var bits = model.Substring(model.IndexOf(':') + 1).Split(':');
             var style = Buildings.Get(bits[0]);
             var seed = bits.Length > 1 && int.TryParse(bits[1], out var s) ? s : 1;
             var clan = bits.Length > 2 ? bits[2] : "gu_yue";
@@ -48,11 +51,17 @@ namespace GuWorld.Actors
             var width = bits.Length > 5 && float.TryParse(bits[5], System.Globalization.NumberStyles.Float, System.Globalization.CultureInfo.InvariantCulture, out var wd) ? wd : 0;
             var depth = bits.Length > 6 && float.TryParse(bits[6], System.Globalization.NumberStyles.Float, System.Globalization.CultureInfo.InvariantCulture, out var dp) ? dp : 0;
 
-            return BuildingGen.Make(style, seed, new BuildingParams { Clan = clan, Wealth = wealth, Wear = wear, Width = width, Depth = depth });
+            return BuildingGen.Make(style, seed, new BuildingParams { Clan = clan, Wealth = wealth, Wear = wear, Width = width, Depth = depth, Ground = ground });
         }
 
         static Made Get(string model)
         {
+            // The level stand-in of a house of the mountain (for far batches and caches).
+            if (model.StartsWith(Hill, System.StringComparison.Ordinal))
+            {
+                model = Prefix + model.Substring(Hill.Length);
+            }
+
             if (made.TryGetValue(model, out var m))
             {
                 return m;
@@ -83,7 +92,6 @@ namespace GuWorld.Actors
 
         public static GameObject Make(string model, Transform parent, Vector3 at, float yaw, float scale = 1)
         {
-            var m = Get(model);
             var root = new GameObject(model);
             root.transform.SetParent(parent, false);
             root.transform.SetPositionAndRotation(at, Quaternion.Euler(0, yaw, 0));
@@ -93,6 +101,31 @@ namespace GuWorld.Actors
             var inner = new GameObject("Model").transform;
             inner.SetParent(root.transform, false);
             inner.localRotation = Quaternion.Euler(0, 180, 0);
+            Made m;
+
+            if (model.StartsWith(Hill, System.StringComparison.Ordinal))
+            {
+                // Raised against the ground where it stands (its own meshes, not shared).
+                var foot = at.y;
+                var building = Raise(model, (x, z) =>
+                {
+                    var w = inner.TransformPoint(new Vector3(x, 0, z));
+
+                    return GuWorld.World.Ground.HeightAt(w.x, w.z) - foot;
+                });
+                m = new Made();
+
+                for (var lod = 0; lod < 4; lod++)
+                {
+                    m.Lods[lod] = MeshOf(building.Lods[lod], model + " LOD" + lod, out m.Materials[lod]);
+                }
+
+                m.Solid = Plain(building.Collision, model + " solid");
+            }
+            else
+            {
+                m = Get(model);
+            }
             var lods = new LOD[4];
             // The share of the screen's height below which each level gives way to the next.
             var heights = new[] { 0.32f, 0.12f, 0.035f, 0.004f };

@@ -441,17 +441,20 @@ namespace GuWorld.Core.Gen
                 smooth[i] = pinned[i] ? raw[i] : sum / weight;
             }
 
+            // (On the mountain a town's ways climb as its slope does, a stair where they must: one in three.)
+            var steepest = Buildings.GenHouses.Mountain ? 0.33f : 0.2f;
+
             for (var pass = 0; pass < 2; pass++)
             {
                 for (var i = 1; i < count; i++)
                 {
-                    var run = Vec2.Distance(road.Points[i], road.Points[i - 1]) * 0.2f;
+                    var run = Vec2.Distance(road.Points[i], road.Points[i - 1]) * steepest;
                     smooth[i] = pinned[i] ? smooth[i] : Noise.Clamp(smooth[i], smooth[i - 1] - run, smooth[i - 1] + run);
                 }
 
                 for (var i = count - 2; i >= 0; i--)
                 {
-                    var run = Vec2.Distance(road.Points[i], road.Points[i + 1]) * 0.2f;
+                    var run = Vec2.Distance(road.Points[i], road.Points[i + 1]) * steepest;
                     smooth[i] = pinned[i] ? smooth[i] : Noise.Clamp(smooth[i], smooth[i + 1] - run, smooth[i + 1] + run);
                 }
             }

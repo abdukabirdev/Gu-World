@@ -51,6 +51,11 @@ static partial class Program
                 FortChecks.Run(repo, Check, genReport, export);
             }
 
+            if (Array.IndexOf(what, "slope") >= 0)
+            {
+                SlopeScene.Run(repo, genReport);
+            }
+
             if (Array.IndexOf(what, "town") >= 0)
             {
                 TownScene.Run(repo, Check, genReport, args);

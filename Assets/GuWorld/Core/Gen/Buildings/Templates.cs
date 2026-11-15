@@ -163,7 +163,7 @@ namespace GuWorld.Core.Gen.Buildings
             var wealth = lot.Poorest + variant % (lot.Richest - lot.Poorest + 1);
             var wear = 2 + variant * 7 % 4;
 
-            return string.Format(CultureInfo.InvariantCulture, "gen:{0}:{1}:{2}:{3}:{4}:{5:0.0}:{6:0.0}", lot.Style, variant, clan ?? "", wealth, wear, lot.Width, lot.Depth);
+            return string.Format(CultureInfo.InvariantCulture, "{7}:{0}:{1}:{2}:{3}:{4}:{5:0.0}:{6:0.0}", lot.Style, variant, clan ?? "", wealth, wear, lot.Width, lot.Depth, GenHouses.Mountain ? "hill" : "gen");
         }
     }
 

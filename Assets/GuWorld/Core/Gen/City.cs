@@ -54,7 +54,7 @@ namespace GuWorld.Core.Gen
         /// <summary>How many people live in a building of a model.</summary>
         public static int Occupants(string model)
         {
-            if (model != null && model.StartsWith("gen:", StringComparison.Ordinal))
+            if (model != null && (model.StartsWith("gen:", StringComparison.Ordinal) || model.StartsWith("hill:", StringComparison.Ordinal)))
             {
                 return Buildings.GenHouses.Occupants(model);
             }
@@ -190,74 +190,190 @@ namespace GuWorld.Core.Gen
                 return false;
             }
 
-            // Ring streets, bent by the land: each is cut where it would pass through a place of the valley, water or a cliff.
-            var rings = new List<float>();
+            var lanes = 0;
 
-            for (var r = def.Core + 26; r < def.Radius - 10; r += r < 200 ? 48 : 58)
+            if (Buildings.GenHouses.Mountain)
             {
-                rings.Add(r);
-            }
+                // On the mountain: lanes along the slope at each bench (the contours, so they bend as the
+                // mountain does), and stairs straight down the slope between them every so often.
+                var lowest = float.MaxValue;
+                var highest = float.MinValue;
 
-            var wobble = new Noise(def.Seed * 13 + 5);
-
-            foreach (var radius in rings)
-            {
-                var ring = new List<Vec2>();
-                var steps = (int)(2 * Math.PI * radius / 6);
-
-                for (var i = 0; i <= steps; i++)
+                for (var a = 0; a < 36; a++)
                 {
-                    var angle = i * 360f / steps;
-                    var bend = wobble.Fbm(angle * 0.02f, radius * 0.01f, 2) * 14;
-                    var p = plan.Centre + Vec2.FromYaw(angle) * (radius + bend);
-
-                    if (Taken(p, 6))
+                    for (var r = def.Core; r <= def.Radius; r += 30)
                     {
-                        AddPiece(plan, ring, 2.6f);
-                        ring = new List<Vec2>();
-                    }
-                    else
-                    {
-                        ring.Add(p);
+                        var p = plan.Centre + Vec2.FromYaw(a * 10) * r;
+                        var h = ground.Height(p.X, p.Z);
+                        lowest = Math.Min(lowest, h);
+                        highest = Math.Max(highest, h);
                     }
                 }
 
-                AddPiece(plan, ring, 2.6f);
-            }
+                // A lane every second bench: room for a row of houses each side between.
+                var bench = 11f;
 
-            // Lanes between the rings, staggered from ring to ring so the blocks are not one long grid.
-            var lanes = 0;
-
-            for (var k = 0; k < rings.Count; k++)
-            {
-                var inner = k == 0 ? def.Core + 4 : rings[k - 1];
-                var outer = k + 1 < rings.Count ? rings[k + 1] : def.Radius - 6;
-                var count = (int)(2 * Math.PI * rings[k] / (k < 2 ? 70 : 85));
-                var offset = rng.Range(0f, 360f / count);
-
-                for (var i = 0; i < count; i++)
+                for (var level = (float)Math.Ceiling(lowest / bench) * bench + bench * 0.5f; level < highest; level += bench)
                 {
-                    var angle = offset + i * 360f / count + rng.Range(-4f, 4f);
+                    // Trace the contour across the town, west to east: at each step the point north or south where the ground is at this level.
                     var lane = new List<Vec2>();
 
-                    for (var r = inner; r <= outer; r += 5)
+                    for (var x = -def.Radius; x <= def.Radius; x += 4)
                     {
-                        var p = plan.Centre + Vec2.FromYaw(angle) * r;
+                        var half = (float)Math.Sqrt(Math.Max(0, def.Radius * def.Radius - x * x)) - 8;
+                        var found = false;
+                        var p = default(Vec2);
 
-                        if (Taken(p, 5))
+                        if (half > 10)
                         {
-                            AddPiece(plan, lane, 1.8f);
-                            lane = new List<Vec2>();
+                            var lo = plan.Centre.Z - half;
+                            var hi = plan.Centre.Z + half;
+                            var hlo = ground.Height(plan.Centre.X + x, lo) - level;
+                            var hhi = ground.Height(plan.Centre.X + x, hi) - level;
+
+                            if (hlo * hhi < 0)
+                            {
+                                for (var k = 0; k < 18; k++)
+                                {
+                                    var mid = (lo + hi) * 0.5f;
+                                    var hm = ground.Height(plan.Centre.X + x, mid) - level;
+
+                                    if (hm * hlo > 0)
+                                    {
+                                        lo = mid;
+                                        hlo = hm;
+                                    }
+                                    else
+                                    {
+                                        hi = mid;
+                                    }
+                                }
+
+                                p = new Vec2(plan.Centre.X + x, (lo + hi) * 0.5f);
+                                found = Vec2.Distance(p, plan.Centre) > def.Core + 6 && !Taken(p, 5) && (lane.Count == 0 || Vec2.Distance(p, lane[lane.Count - 1]) < 12);
+                            }
                         }
-                        else
+
+                        if (found)
                         {
                             lane.Add(p);
                         }
+                        else
+                        {
+                            if (AddPiece(plan, lane, 2.0f))
+                            {
+                                lanes++;
+                            }
+
+                            lane = new List<Vec2>();
+
+                            if (half > 10 && Vec2.Distance(p, plan.Centre) > def.Core + 6 && p.X != 0 && !Taken(p, 5))
+                            {
+                                lane.Add(p);
+                            }
+                        }
                     }
 
-                    if (AddPiece(plan, lane, 1.8f))
+                    if (AddPiece(plan, lane, 2.0f))
                     {
                         lanes++;
+                    }
+                }
+
+                // Stairs down the slope: straight down the fall of the ground from bench to bench, every 45–75 m across the town.
+                for (var x = -def.Radius + rng.Range(15f, 35f); x < def.Radius - 15; x += rng.Range(32f, 52f))
+                {
+                    var stair = new List<Vec2>();
+                    var half = (float)Math.Sqrt(Math.Max(0, def.Radius * def.Radius - x * x)) - 8;
+
+                    for (var z = -half; z <= half; z += 4)
+                    {
+                        var p = new Vec2(plan.Centre.X + x + 6 * (float)Math.Sin(z * 0.02f + x), plan.Centre.Z + z);
+
+                        if (Vec2.Distance(p, plan.Centre) < def.Core + 6 || Taken(p, 4))
+                        {
+                            AddPiece(plan, stair, 1.5f);
+                            stair = new List<Vec2>();
+                        }
+                        else
+                        {
+                            stair.Add(p);
+                        }
+                    }
+
+                    AddPiece(plan, stair, 1.5f);
+                }
+            }
+            else
+            {
+                // Ring streets, bent by the land: each is cut where it would pass through a place of the valley, water or a cliff.
+                var rings = new List<float>();
+
+                for (var r = def.Core + 26; r < def.Radius - 10; r += r < 200 ? 48 : 58)
+                {
+                    rings.Add(r);
+                }
+
+                var wobble = new Noise(def.Seed * 13 + 5);
+
+                foreach (var radius in rings)
+                {
+                    var ring = new List<Vec2>();
+                    var steps = (int)(2 * Math.PI * radius / 6);
+
+                    for (var i = 0; i <= steps; i++)
+                    {
+                        var angle = i * 360f / steps;
+                        var bend = wobble.Fbm(angle * 0.02f, radius * 0.01f, 2) * 14;
+                        var p = plan.Centre + Vec2.FromYaw(angle) * (radius + bend);
+
+                        if (Taken(p, 6))
+                        {
+                            AddPiece(plan, ring, 2.6f);
+                            ring = new List<Vec2>();
+                        }
+                        else
+                        {
+                            ring.Add(p);
+                        }
+                    }
+
+                    AddPiece(plan, ring, 2.6f);
+                }
+
+                // Lanes between the rings, staggered from ring to ring so the blocks are not one long grid.
+
+                for (var k = 0; k < rings.Count; k++)
+                {
+                    var inner = k == 0 ? def.Core + 4 : rings[k - 1];
+                    var outer = k + 1 < rings.Count ? rings[k + 1] : def.Radius - 6;
+                    var count = (int)(2 * Math.PI * rings[k] / (k < 2 ? 70 : 85));
+                    var offset = rng.Range(0f, 360f / count);
+
+                    for (var i = 0; i < count; i++)
+                    {
+                        var angle = offset + i * 360f / count + rng.Range(-4f, 4f);
+                        var lane = new List<Vec2>();
+
+                        for (var r = inner; r <= outer; r += 5)
+                        {
+                            var p = plan.Centre + Vec2.FromYaw(angle) * r;
+
+                            if (Taken(p, 5))
+                            {
+                                AddPiece(plan, lane, 1.8f);
+                                lane = new List<Vec2>();
+                            }
+                            else
+                            {
+                                lane.Add(p);
+                            }
+                        }
+
+                        if (AddPiece(plan, lane, 1.8f))
+                        {
+                            lanes++;
+                        }
                     }
                 }
             }
@@ -280,7 +396,7 @@ namespace GuWorld.Core.Gen
                 var taken = placed;
                 var streetIndex = streets;
                 houses = Buildings.Lots.Fill(plan, template, def.Houses, def.Clan, (model, centre, yaw, role) =>
-                    Place(plan, taken, index, streetIndex, ground, waters, model, centre, yaw, role, 0.5f), ref rng, def.Core + 8);
+                    Place(plan, taken, index, streetIndex, ground, waters, model, centre, yaw, role, 0.5f, !model.StartsWith("hill:")), ref rng, def.Core + 8);
             }
 
             var lots = new List<(Street street, int side, float along)>();
@@ -883,6 +999,12 @@ namespace GuWorld.Core.Gen
 
             // A house on a slope gets a pad cut in; more than a storey of fall is too much.
             if (pad && high - low > (footprint.Across > 30 ? 6 : 4.2f))
+            {
+                return false;
+            }
+
+            // A house of the mountain stands down the slope on its own posts and stone: not over a cliff.
+            if (!pad && high - low > 9)
             {
                 return false;
             }

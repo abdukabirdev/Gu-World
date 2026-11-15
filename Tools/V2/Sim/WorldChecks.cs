@@ -29,7 +29,9 @@ static class WorldChecks
             if (!float.IsNaN(place.Level) && !place.Cave)
             {
                 var h = land.Height(place.At.X, place.At.Z);
-                check(Math.Abs(h - place.Level) < 1.5f, $"world: {place.Id} stands at its level {place.Level} ({h:0.0})");
+                // (Carried up Gu Yue's slope with the ground round it.)
+                var level = land.FlatOf(place.Id)?.Level ?? place.Level;
+                check(Math.Abs(h - level) < (GuWorld.Core.Gen.Buildings.GenHouses.Mountain ? 5 : 1.5f), $"world: {place.Id} stands at its level {level:0.0} ({h:0.0})");
             }
         }
 
@@ -62,7 +64,7 @@ static class WorldChecks
         check(plan.Waters.Wet(ford, out var fordLevel) && fordLevel - land.Height(ford) < 1.1f, "world: the ford can be waded");
 
         // The roads: every one found, none steeper than a cart can climb, all of them joined.
-        check(plan.Roads.All.Count(r => r.Planned) == Regions.Roads.Length, $"world: every road was found ({plan.Roads.All.Count(r => r.Planned)} of {Regions.Roads.Length})");
+        check(plan.Roads.All.Count(r => r.Planned) == Regions.Roads.Length, $"world: every road was found ({plan.Roads.All.Count(r => r.Planned)} of {Regions.Roads.Length}; missing: {string.Join(", ", Regions.Roads.Where(d => !plan.Roads.All.Any(r => r.Planned && r.From == d.From && r.To == d.To)).Select(d => d.From + "→" + d.To))})");
         var steepest = 0f;
         var where = default(Vec2);
 
@@ -119,6 +121,12 @@ static class WorldChecks
                 {
                     foreach (var p in box.Corners().Append(box.Centre))
                     {
+                        // (Where a road runs by, on the mountain, the road's own grade wins over the pad's edge.)
+                        if (GuWorld.Core.Gen.Buildings.GenHouses.Mountain && plan.Roads.All.Any(r => Lines.ToPolyline(p, r.Points) < r.HalfWidth + 9))
+                        {
+                            continue;
+                        }
+
                         worst = Math.Max(worst, Math.Abs(land.Height(p) - level));
                     }
                 }
@@ -141,7 +149,8 @@ static class WorldChecks
 
             var h0 = land.Height(settlement.Centre);
             var flatness = solid.Max(b => Math.Abs(land.Height(b.Footprint.Centre) - h0));
-            check(flatness < 2.5f, $"world: {settlement.Def.Id} is level under its buildings (off by {flatness:0.0} m)");
+            // A village of the mountain is not levelled (its houses stand down the slope): only its plaza is.
+            check(GuWorld.Core.Gen.Buildings.GenHouses.Mountain || flatness < 2.5f, $"world: {settlement.Def.Id} is level under its buildings (off by {flatness:0.0} m)");
             var ring = settlement.Buildings.Where(b => b.Model.StartsWith("fort:")).GroupBy(b => b.Model.Split(':')[1] + " " + b.Model.Split(':')[2]).Select(g => $"{g.Key} {g.Count()}");
             var outside = settlement.Buildings.Where(b => b.Model.StartsWith("thing:")).GroupBy(b => b.Model.Split(':')[1]).Select(g => $"{g.Key} {g.Count()}");
             report.Add($"  {settlement.Def.Id}: ring {string.Join(", ", ring)}; outside {string.Join(", ", outside)}");

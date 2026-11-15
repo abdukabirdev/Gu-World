@@ -16,6 +16,13 @@ namespace GuWorld.Core.Gen.Buildings
     {
         public static bool Enabled = true;
 
+        /// <summary>
+        /// The settlements are of the mountain: the town on the slope's benches, the villages not
+        /// levelled; their houses ("hill:…" in place of "gen:…") stand down to the ground each on
+        /// its own posts and stone, raised where they stand.
+        /// </summary>
+        public static bool Mountain = true;
+
         /// <summary>How many variants of each kind of building a settlement draws from (more: more variety, more meshes).</summary>
         public static int Variants = 24;
 
@@ -74,6 +81,12 @@ namespace GuWorld.Core.Gen.Buildings
 
                 building.Origin = building.Model;
                 building.Model = For(building.Model, building.Footprint, clan, plan.Def.Seed);
+
+                // A village is not levelled: its halls too stand down to the slope (the town's great buildings have pads).
+                if (Mountain && !plan.Def.City)
+                {
+                    building.Model = "hill:" + building.Model.Substring(4);
+                }
                 // A generated building stands on its lot's middle (the old models had their own pivots).
                 building.At = building.Footprint.Centre;
             }

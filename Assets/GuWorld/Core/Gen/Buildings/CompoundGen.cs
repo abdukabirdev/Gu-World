@@ -275,6 +275,27 @@ namespace GuWorld.Core.Gen.Buildings
 
             // Put it all together, on its terrace if the ground falls away.
             var lift = Math.Max(0, asked.Terrace);
+            var bottom = -0.3f;
+
+            if (asked.Ground != null)
+            {
+                // On the mountain: the whole yard on a stone terrace a little over the highest ground of its lot.
+                var high = float.MinValue;
+                var low = float.MaxValue;
+
+                for (var i = 0; i <= 6; i++)
+                {
+                    for (var j = 0; j <= 6; j++)
+                    {
+                        var g = asked.Ground(-hw + width * i / 6, -hd + depth * j / 6);
+                        high = Math.Max(high, g);
+                        low = Math.Min(low, g);
+                    }
+                }
+
+                lift = high + 0.25f;
+                bottom = low - 0.5f;
+            }
             var solid = new MeshData();
 
             for (var lod = 0; lod < 4; lod++)
@@ -286,10 +307,10 @@ namespace GuWorld.Core.Gen.Buildings
                     Compose.Add(into, lods[lod], new V3(at.X, at.Y + lift, at.Z), yaw);
                 }
 
-                if (lift > 0.05f)
+                if (lift - bottom > 0.4f)
                 {
                     // The terrace: a stone platform under the whole yard, steps up to the gate.
-                    var terrace = TerraceLod(lod, hw, hd, lift, gateX, gateWidth, seed);
+                    var terrace = BuildingGen.Platform(seed, lod, hw + 0.4f, hd + 0.4f, lift, gateX, gateWidth, bottom);
                     Compose.Add(into, terrace, new V3(0, 0, 0), 0);
                 }
 
@@ -310,9 +331,5 @@ namespace GuWorld.Core.Gen.Buildings
             return model;
         }
 
-        static TreeLod TerraceLod(int lod, float hw, float hd, float lift, float gateX, float gateWidth, int seed)
-        {
-            return BuildingGen.Platform(seed, lod, hw + 0.4f, hd + 0.4f, lift, gateX, gateWidth);
-        }
     }
 }
