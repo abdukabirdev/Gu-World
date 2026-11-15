@@ -90,11 +90,21 @@ namespace GuWorld
             {
                 Quality.Set(level, false);
                 Note("== Quality " + level + " (" + Quality.Names[level] + ") " + Screen.width + "x" + Screen.height + " ==");
+                var began = Time.realtimeSinceStartup;
                 game.Begin(true);
 
                 while (!Game.Playing)
                 {
                     yield return null;
+                }
+
+                if (AutoTour.File_ != null)
+                {
+                    yield return AutoTour.Run(game, AutoTour.File_, folder, Time.realtimeSinceStartup - began);
+                    Note("tour finished");
+                    yield return Frames(5);
+                    Application.Quit();
+                    yield break;
                 }
 
                 yield return Frames(30);

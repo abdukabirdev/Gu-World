@@ -369,7 +369,7 @@ namespace GuWorld.Editor
                 return saved;
             }
 
-            var path = $"{Root}/Materials/{Clean(material.name)}_{material.GetInstanceID() & 0xFFFF:X4}.mat";
+            var path = $"{Root}/Materials/{Clean(material.name)}_{savedMaterials.Count:X4}.mat";
             AssetDatabase.CreateAsset(material, path);
             savedMaterials[material] = material;
 

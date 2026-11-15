@@ -302,6 +302,7 @@ namespace GuWorld
             if (WorldMode.Big)
             {
                 // The mountain's plan is made on a worker thread (a few seconds the first time); the loading screen waits.
+                Debug.Log("GU World load: plan task starting");
                 var making = System.Threading.Tasks.Task.Run(() => Core.Gen.WorldPlan.Get());
 
                 while (!making.IsCompleted)
@@ -316,15 +317,22 @@ namespace GuWorld
                 }
                 else
                 {
+                    Debug.Log("GU World load: plan made");
                     var plan = making.Result;
                     Debug.Log("GU World: " + plan.Report());
                     World.Ground.Plan = plan;
                     Streamer.Make(world.transform, plan);
+                    Debug.Log("GU World load: Streamer made");
                     Forest.Make(world.transform, plan);
+                    Debug.Log("GU World load: Forest made");
                     Places.Make(world.transform, plan);
+                    Debug.Log("GU World load: Places made");
                     GrassField.Make(world.transform, plan);
+                    Debug.Log("GU World load: GrassField made");
                     Governor.Make(world.transform);
+                    Debug.Log("GU World load: Governor made");
                     Population.Make(world.transform);
+                    Debug.Log("GU World load: Population made");
                 }
             }
 

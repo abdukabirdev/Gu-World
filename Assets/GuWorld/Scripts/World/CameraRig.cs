@@ -18,6 +18,8 @@ namespace GuWorld.World
         Vector3 focus;
         Volume volume;
         public Camera Camera => view;
+        /// <summary>A fixed viewpoint for the autotest's tour (position, rotation); null: follow the hero.</summary>
+        public static (Vector3 at, Quaternion turn)? Photo;
 
         public static CameraRig Make()
         {
@@ -91,6 +93,13 @@ namespace GuWorld.World
                 transform.rotation = Quaternion.Euler(16, Time.unscaledTime * 2.5f, 0);
                 Cursor.lockState = CursorLockMode.None;
                 Cursor.visible = true;
+                return;
+            }
+
+            if (Photo.HasValue)
+            {
+                transform.position = Photo.Value.at;
+                transform.rotation = Photo.Value.turn;
                 return;
             }
 
