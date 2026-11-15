@@ -466,6 +466,11 @@ namespace GuWorld.Actors
                 return GenBuilding.Make(model, parent, at, yaw, scale);
             }
 
+            if (GenFort.Is(model))
+            {
+                return GenFort.Make(model, parent, at, yaw, scale);
+            }
+
             var prefab = Resources.Load<GameObject>("Build/" + model);
 
             if (prefab == null)

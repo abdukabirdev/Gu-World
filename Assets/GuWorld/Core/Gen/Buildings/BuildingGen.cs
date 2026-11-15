@@ -20,7 +20,7 @@ namespace GuWorld.Core.Gen.Buildings
 
         enum Panel { None, Solid, Window, Door, LatticeDoor, Counter, Rail }
 
-        sealed class Ctx
+        internal sealed class Ctx
         {
             public BuildingStyle S;
             public int Seed, Lod;
@@ -30,6 +30,8 @@ namespace GuWorld.Core.Gen.Buildings
             public Tint Frame, Accent, Wall, Roof, Leaf;
             public string WallTex, DadoTex, RoofTexName;
             public bool Moon;
+            /// <summary>The ground's height under a point (for the dirt at a wall's foot on sloping ground); null: the model's own zero.</summary>
+            public Func<float, float, float> Floor;
 
             public MeshData M(string tex) => Out.Part("tex:" + tex);
             public MeshData Plain => Out.Part("plain");
@@ -38,10 +40,10 @@ namespace GuWorld.Core.Gen.Buildings
             public float R(int a, int b) => (uint)Noise.Hash(a, b, Seed) % 10007 / 10007f;
         }
 
-        static readonly Tint Gold = new Tint(0.83f, 0.62f, 0.22f);
-        static readonly Tint Paper = new Tint(1f, 0.74f, 0.38f);
-        static readonly Tint Lantern = new Tint(1f, 0.26f, 0.1f);
-        static readonly Tint White = new Tint(1, 1, 1);
+        internal static readonly Tint Gold = new Tint(0.83f, 0.62f, 0.22f);
+        internal static readonly Tint Paper = new Tint(1f, 0.74f, 0.38f);
+        internal static readonly Tint Lantern = new Tint(1f, 0.26f, 0.1f);
+        internal static readonly Tint White = new Tint(1, 1, 1);
 
         static string Tex(WallKind kind)
         {
@@ -57,7 +59,7 @@ namespace GuWorld.Core.Gen.Buildings
         }
 
         /// <summary>How many metres one repeat of a texture covers.</summary>
-        static float Size(string tex)
+        internal static float Size(string tex)
         {
             switch (tex)
             {
@@ -68,6 +70,8 @@ namespace GuWorld.Core.Gen.Buildings
                 case "stone": return 2.4f;
                 case "brick": return 1.6f;
                 case "bamboo": return 1.5f;
+                case "rammed": return 3.0f;
+                case "log": return 1.6f;
                 default: return RoofTex;
             }
         }
@@ -839,7 +843,7 @@ namespace GuWorld.Core.Gen.Buildings
         }
 
         /// <summary>A window's or a door-leaf's opening: a frame, lit paper set back in it, a lattice of thin bars before the paper.</summary>
-        static void Opening(Ctx c, V3 o, V3 t, V3 outward, float w, float h, int pattern, float frame)
+        internal static void Opening(Ctx c, V3 o, V3 t, V3 outward, float w, float h, int pattern, float frame)
         {
             if (w < 0.15f || h < 0.15f)
             {
@@ -941,7 +945,7 @@ namespace GuWorld.Core.Gen.Buildings
         }
 
         /// <summary>A balustrade from a to b standing on their height: posts with caps, three rails, balusters between (stone: a solid panel).</summary>
-        static void Balustrade(Ctx c, V3 a, V3 b, bool stone)
+        internal static void Balustrade(Ctx c, V3 a, V3 b, bool stone)
         {
             var length = (b - a).Length;
 
@@ -1013,7 +1017,7 @@ namespace GuWorld.Core.Gen.Buildings
         }
 
         /// <summary>A paper lantern hung on a cord: a lit drum between two dark caps, a tassel.</summary>
-        static void Lamp(Ctx c, V3 top, float radius)
+        internal static void Lamp(Ctx c, V3 top, float radius)
         {
             var glow = c.Glow;
             var sides = c.Lod == 0 ? 10 : c.Lod == 1 ? 6 : 4;
@@ -1541,11 +1545,12 @@ namespace GuWorld.Core.Gen.Buildings
 
         // ------------------------------------------------------------------ Pieces
 
-        static void Shade(Ctx c, V3 p, Tint tint, out float r, out float g, out float b)
+        internal static void Shade(Ctx c, V3 p, Tint tint, out float r, out float g, out float b)
         {
             // Stains where the weather has run, and the ground's dirt at the foot.
             var stain = 1 - (0.08f + 0.22f * c.Wear) * (0.5f + 0.5f * c.Noise.Fbm(p.X * 0.6f + p.Y * 0.35f, p.Z * 0.6f - p.Y * 0.2f, 2));
-            var dirt = 1 - (0.1f + 0.22f * c.Wear) * (float)Math.Exp(-Math.Max(0, p.Y) / 0.45f);
+            var above = c.Floor != null ? p.Y - c.Floor(p.X, p.Z) : p.Y;
+            var dirt = 1 - (0.1f + 0.22f * c.Wear) * (float)Math.Exp(-Math.Max(0, above) / 0.45f);
             var k = stain * dirt;
             r = Math.Min(1, tint.R * k);
             g = Math.Min(1, tint.G * k);
@@ -1553,7 +1558,7 @@ namespace GuWorld.Core.Gen.Buildings
         }
 
         /// <summary>Two triangles for a quad whose corners run round it, facing `outward`.</summary>
-        static void Wind(MeshData mesh, int a, int b, int cc, int d, V3 outward)
+        internal static void Wind(MeshData mesh, int a, int b, int cc, int d, V3 outward)
         {
             V3 At(int i) => new V3(mesh.Positions[i * 3], mesh.Positions[i * 3 + 1], mesh.Positions[i * 3 + 2]);
             var n = V3.Cross(At(b) - At(a), At(cc) - At(a));
@@ -1576,7 +1581,7 @@ namespace GuWorld.Core.Gen.Buildings
         }
 
         /// <summary>A flat quad a → b → cc → d facing `outward`, its texture laid by the world's metres (tex null: untextured).</summary>
-        static void Quad(Ctx c, MeshData mesh, V3 a, V3 b, V3 cc, V3 d, V3 outward, Tint tint, string tex)
+        internal static void Quad(Ctx c, MeshData mesh, V3 a, V3 b, V3 cc, V3 d, V3 outward, Tint tint, string tex)
         {
             var n = V3.Cross(b - a, cc - a);
 
@@ -1621,7 +1626,7 @@ namespace GuWorld.Core.Gen.Buildings
         }
 
         /// <summary>A box between two corners (its underside left out unless asked).</summary>
-        static void Box(Ctx c, MeshData mesh, V3 min, V3 max, Tint tint, string tex, bool bottom = false)
+        internal static void Box(Ctx c, MeshData mesh, V3 min, V3 max, Tint tint, string tex, bool bottom = false)
         {
             var x0 = min.X;
             var x1 = max.X;
@@ -1642,7 +1647,7 @@ namespace GuWorld.Core.Gen.Buildings
         }
 
         /// <summary>A box on a wall's face: from `o` (its lower left, seen from outside) `w` along the wall, `h` up, standing `d` proud of it.</summary>
-        static void BoxOn(Ctx c, MeshData mesh, V3 o, V3 t, V3 outward, float w, float h, float d, Tint tint, string tex)
+        internal static void BoxOn(Ctx c, MeshData mesh, V3 o, V3 t, V3 outward, float w, float h, float d, Tint tint, string tex)
         {
             if (w <= 0 || h <= 0)
             {
@@ -1654,7 +1659,7 @@ namespace GuWorld.Core.Gen.Buildings
         }
 
         /// <summary>A beam of section `w` (across) × `h` (up) from a to b, the wood's grain along it.</summary>
-        static void Beam(Ctx c, MeshData mesh, V3 a, V3 b, float w, float h, Tint tint, bool caps = true, string tex = "wood")
+        internal static void Beam(Ctx c, MeshData mesh, V3 a, V3 b, float w, float h, Tint tint, bool caps = true, string tex = "wood")
         {
             var axis = b - a;
             var length = axis.Length;
@@ -1714,7 +1719,7 @@ namespace GuWorld.Core.Gen.Buildings
         }
 
         /// <summary>A round post from y0 to y1, the grain running up it.</summary>
-        static void Post(Ctx c, MeshData mesh, float x, float z, float y0, float y1, float radius, int sides, Tint tint)
+        internal static void Post(Ctx c, MeshData mesh, float x, float z, float y0, float y1, float radius, int sides, Tint tint)
         {
             var start = mesh.VertexCount;
             var size = Size("wood");
@@ -1744,7 +1749,7 @@ namespace GuWorld.Core.Gen.Buildings
         }
 
         /// <summary>A short round solid with a flat top (a post's stone foot, a finial's stage).</summary>
-        static void Drum(Ctx c, MeshData mesh, float x, float z, float y0, float y1, float radius, int sides, Tint tint)
+        internal static void Drum(Ctx c, MeshData mesh, float x, float z, float y0, float y1, float radius, int sides, Tint tint)
         {
             var plain = ReferenceEquals(mesh, c.Plain);
 

@@ -287,6 +287,19 @@ namespace GuWorld.World
             parts = new List<Batch>();
             farParts[model] = parts;
 
+            // A generated building, a piece of the ring, a thing: its far level, a batch per sub-mesh.
+            if (GenBuilding.Is(model) || GenFort.Is(model))
+            {
+                var far = GenBuilding.Is(model) ? GenBuilding.Far(model, out var mats) : GenFort.Far(model, out mats);
+
+                for (var i = 0; i < far.subMeshCount && i < mats.Length; i++)
+                {
+                    parts.Add(new Batch { Mesh = far, Submesh = i, Material = mats[i], Local = Matrix4x4.identity });
+                }
+
+                return parts;
+            }
+
             // A model made in code is one mesh with one material.
             if (CodeProp.Is(model))
             {

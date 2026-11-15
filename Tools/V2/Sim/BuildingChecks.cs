@@ -26,18 +26,20 @@ static class BuildingChecks
         (5, 0.7f, 0.2f, "bai"),
     };
 
-    public static List<Glb.Part> Parts(BuildingModel model, int lod, string tex)
+    public static List<Glb.Part> Parts(BuildingModel model, int lod, string tex) => Parts(model.Lods[lod], tex, $"LOD{lod}");
+
+    public static List<Glb.Part> Parts(GuWorld.Core.Gen.Flora.TreeLod level, string tex, string prefix = "LOD0")
     {
         var parts = new List<Glb.Part>();
 
-        foreach (var part in model.Lods[lod].Parts)
+        foreach (var part in level.Parts)
         {
             if (part.Mesh.TriangleCount == 0)
             {
                 continue;
             }
 
-            var made = new Glb.Part { Name = $"LOD{lod}_{part.Material.Replace(':', '_')}", Mesh = part.Mesh };
+            var made = new Glb.Part { Name = $"{prefix}_{part.Material.Replace(':', '_')}", Mesh = part.Mesh };
 
             if (part.Material.StartsWith("tex:"))
             {
@@ -50,6 +52,10 @@ static class BuildingChecks
             {
                 made.Emissive = new[] { 1f, 0.62f, 0.3f };
                 made.TwoSided = true;
+            }
+            else if (part.Material == "ground")
+            {
+                made.Roughness = 1;
             }
             else
             {

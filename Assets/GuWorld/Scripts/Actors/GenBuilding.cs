@@ -9,7 +9,7 @@ namespace GuWorld.Actors
 {
     /// <summary>
     /// Generated buildings in the engine (Core/Gen/Buildings): a model named
-    /// "gen:&lt;style&gt;:&lt;seed&gt;[:&lt;clan&gt;[:&lt;wealth 0-9&gt;[:&lt;wear 0-9&gt;]]]" (as Models.Prefab
+    /// "gen:&lt;style&gt;:&lt;seed&gt;[:&lt;clan&gt;[:&lt;wealth 0-9&gt;[:&lt;wear 0-9&gt;[:&lt;width m&gt;[:&lt;depth m&gt;]]]]]" (as Models.Prefab
     /// is asked for) is raised once, its four levels of detail kept as meshes, and placed with a
     /// LODGroup and a collider of its far level. The model's front faces -Z, its foot at its origin.
     /// Textures: Resources/Buildings/&lt;name&gt; (Tools/V2/models/buildtex.py), drawn with VertexLit
@@ -43,7 +43,10 @@ namespace GuWorld.Actors
             var wealth = bits.Length > 3 && int.TryParse(bits[3], out var w) ? w / 9f : 0.5f;
             var wear = bits.Length > 4 && int.TryParse(bits[4], out var r) ? r / 9f : 0.3f;
 
-            return BuildingGen.Make(style, seed, new BuildingParams { Clan = clan, Wealth = wealth, Wear = wear });
+            var width = bits.Length > 5 && float.TryParse(bits[5], System.Globalization.NumberStyles.Float, System.Globalization.CultureInfo.InvariantCulture, out var wd) ? wd : 0;
+            var depth = bits.Length > 6 && float.TryParse(bits[6], System.Globalization.NumberStyles.Float, System.Globalization.CultureInfo.InvariantCulture, out var dp) ? dp : 0;
+
+            return BuildingGen.Make(style, seed, new BuildingParams { Clan = clan, Wealth = wealth, Wear = wear, Width = width, Depth = depth });
         }
 
         static Made Get(string model)
@@ -65,6 +68,15 @@ namespace GuWorld.Actors
             made[model] = m;
 
             return m;
+        }
+
+        /// <summary>The far level of a model (for drawing it in batches from afar): its mesh and a material per sub-mesh.</summary>
+        public static Mesh Far(string model, out Material[] mats)
+        {
+            var m = Get(model);
+            mats = m.Materials[2];
+
+            return m.Lods[2];
         }
 
         public static GameObject Make(string model, Transform parent, Vector3 at, float yaw, float scale = 1)
@@ -98,7 +110,7 @@ namespace GuWorld.Actors
             return root;
         }
 
-        static Mesh MeshOf(TreeLod lod, string name, out Material[] mats)
+        public static Mesh MeshOf(TreeLod lod, string name, out Material[] mats)
         {
             var positions = new List<Vector3>();
             var normals = new List<Vector3>();
@@ -161,7 +173,7 @@ namespace GuWorld.Actors
             return mesh;
         }
 
-        static Mesh Plain(MeshData data, string name)
+        public static Mesh Plain(MeshData data, string name)
         {
             var mesh = new Mesh { name = name };
             var vertices = new Vector3[data.VertexCount];

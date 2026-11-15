@@ -154,6 +154,40 @@ namespace GuWorld.Core
                 }
             }
 
+            // Generated: a building ("gen:style:…"), a piece of a ring ("fort:rampart:what:…"), a thing ("thing:kind:…").
+            if (id != null && (id.StartsWith("gen:", System.StringComparison.Ordinal) || id.StartsWith("fort:", System.StringComparison.Ordinal) || id.StartsWith("thing:", System.StringComparison.Ordinal)))
+            {
+                var bits = id.Split(':');
+                float width, depth, height;
+
+                if (bits[0] == "thing")
+                {
+                    (width, depth) = Gen.Buildings.ThingGen.Footprint(bits[1]);
+                    height = 3;
+                }
+                else if (bits[0] == "fort")
+                {
+                    var style = Gen.Buildings.Ramparts.Get(bits[1]);
+                    var what = bits.Length > 2 ? bits[2] : "wall";
+                    var length = bits.Length > 5 && float.TryParse(bits[5], System.Globalization.NumberStyles.Float, System.Globalization.CultureInfo.InvariantCulture, out var l) && l > 0 ? l : style.Piece;
+                    width = what == "gate" ? (style.Kind == Gen.Buildings.RampartKind.Stone ? 19 : style.Kind == Gen.Buildings.RampartKind.Earth || style.Kind == Gen.Buildings.RampartKind.Plaster ? 13 : 6) : what == "tower" ? style.Thickness + 4 : length;
+                    depth = what == "wall" ? style.Thickness + 0.6f : style.Thickness + 4;
+                    height = style.Height + (what == "wall" ? 1.8f : 9);
+                }
+                else
+                {
+                    var style = Gen.Buildings.Buildings.Get(bits.Length > 1 ? bits[1] : "house");
+                    width = style.Bay * (style.MinBaysX + style.MaxBaysX) * 0.5f + 2 * style.Overhang;
+                    depth = style.Bay * (style.MinBaysZ + style.MaxBaysZ) * 0.5f + style.Veranda + 2 * style.Overhang;
+                    height = style.Plinth + style.StoreyHeight * (style.MinStoreys + style.MaxStoreys) * 0.5f + depth * style.Pitch * 0.5f;
+                }
+
+                footprint = new Footprint(id, bits[0] + " " + (bits.Length > 1 ? bits[1] : ""), width, depth, height, 0, 0);
+                byId[id] = footprint;
+
+                return true;
+            }
+
             return false;
         }
 

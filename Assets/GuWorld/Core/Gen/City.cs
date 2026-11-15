@@ -633,10 +633,17 @@ namespace GuWorld.Core.Gen
         /// crosses the ring, a corner tower every so often, and gaps where the ground will not take a wall
         /// (water, a cliff, a place of the valley).
         /// </summary>
+        /// <summary>Whether the ring is raised by the ring generator (FortGen) or from the old kit's pieces.</summary>
+        public static bool GeneratedRing = true;
+
         static void Wall(SettlementPlan plan, ShapeIndex<Box> index, IList<List<Vec2>> roads, IGround ground, Waters waters)
         {
             var radius = plan.Def.Radius + 66;
-            var piece = Props.Footprint("town_wall").width;
+            // The ring's build: a clan town's stone, a village's rammed earth, the Bai's white wall, a hamlet's palisade (Core/Gen/Buildings/FortGen).
+            var rampart = GeneratedRing ? Buildings.Ramparts.For(plan.Def.Clan, plan.Def.City, plan.Def.Houses) : null;
+            var clan = plan.Def.Clan ?? "";
+            var gateModel = GeneratedRing ? $"fort:{rampart.Id}:gate:{plan.Def.Seed}:{clan}:0" : "code:town_gate:0";
+            var piece = GeneratedRing ? rampart.Piece : Props.Footprint("town_wall").width;
             var pieces = (int)(2 * Math.PI * radius / piece);
             var gates = new List<float>();
 
@@ -665,14 +672,15 @@ namespace GuWorld.Core.Gen
             foreach (var angle in gates)
             {
                 var at = plan.Centre + Vec2.FromYaw(angle) * radius;
-                var (width, depth) = Props.Footprint("town_gate");
-                // The gate faces out along the road (its +z outward).
-                plan.Buildings.Add(new Placed { Model = "code:town_gate:0", At = at, Yaw = angle, Footprint = new Box(at, new Vec2(width * 0.5f, depth * 0.5f), angle), Role = "gate" });
+                var gateFoot = Catalog.Get(gateModel);
+                var (width, depth) = (gateFoot.Across, gateFoot.Deep);
+                // The gate faces out along the road (the old model's +z outward; a generated one's -z).
+                plan.Buildings.Add(new Placed { Model = gateModel, At = at, Yaw = GeneratedRing ? angle + 180 : angle, Footprint = new Box(at, new Vec2(width * 0.5f, depth * 0.5f), angle), Role = "gate" });
                 plan.Gates.Add((at, angle));
             }
 
             var built = new List<Box>();
-            var gateHalf = (float)(Math.Atan2(Props.Footprint("town_gate").width * 0.5f + 1, radius) * 180 / Math.PI);
+            var gateHalf = (float)(Math.Atan2(Catalog.Get(gateModel).Across * 0.5f + (GeneratedRing ? 0 : 1), radius) * 180 / Math.PI);
 
             for (var i = 0; i < pieces; i++)
             {
@@ -686,9 +694,10 @@ namespace GuWorld.Core.Gen
                 var at = plan.Centre + Vec2.FromYaw(angle) * radius;
                 // Its length along the ring (its own x), its outer face (−z) outward: it faces the middle.
                 var yaw = angle + 180;
-                var corner = i % 24 == 0;
-                var model = corner ? "code:corner_tower:0" : "code:town_wall:0";
-                var (w, d) = Props.Footprint(corner ? "corner_tower" : "town_wall");
+                var corner = GeneratedRing ? i % 8 == 0 && rampart.Kind != Buildings.RampartKind.Bamboo && rampart.Kind != Buildings.RampartKind.Plaster : i % 24 == 0;
+                var model = GeneratedRing ? $"fort:{rampart.Id}:wall:{i}:{clan}:{piece + 0.3f:0.0}".Replace(',', '.') : corner ? "code:corner_tower:0" : "code:town_wall:0";
+                var wallFoot = Catalog.Get(model);
+                var (w, d) = GeneratedRing ? (wallFoot.Across, wallFoot.Deep) : Props.Footprint(corner ? "corner_tower" : "town_wall");
                 var box = new Box(at, new Vec2(w * 0.5f, d * 0.5f), yaw);
                 var blocked = false;
 
@@ -713,6 +722,14 @@ namespace GuWorld.Core.Gen
                 plan.Buildings.Add(new Placed { Model = model, At = at, Yaw = yaw, Footprint = box, Role = "wall" });
                 built.Add(box);
                 plan.WallPieces++;
+
+                if (GeneratedRing && corner)
+                {
+                    // A tower astride the wall, standing out from its outer face.
+                    var towerModel = $"fort:{rampart.Id}:tower:{i}:{clan}:0";
+                    var tf = Catalog.Get(towerModel);
+                    plan.Buildings.Add(new Placed { Model = towerModel, At = at, Yaw = yaw, Footprint = new Box(at, new Vec2(tf.Across * 0.5f, tf.Deep * 0.5f), yaw), Role = "wall" });
+                }
             }
 
             foreach (var box in built)

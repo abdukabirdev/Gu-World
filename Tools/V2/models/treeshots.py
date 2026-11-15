@@ -141,6 +141,10 @@ def dress(objects, tex_dir):
             poly.use_smooth = True
 
 
+# The meadow's height (a scene with its own ground sets it lower).
+GROUND_Z = 0
+
+
 def shoot(path, eye, target, size, samples, lens=35, sun_yaw=35, sun_pitch=48, person=None):
     scene = bpy.context.scene
     scene.render.engine = 'CYCLES'
@@ -165,7 +169,7 @@ def shoot(path, eye, target, size, samples, lens=35, sun_yaw=35, sun_pitch=48, p
     sun.rotation_euler = (math.radians(sun_pitch), 0, math.radians(sun_yaw))
     scene.collection.objects.link(sun)
     # The ground: a wide dark meadow.
-    bpy.ops.mesh.primitive_plane_add(size=900, location=(0, 0, 0))
+    bpy.ops.mesh.primitive_plane_add(size=900, location=(0, 0, GROUND_Z))
     ground = bpy.context.active_object
     ground.name = '_look_ground'
     gm = bpy.data.materials.new('_look_ground')

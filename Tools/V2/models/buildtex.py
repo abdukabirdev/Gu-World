@@ -371,7 +371,57 @@ def shingle(rng):
     return shade(base, h, 0.45), h
 
 
-ALL = {'wood': wood, 'plank': plank, 'plaster': plaster, 'mud': mud, 'stone': stone, 'brick': brick, 'bamboo': bamboo, 'tile': tile, 'thatch': thatch, 'shingle': shingle}
+def rammed(rng):
+    """Rammed earth: courses the height of the shuttering, each pressed in layers, the boards' seams and the tie-holes left in rows."""
+    u, v = grid()
+    courses = 6
+    cv = v * courses
+    course = np.floor(cv).astype(int)
+    fv = cv - course
+    layers = 0.5 + 0.5 * np.sin((v * 60 + 0.4 * fbm(rng, 12, 3, 3)) * 6.283)
+    lumps = fbm(rng, 16, 10, 4)
+    seam = 1 - smooth(0.0, 0.03, np.minimum(fv, 1 - fv))
+    tone = per(course, 33, 64)
+    ys = np.zeros((N, N), np.float32)
+    holes = np.zeros((N, N), np.float32)
+    for k in range(courses):
+        cy = (k + 0.08) / courses
+        for j in range(4):
+            cx = (j + 0.5 * (k % 2) + 0.25) / 4
+            d = np.hypot(((u - cx + 0.5) % 1.0) - 0.5, (v - cy) * 1.0)
+            holes = np.maximum(holes, 1 - smooth(0.006, 0.011, d))
+    f1, f2, _ = voronoi(rng, 50, 1.0, 0.6)
+    crack = (1 - smooth(0.0, 0.002, f2 - f1)) * smooth(0.6, 0.78, fbm(rng, 6, 6, 3))
+    h = 0.6 + 0.12 * (layers - 0.5) + 0.2 * (lumps - 0.5) - 0.3 * seam - 0.4 * holes - 0.3 * crack
+    base = col((0.6, 0.48, 0.34)) * (0.82 + 0.25 * tone[..., None]) * (0.85 + 0.2 * layers[..., None]) * (0.85 + 0.3 * lumps[..., None])
+    base = mix(base, col((0.3, 0.23, 0.16)), seam * 0.5)
+    base = mix(base, col((0.08, 0.06, 0.05)), np.maximum(holes, crack * 0.8))
+    rain = smooth(0.55, 0.8, fbm(rng, 24, 2, 3)) * 0.25
+    base = mix(base, col((0.42, 0.36, 0.3)), rain)
+    damp = smooth(0.25, 0.0, v) * 0.35
+    base = base * (1 - damp[..., None])
+    return shade(base, h, 0.5), h
+
+
+def log(rng):
+    """Round logs with their bark on (palisades, cartwheels' hubs, woodpiles): ridged bark running along u, pale where it has peeled."""
+    u, v = grid()
+    w = (fbm(rng, 3, 30, 3) - 0.5) * 0.06
+    ridges = 0.5 + 0.5 * np.sin((v + w) * 6.283 * 22 + 2 * fbm(rng, 30, 4, 2))
+    ridges = ridges ** 1.6
+    breaks = 1 - (1 - smooth(0.0, 0.03, np.abs(fbm(rng, 40, 3, 2) - 0.5))) * 0.6
+    fine = fbm(rng, 120, 30, 3)
+    h = 0.35 + 0.45 * ridges * breaks + 0.15 * (fine - 0.5)
+    base = col((0.4, 0.33, 0.26)) * (0.55 + 0.6 * ridges[..., None]) * (0.85 + 0.3 * fine[..., None])
+    peel = smooth(0.66, 0.72, fbm(rng, 6, 8, 4))
+    base = mix(base, col((0.72, 0.6, 0.45)) * (0.85 + 0.3 * fine[..., None]), peel)
+    h = np.where(peel > 0.5, 0.3 + 0.1 * fine, h)
+    lichen = smooth(0.7, 0.8, fbm(rng, 10, 10, 3)) * (1 - peel)
+    base = mix(base, col((0.55, 0.58, 0.45)), lichen * 0.5)
+    return shade(base, h, 0.45), h
+
+
+ALL = {'wood': wood, 'plank': plank, 'plaster': plaster, 'mud': mud, 'stone': stone, 'brick': brick, 'bamboo': bamboo, 'tile': tile, 'thatch': thatch, 'shingle': shingle, 'rammed': rammed, 'log': log}
 
 
 def main():

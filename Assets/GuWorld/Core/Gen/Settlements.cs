@@ -279,6 +279,11 @@ namespace GuWorld.Core.Gen
                 Fields(plan, roadsIn, axis, ref rng);
             }
 
+            if (CityPlanner.GeneratedRing)
+            {
+                Outskirts(plan, placed, roadsIn, waters, ref rng);
+            }
+
             // Where people stand: before the clan's buildings, before some doors, on the plaza.
             foreach (var building in plan.Buildings)
             {
@@ -411,8 +416,13 @@ namespace GuWorld.Core.Gen
         {
             var def = plan.Def;
             var walled = def.Walled;
-            var model = walled ? "fort_wall_segment" : "prop_bamboo_fence";
-            var piece = Catalog.Get(model).Across;
+            var generated = CityPlanner.GeneratedRing;
+            // A generated ring: rammed earth (white plaster for the Bai, a palisade for a hamlet) if walled, else a bamboo fence.
+            var rampart = generated ? (walled ? Buildings.Ramparts.For(def.Clan, false, def.Houses) : Buildings.Ramparts.Bamboo) : null;
+            var clan = def.Clan ?? "";
+            var model = generated ? null : walled ? "fort_wall_segment" : "prop_bamboo_fence";
+            var piece = generated ? rampart.Piece : Catalog.Get(model).Across;
+            var gateModel = generated ? $"fort:{rampart.Id}:gate:{def.Seed}:{clan}:0" : "fort_battle_gate";
             var radius = def.Radius - (walled ? 3 : 1.5f);
             var circumference = 2 * (float)Math.PI * radius;
             var pieces = (int)(circumference / piece);
@@ -453,12 +463,12 @@ namespace GuWorld.Core.Gen
                         if (walled && !gateDone && Math.Abs(Mod(opening - axis + 180, 360) - 180) < 30)
                         {
                             gateDone = true;
-                            var gateAt = plan.Centre + Vec2.FromYaw(opening) * (radius + 1);
+                            var gateAt = plan.Centre + Vec2.FromYaw(opening) * (radius + (generated ? 0 : 1));
                             plan.Gates.Add((gateAt, opening));
                             plan.Buildings.Add(new Placed
                             {
-                                Model = "fort_battle_gate", At = gateAt, Yaw = opening, Role = "gate",
-                                Footprint = new Box(gateAt, new Vec2(Catalog.Get("fort_battle_gate").Across * 0.5f, 3), opening)
+                                Model = gateModel, At = gateAt, Yaw = generated ? Mod(opening + 180, 360) : opening, Role = "gate",
+                                Footprint = new Box(gateAt, new Vec2(Catalog.Get(gateModel).Across * 0.5f, 3), opening)
                             });
                         }
                     }
@@ -477,8 +487,10 @@ namespace GuWorld.Core.Gen
                     continue;
                 }
 
-                var yaw = Mod(angle + 90, 360);
-                var box = new Box(at, new Vec2(piece * 0.5f, walled ? 1.5f : 0.4f), yaw);
+                // (A generated piece: its length along its own x, its outer face, -z, outward.)
+                var yaw = generated ? Mod(angle + 180, 360) : Mod(angle + 90, 360);
+                var pieceModel = generated ? $"fort:{rampart.Id}:wall:{i}:{clan}:{piece + 0.3f:0.0}".Replace(',', '.') : model;
+                var box = generated ? new Box(at, new Vec2(piece * 0.5f, Catalog.Get(pieceModel).Deep * 0.5f), yaw) : new Box(at, new Vec2(piece * 0.5f, walled ? 1.5f : 0.4f), yaw);
                 var clear = true;
 
                 foreach (var other in placed)
@@ -492,11 +504,18 @@ namespace GuWorld.Core.Gen
 
                 if (clear)
                 {
-                    plan.Buildings.Add(new Placed { Model = model, At = at, Yaw = yaw, Footprint = box, Role = walled ? "wall" : "fence" });
+                    plan.Buildings.Add(new Placed { Model = pieceModel, At = at, Yaw = yaw, Footprint = box, Role = walled ? "wall" : "fence" });
+
+                    if (generated && walled && i % 8 == 4 && rampart.Kind != Buildings.RampartKind.Plaster)
+                    {
+                        var tower = $"fort:{rampart.Id}:tower:{i}:{clan}:0";
+                        var tf = Catalog.Get(tower);
+                        plan.Buildings.Add(new Placed { Model = tower, At = at, Yaw = yaw, Role = "tower", Footprint = new Box(at, new Vec2(tf.Across * 0.5f, tf.Deep * 0.5f), yaw) });
+                    }
                 }
             }
 
-            if (walled && plan.Gates.Count > 0)
+            if (walled && plan.Gates.Count > 0 && !generated)
             {
                 // Watchtowers at the gate's two sides.
                 var (gate, facing) = plan.Gates[0];
@@ -509,6 +528,158 @@ namespace GuWorld.Core.Gen
                         Model = "fort_watchtower", At = at, Yaw = facing, Role = "tower", Footprint = new Box(at, new Vec2(4.6f, 4.6f), facing)
                     });
                 }
+            }
+        }
+
+        /// <summary>
+        /// The things outside the ring (Core/Gen/Buildings/ThingGen): banner poles, lanterns and
+        /// barricades before each gate, a roadside shrine, a stele and a signpost along the road out;
+        /// haystacks, a drying rack, a scarecrow and wattle fences by the fields; a few graves on the
+        /// slope away from the roads.
+        /// </summary>
+        static void Outskirts(SettlementPlan plan, List<Box> placed, IList<float> roadsIn, Waters waters, ref Rng rng)
+        {
+            var def = plan.Def;
+            var clan = def.Clan ?? "";
+            var seed = def.Seed * 31;
+            var ways = new List<(Vec2 at, float facing)>(plan.Gates);
+
+            if (ways.Count == 0)
+            {
+                foreach (var road in roadsIn)
+                {
+                    ways.Add((plan.Centre + Vec2.FromYaw(road) * def.Radius, road));
+                }
+            }
+
+            bool Put(string kind, Vec2 at, float yaw)
+            {
+                var model = $"thing:{kind}:{seed++}:{clan}";
+                var foot = Catalog.Get(model);
+                var box = new Box(at, new Vec2(foot.Across * 0.5f, foot.Deep * 0.5f), yaw);
+
+                if (Vec2.Distance(at, plan.Centre) < def.Radius + 1 || waters != null && waters.Distance(at) < 8)
+                {
+                    return false;
+                }
+
+                foreach (var other in placed)
+                {
+                    if (Box.Overlap(box.Grown(0.5f), other))
+                    {
+                        return false;
+                    }
+                }
+
+                foreach (var building in plan.Buildings)
+                {
+                    if (Vec2.Distance(building.Footprint.Centre, at) < building.Footprint.Radius + box.Radius && Box.Overlap(box.Grown(0.5f), building.Footprint))
+                    {
+                        return false;
+                    }
+                }
+
+                foreach (var field in plan.Fields)
+                {
+                    if (kind != "scarecrow" && Box.Overlap(box, field))
+                    {
+                        return false;
+                    }
+                }
+
+                plan.Buildings.Add(new Placed { Model = model, At = at, Yaw = yaw, Footprint = box, Role = "prop" });
+                placed.Add(box);
+
+                return true;
+            }
+
+            var first = true;
+
+            foreach (var (gate, facing) in ways)
+            {
+                var outward = Vec2.FromYaw(facing);
+                var side = outward.Right;
+                // Things by the road face it: their fronts (-Z) toward the road's line.
+                Vec2 At(float across, float out_) => gate + side * across + outward * out_;
+                float Toward(float across) => Mod((across > 0 ? facing - 90 : facing + 90) + 180, 360);
+                Put("banner_pole", At(-7, 5), Toward(-7));
+                Put("banner_pole", At(7, 5), Toward(7));
+                Put("lantern_post", At(-4.5f, 10), Toward(-4.5f));
+                Put("lantern_post", At(4.5f, 10), Toward(4.5f));
+
+                if (def.Walled)
+                {
+                    Put("barricade", At(-10, 15), Mod(facing + 180 + 12, 360));
+                    Put("barricade", At(10, 15), Mod(facing + 180 - 12, 360));
+                }
+
+                if (first)
+                {
+                    Put("shrine", At(-11, 24), Toward(-11));
+                    Put("stele", At(9, 20), Toward(9));
+                    Put("signpost", At(4, 34), facing);
+                    Put("cart", At(-6.5f, 30 + rng.Range(0f, 8f)), Mod(facing + rng.Range(-20f, 20f), 360));
+                    first = false;
+                }
+
+                Put("woodpile", At(rng.Chance(0.5f) ? -14 : 14, 9), Mod(facing + 180, 360));
+            }
+
+            foreach (var field in plan.Fields)
+            {
+                var ax = field.AxisX;
+                var az = field.AxisZ;
+                var hx = field.Half.X;
+                var hz = field.Half.Z;
+                var corner = rng.Chance(0.5f) ? 1 : -1;
+                Put("haystack", field.Centre + ax * (corner * (hx + 4)) + az * (hz * 0.5f), rng.Range(0f, 360f));
+                Put("haystack", field.Centre + ax * (corner * (hx + 4.5f)) - az * (hz * 0.2f), rng.Range(0f, 360f));
+                Put("drying_rack", field.Centre + az * (hz + 2.5f) + ax * rng.Range(-hx * 0.5f, hx * 0.5f), field.Yaw + 180);
+                Put("scarecrow", field.Centre + ax * rng.Range(-hx * 0.4f, hx * 0.4f) + az * rng.Range(-hz * 0.3f, hz * 0.3f), field.Yaw + 180 + rng.Range(-30f, 30f));
+
+                // Wattle along the field's side away from the settlement.
+                var far = Vec2.Dot(field.Centre - plan.Centre, az) > 0 ? 1 : -1;
+                var count = (int)(hx * 2 / 6.2f);
+
+                for (var k = 0; k < count; k++)
+                {
+                    if (rng.Chance(0.2f))
+                    {
+                        continue;
+                    }
+
+                    Put("wattle", field.Centre + az * (far * (hz + 0.8f)) + ax * (-hx + 3.1f + k * 6.2f), far > 0 ? field.Yaw + 180 : field.Yaw);
+                }
+            }
+
+            // Graves on a slope away from the roads.
+            for (var attempt = 0; attempt < 6; attempt++)
+            {
+                var angle = rng.Range(0f, 360f);
+                var clear = true;
+
+                foreach (var road in roadsIn)
+                {
+                    if (Math.Abs(Mod(angle - road + 180, 360) - 180) < 40)
+                    {
+                        clear = false;
+                    }
+                }
+
+                if (!clear)
+                {
+                    continue;
+                }
+
+                var site = plan.Centre + Vec2.FromYaw(angle) * (def.Radius + 55);
+                var graves = rng.Range(3, 7);
+
+                for (var k = 0; k < graves; k++)
+                {
+                    Put("grave", site + Vec2.FromYaw(angle + 90) * ((k - graves * 0.5f) * 3.6f) + Vec2.FromYaw(angle) * rng.Range(-1.5f, 1.5f), Mod(angle + 180 + rng.Range(-8f, 8f), 360));
+                }
+
+                break;
             }
         }
 

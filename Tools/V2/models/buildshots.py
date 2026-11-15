@@ -19,6 +19,7 @@ from PIL import Image
 
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 from common import load_glb, reset
+import treeshots
 from treeshots import attribute, image, shoot
 
 
@@ -85,6 +86,12 @@ def dress(objects, tex_dir, glow):
         mat = bpy.data.materials.new(name)
         if kind.startswith('tex_'):
             textured(mat, tex_dir, kind[4:])
+        elif kind == 'ground':
+            mat.use_nodes = True
+            nodes, links = mat.node_tree.nodes, mat.node_tree.links
+            bsdf = nodes['Principled BSDF']
+            bsdf.inputs['Roughness'].default_value = 1
+            links.new(attribute(nodes, links), bsdf.inputs['Base Color'])
         else:
             plain(mat, kind == 'glow', glow)
         obj.data.materials.clear()
@@ -127,14 +134,35 @@ def main():
     for name in names:
         for view in views:
             reset()
-            objects = load_glb(os.path.join(gen, 'buildings', f'{name}_lod{lod}.glb'))
+            objects = load_glb(os.path.join(gen, name + '.glb') if '/' in name else os.path.join(gen, 'buildings', f'{name}_lod{lod}.glb'))
             dress(objects, tex_dir, 2.5 if view == 'd' else 0.9)
             lo, hi = bounds(objects)
+            treeshots.GROUND_Z = -12 if '/' in name else 0
             mid = (lo + hi) / 2
             r = max(hi.x - lo.x, hi.y - lo.y, hi.z * 0.9)
             front = hi.y + 2.5
             person = (lo.x * 0.25 + 1.2, front - 1.0)
-            if view in 'td':
+            if '/' in name:
+                # A scene: the gate at the origin, the outside toward +Y; `size` of the view from the scene's name.
+                reach = 140 if 'stone' in name else 30 if 'bamboo' in name else 32 if 'things' in name else 80
+                if 'things' in name:
+                    eye = (0, 34, 9) if view != 'f' else (-14, 9, 2.4)
+                    target = (0, 3, 0.5) if view != 'f' else (-17, 0, 1.2)
+                    lens = 24
+                elif view in 'td':
+                    eye = (reach * 0.42, reach * 0.62, reach * 0.24)
+                    target = (0, reach * 0.05, reach * 0.03)
+                    lens = 35
+                elif view == 'f':
+                    eye = (reach * 0.12, reach * 0.3, 2.2 + reach * 0.01)
+                    target = (0, 0, reach * 0.06)
+                    lens = 30
+                else:
+                    eye = (-reach * 0.4, -reach * 0.5, reach * 0.3)
+                    target = (0, 0, 2)
+                    lens = 35
+                person = (3, reach * 0.12)
+            elif view in 'td':
                 eye = (mid.x + r * 0.95, mid.y + r * 1.35, r * 0.62 + 1)
                 target = (mid.x, mid.y, hi.z * 0.4)
                 lens = 35
@@ -146,7 +174,7 @@ def main():
                 eye = (mid.x - r * 1.2, mid.y - r * 1.1, r * 0.5 + 1)
                 target = (mid.x, mid.y, hi.z * 0.4)
                 lens = 35
-            path = f'{out}.{name}.{view}.png'
+            path = f'{out}.{name.replace("/", "_")}.{view}.png'
             if view == 'd':
                 # dusk() needs the sun that shoot() makes: shoot once to set the scene, then again.
                 bpy.context.scene.render.resolution_percentage = 100

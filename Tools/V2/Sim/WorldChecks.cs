@@ -91,7 +91,7 @@ static class WorldChecks
         foreach (var settlement in plan.Settlements)
         {
             var houses = settlement.Buildings.Count(b => b.Role == "house");
-            var solid = settlement.Buildings.Where(b => b.Role != "wall" && b.Role != "fence" && b.Role != "gate" && b.Role != "tower" && b.Role != "lamp").ToList();
+            var solid = settlement.Buildings.Where(b => b.Role != "wall" && b.Role != "fence" && b.Role != "gate" && b.Role != "tower" && b.Role != "lamp" && !b.Model.StartsWith("thing:")).ToList();
             var overlaps = 0;
 
             for (var i = 0; i < solid.Count; i++)
@@ -132,7 +132,8 @@ static class WorldChecks
                 report.Add($"  town {settlement.Def.Id}, made in code: " + string.Join(", ", made));
                 check(settlement.Stalls >= 20, $"world: {settlement.Def.Id} has a market ({settlement.Stalls} stalls)");
                 check(settlement.WallPieces >= 150 && settlement.Gates.Count >= 2, $"world: {settlement.Def.Id} is walled ({settlement.WallPieces} pieces, {settlement.Gates.Count} gates)");
-                report.Add($"  town {settlement.Def.Id}, its wall: {settlement.WallPieces} pieces, {settlement.Gates.Count} gates");
+                report.Add($"  town {settlement.Def.Id}, its wall: {settlement.WallPieces} pieces, {settlement.Gates.Count} gates; generated: " +
+                           string.Join(", ", settlement.Buildings.Where(b => b.Model.StartsWith("fort:")).GroupBy(b => b.Model.Split(':')[1] + " " + b.Model.Split(':')[2]).Select(g => $"{g.Key} {g.Count()}")));
                 CrowdChecks(settlement, check, report);
                 check(settlement.Buildings.Count(b => b.Model.StartsWith("code:paifang")) >= 2, $"world: {settlement.Def.Id} has archways over its avenues");
                 continue;
@@ -141,6 +142,9 @@ static class WorldChecks
             var h0 = land.Height(settlement.Centre);
             var flatness = solid.Max(b => Math.Abs(land.Height(b.Footprint.Centre) - h0));
             check(flatness < 2.5f, $"world: {settlement.Def.Id} is level under its buildings (off by {flatness:0.0} m)");
+            var ring = settlement.Buildings.Where(b => b.Model.StartsWith("fort:")).GroupBy(b => b.Model.Split(':')[1] + " " + b.Model.Split(':')[2]).Select(g => $"{g.Key} {g.Count()}");
+            var outside = settlement.Buildings.Where(b => b.Model.StartsWith("thing:")).GroupBy(b => b.Model.Split(':')[1]).Select(g => $"{g.Key} {g.Count()}");
+            report.Add($"  {settlement.Def.Id}: ring {string.Join(", ", ring)}; outside {string.Join(", ", outside)}");
             if (settlement.Def.Clan == "bai" || settlement.Def.Clan == "xiong")
             {
                 check(settlement.Walkers.Count >= 30 && settlement.Walkers.All(w => w.Clan == settlement.Def.Clan), $"world: {settlement.Def.Id} has its people out ({settlement.Walkers.Count})");
