@@ -17,7 +17,7 @@ namespace GuWorld.Core.Gen.Buildings
         {
             "haystack", "drying_rack", "scarecrow", "wattle", "shrine", "stele", "signpost", "lantern_post",
             "banner_pole", "barricade", "well", "woodpile", "cart", "grave",
-            "jars", "washing", "hide_rack", "weapon_rack", "dummy", "stall", "table", "barrels",
+            "jars", "washing", "hide_rack", "weapon_rack", "dummy", "stall", "table", "barrels", "garden",
         };
 
         /// <summary>The room a thing takes on the ground (width × depth, metres).</summary>
@@ -46,6 +46,7 @@ namespace GuWorld.Core.Gen.Buildings
                 case "stall": return (3.4f, 2.6f);
                 case "table": return (2.4f, 2.4f);
                 case "barrels": return (2f, 1.6f);
+                case "garden": return (8f, 6f);
                 default: return (2.4f, 3.2f);
             }
         }
@@ -90,6 +91,7 @@ namespace GuWorld.Core.Gen.Buildings
                     case "stall": Stall(c, size); break;
                     case "table": Table(c); break;
                     case "barrels": Barrels(c); break;
+                    case "garden": Garden(c); break;
                     default: Grave(c, size); break;
                 }
 
@@ -808,6 +810,69 @@ namespace GuWorld.Core.Gen.Buildings
             }
 
             Log(c, wood, new V3(-0.4f, 0.32f, -0.55f), new V3(0.5f, 0.32f, -0.55f), 0.32f, Sides(c, 10), tint.Times(0.95f));
+        }
+
+        static void Garden(Ctx c)
+        {
+            // A vegetable plot: dug earth in ridges, rows of greens (cabbages, leeks, beans on poles), a wattle edge.
+            var mud = c.M("mud");
+            var w = 3.8f;
+            var d = 2.8f;
+            Quad(c, mud, new V3(-w, 0.04f, -d), new V3(w, 0.04f, -d), new V3(w, 0.04f, d), new V3(-w, 0.04f, d), V3.Up, new Tint(0.55f, 0.45f, 0.35f), "mud");
+            var rows = 7;
+
+            for (var r = 0; r < rows; r++)
+            {
+                var z = -d + 0.4f + r * (2 * d - 0.8f) / (rows - 1);
+                var crop = (int)(c.R(r, 1) * 3);
+                var green = new[] { new Tint(0.3f, 0.5f, 0.2f), new Tint(0.4f, 0.55f, 0.25f), new Tint(0.25f, 0.42f, 0.2f) }[crop];
+                // The ridge of earth the row grows on.
+                Beam(c, mud, new V3(-w + 0.3f, 0.06f, z), new V3(w - 0.3f, 0.06f, z), 0.45f, 0.12f, new Tint(0.5f, 0.4f, 0.3f), true, "mud");
+
+                if (c.Lod >= 2)
+                {
+                    Quad(c, c.Plain, new V3(-w + 0.3f, 0.14f, z - 0.18f), new V3(w - 0.3f, 0.14f, z - 0.18f), new V3(w - 0.3f, 0.14f, z + 0.18f), new V3(-w + 0.3f, 0.14f, z + 0.18f), V3.Up, green, null);
+                    continue;
+                }
+
+                for (var x = -w + 0.5f; x < w - 0.4f; x += crop == 1 ? 0.25f : 0.5f)
+                {
+                    var s = 0.8f + 0.4f * c.R((int)(x * 10), r);
+
+                    if (crop == 0)
+                    {
+                        Lathe(c, c.Plain, new V3(x, 0.1f, z), new[] { (0f, 0.1f * s), (0.1f, 0.2f * s), (0.2f, 0.12f * s), (0.24f, 0.02f) }, c.Lod == 0 ? 7 : 4, green.Times(0.9f + 0.2f * c.R(r, (int)(x * 7))), null);
+                    }
+                    else if (crop == 1)
+                    {
+                        Beam(c, c.Plain, new V3(x, 0.1f, z), new V3(x + 0.03f, 0.55f * s, z + 0.04f), 0.04f, 0.02f, green, false, null);
+                    }
+                    else if (c.Lod == 0 || ((int)(x * 2)) % 2 == 0)
+                    {
+                        // Beans on poles leaning together.
+                        Beam(c, c.M("bamboo"), new V3(x, 0, z - 0.15f), new V3(x, 1.6f, z), 0.025f, 0.025f, White.Times(0.85f), false, "bamboo");
+                        Lathe(c, c.Plain, new V3(x, 0.2f, z - 0.07f), new[] { (0f, 0.12f), (0.6f, 0.1f), (1.3f, 0.03f) }, 5, green.Times(0.85f), null);
+                    }
+                }
+            }
+
+            if (c.Lod <= 1)
+            {
+                // A low wattle on the open sides.
+                foreach (var (a, b) in new[] { (new V3(-w, 0, -d), new V3(-w, 0, d)), (new V3(w, 0, -d), new V3(w, 0, d)), (new V3(-w, 0, d), new V3(w, 0, d)) })
+                {
+                    var length = (b - a).Length;
+
+                    for (var k = 0; k <= (int)(length / 0.9f); k++)
+                    {
+                        var p = V3.Lerp(a, b, k / Math.Max(1f, (int)(length / 0.9f)));
+                        Post(c, c.M("log"), p.X, p.Z, -0.2f, 0.75f, 0.03f, 5, Bark);
+                    }
+
+                    Beam(c, c.M("wood"), a + V3.Up * 0.5f, b + V3.Up * 0.5f, 0.04f, 0.05f, new Tint(0.55f, 0.43f, 0.32f), false);
+                    Beam(c, c.M("wood"), a + V3.Up * 0.3f, b + V3.Up * 0.3f, 0.04f, 0.05f, new Tint(0.55f, 0.43f, 0.32f), false);
+                }
+            }
         }
 
         static void Grave(Ctx c, float size)

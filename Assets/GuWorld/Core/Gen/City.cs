@@ -271,6 +271,18 @@ namespace GuWorld.Core.Gen
 
             // ---------------------------------------------------------------- Houses along every street
 
+            var houses = 0;
+
+            if (Buildings.GenHouses.Enabled)
+            {
+                // Generated buildings on lots by the clan's template, densest at the middle.
+                var template = Buildings.TownTemplate.For(def.Clan, def.Style.ToString());
+                var taken = placed;
+                var streetIndex = streets;
+                houses = Buildings.Lots.Fill(plan, template, def.Houses, def.Clan, (model, centre, yaw, role) =>
+                    Place(plan, taken, index, streetIndex, ground, waters, model, centre, yaw, role, 0.5f), ref rng, def.Core + 8);
+            }
+
             var lots = new List<(Street street, int side, float along)>();
 
             foreach (var street in plan.Streets)
@@ -292,11 +304,9 @@ namespace GuWorld.Core.Gen
                 (lots[i], lots[j]) = (lots[j], lots[i]);
             }
 
-            var houses = 0;
-
             foreach (var (street, side, along) in lots)
             {
-                if (houses >= def.Houses)
+                if (houses >= def.Houses || Buildings.GenHouses.Enabled)
                 {
                     break;
                 }

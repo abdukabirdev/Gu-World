@@ -203,6 +203,15 @@ namespace GuWorld.Core.Gen
                 (lots[i], lots[j]) = (lots[j], lots[i]);
             }
 
+            if (Buildings.GenHouses.Enabled)
+            {
+                // Generated buildings on lots by the clan's template, densest at the plaza.
+                var template = Buildings.TownTemplate.For(def.Clan, def.Style.ToString());
+                var clan = def.Clan == "bai" || def.Clan == "xiong" || def.Clan == "gu_yue" ? def.Clan : "";
+                houses = Buildings.Lots.Fill(plan, template, def.Houses, clan, (model, centre, yaw, role) => TryPlace(plan, placed, model, centre, yaw, role, waters, 0.5f), ref rng, plan.PlazaRadius + 4);
+                lots.Clear();
+            }
+
             foreach (var (street, side, along) in lots)
             {
                 if (houses >= def.Houses)
