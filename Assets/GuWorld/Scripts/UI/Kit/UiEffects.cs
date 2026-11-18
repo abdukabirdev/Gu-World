@@ -427,7 +427,11 @@ namespace GuWorld.UI
             glowRest = glowAlpha;
         }
 
-        public void OnPointerEnter(PointerEventData _) => over = true;
+        public void OnPointerEnter(PointerEventData _)
+        {
+            over = true;
+            UiSound.Hover();
+        }
 
         public void OnPointerExit(PointerEventData _)
         {
@@ -442,6 +446,7 @@ namespace GuWorld.UI
         {
             if (Hold <= 0 && data.button == PointerEventData.InputButton.Left)
             {
+                UiSound.Click();
                 Click?.Invoke();
             }
         }
@@ -497,6 +502,7 @@ namespace GuWorld.UI
         {
             if (data.button == PointerEventData.InputButton.Left)
             {
+                UiSound.Click();
                 Click?.Invoke();
             }
         }

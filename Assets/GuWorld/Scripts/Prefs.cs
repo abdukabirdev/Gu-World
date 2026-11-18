@@ -33,6 +33,15 @@ namespace GuWorld
         public static float SensitivityX { get => Float("gw2.sensx", 1); set => Float("gw2.sensx", value, true); }
         public static float SensitivityY { get => Float("gw2.sensy", 1); set => Float("gw2.sensy", value, true); }
         public static bool InvertY { get => Bool("gw2.inverty", false); set => Bool("gw2.inverty", value, true); }
+        /// <summary>Running hard: false — while the key is held; true — the key turns it on (it ends when the hero stops or tires).</summary>
+        public static bool SprintToggle { get => Bool("gw2.sprinttoggle", false); set => Bool("gw2.sprinttoggle", value, true); }
+        /// <summary>Holding a target: false — the key takes and drops it; true — only while the key is held.</summary>
+        public static bool TargetHold { get => Bool("gw2.targethold", false); set => Bool("gw2.targethold", value, true); }
+        /// <summary>The conversations' words: 0 at once, 1 typed fast, 2 typed slowly.</summary>
+        public static int TextSpeed { get => Int("gw2.textspeed", 1); set => Int("gw2.textspeed", value, true); }
+        /// <summary>The interface's own sounds (pointing, choosing).</summary>
+        public static bool UiSounds { get => Bool("gw2.uisounds", true); set => Bool("gw2.uisounds", value, true); }
+
         /// <summary>The camera's field of view, degrees.</summary>
         public static float Fov { get => Float("gw2.fov", 58); set => Float("gw2.fov", value, true); }
         /// <summary>How much blows shake the camera, 0…1.</summary>
@@ -81,12 +90,12 @@ namespace GuWorld
 
         public static void ResetGame()
         {
-            Delete("gw2.hints", "gw2.numbers", "gw2.reactions", "gw2.questmark", "gw2.autosave", "gw2.dev");
+            Delete("gw2.hints", "gw2.numbers", "gw2.reactions", "gw2.questmark", "gw2.autosave", "gw2.dev", "gw2.textspeed");
         }
 
         public static void ResetControls()
         {
-            Delete("gw2.sensx", "gw2.sensy", "gw2.inverty", "gw2.fov", "gw2.shake");
+            Delete("gw2.sensx", "gw2.sensy", "gw2.inverty", "gw2.fov", "gw2.shake", "gw2.sprinttoggle", "gw2.targethold");
             Actors.Bindings.Reset();
         }
 
@@ -99,7 +108,7 @@ namespace GuWorld
 
         public static void ResetSound()
         {
-            Delete("gw2.background");
+            Delete("gw2.background", "gw2.uisounds");
             Sound.AudioDirector.SetVolumes(0.9f, 0.9f, 0.55f, 0.7f);
         }
 

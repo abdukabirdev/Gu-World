@@ -44,6 +44,11 @@ namespace GuWorld.UI
 
         void Choose(int index)
         {
+            if (Mathf.Clamp(index, 0, entries.Count - 1) != chosen)
+            {
+                UiSound.Hover();
+            }
+
             chosen = Mathf.Clamp(index, 0, entries.Count - 1);
 
             for (var i = 0; i < entries.Count; i++)

@@ -245,7 +245,14 @@ namespace GuWorld.UI
             {
                 if (Keys.Down(Key.Space) || Keys.Down(Key.Enter) || Keys.Down(Key.T) || Keys.LeftDown)
                 {
-                    NextLine();
+                    if (Typewriter.Busy)
+                    {
+                        Typewriter.FinishAll();
+                    }
+                    else
+                    {
+                        NextLine();
+                    }
                 }
                 else if (Keys.Down(Key.Escape))
                 {
@@ -479,6 +486,7 @@ namespace GuWorld.UI
                 said.horizontalOverflow = HorizontalWrapMode.Wrap;
                 said.lineSpacing = 1.05f;
                 said.Size(-1).flexibleHeight = 1;
+                Typewriter.On(said, said.text);
             }
             else
             {
@@ -488,6 +496,7 @@ namespace GuWorld.UI
                 told.horizontalOverflow = HorizontalWrapMode.Wrap;
                 told.lineSpacing = 1.08f;
                 told.Size(-1).flexibleHeight = 1;
+                Typewriter.On(told, told.text);
             }
 
             UiKit.Footer(stage, new[] { ("Пробел", talkAt + 1 < talkLines.Length ? "Дальше" : "Закончить"), ("Esc", "Пропустить") }, 56, 22, false, $"{talkAt + 1} / {talkLines.Length}");

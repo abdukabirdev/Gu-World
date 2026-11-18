@@ -335,7 +335,7 @@ namespace GuWorld.Actors
             var guarding = free && Grounded && Bindings.Held("guard");
             guardSince = guarding ? (Guarding ? guardSince + dt : 0) : 0;
             Guarding = guarding;
-            Sprinting = moving && free && !guarding && Bindings.Held("sprint") && Session.Stamina > 1 && Grounded;
+            Sprinting = moving && free && !guarding && SprintWanted(moving) && Session.Stamina > 1 && Grounded;
             // Cold and slowness drag, wind hastens.
             var speed = (Sprinting ? SprintSpeed : RunSpeed) * Session.SpeedFactor * (guarding ? 0.45f : 1);
             Walk(wish * speed, dt);
@@ -399,7 +399,21 @@ namespace GuWorld.Actors
                 return;
             }
 
-            if (Bindings.Down("target") || Keys.MiddleDown)
+            if (Prefs.TargetHold)
+            {
+                // Held: a target while the key is down, none when it is let go.
+                var held = Bindings.Held("target") || (UnityEngine.InputSystem.Mouse.current != null && UnityEngine.InputSystem.Mouse.current.middleButton.isPressed);
+
+                if (held && Target == null)
+                {
+                    PickTarget();
+                }
+                else if (!held && Target != null)
+                {
+                    Target = null;
+                }
+            }
+            else if (Bindings.Down("target") || Keys.MiddleDown)
             {
                 PickTarget();
             }
@@ -540,7 +554,7 @@ namespace GuWorld.Actors
             up = up.sqrMagnitude < 0.01f ? transform.forward : up.normalized;
             var right = Vector3.Cross(Vector3.up, -climbNormal);
             right = right.sqrMagnitude < 0.01f ? transform.right : right.normalized;
-            var fast = Bindings.Held("sprint") && Session.Stamina > 1;
+            var fast = SprintWanted(keys.sqrMagnitude > 0.01f) && Session.Stamina > 1;
             Sprinting = fast && keys.sqrMagnitude > 0.01f;
             var speed = (fast ? 5.2f : 3.2f) * Session.SpeedFactor;
             var move = (up * keys.y + right * keys.x) * speed;
@@ -1262,6 +1276,29 @@ namespace GuWorld.Actors
             SetMode(Mode.Free);
             invulnerable = 2;
             Animate("idle", 0, 1, true);
+        }
+
+        bool sprintOn;
+
+        /// <summary>Whether the hero wants to run hard: the key held, or (the toggle setting) turned on until they stop or tire.</summary>
+        bool SprintWanted(bool moving)
+        {
+            if (!Prefs.SprintToggle)
+            {
+                return Bindings.Held("sprint");
+            }
+
+            if (Bindings.Down("sprint"))
+            {
+                sprintOn = !sprintOn;
+            }
+
+            if (!moving || Session.Stamina <= 1)
+            {
+                sprintOn = false;
+            }
+
+            return sprintOn;
         }
 
         public void Sit(bool down)

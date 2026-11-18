@@ -78,8 +78,15 @@ namespace GuWorld.UI
             {
                 if (Keys.Down(Key.Space) || Keys.Down(Key.Enter) || Keys.Down(Key.T) || Keys.LeftDown)
                 {
-                    dialogueLine++;
-                    Redraw();
+                    if (Typewriter.Busy)
+                    {
+                        Typewriter.FinishAll();
+                    }
+                    else
+                    {
+                        dialogueLine++;
+                        Redraw();
+                    }
                 }
 
                 return;
@@ -175,6 +182,7 @@ namespace GuWorld.UI
             said.horizontalOverflow = HorizontalWrapMode.Wrap;
             said.lineSpacing = 1.05f;
             said.Size(110);
+            Typewriter.On(said, said.text);
 
             if (dialogueLine < lines.Length - 1)
             {

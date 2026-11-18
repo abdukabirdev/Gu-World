@@ -144,6 +144,7 @@ namespace GuWorld.UI
             Switch(list, "Слова реакций", "«Пар», «Раскол» над врагом", Prefs.ReactionWords, on => Prefs.ReactionWords = on);
             Choice(list, "Метка задания", "Ромб над местом задания и стрелка у края экрана", new[] { "В мире", "Компас", "Нет" }, Prefs.QuestMark, i => Prefs.QuestMark = i);
             Switch(list, "Режим разработчика", "F3 — строки отладки, F7 — хитбоксы, / — консоль команд, F10 — панель. Игра помечает, что команды были", Prefs.DevMode, on => Prefs.DevMode = on);
+            Choice(list, "Текст в разговорах", "Сразу целиком — или печатается; Пробел допечатывает", new[] { "Сразу", "Быстро", "Медленно" }, Prefs.TextSpeed, i => Prefs.TextSpeed = i);
             Choice(list, "Автосохранение", "Игра сохраняется сама, при паузе и при выходе", new[] { "30 с", "2 мин", "5 мин" },
                 Math.Max(0, Array.IndexOf(Prefs.AutosaveChoices, Prefs.Autosave)), i => Prefs.Autosave = Prefs.AutosaveChoices[i]);
 
@@ -166,6 +167,8 @@ namespace GuWorld.UI
             Switch(list, "Инверсия по вертикали", "Мышь вверх — камера вниз", Prefs.InvertY, on => Prefs.InvertY = on);
             Slide(list, "Поле зрения", "Шире — больше видно, сильнее искажение по краям", 50, 100, Prefs.Fov, v => $"{v:0}°", v => { Prefs.Fov = Mathf.Round(v); Game.Rig?.Dress(); });
             Slide(list, "Тряска камеры", "От ударов и взрывов", 0, 1, Prefs.CameraShake, v => $"{v * 100:0}%", v => Prefs.CameraShake = v);
+            Choice(list, "Бег во весь дух", "Удерживать клавишу — или нажать раз: бег до остановки", new[] { "Удерживать", "Переключать" }, Prefs.SprintToggle ? 1 : 0, i => Prefs.SprintToggle = i == 1);
+            Choice(list, "Захват цели", "Нажать — взять и отпустить цель; или держать, пока клавиша нажата", new[] { "Нажатием", "Удержанием" }, Prefs.TargetHold ? 1 : 0, i => Prefs.TargetHold = i == 1);
 
             Section(list, "Клавиши");
 
@@ -277,6 +280,7 @@ namespace GuWorld.UI
             Slide(list, "Окружение", "Ветер, вода, лес, рынок", 0, 1, Sound.AudioDirector.Beds, v => $"{v * 100:0}%",
                 v => Sound.AudioDirector.SetVolumes(Sound.AudioDirector.Master, Sound.AudioDirector.Effects, Sound.AudioDirector.MusicVolume, v));
             Choice(list, "Звук в фоне", "Когда окно игры не впереди", new[] { "Как есть", "Тише", "Нет" }, Prefs.Background, i => Prefs.Background = i);
+            Switch(list, "Звуки интерфейса", "Наведение и выбор в меню и на страницах", Prefs.UiSounds, on => Prefs.UiSounds = on);
         }
 
         void InterfaceTab(RectTransform list)

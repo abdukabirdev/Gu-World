@@ -818,11 +818,16 @@ namespace GuWorld.UI
         }
 
         /// <summary>Does what the entry is for.</summary>
-        public void Open() => click?.Invoke();
+        public void Open()
+        {
+            UiSound.Click();
+            click?.Invoke();
+        }
 
         public void OnPointerEnter(PointerEventData _)
         {
             over = true;
+            UiSound.Hover();
             Entered?.Invoke();
         }
 
@@ -832,7 +837,7 @@ namespace GuWorld.UI
         {
             if (data.button == PointerEventData.InputButton.Left)
             {
-                click?.Invoke();
+                Open();
             }
         }
 
