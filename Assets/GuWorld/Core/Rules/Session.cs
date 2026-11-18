@@ -585,7 +585,7 @@ namespace GuWorld.Core
 
             var damage = raw * Stats.DamageTaken * (shieldTime > 0 ? 1 - shieldValue : 1) * DifficultyRules.DamageTaken(State.Settings.Difficulty);
             // In the aperture no one falls; in a bout no one falls below a tenth (the bout is lost instead).
-            var floor = InSandbox && SandboxUndying ? 1 : Sparring ? Stats.MaxHealth * 0.1f : 0;
+            var floor = (InSandbox && SandboxUndying) || Godmode ? 1 : Sparring ? Stats.MaxHealth * 0.1f : 0;
             State.Health = Math.Max(floor, State.Health - damage);
 
             if (Sparring && State.Health <= floor + 0.01f)
@@ -617,6 +617,9 @@ namespace GuWorld.Core
         }
 
         public bool Dead => State.Health <= 0;
+
+        /// <summary>The developer's immortality (/god): blows still land, but no lower than one.</summary>
+        public bool Godmode { get; set; }
 
         /// <summary>The Cicada brought the hero back (for the screen's flash of green and the sound).</summary>
         public event Action Revived;

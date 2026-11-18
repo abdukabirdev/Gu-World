@@ -16,7 +16,7 @@ namespace GuWorld.UI
     /// </summary>
     public partial class Ui : MonoBehaviour
     {
-        public enum Page { None, Title, Loading, Talk, Aperture, Bag, Journal, Map, Shop, Gamble, Board, Fusion, Spring, Pause, Help, Death, Ending, Choice, Dialogue, Alchemy, Bounties, Codex, Clans, Travel, Inn, Settings, Moves, Sandbox, Paths, Home, Treasury, NewPath, NewHero, Slots, About }
+        public enum Page { None, Title, Loading, Talk, Aperture, Bag, Journal, Map, Shop, Gamble, Board, Fusion, Spring, Pause, Help, Death, Ending, Choice, Dialogue, Alchemy, Bounties, Codex, Clans, Travel, Inn, Settings, Moves, Sandbox, Paths, Home, Treasury, NewPath, NewHero, Slots, About, Console, Dev }
 
         public Page Open { get; private set; } = Page.Title;
 
@@ -53,11 +53,12 @@ namespace GuWorld.UI
             fpsLine.rectTransform.TopLeft(14, 10, 320, 22);
             fpsLine.raycastTarget = false;
             BuildHud();
+            AddEngineCommands();
         }
 
         // ------------------------------------------------------------------ Pages
 
-        static bool Stops(Page page) => page != Page.None && page != Page.Talk && page != Page.Dialogue && page != Page.Spring && page != Page.Title && page != Page.Loading && page != Page.NewPath && page != Page.NewHero && page != Page.Slots && page != Page.About;
+        static bool Stops(Page page) => page != Page.None && page != Page.Talk && page != Page.Dialogue && page != Page.Spring && page != Page.Title && page != Page.Loading && page != Page.NewPath && page != Page.NewHero && page != Page.Slots && page != Page.About && page != Page.Console;
 
         public void Show(Page page)
         {
@@ -101,6 +102,8 @@ namespace GuWorld.UI
                 case Page.NewHero: NewHeroPage(); break;
                 case Page.Slots: SlotsPage(); break;
                 case Page.About: AboutPage(); break;
+                case Page.Console: ConsolePage(); break;
+                case Page.Dev: DevPage(); break;
                 case Page.Loading: LoadingPage(); break;
                 case Page.Talk: TalkPage(); break;
                 case Page.Aperture: AperturePage(); break;
@@ -181,6 +184,7 @@ namespace GuWorld.UI
             TickFps();
             TickLoading();
             TickHud();
+            DevTick();
 
             if (!Game.Playing || Time.frameCount == born)
             {
@@ -247,6 +251,10 @@ namespace GuWorld.UI
             else if (Open == Page.Dialogue)
             {
                 DialogueKeys();
+            }
+            else if (Open == Page.Console)
+            {
+                // The console's own keys (PageKeys); the world goes on.
             }
             else if (Open == Page.Settings)
             {
