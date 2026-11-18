@@ -145,6 +145,87 @@ namespace GuWorld.UI
         }
 
         /// <summary>Everything about one Gu; with `acts`, the buttons to refine it and put it in a slot.</summary>
+        /// <summary>
+        /// A Gu not in a slot against the one it would most likely take the place of (ROADMAP 3.2): the
+        /// slotted Gu of its kind with the same shape of skill (else of its path, else the first); what
+        /// would change — power, essence, cooldown, range — better in the gifts' colour, worse in the harms'.
+        /// </summary>
+        void Compare(RectTransform column, GuInstance gu)
+        {
+            var session = S;
+            var def = GuBook.Get(gu.Def);
+
+            if (def.Skill == null || def.Kind != GuKind.Active)
+            {
+                return;
+            }
+
+            GuInstance against = null;
+            var score = -1;
+
+            foreach (var slotted in session.Slotted())
+            {
+                var other = GuBook.Get(slotted.Def);
+
+                if (slotted.Uid == gu.Uid)
+                {
+                    return;
+                }
+
+                if (other.Kind != GuKind.Active || other.Skill == null)
+                {
+                    continue;
+                }
+
+                var fit = (other.Skill.Shape == def.Skill.Shape ? 2 : 0) + (other.Path == def.Path ? 1 : 0);
+
+                if (fit > score)
+                {
+                    score = fit;
+                    against = slotted;
+                }
+            }
+
+            if (against == null)
+            {
+                return;
+            }
+
+            var them = GuBook.Get(against.Def);
+            Gap(column, 6);
+            UiKit.Lbl($"Против «{them.Name}» в слоте", column, 11, UiKit.LabelGold).Size(16);
+
+            float Cooldown(GuInstance g) => GuBook.Get(g.Def).Skill.Cooldown * session.Stats.Cooldown * (1 - Session.AffixOf(g, AffixKind.Quick));
+            float Range(GuInstance g) => GuBook.Get(g.Def).Skill.Range * session.Stats.Range * (1 + Session.AffixOf(g, AffixKind.Far));
+
+            void Delta(string name, float mine, float theirs, bool higherBetter, string unit = "", string format = "0")
+            {
+                var change = mine - theirs;
+
+                if (Mathf.Abs(change) < 0.05f)
+                {
+                    Fact(column, name, "так же", UiKit.Muted);
+                    return;
+                }
+
+                var better = higherBetter ? change > 0 : change < 0;
+                Fact(column, name, (change > 0 ? "+" : "−") + Mathf.Abs(change).ToString(format) + unit, better ? Accessible.Gift : Accessible.Harm);
+            }
+
+            if (def.Skill.Power > 0 || them.Skill.Power > 0)
+            {
+                Delta("Сила", session.PowerOf(gu), session.PowerOf(against), true);
+            }
+
+            Delta("Расход", session.CostOf(gu), session.CostOf(against), false);
+            Delta("Перезарядка", Cooldown(gu), Cooldown(against), false, " с", "0.0");
+
+            if (def.Skill.Range > 0 && them.Skill.Range > 0)
+            {
+                Delta("Дальность", Range(gu), Range(against), true, " м");
+            }
+        }
+
         void GuDetail(RectTransform column, GuInstance gu, bool acts)
         {
             var session = S;
@@ -183,6 +264,8 @@ namespace GuWorld.UI
             {
                 Fact(column, GuBook.AffixName(affix.Kind), GuBook.AffixText(affix).Split(':')[1].Trim(), UiKit.SystemBlue);
             }
+
+            Compare(column, gu);
 
             // What it eats and how hungry it is.
             if (def.Food != "" && session.State.Settings.Hunger != HungerRule.Off && session.FindGu(gu.Uid) != null)
