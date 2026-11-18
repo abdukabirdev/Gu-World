@@ -182,7 +182,7 @@ namespace GuWorld.UI
                 slotsForNew ? "Выберите ячейку для нового пути. Занятая ячейка будет перезаписана — удерживайте кнопку, чтобы подтвердить."
                             : "Три ячейки, каждая — своя жизнь. Игра сохраняется сама; рядом с каждой лежит резервная копия.");
             var row = UiKit.Rect("Slots", stage);
-            row.Place(new Vector2(0, 1), new Vector2(1, 1), 56, -640, 56, 200);
+            row.Place(new Vector2(0, 1), new Vector2(1, 1), 56, -720, 56, 186);
             var across = row.Stack<HorizontalLayoutGroup>(20, null, TextAnchor.UpperLeft);
             across.childControlHeight = true;
             across.childForceExpandHeight = true;
@@ -216,7 +216,26 @@ namespace GuWorld.UI
             }
 
             var column = UiKit.Rect("Column", card.transform).Fill();
-            column.Stack<VerticalLayoutGroup>(8, new RectOffset(26, 26, 24, 22));
+            column.Stack<VerticalLayoutGroup>(6, new RectOffset(22, 22, 20, 20));
+
+            // The world as it was at the last save.
+            var shot = SlotShot(slot);
+
+            if (shot != null && save != null)
+            {
+                var frame = UiKit.Rect("Shot", column);
+                frame.Size(130);
+                var picture = UiKit.Rect("Picture", frame).gameObject.AddComponent<RawImage>();
+                picture.texture = shot;
+                picture.raycastTarget = false;
+                picture.rectTransform.Fill();
+                var fadeOut = UiKit.Image("Fade", frame, Color.white, UiKit.Plain);
+                fadeOut.rectTransform.Fill();
+                fadeOut.raycastTarget = false;
+                fadeOut.Gradient(new Color(5 / 255f, 7 / 255f, 12 / 255f, 0), new Color(5 / 255f, 7 / 255f, 12 / 255f, 0.85f));
+                UiKit.Frame(frame, new Color(200 / 255f, 230 / 255f, 240 / 255f, 0.12f));
+            }
+
             UiKit.Lbl($"Ячейка {slot + 1}{(current ? " · последняя" : "")}", column, 11, UiKit.LabelGold).Size(16);
 
             if (save == null)
@@ -257,6 +276,39 @@ namespace GuWorld.UI
             {
                 UiKit.HexButton("Загрузить", column, () => Game.Instance.Load(slot), UiKit.HexKind.Solid, 13, 50).Size(50);
                 UiKit.HexButton("Удерживать — удалить", column, () => { Game.DeleteSlot(slot); Show(AnySave() ? Page.Slots : Page.Title); }, UiKit.HexKind.Bad, 11, 42).Held(1.2f).Size(42);
+            }
+        }
+
+        readonly Dictionary<int, (System.DateTime when, Texture2D picture)> slotShots = new Dictionary<int, (System.DateTime, Texture2D)>();
+
+        /// <summary>A slot's picture, loaded once while its file is unchanged (null if there is none).</summary>
+        Texture2D SlotShot(int slot)
+        {
+            var path = Game.ShotPath(slot);
+
+            if (!System.IO.File.Exists(path))
+            {
+                return null;
+            }
+
+            var when = System.IO.File.GetLastWriteTime(path);
+
+            if (slotShots.TryGetValue(slot, out var have) && have.when == when && have.picture != null)
+            {
+                return have.picture;
+            }
+
+            try
+            {
+                var picture = new Texture2D(2, 2, TextureFormat.RGB24, false);
+                picture.LoadImage(System.IO.File.ReadAllBytes(path));
+                slotShots[slot] = (when, picture);
+
+                return picture;
+            }
+            catch (System.Exception)
+            {
+                return null;
             }
         }
 

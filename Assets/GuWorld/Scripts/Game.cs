@@ -202,6 +202,55 @@ namespace GuWorld
         /// <summary>The start of an arc (a chapter) kept for the rebirth death rule: the slot's file with ".arcN" before ".json".</summary>
         static string ArcPath(int slot, int arc) => Path.ChangeExtension(PathOf(slot), $".arc{arc}.json");
 
+        /// <summary>A slot's picture: the world as it was at a save (the slots page shows it).</summary>
+        public static string ShotPath(int slot) => Path.ChangeExtension(PathOf(slot), ".jpg");
+
+        float lastShot = -999;
+
+        /// <summary>Takes the slot's picture at the end of this frame: the screen made small, written beside the save.</summary>
+        IEnumerator Snapshot(int slot)
+        {
+            yield return new WaitForEndOfFrame();
+
+            Texture2D full = null, small = null;
+            RenderTexture target = null;
+
+            try
+            {
+                full = ScreenCapture.CaptureScreenshotAsTexture();
+                target = RenderTexture.GetTemporary(384, 216);
+                Graphics.Blit(full, target);
+                var was = RenderTexture.active;
+                RenderTexture.active = target;
+                small = new Texture2D(384, 216, TextureFormat.RGB24, false);
+                small.ReadPixels(new Rect(0, 0, 384, 216), 0, 0);
+                small.Apply();
+                RenderTexture.active = was;
+                File.WriteAllBytes(ShotPath(slot), small.EncodeToJPG(82));
+            }
+            catch (System.Exception error)
+            {
+                Debug.LogWarning("GU World: the slot's picture could not be taken: " + error.Message);
+            }
+            finally
+            {
+                if (target != null)
+                {
+                    RenderTexture.ReleaseTemporary(target);
+                }
+
+                if (full != null)
+                {
+                    Destroy(full);
+                }
+
+                if (small != null)
+                {
+                    Destroy(small);
+                }
+            }
+        }
+
         /// <summary>When a slot was last saved (null: never).</summary>
         public static System.DateTime? SavedAt(int slot)
         {
@@ -231,7 +280,7 @@ namespace GuWorld
             var folder = Application.persistentDataPath;
             var stem = Path.GetFileNameWithoutExtension(PathOf(slot));
 
-            foreach (var path in new[] { PathOf(slot), PathOf(slot) + ".bak", PathOf(slot) + ".tmp" })
+            foreach (var path in new[] { PathOf(slot), PathOf(slot) + ".bak", PathOf(slot) + ".tmp", ShotPath(slot) })
             {
                 TryDelete(path);
             }
@@ -688,6 +737,13 @@ namespace GuWorld
             {
                 saveWait = Mathf.Max(15, Prefs.Autosave);
                 Save();
+
+                // The slot's picture now and then, of the world itself (no page over it).
+                if (Ui.Open == Ui.Page.None && Time.unscaledTime - lastShot > 90 && !SandboxOnly && !Session.InSandbox && !AutoTest.On)
+                {
+                    lastShot = Time.unscaledTime;
+                    StartCoroutine(Snapshot(Slot));
+                }
             }
 
             // A hint now and then, each once, when it first matters.
