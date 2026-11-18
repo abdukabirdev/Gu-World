@@ -400,10 +400,41 @@ namespace GuWorld.UI
             var session = S;
             var body = Frame("宝", "Сумка", $"{session.State.Items.Count} видов вещей", true, null, Purse, new[] { ("Q E", "Страницы"), ("Esc", "Закрыть") });
             var left = Column(body, 0, 0.5f, 6);
-            UiKit.Lbl("Вещи", left, 11, UiKit.LabelGold).Size(18);
+
+            // What is shown (by kind) and in what order (ROADMAP 3.2).
+            UiKit.Choices(left, BagFilters, bagFilter, i => { bagFilter = i; Redraw(); }, 13);
+            var sortRow = UiKit.Rect("Sort", left);
+            sortRow.Size(34);
+            var sortLine = sortRow.Stack<HorizontalLayoutGroup>(8, null, TextAnchor.MiddleLeft);
+            sortLine.childForceExpandWidth = false;
+            UiKit.Lbl("Порядок", sortRow, 10, UiKit.Muted).Size(30, 80, 0);
+
+            for (var i = 0; i < BagSorts.Length; i++)
+            {
+                var index = i;
+                UiKit.Tb(BagSorts[i], sortRow, i == bagSort, () => { bagSort = index; Redraw(); }, 11).Size(30, 110, 0);
+            }
+
             var list = Scroll(Rest(left));
-            var items = new List<ItemStack>(session.State.Items);
-            items.Sort((a, b) => ItemBook.Get(a.Item).Kind != ItemBook.Get(b.Item).Kind ? ItemBook.Get(a.Item).Kind.CompareTo(ItemBook.Get(b.Item).Kind) : string.CompareOrdinal(a.Item, b.Item));
+            var items = new List<ItemStack>();
+
+            foreach (var stack in session.State.Items)
+            {
+                if (InBagFilter(ItemBook.Get(stack.Item)))
+                {
+                    items.Add(stack);
+                }
+            }
+
+            int ByKind(ItemStack a, ItemStack b) => ItemBook.Get(a.Item).Kind != ItemBook.Get(b.Item).Kind ? ItemBook.Get(a.Item).Kind.CompareTo(ItemBook.Get(b.Item).Kind) : string.CompareOrdinal(ItemBook.Get(a.Item).Name, ItemBook.Get(b.Item).Name);
+
+            switch (bagSort)
+            {
+                case 1: items.Sort((a, b) => string.CompareOrdinal(ItemBook.Get(a.Item).Name, ItemBook.Get(b.Item).Name)); break;
+                case 2: items.Sort((a, b) => session.SellPrice(b.Item).CompareTo(session.SellPrice(a.Item))); break;
+                case 3: items.Sort((a, b) => b.Count.CompareTo(a.Count)); break;
+                default: items.Sort(ByKind); break;
+            }
 
             if (session.Count(pickedItem) <= 0)
             {
@@ -419,7 +450,7 @@ namespace GuWorld.UI
 
             if (items.Count == 0)
             {
-                Para("Сумка пуста. Добыча падает с врагов и лежит в тайниках.", list, 15, UiKit.Muted);
+                Para(session.State.Items.Count == 0 ? "Сумка пуста. Добыча падает с врагов, травы растут по всей горе, дикие Гу — над своими местами." : "Таких вещей нет.", list, 15, UiKit.Muted);
             }
 
             var right = Column(body, 0.56f, 1, 8);
@@ -493,6 +524,55 @@ namespace GuWorld.UI
             if (session.SellPrice(item) > 0)
             {
                 Fact(right, "Лавка даст", $"{session.SellPrice(item)} камней", UiKit.GoldText);
+            }
+
+            // Who eats it: the Gu whose food it is.
+            if (picked.Kind == ItemKind.Food || picked.Kind == ItemKind.Herb || picked.Kind == ItemKind.Material)
+            {
+                var eaters = new List<string>();
+
+                foreach (var gu in GuBook.All)
+                {
+                    if (gu.Food == item)
+                    {
+                        eaters.Add(gu.Name);
+                    }
+                }
+
+                if (eaters.Count > 0)
+                {
+                    Para("Корм для: " + string.Join(", ", eaters.GetRange(0, Mathf.Min(6, eaters.Count))) + (eaters.Count > 6 ? $" и ещё {eaters.Count - 6}" : ""), right, 13, UiKit.Muted);
+                }
+            }
+
+            // Thrown away: held, as the irreversible is (the story's things never).
+            if (picked.Kind != ItemKind.Quest && picked.Kind != ItemKind.Key)
+            {
+                Gap(right, 10);
+                var count = session.Count(item);
+                UiKit.HexButton(count > 1 ? $"Удерживать — выбросить все {count}" : "Удерживать — выбросить", right, () =>
+                {
+                    session.RemoveItem(item, session.Count(item));
+                    Redraw();
+                }, UiKit.HexKind.Bad, 11, 40).Held(1.2f).Size(40, 320, 0);
+            }
+        }
+
+        int bagFilter, bagSort;
+        static readonly string[] BagFilters = { "Все", "Пилюли", "Корм", "Травы", "Материалы", "Свитки", "Прочее" };
+        static readonly string[] BagSorts = { "Вид", "Имя", "Цена", "Сколько" };
+
+        bool InBagFilter(ItemDef def)
+        {
+            switch (bagFilter)
+            {
+                case 1: return def.Kind == ItemKind.Consumable;
+                case 2: return def.Kind == ItemKind.Food;
+                case 3: return def.Kind == ItemKind.Herb;
+                case 4: return def.Kind == ItemKind.Material || def.Kind == ItemKind.Rock;
+                case 5: return def.Kind == ItemKind.Scroll || def.Kind == ItemKind.Book;
+                case 6: return def.Kind == ItemKind.Quest || def.Kind == ItemKind.Key || def.Kind == ItemKind.Currency;
+                default: return true;
             }
         }
 
