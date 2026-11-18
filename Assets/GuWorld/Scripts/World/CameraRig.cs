@@ -16,6 +16,13 @@ namespace GuWorld.World
         float yaw, pitch = 14, distance = 5.2f, shown = 5.2f;
         float shake;
         Vector3 focus;
+
+        /// <summary>Where the camera is (F5 turns through them, ROADMAP 12.2): behind the right shoulder, the hero's own eyes, behind the left shoulder.</summary>
+        public enum View { Behind, FirstPerson, OtherShoulder }
+
+        public View Mode { get; private set; } = View.Behind;
+        /// <summary>The eyes' view is in use now (it gives way to the shoulder in talks and when the hero is down).</summary>
+        bool firstNow;
         Volume volume;
         public Camera Camera => view;
         /// <summary>A fixed viewpoint for the autotest's tour (position, rotation); null: follow the hero.</summary>
@@ -119,7 +126,13 @@ namespace GuWorld.World
             {
                 var look = Keys.Look;
                 yaw += look.x * 0.12f * Prefs.SensitivityX;
-                pitch = Mathf.Clamp(pitch - look.y * 0.1f * Prefs.SensitivityY * (Prefs.InvertY ? -1 : 1), -28, 68);
+                pitch = Mathf.Clamp(pitch - look.y * 0.1f * Prefs.SensitivityY * (Prefs.InvertY ? -1 : 1), Mode == View.FirstPerson ? -75 : -28, Mode == View.FirstPerson ? 75 : 68);
+
+                if (Keys.Down(UnityEngine.InputSystem.Key.F5))
+                {
+                    Mode = (View)(((int)Mode + 1) % 3);
+                    Game.Say(Mode == View.FirstPerson ? "Вид: глазами героя (F5)" : Mode == View.OtherShoulder ? "Вид: из-за левого плеча (F5)" : "Вид: из-за правого плеча (F5)");
+                }
                 var wheel = Keys.Scroll;
 
                 if (Mathf.Abs(wheel) > 0.01f)
@@ -143,6 +156,35 @@ namespace GuWorld.World
 
             var head = hero.transform.position + Vector3.up * (hero.Sitting ? 1.0f : 1.55f);
             focus = Vector3.Lerp(focus, head, 1 - Mathf.Exp(-18 * dt));
+
+            // The hero's own eyes: the camera at the head, the body seen only by its shadow; back to the shoulder in talks and when down.
+            var eyes = Mode == View.FirstPerson && free && hero.Alive && !hero.Sitting;
+
+            if (eyes != firstNow)
+            {
+                firstNow = eyes;
+                hero.ShowBody(!eyes);
+                view.fieldOfView = eyes ? Mathf.Min(110, Prefs.Fov + 8) : Prefs.Fov;
+            }
+
+            if (eyes)
+            {
+                var look = Quaternion.Euler(pitch, yaw, 0);
+                var at1 = hero.transform.position + Vector3.up * 1.62f + Quaternion.Euler(0, yaw, 0) * Vector3.forward * 0.12f;
+
+                if (shake > 0.001f)
+                {
+                    at1 += Random.insideUnitSphere * shake * 0.12f;
+                    shake = Mathf.Lerp(shake, 0, 1 - Mathf.Exp(-9 * dt));
+                }
+
+                transform.position = at1;
+                transform.rotation = look;
+
+                return;
+            }
+
+            var side = Mode == View.OtherShoulder ? -0.45f : 0.45f;
             var turn = Quaternion.Euler(pitch, yaw, 0);
             var back = turn * Vector3.back;
             var want2 = distance;
@@ -154,7 +196,7 @@ namespace GuWorld.World
             }
 
             shown = want2 < shown ? want2 : Mathf.Lerp(shown, want2, 1 - Mathf.Exp(-6 * dt));
-            var at = focus + back * shown + turn * Vector3.right * 0.45f;
+            var at = focus + back * shown + turn * Vector3.right * side;
             var floor = Ground.SampleHeight(at) + 0.3f;
 
             if (at.y < floor)
@@ -169,7 +211,7 @@ namespace GuWorld.World
             }
 
             transform.position = at;
-            transform.rotation = Quaternion.LookRotation(focus + turn * Vector3.right * 0.45f - at + Vector3.up * 0.1f);
+            transform.rotation = Quaternion.LookRotation(focus + turn * Vector3.right * side - at + Vector3.up * 0.1f);
         }
     }
 }

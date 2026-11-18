@@ -58,6 +58,20 @@ namespace GuWorld.Actors
             return hero;
         }
 
+        /// <summary>The body seen, or only its shadow (the first-person view: no head in the eyes, no clothes through the lens).</summary>
+        public void ShowBody(bool seen)
+        {
+            if (model == null)
+            {
+                return;
+            }
+
+            foreach (var renderer in model.GetComponentsInChildren<Renderer>(true))
+            {
+                renderer.shadowCastingMode = seen ? UnityEngine.Rendering.ShadowCastingMode.On : UnityEngine.Rendering.ShadowCastingMode.ShadowsOnly;
+            }
+        }
+
         /// <summary>The model for the quality chosen (the full 626 000-triangle one on high).</summary>
         public void MakeModel()
         {

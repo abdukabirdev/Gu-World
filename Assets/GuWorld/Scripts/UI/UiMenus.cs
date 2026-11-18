@@ -240,7 +240,7 @@ namespace GuWorld.UI
             UiKit.Lbl("В мире", left, 11, UiKit.LabelGold).Size(22);
 
             // The fixed ones, then every action with the key it has now (Settings → Управление changes them).
-            foreach (var (key, what) in new[] { ("W A S D", "Идти"), ("Мышь", "Смотреть"), ("Колесо", "Ближе и дальше"), ("ЛКМ", "Удар ладонью, три подряд"), ("ПКМ", "Перекат") })
+            foreach (var (key, what) in new[] { ("W A S D", "Идти"), ("Мышь", "Смотреть"), ("Колесо", "Ближе и дальше"), ("ЛКМ", "Удар ладонью, три подряд"), ("ПКМ", "Перекат"), ("F5", "Вид: плечо · глаза героя · другое плечо") })
             {
                 Fact(left, what, key, UiKit.GoldText);
             }
