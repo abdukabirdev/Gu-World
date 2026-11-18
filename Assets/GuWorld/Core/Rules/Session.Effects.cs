@@ -310,7 +310,7 @@ namespace GuWorld.Core
             if (taken > 0 && State.Health > 0)
             {
                 // Statuses wear the hero down but do not finish them on the difficulties below Hard.
-                var floor = State.Settings.Difficulty <= Difficulty.Normal ? 1 : 0;
+                var floor = DifficultyRules.Order(State.Settings.Difficulty) <= DifficultyRules.Order(Difficulty.Normal) ? 1 : 0;
                 State.Health = Math.Max(floor, State.Health - taken * DifficultyRules.DamageTaken(State.Settings.Difficulty));
             }
 

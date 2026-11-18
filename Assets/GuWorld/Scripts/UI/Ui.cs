@@ -16,7 +16,7 @@ namespace GuWorld.UI
     /// </summary>
     public partial class Ui : MonoBehaviour
     {
-        public enum Page { None, Title, Loading, Talk, Aperture, Bag, Journal, Map, Shop, Gamble, Board, Fusion, Spring, Pause, Help, Death, Ending, Choice, Dialogue, Alchemy, Bounties, Codex, Clans, Travel, Inn, Settings, Moves, Sandbox, Paths, Home, Controls, Treasury }
+        public enum Page { None, Title, Loading, Talk, Aperture, Bag, Journal, Map, Shop, Gamble, Board, Fusion, Spring, Pause, Help, Death, Ending, Choice, Dialogue, Alchemy, Bounties, Codex, Clans, Travel, Inn, Settings, Moves, Sandbox, Paths, Home, Controls, Treasury, NewPath, NewHero }
 
         public Page Open { get; private set; } = Page.Title;
 
@@ -53,7 +53,7 @@ namespace GuWorld.UI
 
         // ------------------------------------------------------------------ Pages
 
-        static bool Stops(Page page) => page != Page.None && page != Page.Talk && page != Page.Dialogue && page != Page.Spring && page != Page.Title && page != Page.Loading;
+        static bool Stops(Page page) => page != Page.None && page != Page.Talk && page != Page.Dialogue && page != Page.Spring && page != Page.Title && page != Page.Loading && page != Page.NewPath && page != Page.NewHero;
 
         public void Show(Page page)
         {
@@ -93,6 +93,8 @@ namespace GuWorld.UI
             switch (page)
             {
                 case Page.Title: Title(); break;
+                case Page.NewPath: NewPathPage(); break;
+                case Page.NewHero: NewHeroPage(); break;
                 case Page.Loading: LoadingPage(); break;
                 case Page.Talk: TalkPage(); break;
                 case Page.Aperture: AperturePage(); break;
@@ -434,7 +436,7 @@ namespace GuWorld.UI
                 UiKit.Disp(name, who, 30, UiKit.GoldText).Size(36);
                 UiKit.Lbl(title, who, 11, UiKit.Muted, 0.3f).Size(36);
                 UiKit.Rule(words);
-                var said = UiKit.Disp($"«{line.Text}»", words, 26, UiKit.Hex(0xF2EADB), TextAnchor.UpperLeft);
+                var said = UiKit.Disp($"«{Words.Fill(line.Text, S.State)}»", words, 26, UiKit.Hex(0xF2EADB), TextAnchor.UpperLeft);
                 said.horizontalOverflow = HorizontalWrapMode.Wrap;
                 said.lineSpacing = 1.05f;
                 said.Size(-1).flexibleHeight = 1;
@@ -442,7 +444,7 @@ namespace GuWorld.UI
             else
             {
                 // The narrator: no name, quieter.
-                var told = UiKit.Disp(line.Text, words, 24, UiKit.Hex(0xC9D3D5), TextAnchor.UpperLeft);
+                var told = UiKit.Disp(Words.Fill(line.Text, S.State), words, 24, UiKit.Hex(0xC9D3D5), TextAnchor.UpperLeft);
                 told.fontStyle = FontStyle.Italic;
                 told.horizontalOverflow = HorizontalWrapMode.Wrap;
                 told.lineSpacing = 1.08f;

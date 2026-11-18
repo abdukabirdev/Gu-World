@@ -170,7 +170,8 @@ namespace GuWorld.UI
             }
 
             UiKit.Rule(words);
-            var said = UiKit.Disp(line.Who == "" ? line.Text : $"«{line.Text}»", words, 25, UiKit.Hex(0xF2EADB), TextAnchor.UpperLeft);
+            var text = Words.Fill(line.Text, S.State);
+            var said = UiKit.Disp(line.Who == "" ? text : $"«{text}»", words, 25, UiKit.Hex(0xF2EADB), TextAnchor.UpperLeft);
             said.horizontalOverflow = HorizontalWrapMode.Wrap;
             said.lineSpacing = 1.05f;
             said.Size(110);
@@ -697,17 +698,25 @@ namespace GuWorld.UI
             var body = Frame("设", "Настройки игры", "Сохраняются вместе с игрой", false, () => Show(Page.Pause), null, new[] { ("Esc", "Назад") });
             var left = Column(body, 0.1f, 0.9f, 14);
 
-            UiKit.Lbl("Сложность", left, 11, UiKit.LabelGold).Size(18);
-            var difficulties = (Difficulty[])Enum.GetValues(typeof(Difficulty));
+            // The path: only the one the hero was born on or an easier one; the talent stays the born one.
+            UiKit.Lbl("Путь (сложность)", left, 11, UiKit.LabelGold).Size(18);
+            var difficulties = new List<Difficulty>();
             var names = new List<string>();
 
-            foreach (var difficulty in difficulties)
+            foreach (var difficulty in DifficultyRules.All)
             {
-                names.Add(DifficultyRules.Name(difficulty));
+                if (DifficultyRules.CanSwitch(settings.Born, difficulty))
+                {
+                    difficulties.Add(difficulty);
+                    names.Add(DifficultyRules.Name(difficulty));
+                }
             }
 
-            UiKit.Choices(left, names, Array.IndexOf(difficulties, settings.Difficulty), i => { settings.Difficulty = difficulties[i]; session.Recompute(); Redraw(); });
+            UiKit.Choices(left, names, difficulties.IndexOf(settings.Difficulty), i => { settings.Difficulty = difficulties[i]; session.Recompute(); Redraw(); });
             Para(DifficultyRules.Text(settings.Difficulty), left, 14, UiKit.Muted);
+            var born = Beginnings.Of(settings.Born);
+            Para($"Герой родился на пути «{born.Name}» (талант {Cultivation.TalentName(Words.BornTalent(session.State))}). Путь можно сделать легче, но не тяжелее; " +
+                 "врождённый талант остаётся прежним.", left, 13, UiKit.Muted);
 
             UiKit.Lbl("Голод Гу", left, 11, UiKit.LabelGold).Size(18);
             UiKit.Choices(left, new[] { "Нет", "Мягкий", "Как в каноне" }, (int)settings.Hunger, i => { settings.Hunger = (HungerRule)i; session.Recompute(); Redraw(); });

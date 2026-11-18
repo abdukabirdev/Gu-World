@@ -481,9 +481,9 @@ static partial class Program
 
         // Difficulty.
         s = new Session(Session.NewGame("Тест"), 16);
-        s.State.Settings.Difficulty = Difficulty.Story;
+        s.State.Settings.Difficulty = Difficulty.Easy;
         var soft = s.TakeDamage(10);
-        s.State.Settings.Difficulty = Difficulty.Demonic;
+        s.State.Settings.Difficulty = Difficulty.Impossible;
         var hard = s.TakeDamage(10);
         Check(soft < 7 && hard > 16, "the difficulty scales the blows");
 

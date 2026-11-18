@@ -90,6 +90,7 @@ static partial class Program
         Rules();
         MoreRules();
         HighRules();
+        PathRules();
         SaveRoundTrip();
         var report = new List<string>();
 
@@ -111,6 +112,15 @@ static partial class Program
         RegionPlay(report);
         Playthrough("ending_righteous", 11, report, true);
         Playthrough("ending_demonic", 23, null, false);
+
+        // Every path can be played to the end (its talent decides which Gu can be refined when).
+        foreach (var way in Beginnings.All)
+        {
+            if (way.Path != Beginnings.Reference)
+            {
+                Playthrough("ending_righteous", 11, report, false, way.Path);
+            }
+        }
         Balance(report);
 
         foreach (var line in report)
@@ -461,9 +471,9 @@ static partial class Program
 
     // ---------------------------------------------------------------------- A bot plays the story
 
-    static void Playthrough(string ending, int seed, List<string> report, bool verbose)
+    static void Playthrough(string ending, int seed, List<string> report, bool verbose, Difficulty path = Beginnings.Reference)
     {
-        var s = new Session(Session.NewGame("Бот"), seed);
+        var s = new Session(Session.NewGame("Бот", path, null, seed), seed);
         var kills = new Dictionary<string, int>();
         var grind = 0;
         var quests = 0;
@@ -651,6 +661,12 @@ static partial class Program
         Check(ending != "ending_demonic" || s.State.Gu.Any(g => g.Def == "blood_moon"), "the demonic ending gives the Blood Moon Gu");
         Check(ending != "ending_righteous" || s.State.Talent >= 1, "the righteous ending gives talent S");
         Check(s.Rank == 3, "the hero ends at rank 3");
+
+        if (path != Beginnings.Reference)
+        {
+            Check(s.Has("finished") && s.Has(ending), $"{DifficultyRules.Name(path)}: the story can be played to the end");
+            report?.Add($"  path {DifficultyRules.Name(path),-12} talent {Beginnings.Of(path).Talent * 100:0}% → {s.State.Talent * 100:0}%, {grind} kills farmed for the gates");
+        }
 
         if (verbose)
         {

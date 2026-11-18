@@ -105,12 +105,39 @@ namespace GuWorld.Core
             // A game stopped inside the immortal aperture: its loans go back.
             DropBorrowed();
             State.Move = State.Move ?? "";
-            State.Version = Math.Max(State.Version, 2);
+
+            // Version 3: five paths. The old demonic difficulty (3) is the impossible path now; an old save was born on the path it plays.
+            if (State.Version < 3)
+            {
+                if ((int)State.Settings.Difficulty == 3)
+                {
+                    State.Settings.Difficulty = Difficulty.Impossible;
+                }
+
+                State.Settings.Born = State.Settings.Difficulty;
+            }
+
+            State.Version = Math.Max(State.Version, 3);
         }
 
-        public static SaveData NewGame(string heroName)
+        /// <summary>A new game on the path the numbers were balanced on (C 44%, every multiplier 1) — what the checks play.</summary>
+        public static SaveData NewGame(string heroName) => NewGame(heroName, Beginnings.Reference, null, 0);
+
+        /// <summary>
+        /// A new game: the hero's name, the path chosen (its talent, its difficulty), the player's own rules
+        /// (null: the defaults) and a seed for the one roll a new game makes — the Ten Extreme Physique on a
+        /// path that offers it (0: the time).
+        /// </summary>
+        public static SaveData NewGame(string heroName, Difficulty path, Settings rules, int seed)
         {
-            var state = new SaveData { HeroName = string.IsNullOrWhiteSpace(heroName) ? "Лань" : heroName.Trim() };
+            var state = new SaveData { HeroName = Look.CleanName(heroName) };
+            var way = Beginnings.Of(path);
+            state.Settings = rules ?? new Settings();
+            state.Settings.Difficulty = path;
+            state.Settings.Born = path;
+            var random = seed == 0 ? new Random() : new Random(seed);
+            state.ExtremePhysique = way.ExtremeChance > 0 && random.NextDouble() < way.ExtremeChance;
+            state.Talent = state.ExtremePhysique ? 1f : way.Talent;
             state.Health = 100;
             state.Essence = Cultivation.EssenceScale(1) * state.Talent;
 

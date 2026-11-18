@@ -403,8 +403,8 @@ namespace GuWorld.Core
         public (string item, int count)[] Items = new (string, int)[0];
         public string[] Gu = new string[0];
         public string[] Flags = new string[0];
-        /// <summary>The talent the hero rises to (share of the aperture), 0 for none.</summary>
-        public float Talent;
+        /// <summary>How much the hero's talent grows (share of the aperture, up to 1), 0 for none — the same on every path.</summary>
+        public float TalentGain;
     }
 
     public class QuestDef

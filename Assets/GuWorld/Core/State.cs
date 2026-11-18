@@ -54,13 +54,15 @@ namespace GuWorld.Core
     [Serializable]
     public class SaveData
     {
-        public int Version = 2;
+        public int Version = 3;
         public string HeroName = "Лань";
         /// <summary>Cultivation step: 0–3 rank 1, 4–7 rank 2, 8–11 rank 3.</summary>
         public int Step;
         public float Insight;
         /// <summary>The share of the aperture the hero's talent fills.</summary>
         public float Talent = 0.44f;
+        /// <summary>Born with the Ten Extreme Physique (the easy path's one chance in ten): talent 100%.</summary>
+        public bool ExtremePhysique;
         public float Health = 100;
         public float Essence = 44;
         public int Stones = 10;
@@ -192,7 +194,12 @@ namespace GuWorld.Core
 
     public enum HungerRule { Off, Soft, Canon }
 
-    public enum Difficulty { Story, Normal, Hard, Demonic }
+    /// <summary>
+    /// The way the hero begins (main's "path"), which is the game's difficulty: the talent the hero is
+    /// born with and how hard the mountain is. Saved as a number — never reorder (saves before version 3
+    /// had Story 0, Normal 1, Hard 2, Demonic 3; Migrate moves Demonic to Impossible).
+    /// </summary>
+    public enum Difficulty { Easy, Normal, Hard, Unbearable, Impossible }
 
     /// <summary>The player's choices for how the game plays.</summary>
     [Serializable]
@@ -200,6 +207,8 @@ namespace GuWorld.Core
     {
         public HungerRule Hunger = HungerRule.Soft;
         public Difficulty Difficulty = Difficulty.Normal;
+        /// <summary>The path the hero was born on (fixed at a new game; the difficulty may be lowered below it, not raised above it).</summary>
+        public Difficulty Born = Difficulty.Normal;
         /// <summary>Gu eat from the bag by themselves at dawn.</summary>
         public bool AutoFeed = true;
         /// <summary>Travelling between lanterns costs primeval stones.</summary>

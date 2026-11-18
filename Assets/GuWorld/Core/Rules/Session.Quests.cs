@@ -316,9 +316,9 @@ namespace GuWorld.Core
                 ChangeReputation(clan, change, false);
             }
 
-            if (reward.Talent > State.Talent)
+            if (reward.TalentGain > 0 && State.Talent < 1)
             {
-                State.Talent = reward.Talent;
+                State.Talent = Math.Min(1f, State.Talent + reward.TalentGain);
                 Say($"Талант вырос: {Cultivation.TalentName(State.Talent)} ({(int)Math.Round(State.Talent * 100)}%)");
             }
 

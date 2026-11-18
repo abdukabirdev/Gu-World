@@ -39,10 +39,10 @@ namespace GuWorld.UI
             if (save != null)
             {
                 var minutes = Mathf.RoundToInt(save.PlayedSeconds / 60);
-                keys.Add(UiKit.Entry("Продолжить", $"Гу Юэ {save.HeroName} · {Cultivation.Name(save.Step)} · {minutes} мин", middle, () => Game.Instance.Begin(false)).Centre());
+                keys.Add(UiKit.Entry("Продолжить", $"Гу Юэ {save.HeroName} · {DifficultyRules.Name(DifficultyRules.Of(save))} · {Cultivation.Name(save.Step)} · {minutes} мин", middle, () => Game.Instance.Begin(false)).Centre());
             }
 
-            keys.Add(UiKit.Entry("Новая игра", save != null ? $"В ячейке {Game.Slot + 1} — прежнее будет заменено" : null, middle, () => Game.Instance.Begin(true)).Centre());
+            keys.Add(UiKit.Entry("Новая игра", save != null ? $"Выбор пути и героя · в ячейке {Game.Slot + 1} прежнее будет заменено" : "Выбор пути и героя", middle, StartNewGame).Centre());
             keys.Add(UiKit.Entry($"Ячейка сохранения: {Game.Slot + 1} из {Game.Slots}", SlotLine(Game.Slot + 1 < Game.Slots ? Game.Slot + 1 : 0, "Следующая: "), middle, () =>
             {
                 Game.Slot = (Game.Slot + 1) % Game.Slots;
@@ -221,7 +221,7 @@ namespace GuWorld.UI
 
             foreach (var line in Story.Endings[demonic ? "ending_demonic" : "ending_righteous"])
             {
-                var words = UiKit.Disp(line, middle, 22, UiKit.Hex(0xE6DCCB), TextAnchor.UpperCenter);
+                var words = UiKit.Disp(Words.Fill(line, S.State), middle, 22, UiKit.Hex(0xE6DCCB), TextAnchor.UpperCenter);
                 words.horizontalOverflow = HorizontalWrapMode.Wrap;
                 words.lineSpacing = 1.05f;
                 Gap(middle, 4);

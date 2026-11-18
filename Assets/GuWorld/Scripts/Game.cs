@@ -214,14 +214,25 @@ namespace GuWorld
             StartCoroutine(Starting(fresh));
         }
 
+        /// <summary>The new game the new game pages chose (the name, the path, the player's rules), started on the next Begin(true).</summary>
+        SaveData chosenNew;
+
+        /// <summary>Begins a new game as the new game pages chose it: the hero is born on the path now (the one roll — the extreme physique — made here).</summary>
+        public void BeginNew(string name, Difficulty path, Core.Settings rules)
+        {
+            chosenNew = Session.NewGame(name, path, rules, 0);
+            Begin(true);
+        }
+
         IEnumerator Starting(bool fresh)
         {
             Ui.Loading("Долина просыпается…");
             yield return null;
             yield return null;
             Leave();
-            var state = fresh ? null : ReadSave();
-            Session = new Session(state ?? Session.NewGame("Лань"));
+            var state = fresh ? chosenNew : ReadSave();
+            chosenNew = null;
+            Session = new Session(state ?? Session.NewGame(Look.DefaultName));
             Session.Toast += line => Ui.Toast(line);
             Session.QuestStarted += quest =>
             {

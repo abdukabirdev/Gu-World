@@ -2,28 +2,41 @@ using System;
 
 namespace GuWorld.Core
 {
-    /// <summary>How each difficulty changes the numbers of the game.</summary>
+    /// <summary>
+    /// How each path (difficulty) changes the numbers of the game. The hard path is the one the numbers
+    /// were balanced on (every multiplier 1, talent C 44%); the paths below it are kinder, the two above
+    /// it crueller. Which talent each path is born with — Beginnings.
+    /// </summary>
     public static class DifficultyRules
     {
+        /// <summary>The paths from the easiest to the hardest (the order the new game shows them in).</summary>
+        public static readonly Difficulty[] All = { Difficulty.Easy, Difficulty.Normal, Difficulty.Hard, Difficulty.Unbearable, Difficulty.Impossible };
+
+        /// <summary>0 the easiest … 4 the hardest.</summary>
+        public static int Order(Difficulty difficulty) => Math.Max(0, Array.IndexOf(All, difficulty));
+
         public static string Name(Difficulty difficulty)
         {
             switch (difficulty)
             {
-                case Difficulty.Story: return "Сказание";
-                case Difficulty.Hard: return "Испытание";
-                case Difficulty.Demonic: return "Демонический путь";
-                default: return "Путь мастера";
+                case Difficulty.Easy: return "Лёгкая";
+                case Difficulty.Hard: return "Сложная";
+                case Difficulty.Unbearable: return "Невыносимая";
+                case Difficulty.Impossible: return "Невозможная";
+                default: return "Обычная";
             }
         }
 
+        /// <summary>What the path does to the mountain, in a line.</summary>
         public static string Text(Difficulty difficulty)
         {
             switch (difficulty)
             {
-                case Difficulty.Story: return "Враги слабее, смерть почти ничего не стоит. Для тех, кто пришёл за историей.";
-                case Difficulty.Hard: return "Враги крепче и бьют больнее, лавки дороже.";
-                case Difficulty.Demonic: return "Гора не прощает. Враги вдвое опаснее, смерть забирает четверть камней.";
-                default: return "Как задумано.";
+                case Difficulty.Easy: return "Враги слабее, смерть почти ничего не стоит. Для тех, кто пришёл за историей.";
+                case Difficulty.Hard: return "Как задумано: каждый удар и каждый камень на счету.";
+                case Difficulty.Unbearable: return "Враги крепче и бьют больнее, лавки дороже, смерть забирает больше.";
+                case Difficulty.Impossible: return "Гора не прощает. Враги почти вдвое опаснее, смерть забирает четверть камней.";
+                default: return "Мягче задуманного: ошибки прощаются, но не все.";
             }
         }
 
@@ -32,9 +45,10 @@ namespace GuWorld.Core
         {
             switch (difficulty)
             {
-                case Difficulty.Story: return 0.6f;
-                case Difficulty.Hard: return 1.35f;
-                case Difficulty.Demonic: return 1.7f;
+                case Difficulty.Easy: return 0.6f;
+                case Difficulty.Normal: return 0.85f;
+                case Difficulty.Unbearable: return 1.35f;
+                case Difficulty.Impossible: return 1.7f;
                 default: return 1;
             }
         }
@@ -44,35 +58,54 @@ namespace GuWorld.Core
         {
             switch (difficulty)
             {
-                case Difficulty.Story: return 0.7f;
-                case Difficulty.Hard: return 1.3f;
-                case Difficulty.Demonic: return 1.6f;
+                case Difficulty.Easy: return 0.7f;
+                case Difficulty.Normal: return 0.9f;
+                case Difficulty.Unbearable: return 1.3f;
+                case Difficulty.Impossible: return 1.6f;
                 default: return 1;
             }
         }
 
+        /// <summary>Share of the breakthrough each win and quest gives.</summary>
         public static float Insight(Difficulty difficulty)
         {
             switch (difficulty)
             {
-                case Difficulty.Story: return 1.25f;
-                case Difficulty.Demonic: return 1.1f;
+                case Difficulty.Easy: return 1.25f;
+                case Difficulty.Normal: return 1.1f;
+                case Difficulty.Impossible: return 1.1f;
                 default: return 1;
             }
         }
 
-        public static float Prices(Difficulty difficulty) => difficulty >= Difficulty.Hard ? 1.2f : 1;
+        /// <summary>Share of the shops' prices.</summary>
+        public static float Prices(Difficulty difficulty) => Order(difficulty) >= Order(Difficulty.Unbearable) ? 1.2f : 1;
 
         /// <summary>The share of the stones a fall costs.</summary>
         public static float DeathLoss(Difficulty difficulty)
         {
             switch (difficulty)
             {
-                case Difficulty.Story: return 0.03f;
-                case Difficulty.Hard: return 0.15f;
-                case Difficulty.Demonic: return 0.25f;
+                case Difficulty.Easy: return 0.03f;
+                case Difficulty.Normal: return 0.07f;
+                case Difficulty.Unbearable: return 0.15f;
+                case Difficulty.Impossible: return 0.25f;
                 default: return 0.1f;
             }
+        }
+
+        /// <summary>
+        /// Whether a game born on one path may be switched to another: only to its own or an easier one
+        /// (the talent stays the one the hero was born with either way).
+        /// </summary>
+        public static bool CanSwitch(Difficulty born, Difficulty to) => Order(to) <= Order(born);
+
+        /// <summary>The path a save plays, read before Session migrates it (an old save's demonic 3 is the impossible path).</summary>
+        public static Difficulty Of(SaveData save)
+        {
+            var path = save?.Settings?.Difficulty ?? Difficulty.Normal;
+
+            return save != null && save.Version < 3 && (int)path == 3 ? Difficulty.Impossible : path;
         }
     }
 
