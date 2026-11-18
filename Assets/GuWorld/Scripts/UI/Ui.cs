@@ -141,6 +141,7 @@ namespace GuWorld.UI
         public void Loading(string text)
         {
             loadingText = text;
+            tipAt = UnityEngine.Random.Range(0, LoadingTips.Length);
             Show(Page.Loading);
         }
 
@@ -178,6 +179,7 @@ namespace GuWorld.UI
         void Update()
         {
             TickFps();
+            TickLoading();
             TickHud();
 
             if (!Game.Playing || Time.frameCount == born)

@@ -400,7 +400,8 @@ namespace GuWorld
 
         IEnumerator Starting(bool fresh)
         {
-            Ui.Loading("Долина просыпается…");
+            Ui.Loading(SandboxOnly ? "Апертура раскрывается…" : "Долина просыпается…");
+            Ui.LoadingProgress(0.04f, "Сохранение");
             yield return null;
             yield return null;
             Leave();
@@ -497,9 +498,13 @@ namespace GuWorld
                 // The mountain's plan is made on a worker thread (a few seconds the first time); the loading screen waits.
                 Debug.Log("GU World load: plan task starting");
                 var making = System.Threading.Tasks.Task.Run(() => Core.Gen.WorldPlan.Get());
+                var waited = 0f;
 
+                // The plan takes some seconds the first time (cached after): the bar creeps toward half meanwhile.
                 while (!making.IsCompleted)
                 {
+                    waited += Time.unscaledDeltaTime;
+                    Ui.LoadingProgress(0.08f + 0.42f * (1 - Mathf.Exp(-waited / 4f)), waited > 20 ? $"Гора, реки, дороги, деревни — {waited:0} с" : "Гора, реки, дороги, деревни");
                     yield return null;
                 }
 
@@ -514,16 +519,26 @@ namespace GuWorld
                     var plan = making.Result;
                     Debug.Log("GU World: " + plan.Report());
                     World.Ground.Plan = plan;
+                    Ui.LoadingProgress(0.55f, "Земля");
+                    yield return null;
                     Streamer.Make(world.transform, plan);
                     Debug.Log("GU World load: Streamer made");
+                    Ui.LoadingProgress(0.64f, "Лес");
+                    yield return null;
                     Forest.Make(world.transform, plan);
                     Debug.Log("GU World load: Forest made");
+                    Ui.LoadingProgress(0.72f, "Места и деревни");
+                    yield return null;
                     Places.Make(world.transform, plan);
                     Debug.Log("GU World load: Places made");
+                    Ui.LoadingProgress(0.8f, "Трава и цветы");
+                    yield return null;
                     GrassField.Make(world.transform, plan);
                     Debug.Log("GU World load: GrassField made");
                     Governor.Make(world.transform);
                     Debug.Log("GU World load: Governor made");
+                    Ui.LoadingProgress(0.86f, "Люди");
+                    yield return null;
                     Population.Make(world.transform);
                     Debug.Log("GU World load: Population made");
                 }
@@ -535,9 +550,11 @@ namespace GuWorld
                 World.Ground.Build(world.transform);
             }
 
+            Ui.LoadingProgress(0.9f, "Дома, вещи, погода");
             yield return null;
             Scenery.Build(world.transform);
             WeatherFx.Make(world.transform);
+            Ui.LoadingProgress(0.96f, "Звери и герой");
             yield return null;
             spawns = world.AddComponent<Spawns>();
             Atmosphere.Hour = Session.State.Hour;
@@ -548,6 +565,7 @@ namespace GuWorld
             Streamer.Instance?.LoadNow(at);
             Hero = Hero.Spawn(at, 0);
             Rig.Follow(Hero, 0);
+            Ui.LoadingProgress(1, "Готово");
             Playing = true;
             Time.timeScale = 1;
             yield return null;

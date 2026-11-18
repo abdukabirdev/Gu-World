@@ -23,13 +23,93 @@ namespace GuWorld.UI
             return middle;
         }
 
+        // ------------------------------------------------------------------ Loading (ROADMAP 2.10)
+
+        RectTransform loadingFill;
+        Text loadingStep, loadingTip;
+        float loadingShare, loadingShown, tipTime;
+        int tipAt;
+
+        /// <summary>Lines shown while the world is made: advice, and the valley's own sayings.</summary>
+        static readonly string[] LoadingTips =
+        {
+            "Ладонь копит эссенцию, Гу её тратят. Кончилась эссенция — бейте ладонью.",
+            "Красная фигура на земле — враг сейчас ударит туда. Перекат в последний миг — и он промахнётся.",
+            "Блок, поставленный в самый последний миг, становится парированием.",
+            "Голодный Гу слабеет. Корм — в сумке; на рассвете Гу берут его сами, если вы разрешили.",
+            "Лунный фонарь, которого вы коснулись, — место, где вы очнётесь. И дорога назад.",
+            "Первобытный камень — и деньги, и эссенция, и прорыв. Каждый можно потратить только один раз.",
+            "Три Гу одного пути звучат вместе — созвучие апертуры. Пять разных путей спорят друг с другом.",
+            "Огонь по замёрзшему зверю даёт пар. Удар по замёрзшему — раскол.",
+            "Звери одних путей боятся, к другим стойки. Кодекс запоминает это после третьей победы над видом.",
+            "У Духовного источника камни становятся прорывом. На пике ступени там же прорываются на новый ранг.",
+            "Компас наверху и круг карты внизу справа можно убрать в настройках, вкладка «Интерфейс».",
+            "Клан помнит тех, кто полезен. Доски поручений есть в каждой деревне.",
+            "В деревне говорят: талант — глубина колодца, но воду из него носят руками.",
+            "Старики Гу Юэ говорят: Гу не нюхает, чей ты сын. Он слушается воли.",
+            "Охотники Сюн говорят: волк, который воет, ещё не голоден. Бойся тихого.",
+            "Речные люди Бай говорят: вода не спорит с камнем — она его обходит, а потом точит.",
+        };
+
+        public void LoadingProgress(float share, string step)
+        {
+            loadingShare = Mathf.Max(loadingShare, Mathf.Clamp01(share));
+
+            if (loadingStep != null)
+            {
+                loadingStep.text = step;
+            }
+        }
+
         void LoadingPage()
         {
             var stage = UiKit.Stage(pageRoot);
             UiKit.Backdrop(stage, "蛊", 620);
-            var middle = Centre(stage, 700, 380, 200);
+            loadingShare = loadingShown = 0;
+            var middle = Centre(stage, 760, 330, 300);
             UiKit.Disp(loadingText, middle, 40, UiKit.GoldText, TextAnchor.MiddleCenter).Size(50);
             UiKit.Lbl("Гора Цинмао · деревня Гу Юэ", middle, 11, UiKit.Muted, 0.4f, TextAnchor.MiddleCenter).Size(16);
+            Gap(middle, 26);
+
+            // The bar: a hairline and a gold fill growing to the share made.
+            var bar = UiKit.Rect("Bar", middle);
+            bar.Size(6);
+            var track = UiKit.Image("Track", bar, new Color(234 / 255f, 240 / 255f, 242 / 255f, 0.1f), UiKit.Plain);
+            track.rectTransform.Place(new Vector2(0, 0.5f), new Vector2(1, 0.5f), 0, -1, 0, -1);
+            var fill = UiKit.Image("Fill", bar, Color.white, UiKit.Plain);
+            fill.Gradient(UiKit.GoldDeep, UiKit.GoldLit, true);
+            UiKit.Glow(fill.transform, UiKit.Gold.A(0.4f), 8);
+            loadingFill = fill.rectTransform;
+            loadingFill.Place(new Vector2(0, 0.5f), new Vector2(0, 0.5f), 0, -1.5f, 0, -1.5f);
+            Gap(middle, 10);
+            loadingStep = UiKit.Label("", middle, 13, UiKit.Muted, TextAnchor.MiddleCenter);
+            loadingStep.Size(20);
+            Gap(middle, 34);
+            loadingTip = UiKit.Label(LoadingTips[tipAt % LoadingTips.Length], middle, 16, UiKit.Text2, TextAnchor.UpperCenter);
+            loadingTip.horizontalOverflow = HorizontalWrapMode.Wrap;
+            loadingTip.lineSpacing = 1.15f;
+            loadingTip.Size(60);
+            tipTime = 0;
+        }
+
+        /// <summary>The loading page as it waits: the bar eases to the share made, the advice turns every six seconds.</summary>
+        void TickLoading()
+        {
+            if (Open != Page.Loading || loadingFill == null)
+            {
+                return;
+            }
+
+            loadingShown = Mathf.MoveTowards(loadingShown, loadingShare, Time.unscaledDeltaTime * 0.8f);
+            loadingFill.anchorMax = new Vector2(loadingShown, 0.5f);
+            tipTime += Time.unscaledDeltaTime;
+
+            if (tipTime > 6)
+            {
+                tipTime = 0;
+                tipAt++;
+                loadingTip.text = LoadingTips[tipAt % LoadingTips.Length];
+            }
         }
 
         RectTransform Dim(Color tint, string brush)
