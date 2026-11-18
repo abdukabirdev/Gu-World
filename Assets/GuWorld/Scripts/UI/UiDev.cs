@@ -36,6 +36,23 @@ namespace GuWorld.UI
 
         DevTab devTab = DevTab.Hero;
 
+        /// <summary>What happened in the game, into the console's log (at most 200 lines kept), with the hour.</summary>
+        void LogEvent(string line)
+        {
+            if (!DevOn)
+            {
+                return;
+            }
+
+            var hour = Atmosphere.Hour;
+            consoleLog.Add($"<color=#7E9093>{(int)hour:00}:{(int)(hour % 1 * 60):00}</color> {line}");
+
+            if (consoleLog.Count > 200)
+            {
+                consoleLog.RemoveRange(0, consoleLog.Count - 200);
+            }
+        }
+
         // ------------------------------------------------------------------ The engine's commands
 
         void AddEngineCommands()

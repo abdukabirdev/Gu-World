@@ -223,6 +223,9 @@ namespace GuWorld.UI
                 return;
             }
 
+            // The console keeps what happened too (the developer's log).
+            LogEvent(line);
+
             if (toasts.Count > 0 && toasts[toasts.Count - 1].text.text == line && toasts[toasts.Count - 1].age < 1)
             {
                 return;
@@ -239,7 +242,11 @@ namespace GuWorld.UI
             }
         }
 
-        public void Banner(string label, string title) => banners.Enqueue((label, title));
+        public void Banner(string label, string title)
+        {
+            banners.Enqueue((label, title));
+            LogEvent($"{label}: {title}");
+        }
 
         public void Place(string name) => Toast("— " + name + " —");
 
