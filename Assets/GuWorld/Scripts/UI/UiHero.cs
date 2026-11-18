@@ -563,6 +563,55 @@ namespace GuWorld.UI
 
         // ------------------------------------------------------------------ Map
 
+        /// <summary>
+        /// The map's colour of a point, one cell across (metres): the ground's own layers darkened, lit
+        /// from the north-west so the slopes read, higher a little brighter; rivers blue, roads brown.
+        /// The map page and the minimap paint with it. `weights` is scratch (Surface.Layers long).
+        /// </summary>
+        public static Color MapColour(float x, float z, float cell, float[] weights)
+        {
+            var plan = Ground.Plan;
+            var height = Ground.HeightAt(x, z);
+            var dx = Ground.HeightAt(x + cell, z) - height;
+            var dz = Ground.HeightAt(x, z + cell) - height;
+            Color colour;
+
+            if (plan != null)
+            {
+                var p = new Core.Gen.Vec2(x, z);
+                plan.Surface.Paint(p, height, Mathf.Sqrt(dx * dx + dz * dz) / cell, weights);
+                float r = 0, g = 0, b = 0;
+
+                for (var k = 0; k < weights.Length; k++)
+                {
+                    r += Core.Gen.Shapes.FarColours[k * 3] * weights[k];
+                    g += Core.Gen.Shapes.FarColours[k * 3 + 1] * weights[k];
+                    b += Core.Gen.Shapes.FarColours[k * 3 + 2] * weights[k];
+                }
+
+                colour = new Color(r, g, b) * 0.6f;
+            }
+            else
+            {
+                colour = Color.Lerp(UiKit.Hex(0x1C2A26), UiKit.Hex(0x343A40), Mathf.Clamp01((Mathf.Abs(dx) + Mathf.Abs(dz)) / cell * 0.8f));
+            }
+
+            colour *= Mathf.Clamp(1 + (-dx + dz) / cell * 0.7f, 0.5f, 1.45f) * (0.85f + Mathf.Clamp01(height / 700) * 0.4f);
+
+            if (Ground.RiverDistance(x, z) < Mathf.Max(cell * 0.8f, 2.5f))
+            {
+                colour = UiKit.Hex(0x2E6E8C);
+            }
+            else if (Ground.RoadDistance(x, z) < Mathf.Max(cell * 0.45f, 1.6f))
+            {
+                colour = UiKit.Hex(0x8C6A3A);
+            }
+
+            colour.a = 1;
+
+            return colour;
+        }
+
         static Texture2D MapTexture()
         {
             if (mapTexture != null)
@@ -574,10 +623,7 @@ namespace GuWorld.UI
             var half = Ground.Half;
             mapTexture = new Texture2D(size, size, TextureFormat.RGB24, false) { wrapMode = TextureWrapMode.Clamp, name = "Map" };
             var pixels = new Color[size * size];
-            var plan = Ground.Plan;
             var weights = new float[Core.Gen.Surface.Layers];
-            var water = UiKit.Hex(0x2E6E8C);
-            var road = UiKit.Hex(0x8C6A3A);
 
             for (var j = 0; j < size; j++)
             {
@@ -586,45 +632,7 @@ namespace GuWorld.UI
                 for (var i = 0; i < size; i++)
                 {
                     var x = -half + half * 2 * (i + 0.5f) / size;
-                    var cell = half * 2 / size;
-                    var height = Ground.HeightAt(x, z);
-                    var dx = Ground.HeightAt(x + cell, z) - height;
-                    var dz = Ground.HeightAt(x, z + cell) - height;
-                    Color colour;
-
-                    if (plan != null)
-                    {
-                        var p = new Core.Gen.Vec2(x, z);
-                        plan.Surface.Paint(p, height, Mathf.Sqrt(dx * dx + dz * dz) / cell, weights);
-                        float r = 0, g = 0, b = 0;
-
-                        for (var k = 0; k < weights.Length; k++)
-                        {
-                            r += Core.Gen.Shapes.FarColours[k * 3] * weights[k];
-                            g += Core.Gen.Shapes.FarColours[k * 3 + 1] * weights[k];
-                            b += Core.Gen.Shapes.FarColours[k * 3 + 2] * weights[k];
-                        }
-
-                        colour = new Color(r, g, b) * 0.6f;
-                    }
-                    else
-                    {
-                        colour = Color.Lerp(UiKit.Hex(0x1C2A26), UiKit.Hex(0x343A40), Mathf.Clamp01((Mathf.Abs(dx) + Mathf.Abs(dz)) / cell * 0.8f));
-                    }
-
-                    // Lit from the north-west, so the mountain reads.
-                    colour *= Mathf.Clamp(1 + (-dx + dz) / cell * 0.7f, 0.5f, 1.45f) * (0.85f + Mathf.Clamp01(height / 700) * 0.4f);
-
-                    if (Ground.RiverDistance(x, z) < cell * 0.8f)
-                    {
-                        colour = water;
-                    }
-                    else if (Ground.RoadDistance(x, z) < cell * 0.45f)
-                    {
-                        colour = road;
-                    }
-
-                    pixels[j * size + i] = colour;
+                    pixels[j * size + i] = MapColour(x, z, half * 2 / size, weights);
                 }
             }
 

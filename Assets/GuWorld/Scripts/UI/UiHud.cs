@@ -209,6 +209,8 @@ namespace GuWorld.UI
             targetMark.sizeDelta = new Vector2(14, 14);
             var dot = UiKit.Image("Aim", floats, new Color(1, 1, 1, 0.45f), UiKit.Disc);
             dot.rectTransform.At(new Vector2(0.5f, 0.5f), Vector2.zero, new Vector2(5, 5));
+            BuildCompass(stage);
+            BuildMinimap(stage);
             hudRoot.gameObject.SetActive(false);
         }
 
@@ -501,7 +503,9 @@ namespace GuWorld.UI
                 }
             }
 
-            markRoot.gameObject.SetActive(marked);
+            markRoot.gameObject.SetActive(marked && Prefs.QuestMark == 0);
+            TickCompass(session, hero, camera);
+            TickMinimap(session, hero, camera);
 
             // A boss that has seen the hero.
             Enemy boss = null;
