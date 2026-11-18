@@ -344,6 +344,29 @@ namespace GuWorld.UI
                 dot.rectTransform.sizeDelta = new Vector2(7, 7);
             }
 
+            // Wild Gu out near: small lights of their colour.
+            if (WildGuField.Instance != null)
+            {
+                foreach (var (wild, colour) in WildGuField.Instance.Lights)
+                {
+                    if (used >= minimapDots.Count)
+                    {
+                        break;
+                    }
+
+                    if ((new Vector2(wild.x, wild.z) - here).sqrMagnitude > MinimapReach * MinimapReach * 0.9f)
+                    {
+                        continue;
+                    }
+
+                    var dot = minimapDots[used++];
+                    dot.gameObject.SetActive(true);
+                    dot.color = colour;
+                    dot.rectTransform.anchoredPosition = OnMap(wild.x, wild.z);
+                    dot.rectTransform.sizeDelta = new Vector2(5, 5);
+                }
+            }
+
             for (var i = used; i < minimapDots.Count; i++)
             {
                 minimapDots[i].gameObject.SetActive(false);

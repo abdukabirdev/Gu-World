@@ -180,6 +180,7 @@ namespace GuWorld
         Component nearby;
         float hintWait = 8;
         Core.Gen.Walker nearbyWalker;
+        WildSpot nearbyWild;
         public static string Prompt { get; private set; }
 
         /// <summary>The save slots (the first is the old single save, so a game saved before slots is kept).</summary>
@@ -554,6 +555,7 @@ namespace GuWorld
             yield return null;
             Scenery.Build(world.transform);
             WeatherFx.Make(world.transform);
+            WildGuField.Make(world.transform);
             Ui.LoadingProgress(0.96f, "Звери и герой");
             yield return null;
             spawns = world.AddComponent<Spawns>();
@@ -753,6 +755,16 @@ namespace GuWorld
                     Prompt = thing.Verb + " · " + thing.Def.Name;
                 }
             }
+            // A wild Gu over its spot (only when nothing else is at hand).
+            var wild = nearby == null ? WildGuField.Instance?.Nearest(Hero.transform.position) : null;
+
+            if (wild != null)
+            {
+                nearby = WildGuField.Instance;
+                nearbyWild = wild;
+                Prompt = WildGuField.PromptFor(wild);
+            }
+
             // A townsperson close by (only when no one of the story is closer).
             if (nearby == null)
             {
@@ -821,6 +833,10 @@ namespace GuWorld
             else if (Instance.nearby is World.Aperture)
             {
                 Ui.Show(UI.Ui.Page.Sandbox);
+            }
+            else if (Instance.nearby is WildGuField field)
+            {
+                field.TryCatch(Instance.nearbyWild);
             }
         }
 

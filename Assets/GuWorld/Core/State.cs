@@ -89,6 +89,8 @@ namespace GuWorld.Core
         public List<TraitXp> Physique = new List<TraitXp>();
         /// <summary>The wounds the hero carries, by part of the body.</summary>
         public List<Wound> Wounds = new List<Wound>();
+        /// <summary>Wild Gu's spots emptied (caught or fled): the spot's key and the day another settles there.</summary>
+        public List<Tally> WildTaken = new List<Tally>();
         /// <summary>The hour of the day, 0–24.</summary>
         public float Hour = 9;
 
