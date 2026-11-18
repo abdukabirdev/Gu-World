@@ -94,11 +94,8 @@ namespace GuWorld.Core
             }
         }
 
-        /// <summary>
-        /// Whether a game born on one path may be switched to another: only to its own or an easier one
-        /// (the talent stays the one the hero was born with either way).
-        /// </summary>
-        public static bool CanSwitch(Difficulty born, Difficulty to) => Order(to) <= Order(born);
+        /// <summary>Whether a game born on one path may be switched to another: never (the author, 18.11) — the path is chosen once, at a new game.</summary>
+        public static bool CanSwitch(Difficulty born, Difficulty to) => to == born;
 
         /// <summary>The path a save plays, read before Session migrates it (an old save's demonic 3 is the impossible path).</summary>
         public static Difficulty Of(SaveData save)

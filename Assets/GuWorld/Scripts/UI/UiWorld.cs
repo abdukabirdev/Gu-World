@@ -698,25 +698,12 @@ namespace GuWorld.UI
             var body = Frame("设", "Настройки игры", "Сохраняются вместе с игрой", false, () => Show(Page.Pause), null, new[] { ("Esc", "Назад") });
             var left = Column(body, 0.1f, 0.9f, 14);
 
-            // The path: only the one the hero was born on or an easier one; the talent stays the born one.
+            // The path: chosen once, at a new game; shown, not changed.
             UiKit.Lbl("Путь (сложность)", left, 11, UiKit.LabelGold).Size(18);
-            var difficulties = new List<Difficulty>();
-            var names = new List<string>();
-
-            foreach (var difficulty in DifficultyRules.All)
-            {
-                if (DifficultyRules.CanSwitch(settings.Born, difficulty))
-                {
-                    difficulties.Add(difficulty);
-                    names.Add(DifficultyRules.Name(difficulty));
-                }
-            }
-
-            UiKit.Choices(left, names, difficulties.IndexOf(settings.Difficulty), i => { settings.Difficulty = difficulties[i]; session.Recompute(); Redraw(); });
-            Para(DifficultyRules.Text(settings.Difficulty), left, 14, UiKit.Muted);
             var born = Beginnings.Of(settings.Born);
-            Para($"Герой родился на пути «{born.Name}» (талант {Cultivation.TalentName(Words.BornTalent(session.State))}). Путь можно сделать легче, но не тяжелее; " +
-                 "врождённый талант остаётся прежним.", left, 13, UiKit.Muted);
+            UiKit.Disp($"{born.Name} · талант при рождении {Cultivation.TalentName(Words.BornTalent(session.State))}", left, 24, UiKit.GoldText).Size(32);
+            Para(DifficultyRules.Text(settings.Difficulty), left, 14, UiKit.Muted);
+            Para("Путь выбирают один раз — в начале новой игры. Сменить его можно только новой игрой.", left, 13, UiKit.Muted);
 
             UiKit.Lbl("Голод Гу", left, 11, UiKit.LabelGold).Size(18);
             UiKit.Choices(left, new[] { "Нет", "Мягкий", "Как в каноне" }, (int)settings.Hunger, i => { settings.Hunger = (HungerRule)i; session.Recompute(); Redraw(); });

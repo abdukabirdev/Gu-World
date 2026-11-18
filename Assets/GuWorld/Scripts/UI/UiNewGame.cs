@@ -59,7 +59,7 @@ namespace GuWorld.UI
             // The player's own rules.
             var rules = UiKit.Rect("Rules", stage);
             rules.Place(new Vector2(0, 1), new Vector2(1, 1), 56, -782, 56, 704);
-            UiKit.Lbl("Свои правила · их можно сменить и потом, в паузе", rules, 11, UiKit.LabelGold).rectTransform.Place(new Vector2(0, 1), new Vector2(1, 1), 0, -16, 0, 0);
+            UiKit.Lbl("Свои правила · их можно сменить и потом, в паузе (путь — нельзя)", rules, 11, UiKit.LabelGold).rectTransform.Place(new Vector2(0, 1), new Vector2(1, 1), 0, -16, 0, 0);
             var line = UiKit.Rect("Line", rules);
             line.Place(Vector2.zero, new Vector2(1, 1), 0, 0, 0, 24);
             var across = line.Stack<HorizontalLayoutGroup>(28, null, TextAnchor.MiddleLeft);

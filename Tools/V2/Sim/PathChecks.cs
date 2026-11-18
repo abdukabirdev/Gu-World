@@ -58,9 +58,9 @@ static partial class Program
         Check(ruled.Settings.Hunger == HungerRule.Canon && !ruled.Settings.AutoFeed && !ruled.Settings.TravelCosts && ruled.Settings.Difficulty == Difficulty.Impossible,
             "a new game keeps the player's rules and its path");
 
-        // A game may go easier than it was born, never harder.
-        Check(DifficultyRules.CanSwitch(Difficulty.Hard, Difficulty.Easy) && DifficultyRules.CanSwitch(Difficulty.Hard, Difficulty.Hard), "a game may be made easier or kept");
-        Check(!DifficultyRules.CanSwitch(Difficulty.Hard, Difficulty.Unbearable) && !DifficultyRules.CanSwitch(Difficulty.Easy, Difficulty.Normal), "a game may not be made harder than it was born");
+        // The path is chosen once: a game keeps the path it was born on.
+        Check(DifficultyRules.CanSwitch(Difficulty.Hard, Difficulty.Hard), "a game keeps its path");
+        Check(!DifficultyRules.CanSwitch(Difficulty.Hard, Difficulty.Easy) && !DifficultyRules.CanSwitch(Difficulty.Hard, Difficulty.Unbearable), "a game may not change its path, easier or harder");
 
         // Old saves: four difficulties, the demonic one (3) becomes the impossible path; born on what they play.
         var options = new JsonSerializerOptions { IncludeFields = true };
