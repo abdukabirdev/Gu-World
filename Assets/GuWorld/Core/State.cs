@@ -85,6 +85,10 @@ namespace GuWorld.Core
         public int Deaths;
         /// <summary>How many times the hero was reborn an arc back (the rebirth death rule).</summary>
         public int Rebirths;
+        /// <summary>The body's traits as trained (Session.Body): experience by trait.</summary>
+        public List<TraitXp> Physique = new List<TraitXp>();
+        /// <summary>The wounds the hero carries, by part of the body.</summary>
+        public List<Wound> Wounds = new List<Wound>();
         /// <summary>The hour of the day, 0–24.</summary>
         public float Hour = 9;
 
@@ -202,6 +206,30 @@ namespace GuWorld.Core
     /// had Story 0, Normal 1, Hard 2, Demonic 3; Migrate moves Demonic to Impossible).
     /// </summary>
     public enum Difficulty { Easy, Normal, Hard, Unbearable, Impossible }
+
+    /// <summary>The body's traits (main's physique, improved): each grows from doing it.</summary>
+    public enum Trait { Strength, Agility, Endurance, Toughness }
+
+    [Serializable]
+    public class TraitXp
+    {
+        public Trait Trait;
+        public float Xp;
+    }
+
+    public enum BodyPart { Head, Torso, LeftArm, RightArm, LeftLeg, RightLeg }
+
+    public enum WoundKind { Bruise, Cut, Burn, Fracture }
+
+    /// <summary>A wound on a part of the body: how bad (1–3) and how many hours of the game until it heals.</summary>
+    [Serializable]
+    public class Wound
+    {
+        public BodyPart Part;
+        public WoundKind Kind;
+        public int Severity = 1;
+        public float Hours;
+    }
 
     /// <summary>
     /// What a fall costs (chosen at a new game, kept for the whole playthrough): wake at the lantern

@@ -231,6 +231,7 @@ namespace GuWorld.Core
             stats.Discord = byPath.Count >= 5 ? 0.04f * (byPath.Count - 4) : 0;
 
             EffectStats(stats, ref regen);
+            BodyStats(stats, ref regen);
             stats.WardPeriod = ward;
             stats.Cost = Math.Max(0.4f, stats.Cost);
             stats.Cooldown = Math.Max(0.4f, stats.Cooldown);
@@ -292,8 +293,9 @@ namespace GuWorld.Core
 
             if (sprinting)
             {
-                Stamina = Math.Max(0, Stamina - HeroStats.SprintStamina * dt);
+                Stamina = Math.Max(0, Stamina - SprintCost * dt);
                 staminaWait = 0.6f;
+                Train(Trait.Endurance, dt * 0.5f);
             }
             else if (staminaWait > 0)
             {
@@ -301,7 +303,7 @@ namespace GuWorld.Core
             }
             else
             {
-                Stamina = Math.Min(HeroStats.MaxStamina, Stamina + HeroStats.StaminaRegen * dt);
+                Stamina = Math.Min(Stats.StaminaMax, Stamina + HeroStats.StaminaRegen * dt);
             }
 
             shieldTime = Math.Max(0, shieldTime - dt);
@@ -541,6 +543,7 @@ namespace GuWorld.Core
             var damage = HeroStats.ComboDamage[Math.Max(0, Math.Min(2, combo))] * Stats.Melee * (MeleeUp ? 1 + meleeValue : 1) * BreakStealth();
             damage *= (critical ? 1.5f : 1) * (1 - (target?.Armour ?? 0)) * (0.92f + 0.16f * (float)Random.NextDouble());
             State.Essence = Math.Min(Stats.MaxEssence, State.Essence + Stats.EssencePerHit);
+            Train(Trait.Strength, 1);
 
             if (Stats.Leech > 0)
             {
@@ -587,6 +590,12 @@ namespace GuWorld.Core
             // In the aperture no one falls; in a bout no one falls below a tenth (the bout is lost instead).
             var floor = (InSandbox && SandboxUndying) || Godmode ? 1 : Sparring ? Stats.MaxHealth * 0.1f : 0;
             State.Health = Math.Max(floor, State.Health - damage);
+            Train(Trait.Toughness, damage / Math.Max(1, Stats.MaxHealth) * 20);
+
+            if (State.Health > 0)
+            {
+                MaybeWound(damage, StatusKind.None);
+            }
 
             if (Sparring && State.Health <= floor + 0.01f)
             {
@@ -663,6 +672,8 @@ namespace GuWorld.Core
             State.Effects.RemoveAll(e => !e.Source.StartsWith("blessing"));
             State.Stones -= lost;
             State.Deaths++;
+            // The lantern's touch closes bruises and cuts; burns and broken bones stay.
+            State.Wounds?.RemoveAll(w => w.Kind == WoundKind.Bruise || w.Kind == WoundKind.Cut);
             Restore();
             Changed?.Invoke();
 
@@ -674,7 +685,7 @@ namespace GuWorld.Core
         {
             State.Health = Stats.MaxHealth;
             State.Essence = Stats.MaxEssence;
-            Stamina = HeroStats.MaxStamina;
+            Stamina = Stats.StaminaMax;
             healLeft = healTime = 0;
         }
 

@@ -112,7 +112,7 @@ namespace GuWorld.Core
                 return UsePill(def);
             }
 
-            var useful = (def.Heal > 0 && State.Health < Stats.MaxHealth - 0.5f) || (def.Essence > 0 && State.Essence < Stats.MaxEssence - 0.5f);
+            var useful = (def.Heal > 0 && (State.Health < Stats.MaxHealth - 0.5f || Wounds.Count > 0)) || (def.Essence > 0 && State.Essence < Stats.MaxEssence - 0.5f);
 
             if (!useful)
             {
@@ -121,6 +121,11 @@ namespace GuWorld.Core
 
             RemoveItem(item);
             Heal(def.Heal);
+
+            if (def.Heal > 0)
+            {
+                TreatWound();
+            }
             State.Essence = Math.Min(Stats.MaxEssence, State.Essence + def.Essence * Stats.MaxEssence);
 
             return true;

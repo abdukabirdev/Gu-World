@@ -76,7 +76,7 @@ namespace GuWorld.Core
                     factor *= 1 + hasteValue;
                 }
 
-                return factor;
+                return factor * LegFactor;
             }
         }
 

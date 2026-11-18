@@ -236,7 +236,7 @@ namespace GuWorld
                 Game.Hero.Teleport(Game.Ground(new Vector3(0, 0, -16)) + Vector3.up * 0.2f);
                 yield return Frames(10);
 
-                var pages = new[] { Ui.Page.Aperture, Ui.Page.Moves, Ui.Page.Codex, Ui.Page.Clans, Ui.Page.Bag, Ui.Page.Journal, Ui.Page.Map, Ui.Page.Shop, Ui.Page.Fusion, Ui.Page.Spring, Ui.Page.Pause, Ui.Page.Settings, Ui.Page.Help, Ui.Page.Title, Ui.Page.NewPath, Ui.Page.NewHero, Ui.Page.Slots, Ui.Page.About };
+                var pages = new[] { Ui.Page.Aperture, Ui.Page.Status, Ui.Page.Moves, Ui.Page.Codex, Ui.Page.Clans, Ui.Page.Bag, Ui.Page.Journal, Ui.Page.Map, Ui.Page.Shop, Ui.Page.Fusion, Ui.Page.Spring, Ui.Page.Pause, Ui.Page.Settings, Ui.Page.Help, Ui.Page.Title, Ui.Page.NewPath, Ui.Page.NewHero, Ui.Page.Slots, Ui.Page.About };
                 n = 60;
 
                 foreach (var page in pages)

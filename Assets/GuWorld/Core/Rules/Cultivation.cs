@@ -91,6 +91,8 @@ namespace GuWorld.Core
         public float Melee = 1;
         public int ActiveSlots;
         public int PassiveSlots;
+        /// <summary>The stamina the hero has at most (the base, with endurance and the torso's wounds).</summary>
+        public float StaminaMax = MaxStamina;
 
         public static readonly float[] ComboDamage = { 9, 9, 17 };
         public const float MaxStamina = 100;

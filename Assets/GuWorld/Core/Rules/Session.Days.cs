@@ -21,9 +21,25 @@ namespace GuWorld.Core
         /// <summary>The interface's clock moved on: a new day if the hour went round midnight.</summary>
         int tideQuarter = -1;
 
+        float woundClock;
+
         public void SetClock(float hour)
         {
             hour = ((hour % 24) + 24) % 24;
+
+            // The wounds heal with the hours, a quarter of an hour at a time (not every frame).
+            var passed = ((hour - State.Hour) % 24 + 24) % 24;
+
+            if (passed < 3)
+            {
+                woundClock += passed;
+
+                if (woundClock >= 0.25f)
+                {
+                    HealWounds(woundClock);
+                    woundClock = 0;
+                }
+            }
 
             if (hour + 12 < State.Hour)
             {
@@ -59,6 +75,7 @@ namespace GuWorld.Core
             }
 
             State.Hour = hour;
+            HealWounds(hours * 1.5f);
             Restore();
             ClockSet?.Invoke(State.Hour);
             Say($"Вы проспали {hours} ч.");

@@ -317,6 +317,11 @@ namespace GuWorld.UI
                 parts.Add("покров");
             }
 
+            foreach (var wound in session.Wounds)
+            {
+                parts.Add($"<color=#F0A070>{Body.Name(wound.Kind, wound.Severity)} · {Body.Name(wound.Part)} {Mathf.CeilToInt(wound.Hours)}ч</color>");
+            }
+
             var hungry = 0;
 
             foreach (var gu in session.Slotted())
@@ -423,7 +428,7 @@ namespace GuWorld.UI
 
             health.Set(state.Health / stats.MaxHealth, $"{Mathf.CeilToInt(state.Health)} / {Mathf.RoundToInt(stats.MaxHealth)}");
             essence.Set(state.Essence / stats.MaxEssence, $"{Mathf.RoundToInt(state.Essence / Cultivation.EssenceScale(session.Rank) * 100)}%");
-            stamina.Set(session.Stamina / HeroStats.MaxStamina);
+            stamina.Set(session.Stamina / Mathf.Max(1, stats.StaminaMax));
             var ready = Cultivation.IsRankUp(state.Step) && state.Insight >= Cultivation.Needs[state.Step];
             insight.Set(session.InsightShare, state.Step >= Cultivation.MaxStep ? "вершина" : ready ? "прорыв у источника" : $"прорыв {(int)state.Insight} / {session.InsightNeeded}");
 

@@ -92,6 +92,7 @@ static partial class Program
         HighRules();
         PathRules();
         DevRules();
+        BodyRules();
         SaveRoundTrip();
         var report = new List<string>();
 

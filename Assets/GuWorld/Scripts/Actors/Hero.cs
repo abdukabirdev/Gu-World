@@ -556,7 +556,7 @@ namespace GuWorld.Actors
 
         void TryRoll(Vector3 wish)
         {
-            if (!Session.SpendStamina(HeroStats.RollStamina))
+            if (!Session.Roll())
             {
                 Note("Нет сил на перекат");
                 return;

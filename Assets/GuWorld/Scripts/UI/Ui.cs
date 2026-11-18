@@ -16,7 +16,7 @@ namespace GuWorld.UI
     /// </summary>
     public partial class Ui : MonoBehaviour
     {
-        public enum Page { None, Title, Loading, Talk, Aperture, Bag, Journal, Map, Shop, Gamble, Board, Fusion, Spring, Pause, Help, Death, Ending, Choice, Dialogue, Alchemy, Bounties, Codex, Clans, Travel, Inn, Settings, Moves, Sandbox, Paths, Home, Treasury, NewPath, NewHero, Slots, About, Console, Dev }
+        public enum Page { None, Title, Loading, Talk, Aperture, Bag, Journal, Map, Shop, Gamble, Board, Fusion, Spring, Pause, Help, Death, Ending, Choice, Dialogue, Alchemy, Bounties, Codex, Clans, Travel, Inn, Settings, Moves, Sandbox, Paths, Home, Treasury, NewPath, NewHero, Slots, About, Console, Dev, Status }
 
         public Page Open { get; private set; } = Page.Title;
 
@@ -29,8 +29,8 @@ namespace GuWorld.UI
         /// <summary>The game's session, or the main menu's guest one (the codex opened from it).</summary>
         Session S => Game.Session ?? guestSession;
 
-        static readonly Page[] HeroPages = { Page.Aperture, Page.Moves, Page.Paths, Page.Bag, Page.Journal, Page.Map, Page.Codex, Page.Clans };
-        static readonly (string name, string key)[] HeroTabs = { ("Апертура", "K"), ("Приёмы", "U"), ("Пути", "P"), ("Сумка", "I"), ("Журнал", "J"), ("Карта", "M"), ("Кодекс", "B"), ("Кланы", "L") };
+        static readonly Page[] HeroPages = { Page.Aperture, Page.Moves, Page.Paths, Page.Bag, Page.Journal, Page.Map, Page.Codex, Page.Clans, Page.Status };
+        static readonly (string name, string key)[] HeroTabs = { ("Апертура", "K"), ("Приёмы", "U"), ("Пути", "P"), ("Сумка", "I"), ("Журнал", "J"), ("Карта", "M"), ("Кодекс", "B"), ("Кланы", "L"), ("Статус", "O") };
 
         void Awake()
         {
@@ -104,6 +104,7 @@ namespace GuWorld.UI
                 case Page.About: AboutPage(); break;
                 case Page.Console: ConsolePage(); break;
                 case Page.Dev: DevPage(); break;
+                case Page.Status: StatusPage(); break;
                 case Page.Loading: LoadingPage(); break;
                 case Page.Talk: TalkPage(); break;
                 case Page.Aperture: AperturePage(); break;
@@ -208,11 +209,12 @@ namespace GuWorld.UI
                 else if (Keys.Down(Key.M)) { Show(Page.Map); }
                 else if (Keys.Down(Key.B)) { Show(Page.Codex); }
                 else if (Keys.Down(Key.L)) { Show(Page.Clans); }
+                else if (Keys.Down(Key.O)) { Show(Page.Status); }
                 else if (Keys.Down(Key.Escape)) { Show(Page.Pause); }
             }
             else if (hero >= 0)
             {
-                var own = new[] { Key.K, Key.U, Key.P, Key.I, Key.J, Key.M, Key.B, Key.L };
+                var own = new[] { Key.K, Key.U, Key.P, Key.I, Key.J, Key.M, Key.B, Key.L, Key.O };
 
                 if (Keys.Down(Key.Escape) || Keys.Down(own[hero]))
                 {
