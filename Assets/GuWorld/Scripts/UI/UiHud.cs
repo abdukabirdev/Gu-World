@@ -93,7 +93,7 @@ namespace GuWorld.UI
 
             // The hero.
             var hero = UiKit.Rect("Hero", stage);
-            hero.TopLeft(40, 32, 460, 170);
+            hero.TopLeft(40, 32, 460, 222);
             var column = hero.Stack<VerticalLayoutGroup>(5);
             column.childForceExpandWidth = false;
             heroName = UiKit.Disp("", hero, 26, UiKit.Text).Shadowed();
@@ -116,6 +116,7 @@ namespace GuWorld.UI
             effects.supportRichText = true;
             effects.horizontalOverflow = HorizontalWrapMode.Overflow;
             effects.Size(24, 300, 0);
+            BuildEffectsRow(hero);
 
             // The Gu in the slots.
             var slots = UiKit.Rect("Slots", stage);
@@ -261,7 +262,7 @@ namespace GuWorld.UI
                 return;
             }
 
-            var colour = onHero ? UiKit.Danger : critical ? UiKit.GoldLit : affinity > 0 ? WeakColour : affinity < 0 ? StrongColour : UiKit.Text;
+            var colour = onHero ? Accessible.Harm : critical ? UiKit.GoldLit : affinity > 0 ? WeakColour : affinity < 0 ? StrongColour : UiKit.Text;
             var shown = Mathf.Max(1, Mathf.RoundToInt(amount)).ToString() + (affinity > 0 ? "!" : "");
             var size = critical ? 26 : affinity > 0 ? 23 : affinity < 0 ? 16 : 19;
             var text = UiKit.Label(shown, floats, size, colour, TextAnchor.MiddleCenter, FontStyle.Bold).Shadowed();
@@ -291,60 +292,6 @@ namespace GuWorld.UI
             return screen.z > 0.1f && screen.x > -50 && screen.x < Screen.width + 50 && screen.y > -50 && screen.y < Screen.height + 50;
         }
 
-        /// <summary>The line of what lasts on the hero: buffs with their seconds, statuses, pills and blessings, hungry Gu.</summary>
-        static string EffectsLine(Session session)
-        {
-            var parts = new System.Collections.Generic.List<string>();
-
-            foreach (BuffKind kind in System.Enum.GetValues(typeof(BuffKind)))
-            {
-                var left = session.BuffLeft(kind);
-
-                if (kind != BuffKind.None && left > 0)
-                {
-                    parts.Add($"{Session.BuffName(kind).ToLowerInvariant()} {left:0}с");
-                }
-            }
-
-            foreach (var status in session.Statuses)
-            {
-                parts.Add($"<color=#F08A74>{Session.StatusName(status.Kind).ToLowerInvariant()} {status.Seconds:0}с</color>");
-            }
-
-            foreach (var effect in session.Effects)
-            {
-                if (effect.IsStat)
-                {
-                    parts.Add($"<color=#A0D2FF>{effect.Name.ToLowerInvariant()} {Mathf.CeilToInt(effect.Seconds / 60)}м</color>");
-                }
-            }
-
-            if (session.WardReady)
-            {
-                parts.Add("покров");
-            }
-
-            foreach (var wound in session.Wounds)
-            {
-                parts.Add($"<color=#F0A070>{Body.Name(wound.Kind, wound.Severity)} · {Body.Name(wound.Part)} {Mathf.CeilToInt(wound.Hours)}ч</color>");
-            }
-
-            var hungry = 0;
-
-            foreach (var gu in session.Slotted())
-            {
-                hungry += session.IsStarving(gu) ? 1 : 0;
-            }
-
-            if (hungry > 0)
-            {
-                parts.Add($"<color=#F0B060>голодных Гу: {hungry}</color>");
-            }
-
-            return string.Join("  ", parts);
-        }
-
-        /// <summary>What is happening in the world now: the tide, a raid, the fair, the Cicada's sleep.</summary>
         static string EventsLine(Session session)
         {
             var line = "";
@@ -430,7 +377,8 @@ namespace GuWorld.UI
                 heroRank.text = $"{Cultivation.Name(state.Step)} · талант {Cultivation.TalentName(state.Talent)}".ToUpperInvariant();
                 stones.text = state.Stones.ToString();
                 pills.text = session.Count("heal_pill").ToString();
-                effects.text = EventsLine(session) + EffectsLine(session);
+                effects.text = EventsLine(session);
+                TickEffectsRow(session);
             }
 
             health.Set(state.Health / stats.MaxHealth, $"{Mathf.CeilToInt(state.Health)} / {Mathf.RoundToInt(stats.MaxHealth)}");

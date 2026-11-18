@@ -74,6 +74,9 @@ namespace GuWorld
         /// <summary>No flashes: the hurt flash, lightning and the bright bursts are toned down.</summary>
         public static bool NoFlashes { get => Bool("gw2.noflash", false); set => Bool("gw2.noflash", value, true); }
 
+        /// <summary>Colours for the colour-blind: gifts blue, harms orange, and the effects told apart by shape too.</summary>
+        public static bool ColourBlind { get => Bool("gw2.colourblind", false); set => Bool("gw2.colourblind", value, true); }
+
         // ------------------------------------------------------------------ Every section back to how it was
 
         public static void ResetGame()
@@ -102,7 +105,7 @@ namespace GuWorld
 
         public static void ResetInterface()
         {
-            Delete("gw2.hudscale", "gw2.hudalpha", "gw2.compass", "gw2.minimap", "gw2.largetext", "gw2.noflash");
+            Delete("gw2.hudscale", "gw2.hudalpha", "gw2.compass", "gw2.minimap", "gw2.largetext", "gw2.noflash", "gw2.colourblind");
         }
 
         // ------------------------------------------------------------------ The screen
