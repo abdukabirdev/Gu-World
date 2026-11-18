@@ -1,4 +1,5 @@
 using System;
+using System.Collections.Generic;
 using GuWorld.Core;
 using UnityEngine;
 using UnityEngine.InputSystem;
@@ -117,7 +118,7 @@ namespace GuWorld.UI
         {
             var header = UiKit.Rect("Header", stage);
             header.Place(new Vector2(0, 1), new Vector2(1, 1), 56, -168, 56, 40);
-            UiKit.Lbl($"Новая игра · шаг {step} из 2", header, 11, UiKit.LabelGold).rectTransform.Place(new Vector2(0, 1), new Vector2(1, 1), 0, -16, 0, 0);
+            UiKit.Lbl(step > 0 ? $"Новая игра · шаг {step} из 2" : "GU World", header, 11, UiKit.LabelGold).rectTransform.Place(new Vector2(0, 1), new Vector2(1, 1), 0, -16, 0, 0);
             var name = UiKit.Disp(title.ToUpperInvariant(), header, 40, UiKit.Text);
             name.Track(0.14f);
             name.rectTransform.Place(new Vector2(0, 1), new Vector2(1, 1), 0, -70, 0, 22);
@@ -126,7 +127,7 @@ namespace GuWorld.UI
             words.lineSpacing = 1.15f;
             words.rectTransform.Place(new Vector2(0, 0), new Vector2(0, 1), 0, 0, -1150, 78);
 
-            for (var i = 0; i < 2; i++)
+            for (var i = 0; i < (step > 0 ? 2 : 0); i++)
             {
                 var lit = i < step;
                 var bar = UiKit.Image("Step", header, lit ? UiKit.GoldLit : new Color(234 / 255f, 240 / 255f, 242 / 255f, 0.15f), UiKit.Plain);
@@ -343,7 +344,7 @@ namespace GuWorld.UI
             var stage = UiKit.Stage(pageRoot);
             UiKit.Backdrop(stage, "人", 560);
             NewGameHeader(stage, 2, "Герой",
-                "Имя после имени клана. Внешность — пол, рост, кожа, причёска и цвет ханьфу — появится здесь, когда у героя будут вторая модель и перекраски.");
+                "Имя после имени клана и цена смерти. Внешность — пол, рост, кожа, причёска и цвет ханьфу — появится здесь вместе со второй моделью и перекрасками.");
             var way = Beginnings.Of(newPath);
             var colour = PathColours[DifficultyRules.Order(newPath)];
 
@@ -364,7 +365,22 @@ namespace GuWorld.UI
             UiKit.HexButton("Случайно", nameRow, () => { newName = Look.RandomName(new System.Random()); Redraw(); }, UiKit.HexKind.Ghost, 12, 44).Size(44, 150, 0);
             Para($"Своё имя — после имени клана, до {Look.NameLength} знаков. Пусто — «{Look.DefaultName}».", left, 13, UiKit.Muted);
 
-            Gap(left, 18);
+            // What a fall costs: chosen once, for the whole playthrough.
+            Gap(left, 14);
+            UiKit.Lbl("Цена смерти · на всё прохождение", left, 11, UiKit.LabelGold).Size(16);
+            var deathRow = UiKit.Rect("Death", left);
+            deathRow.Size(48);
+            var deaths = new List<string>();
+
+            foreach (var rule in DeathRules.All)
+            {
+                deaths.Add(DeathRules.Name(rule));
+            }
+
+            UiKit.Choices(deathRow, deaths, Array.IndexOf(DeathRules.All, newRules.Death), i => { newRules.Death = DeathRules.All[i]; Redraw(); }, 15);
+            Para(DeathRules.Text(newRules.Death), left, 14, newRules.Death == DeathRule.Hardcore ? UiKit.Danger : UiKit.Text2);
+
+            Gap(left, 14);
             UiKit.Lbl("Что ждёт", left, 11, UiKit.LabelGold).Size(16);
             Para("Вам пятнадцать. Завтра — обряд пробуждения апертуры в академии клана Гу Юэ. Камень предков покажет, сколько света в вашей чаше.", left, 16, UiKit.Text2);
 
@@ -391,7 +407,7 @@ namespace GuWorld.UI
             Para(DifficultyRules.Text(newPath), inside, 14, UiKit.Muted);
             Gap(inside, 6);
             var hunger = newRules.Hunger == HungerRule.Off ? "нет" : newRules.Hunger == HungerRule.Soft ? "мягкий" : "как в каноне";
-            Para($"Голод Гу: {hunger} · Гу едят сами: {(newRules.AutoFeed ? "да" : "нет")} · переходы платные: {(newRules.TravelCosts ? "да" : "нет")}", inside, 13, UiKit.Muted);
+            Para($"Смерть: {DeathRules.Name(newRules.Death).ToLowerInvariant()} · голод Гу: {hunger} · Гу едят сами: {(newRules.AutoFeed ? "да" : "нет")} · переходы платные: {(newRules.TravelCosts ? "да" : "нет")}", inside, 13, UiKit.Muted);
             Gap(inside, 4);
             UiKit.HexButton("Изменить путь", inside, () => Show(Page.NewPath), UiKit.HexKind.Ghost, 12, 44).Size(44, 220, 0);
 

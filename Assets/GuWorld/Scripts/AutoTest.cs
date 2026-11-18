@@ -83,8 +83,10 @@ namespace GuWorld
 
         static IEnumerator Run(Game game)
         {
+            // -quality N: the old three levels (0 light, 1 ordinary, 2 high = the presets low, medium, high); -preset N: one of the five.
             var asked = Arg("-quality");
-            var levels = asked != null ? new[] { int.Parse(asked) } : new[] { 0, 1, 2 };
+            var preset = Arg("-preset");
+            var levels = preset != null ? new[] { int.Parse(preset) } : asked != null ? new[] { int.Parse(asked) + 1 } : new[] { 1, 2, 3 };
 
             foreach (var level in levels)
             {
@@ -234,7 +236,7 @@ namespace GuWorld
                 Game.Hero.Teleport(Game.Ground(new Vector3(0, 0, -16)) + Vector3.up * 0.2f);
                 yield return Frames(10);
 
-                var pages = new[] { Ui.Page.Aperture, Ui.Page.Moves, Ui.Page.Codex, Ui.Page.Clans, Ui.Page.Bag, Ui.Page.Journal, Ui.Page.Map, Ui.Page.Shop, Ui.Page.Fusion, Ui.Page.Spring, Ui.Page.Pause, Ui.Page.Settings, Ui.Page.Title, Ui.Page.NewPath, Ui.Page.NewHero };
+                var pages = new[] { Ui.Page.Aperture, Ui.Page.Moves, Ui.Page.Codex, Ui.Page.Clans, Ui.Page.Bag, Ui.Page.Journal, Ui.Page.Map, Ui.Page.Shop, Ui.Page.Fusion, Ui.Page.Spring, Ui.Page.Pause, Ui.Page.Settings, Ui.Page.Help, Ui.Page.Title, Ui.Page.NewPath, Ui.Page.NewHero, Ui.Page.Slots, Ui.Page.About };
                 n = 60;
 
                 foreach (var page in pages)

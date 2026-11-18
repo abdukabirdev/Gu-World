@@ -10,38 +10,131 @@ using UnityEngine;
 
 namespace GuWorld
 {
-    /// <summary>How heavy the picture is: 0 light (weak integrated graphics), 1 ordinary, 2 high (the hero's full model, far shadows, bloom).</summary>
+    /// <summary>
+    /// How heavy the picture is: five presets (ROADMAP 2.7.3 — main's six without "cinema"), each a
+    /// set of numbers that take effect at once (the picture's scale, smoothing, shadows, level of
+    /// detail) and a tier the world's builders read when they make the world (0 light: weak
+    /// integrated graphics, 1 ordinary, 2 high — the hero's full model, far trees and people). A
+    /// number moved by hand makes the preset "custom".
+    /// </summary>
     public static class Quality
     {
-        public static readonly string[] Names = { "Лёгкое", "Обычное", "Высокое" };
-        public static int Level { get; private set; } = 1;
+        public static readonly string[] Names = { "Минимум", "Низкое", "Среднее", "Высокое", "Ультра" };
+        public const int Custom = -1;
+
+        /// <summary>The numbers of a preset.</summary>
+        public struct Numbers
+        {
+            public int Tier;
+            public float Scale;
+            public int Msaa;
+            public float Shadows;
+            public float LodBias;
+            public float Trees;
+            public bool Smaa;
+        }
+
+        public static readonly Numbers[] Presets =
+        {
+            new Numbers { Tier = 0, Scale = 0.6f, Msaa = 1, Shadows = 0, LodBias = 0.4f, Trees = 0.35f },
+            new Numbers { Tier = 0, Scale = 0.75f, Msaa = 1, Shadows = 30, LodBias = 0.55f, Trees = 0.45f },
+            new Numbers { Tier = 1, Scale = 0.9f, Msaa = 2, Shadows = 60, LodBias = 0.9f, Trees = 0.75f },
+            new Numbers { Tier = 2, Scale = 1f, Msaa = 4, Shadows = 130, LodBias = 1.6f, Trees = 1f, Smaa = true },
+            new Numbers { Tier = 2, Scale = 1f, Msaa = 4, Shadows = 220, LodBias = 2.4f, Trees = 1f, Smaa = true },
+        };
+
+        /// <summary>The preset chosen (0 minimum … 4 ultra), or Custom.</summary>
+        public static int Preset { get; private set; } = 2;
+        /// <summary>The numbers in effect.</summary>
+        public static Numbers Now { get; private set; } = Presets[2];
+        /// <summary>The tier the world was (or will be) built for: 0 light, 1 ordinary, 2 high.</summary>
+        public static int Level => Now.Tier;
         public static bool FullHero => Level >= 2;
         /// <summary>The share of the plan's trees that are planted.</summary>
-        public static float Trees => Level == 0 ? 0.45f : Level == 1 ? 0.75f : 1f;
+        public static float Trees => Now.Trees;
+        public static string Name => Preset == Custom ? "Свои" : Names[Preset];
 
-        public static void Load() => Set(PlayerPrefs.GetInt("gw2.quality", SystemInfo.graphicsMemorySize >= 3500 ? 2 : 1), false);
-
-        public static void Set(int level, bool save = true)
+        public static void Load()
         {
-            Level = Mathf.Clamp(level, 0, 2);
+            // The old three levels (gw2.quality: light, ordinary, high) are the presets low, medium, high.
+            var guess = SystemInfo.graphicsMemorySize >= 3500 ? 3 : 2;
+            var old = PlayerPrefs.GetInt("gw2.quality", -1);
+            var preset = PlayerPrefs.GetInt("gw2.preset", old >= 0 ? Mathf.Clamp(old, 0, 2) + 1 : guess);
+
+            if (preset == Custom)
+            {
+                Now = new Numbers
+                {
+                    Tier = PlayerPrefs.GetInt("gw2.q.tier", 1),
+                    Scale = PlayerPrefs.GetFloat("gw2.q.scale", 0.9f),
+                    Msaa = PlayerPrefs.GetInt("gw2.q.msaa", 2),
+                    Shadows = PlayerPrefs.GetFloat("gw2.q.shadows", 60),
+                    LodBias = PlayerPrefs.GetFloat("gw2.q.lod", 0.9f),
+                    Trees = PlayerPrefs.GetFloat("gw2.q.trees", 0.75f),
+                    Smaa = PlayerPrefs.GetInt("gw2.q.smaa", 0) == 1,
+                };
+                Preset = Custom;
+                Apply();
+            }
+            else
+            {
+                Set(preset, false);
+            }
+        }
+
+        /// <summary>A preset (0 … 4).</summary>
+        public static void Set(int preset, bool save = true)
+        {
+            Preset = Mathf.Clamp(preset, 0, Presets.Length - 1);
+            Now = Presets[Preset];
 
             if (save)
             {
-                PlayerPrefs.SetInt("gw2.quality", Level);
+                PlayerPrefs.SetInt("gw2.preset", Preset);
                 PlayerPrefs.Save();
             }
 
-            QualitySettings.lodBias = Level == 0 ? 0.55f : Level == 1 ? 0.9f : 1.6f;
-            QualitySettings.shadowDistance = Level == 0 ? 30 : Level == 1 ? 60 : 130;
-            QualitySettings.vSyncCount = 1;
-            Application.targetFrameRate = -1;
+            Apply();
+        }
+
+        /// <summary>The old three levels (the autotest's -quality): light, ordinary, high.</summary>
+        public static void SetTier(int tier, bool save = true) => Set(Mathf.Clamp(tier, 0, 2) + 1, save);
+
+        /// <summary>One number changed by hand: the preset becomes "custom".</summary>
+        public static void Change(Numbers numbers)
+        {
+            Now = numbers;
+            Preset = Custom;
+            PlayerPrefs.SetInt("gw2.preset", Custom);
+            PlayerPrefs.SetInt("gw2.q.tier", numbers.Tier);
+            PlayerPrefs.SetFloat("gw2.q.scale", numbers.Scale);
+            PlayerPrefs.SetInt("gw2.q.msaa", numbers.Msaa);
+            PlayerPrefs.SetFloat("gw2.q.shadows", numbers.Shadows);
+            PlayerPrefs.SetFloat("gw2.q.lod", numbers.LodBias);
+            PlayerPrefs.SetFloat("gw2.q.trees", numbers.Trees);
+            PlayerPrefs.SetInt("gw2.q.smaa", numbers.Smaa ? 1 : 0);
+            PlayerPrefs.Save();
+            Apply();
+        }
+
+        /// <summary>The numbers that take effect at once (the tier's own wait for the world to be built again).</summary>
+        static void Apply()
+        {
+            QualitySettings.lodBias = Now.LodBias;
+            QualitySettings.shadowDistance = Now.Shadows;
+            QualitySettings.shadows = Now.Shadows > 0 ? ShadowQuality.All : ShadowQuality.Disable;
             var urp = UnityEngine.Rendering.Universal.UniversalRenderPipeline.asset;
 
             if (urp != null)
             {
-                urp.renderScale = Level == 0 ? 0.75f : 1f;
-                urp.shadowDistance = QualitySettings.shadowDistance;
-                urp.msaaSampleCount = Level == 0 ? 1 : Level == 1 ? 2 : 4;
+                urp.renderScale = Now.Scale;
+                urp.shadowDistance = Now.Shadows;
+                urp.msaaSampleCount = Now.Msaa;
+            }
+
+            if (Game.Rig != null)
+            {
+                Game.Rig.Dress();
             }
         }
     }
@@ -104,6 +197,67 @@ namespace GuWorld
         }
 
         static string PathOf(int slot) => Path.Combine(Application.persistentDataPath, slot == 0 ? "gu-world-2.json" : $"gu-world-2-slot{slot + 1}.json");
+
+        /// <summary>The start of an arc (a chapter) kept for the rebirth death rule: the slot's file with ".arcN" before ".json".</summary>
+        static string ArcPath(int slot, int arc) => Path.ChangeExtension(PathOf(slot), $".arc{arc}.json");
+
+        /// <summary>When a slot was last saved (null: never).</summary>
+        public static System.DateTime? SavedAt(int slot)
+        {
+            var path = PathOf(slot);
+
+            return File.Exists(path) ? File.GetLastWriteTime(path) : File.Exists(path + ".bak") ? File.GetLastWriteTime(path + ".bak") : (System.DateTime?)null;
+        }
+
+        /// <summary>Whether a slot's own save could not be read and its backup is what is there.</summary>
+        public static bool OnBackup(int slot)
+        {
+            var path = PathOf(slot);
+
+            try
+            {
+                return File.Exists(path + ".bak") && (!File.Exists(path) || JsonUtility.FromJson<SaveData>(File.ReadAllText(path)) == null);
+            }
+            catch (System.Exception)
+            {
+                return true;
+            }
+        }
+
+        /// <summary>Removes a slot's save, its backup and its arcs' starts (a slot emptied, or a hardcore life ended).</summary>
+        public static void DeleteSlot(int slot)
+        {
+            var folder = Application.persistentDataPath;
+            var stem = Path.GetFileNameWithoutExtension(PathOf(slot));
+
+            foreach (var path in new[] { PathOf(slot), PathOf(slot) + ".bak", PathOf(slot) + ".tmp" })
+            {
+                TryDelete(path);
+            }
+
+            foreach (var path in Directory.GetFiles(folder, stem + ".arc*.json"))
+            {
+                TryDelete(path);
+            }
+        }
+
+        static void TryDelete(string path)
+        {
+            try
+            {
+                if (File.Exists(path))
+                {
+                    File.Delete(path);
+                }
+            }
+            catch (System.Exception error)
+            {
+                Debug.LogWarning($"GU World: {path} could not be removed: {error.Message}");
+            }
+        }
+
+        /// <summary>The proving ground opened from the main menu: a guest hero, nothing kept, out to the menu again.</summary>
+        public static bool SandboxOnly { get; private set; }
         static string SavePath => PathOf(Slot);
         public static bool HasSave => File.Exists(SavePath) || File.Exists(SavePath + ".bak");
 
@@ -124,6 +278,7 @@ namespace GuWorld
         {
             AutoTest.Detect();
             Quality.Load();
+            Prefs.ApplyScreen();
             runner = new GameObject("Runner").AddComponent<Runner>();
             runner.transform.SetParent(transform, false);
             Rig = CameraRig.Make();
@@ -173,7 +328,7 @@ namespace GuWorld
         public static void Save()
         {
             // Nothing of the immortal aperture is kept: the save waits until the hero is back.
-            if (AutoTest.On || Session == null || !Playing || Session.Dead || Session.InSandbox || World.Rooms.Inside)
+            if (AutoTest.On || Session == null || !Playing || Session.Dead || Session.InSandbox || World.Rooms.Inside || SandboxOnly)
             {
                 return;
             }
@@ -220,8 +375,27 @@ namespace GuWorld
         /// <summary>Begins a new game as the new game pages chose it: the hero is born on the path now (the one roll — the extreme physique — made here).</summary>
         public void BeginNew(string name, Difficulty path, Core.Settings rules)
         {
+            // A new life in this slot: whatever was there (its backup, its arcs' starts) goes.
+            SandboxOnly = false;
+            DeleteSlot(Slot);
             chosenNew = Session.NewGame(name, path, rules, 0);
             Begin(true);
+        }
+
+        /// <summary>The immortal aperture from the main menu: a guest of the clan, any Gu, nothing saved.</summary>
+        public void BeginSandbox()
+        {
+            SandboxOnly = true;
+            chosenNew = Session.NewGame("Гость", Beginnings.Reference, null, 1);
+            Begin(true);
+        }
+
+        /// <summary>Continues the game in a slot (the load page).</summary>
+        public void Load(int slot)
+        {
+            SandboxOnly = false;
+            Slot = slot;
+            Begin(false);
         }
 
         IEnumerator Starting(bool fresh)
@@ -234,6 +408,14 @@ namespace GuWorld
             chosenNew = null;
             Session = new Session(state ?? Session.NewGame(Look.DefaultName));
             Session.Toast += line => Ui.Toast(line);
+            Session.QuestStarted += quest =>
+            {
+                // The rebirth rule keeps the start of every arc.
+                if (quest.Main && quest.Chapter > 1)
+                {
+                    KeepArc(quest.Chapter);
+                }
+            };
             Session.QuestStarted += quest =>
             {
                 Ui.Banner(quest.Main ? "Новое задание" : "Поручение", quest.Title);
@@ -371,17 +553,50 @@ namespace GuWorld
             yield return null;
             Ui.Show(Ui.Page.None);
 
-            if (fresh || state == null)
+            if (SandboxOnly)
             {
+                World.Aperture.Enter();
+            }
+            else if (fresh || state == null)
+            {
+                KeepArc(1);
                 Ui.Banner("Глава I", Story.ChapterNames[1]);
                 Ui.Toast("WASD — идти · мышь — смотреть · T — говорить · J — журнал");
             }
         }
 
-        /// <summary>Takes the world down (to the title, or before another game).</summary>
-        public void Leave()
+        /// <summary>Writes the start of an arc for the rebirth rule (once: the arc's first start is the one kept).</summary>
+        static void KeepArc(int arc)
         {
-            Save();
+            if (Session == null || AutoTest.On || SandboxOnly || Session.State.Settings.Death != DeathRule.Rebirth || File.Exists(ArcPath(Slot, arc)))
+            {
+                return;
+            }
+
+            try
+            {
+                if (Hero != null)
+                {
+                    Session.State.X = Hero.transform.position.x;
+                    Session.State.Z = Hero.transform.position.z;
+                }
+
+                File.WriteAllText(ArcPath(Slot, arc), JsonUtility.ToJson(Session.State));
+            }
+            catch (System.Exception error)
+            {
+                Debug.LogWarning("GU World: the arc's start could not be kept: " + error.Message);
+            }
+        }
+
+        /// <summary>Takes the world down (to the title, or before another game); `save` false when the game is thrown away.</summary>
+        public void Leave(bool save = true)
+        {
+            if (save)
+            {
+                Save();
+            }
+
             Playing = false;
             StopGameCoroutines();
 
@@ -409,9 +624,10 @@ namespace GuWorld
 
         void StopGameCoroutines() => runner.StopAllCoroutines();
 
-        public void ToTitle()
+        public void ToTitle(bool save = true)
         {
-            Leave();
+            Leave(save);
+            SandboxOnly = false;
             Ui.Show(Ui.Page.Title);
         }
 
@@ -422,6 +638,9 @@ namespace GuWorld
         }
 
         void OnApplicationQuit() => Save();
+
+        /// <summary>The sound while the window is behind others: as it is, quieter or none (the settings').</summary>
+        void OnApplicationFocus(bool focused) => AudioListener.volume = focused || Prefs.Background == 0 ? 1 : Prefs.Background == 1 ? 0.3f : 0;
 
         // ------------------------------------------------------------------ Every frame
 
@@ -445,14 +664,14 @@ namespace GuWorld
 
             if (saveWait <= 0)
             {
-                saveWait = 30;
+                saveWait = Mathf.Max(15, Prefs.Autosave);
                 Save();
             }
 
             // A hint now and then, each once, when it first matters.
             hintWait -= Time.deltaTime;
 
-            if (hintWait <= 0 && !Busy)
+            if (hintWait <= 0 && !Busy && Prefs.Hints)
             {
                 hintWait = 25;
                 var hint = Session.NextHint();
@@ -633,6 +852,15 @@ namespace GuWorld
 
         IEnumerator Dying()
         {
+            var rule = Session?.State.Settings.Death ?? DeathRule.Lantern;
+
+            // One life: the save goes at once (quitting now saves nothing — the hero is dead).
+            if (rule == DeathRule.Hardcore && !SandboxOnly && Session != null && !Session.InSandbox)
+            {
+                Session.State.Deaths++;
+                DeleteSlot(Slot);
+            }
+
             yield return new WaitForSeconds(1.6f);
 
             if (Session == null)
@@ -640,9 +868,65 @@ namespace GuWorld
                 yield break;
             }
 
-            var lost = Session.Die();
             spawns?.HeroFell();
-            Ui.Death(lost);
+
+            // Rebirth and hardcore leave the hero where they fell, dead (no save is written): the page decides what comes.
+            Ui.Death(rule == DeathRule.Lantern ? Session.Die() : 0);
+        }
+
+        /// <summary>The rebirth rule: born again at the start of the arc before this one, with only memories (DeathRules.Reborn).</summary>
+        public void Reborn()
+        {
+            if (Session == null)
+            {
+                return;
+            }
+
+            var arc = DeathRules.RebirthArc(Session.Chapter);
+            SaveData start = null;
+
+            for (var a = arc; a >= 1 && start == null; a--)
+            {
+                try
+                {
+                    if (File.Exists(ArcPath(Slot, a)))
+                    {
+                        start = JsonUtility.FromJson<SaveData>(File.ReadAllText(ArcPath(Slot, a)));
+                        arc = a;
+                    }
+                }
+                catch (System.Exception error)
+                {
+                    Debug.LogWarning("GU World: an arc's start could not be read: " + error.Message);
+                }
+            }
+
+            if (start == null)
+            {
+                // No arc kept (a save from before the rule): the lantern instead.
+                Ui.Death(Session.Die());
+                Wake();
+                return;
+            }
+
+            var reborn = DeathRules.Reborn(start, Session.State);
+
+            // The arcs after the one gone back to are lived again, and kept again.
+            for (var a = arc + 1; a <= 6; a++)
+            {
+                TryDelete(ArcPath(Slot, a));
+            }
+
+            try
+            {
+                File.WriteAllText(PathOf(Slot), JsonUtility.ToJson(reborn));
+            }
+            catch (System.Exception error)
+            {
+                Debug.LogWarning("GU World: the rebirth could not be written: " + error.Message);
+            }
+
+            Begin(false);
         }
 
         /// <summary>After death: the hero wakes at their lantern.</summary>

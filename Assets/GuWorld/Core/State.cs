@@ -83,6 +83,8 @@ namespace GuWorld.Core
         public float PlayedSeconds;
         public int Kills;
         public int Deaths;
+        /// <summary>How many times the hero was reborn an arc back (the rebirth death rule).</summary>
+        public int Rebirths;
         /// <summary>The hour of the day, 0–24.</summary>
         public float Hour = 9;
 
@@ -201,6 +203,13 @@ namespace GuWorld.Core
     /// </summary>
     public enum Difficulty { Easy, Normal, Hard, Unbearable, Impossible }
 
+    /// <summary>
+    /// What a fall costs (chosen at a new game, kept for the whole playthrough): wake at the lantern
+    /// with a share of the stones lost; be reborn at the start of the arc before (the story's chapters),
+    /// keeping only memories; or the hardcore rule — one life for the whole playthrough.
+    /// </summary>
+    public enum DeathRule { Lantern, Rebirth, Hardcore }
+
     /// <summary>The player's choices for how the game plays.</summary>
     [Serializable]
     public class Settings
@@ -209,6 +218,8 @@ namespace GuWorld.Core
         public Difficulty Difficulty = Difficulty.Normal;
         /// <summary>The path the hero was born on (fixed at a new game; the difficulty may be lowered below it, not raised above it).</summary>
         public Difficulty Born = Difficulty.Normal;
+        /// <summary>What a fall costs (fixed for the playthrough, like the path).</summary>
+        public DeathRule Death = DeathRule.Lantern;
         /// <summary>Gu eat from the bag by themselves at dawn.</summary>
         public bool AutoFeed = true;
         /// <summary>Travelling between lanterns costs primeval stones.</summary>

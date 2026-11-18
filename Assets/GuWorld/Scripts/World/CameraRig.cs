@@ -48,7 +48,7 @@ namespace GuWorld.World
                 data.renderPostProcessing = Quality.Level >= 1;
                 // The water sees how deep it is through the scene's depth (the light quality goes without: the water then thins by its banks).
                 data.requiresDepthTexture = Quality.Level >= 1;
-                data.antialiasing = Quality.Level >= 2 ? AntialiasingMode.SubpixelMorphologicalAntiAliasing : AntialiasingMode.None;
+                data.antialiasing = Quality.Now.Smaa ? AntialiasingMode.SubpixelMorphologicalAntiAliasing : AntialiasingMode.None;
             }
 
             if (volume == null)
@@ -71,6 +71,13 @@ namespace GuWorld.World
             }
 
             volume.enabled = Quality.Level >= 1;
+            view.fieldOfView = Prefs.Fov;
+
+            // Brightness: the exposure, as the settings set it (the post-processing runs from the medium preset up).
+            if (volume.profile != null && volume.profile.TryGet<ColorAdjustments>(out var adjust))
+            {
+                adjust.postExposure.Override(Mathf.Log(Mathf.Clamp(Prefs.Brightness, 0.5f, 2f), 2));
+            }
         }
 
         public void Follow(Hero whom, float facing)
@@ -83,7 +90,7 @@ namespace GuWorld.World
             Cursor.visible = false;
         }
 
-        public void Shake(float amount) => shake = Mathf.Max(shake, amount);
+        public void Shake(float amount) => shake = Mathf.Max(shake, amount * Prefs.CameraShake);
 
         void LateUpdate()
         {
@@ -111,8 +118,8 @@ namespace GuWorld.World
             if (free)
             {
                 var look = Keys.Look;
-                yaw += look.x * 0.12f;
-                pitch = Mathf.Clamp(pitch - look.y * 0.1f, -28, 68);
+                yaw += look.x * 0.12f * Prefs.SensitivityX;
+                pitch = Mathf.Clamp(pitch - look.y * 0.1f * Prefs.SensitivityY * (Prefs.InvertY ? -1 : 1), -28, 68);
                 var wheel = Keys.Scroll;
 
                 if (Mathf.Abs(wheel) > 0.01f)

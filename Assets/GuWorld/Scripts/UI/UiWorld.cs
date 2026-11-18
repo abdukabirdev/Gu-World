@@ -171,7 +171,7 @@ namespace GuWorld.UI
 
             UiKit.Rule(words);
             var text = Words.Fill(line.Text, S.State);
-            var said = UiKit.Disp(line.Who == "" ? text : $"«{text}»", words, 25, UiKit.Hex(0xF2EADB), TextAnchor.UpperLeft);
+            var said = UiKit.Disp(line.Who == "" ? text : $"«{text}»", words, Prefs.LargeText ? 30 : 25, UiKit.Hex(0xF2EADB), TextAnchor.UpperLeft);
             said.horizontalOverflow = HorizontalWrapMode.Wrap;
             said.lineSpacing = 1.05f;
             said.Size(110);
@@ -397,7 +397,14 @@ namespace GuWorld.UI
         void CodexPage()
         {
             var session = S;
-            var body = Frame("典", "Кодекс", $"Открыто страниц: {session.State.Codex.Count}", true, null, null, new[] { ("Q E", "Страницы"), ("Tab", "Раздел"), ("Esc", "Закрыть") });
+            var fromTitle = !Game.Playing;
+            var body = Frame("典", "Кодекс", fromTitle ? $"Открыто во всех ячейках: {session.State.Codex.Count}" : $"Открыто страниц: {session.State.Codex.Count}",
+                !fromTitle, fromTitle ? () => Show(Page.Title) : (Action)null, null, new[] { ("Q E", "Страницы"), ("Tab", "Раздел"), ("Esc", "Закрыть") });
+
+            if (fromTitle)
+            {
+                body.gameObject.AddComponent<PageKeys>().On(Key.Escape, () => Show(Page.Title));
+            }
             var kinds = (CodexKind[])Enum.GetValues(typeof(CodexKind));
             body.gameObject.AddComponent<PageKeys>().On(Key.Tab, () => { codexKind = kinds[(Array.IndexOf(kinds, codexKind) + 1) % kinds.Length]; pickedPage = null; Redraw(); });
             var left = Column(body, 0, 0.42f, 6);
@@ -687,61 +694,6 @@ namespace GuWorld.UI
                 Gap(middle, 10);
                 Para($"Голодных Гу: {hungry}. Утром они возьмут корм из сумки, если он есть.", middle, 14, UiKit.Hunger);
             }
-        }
-
-        // ------------------------------------------------------------------ Settings of the game
-
-        void SettingsPage()
-        {
-            var session = S;
-            var settings = session.State.Settings;
-            var body = Frame("设", "Настройки игры", "Сохраняются вместе с игрой", false, () => Show(Page.Pause), null, new[] { ("Esc", "Назад") });
-            var left = Column(body, 0.1f, 0.9f, 14);
-
-            // The path: chosen once, at a new game; shown, not changed.
-            UiKit.Lbl("Путь (сложность)", left, 11, UiKit.LabelGold).Size(18);
-            var born = Beginnings.Of(settings.Born);
-            UiKit.Disp($"{born.Name} · талант при рождении {Cultivation.TalentName(Words.BornTalent(session.State))}", left, 24, UiKit.GoldText).Size(32);
-            Para(DifficultyRules.Text(settings.Difficulty), left, 14, UiKit.Muted);
-            Para("Путь выбирают один раз — в начале новой игры. Сменить его можно только новой игрой.", left, 13, UiKit.Muted);
-
-            UiKit.Lbl("Голод Гу", left, 11, UiKit.LabelGold).Size(18);
-            UiKit.Choices(left, new[] { "Нет", "Мягкий", "Как в каноне" }, (int)settings.Hunger, i => { settings.Hunger = (HungerRule)i; session.Recompute(); Redraw(); });
-            Para(settings.Hunger == HungerRule.Off ? "Гу не нужно кормить." : settings.Hunger == HungerRule.Soft ? "Голодный Гу слабее на треть и берёт больше эссенции, но не умирает."
-                : $"Голодный Гу слабеет, а через {Session.StarveDays} дня после срока умирает. Как у мастеров Гу на самом деле.", left, 14, UiKit.Muted);
-
-            var feed = UiKit.Rect("Feed", left);
-            feed.Size(30);
-            UiKit.Label("Гу сами едят из сумки на рассвете", feed, 15, UiKit.Text).rectTransform.Fill();
-            var toggle = UiKit.Toggle(feed, settings.AutoFeed, on => { settings.AutoFeed = on; Redraw(); });
-            toggle.anchorMin = toggle.anchorMax = new Vector2(1, 0.5f);
-            toggle.anchoredPosition = new Vector2(-20, 0);
-
-            var travel = UiKit.Rect("Travel", left);
-            travel.Size(30);
-            UiKit.Label("Переход между фонарями стоит камней", travel, 15, UiKit.Text).rectTransform.Fill();
-            var travelToggle = UiKit.Toggle(travel, settings.TravelCosts, on => { settings.TravelCosts = on; Redraw(); });
-            travelToggle.anchorMin = travelToggle.anchorMax = new Vector2(1, 0.5f);
-            travelToggle.anchoredPosition = new Vector2(-20, 0);
-
-            UiKit.Lbl("Кадры", left, 11, UiKit.LabelGold).Size(18);
-            UiKit.HexButton(World.Governor.On ? "Авто-детализация: включена (трава, горожане, тени — по кадрам)" : "Авто-детализация: выключена", left, () => { World.Governor.On = !World.Governor.On; Redraw(); }, World.Governor.On ? UiKit.HexKind.Main : UiKit.HexKind.Ghost, 12, 40);
-
-            UiKit.Lbl("Звук", left, 11, UiKit.LabelGold).Size(18);
-            Volume(left, "Общая громкость", Sound.AudioDirector.Master, v => Sound.AudioDirector.SetVolumes(v, Sound.AudioDirector.Effects, Sound.AudioDirector.MusicVolume, Sound.AudioDirector.Beds));
-            Volume(left, "Музыка", Sound.AudioDirector.MusicVolume, v => Sound.AudioDirector.SetVolumes(Sound.AudioDirector.Master, Sound.AudioDirector.Effects, v, Sound.AudioDirector.Beds));
-            Volume(left, "Удары и Гу", Sound.AudioDirector.Effects, v => Sound.AudioDirector.SetVolumes(Sound.AudioDirector.Master, v, Sound.AudioDirector.MusicVolume, Sound.AudioDirector.Beds));
-            Volume(left, "Ветер, вода, лес", Sound.AudioDirector.Beds, v => Sound.AudioDirector.SetVolumes(Sound.AudioDirector.Master, Sound.AudioDirector.Effects, Sound.AudioDirector.MusicVolume, v));
-        }
-
-        static void Volume(RectTransform parent, string name, float value, Action<float> change)
-        {
-            var row = UiKit.Rect(name, parent);
-            row.Size(30);
-            UiKit.Label(name, row, 15, UiKit.Text).rectTransform.Place(Vector2.zero, new Vector2(0.4f, 1));
-            var slider = UiKit.Rect("Slider", row);
-            slider.Place(new Vector2(0.42f, 0), Vector2.one);
-            UiKit.Slider(slider, 0, 1, value, v => $"{Mathf.RoundToInt(v * 100)}%", change);
         }
     }
 }

@@ -16,7 +16,7 @@ namespace GuWorld.UI
     /// </summary>
     public partial class Ui : MonoBehaviour
     {
-        public enum Page { None, Title, Loading, Talk, Aperture, Bag, Journal, Map, Shop, Gamble, Board, Fusion, Spring, Pause, Help, Death, Ending, Choice, Dialogue, Alchemy, Bounties, Codex, Clans, Travel, Inn, Settings, Moves, Sandbox, Paths, Home, Controls, Treasury, NewPath, NewHero }
+        public enum Page { None, Title, Loading, Talk, Aperture, Bag, Journal, Map, Shop, Gamble, Board, Fusion, Spring, Pause, Help, Death, Ending, Choice, Dialogue, Alchemy, Bounties, Codex, Clans, Travel, Inn, Settings, Moves, Sandbox, Paths, Home, Treasury, NewPath, NewHero, Slots, About }
 
         public Page Open { get; private set; } = Page.Title;
 
@@ -26,7 +26,8 @@ namespace GuWorld.UI
         int born;
         string loadingText = "";
         int lostStones;
-        Session S => Game.Session;
+        /// <summary>The game's session, or the main menu's guest one (the codex opened from it).</summary>
+        Session S => Game.Session ?? guestSession;
 
         static readonly Page[] HeroPages = { Page.Aperture, Page.Moves, Page.Paths, Page.Bag, Page.Journal, Page.Map, Page.Codex, Page.Clans };
         static readonly (string name, string key)[] HeroTabs = { ("Апертура", "K"), ("Приёмы", "U"), ("Пути", "P"), ("Сумка", "I"), ("Журнал", "J"), ("Карта", "M"), ("Кодекс", "B"), ("Кланы", "L") };
@@ -48,12 +49,15 @@ namespace GuWorld.UI
             hurt.rectTransform.Fill();
             fade = UiKit.Image("Fade", topCanvas.transform, new Color(0, 0, 0, 0), UiKit.Plain);
             fade.rectTransform.Fill();
+            fpsLine = UiKit.Label("", topCanvas.transform, 14, UiKit.Text2).Shadowed();
+            fpsLine.rectTransform.TopLeft(14, 10, 320, 22);
+            fpsLine.raycastTarget = false;
             BuildHud();
         }
 
         // ------------------------------------------------------------------ Pages
 
-        static bool Stops(Page page) => page != Page.None && page != Page.Talk && page != Page.Dialogue && page != Page.Spring && page != Page.Title && page != Page.Loading && page != Page.NewPath && page != Page.NewHero;
+        static bool Stops(Page page) => page != Page.None && page != Page.Talk && page != Page.Dialogue && page != Page.Spring && page != Page.Title && page != Page.Loading && page != Page.NewPath && page != Page.NewHero && page != Page.Slots && page != Page.About;
 
         public void Show(Page page)
         {
@@ -95,6 +99,8 @@ namespace GuWorld.UI
                 case Page.Title: Title(); break;
                 case Page.NewPath: NewPathPage(); break;
                 case Page.NewHero: NewHeroPage(); break;
+                case Page.Slots: SlotsPage(); break;
+                case Page.About: AboutPage(); break;
                 case Page.Loading: LoadingPage(); break;
                 case Page.Talk: TalkPage(); break;
                 case Page.Aperture: AperturePage(); break;
@@ -110,7 +116,6 @@ namespace GuWorld.UI
                 case Page.Moves: MovesPage(); break;
                 case Page.Paths: PathsPage(); break;
                 case Page.Home: HomePage(); break;
-                case Page.Controls: ControlsPage(); break;
                 case Page.Treasury: TreasuryPage(); break;
                 case Page.Sandbox: SandboxPage(); break;
                 case Page.Clans: ClansPage(); break;
@@ -129,7 +134,7 @@ namespace GuWorld.UI
         }
 
         /// <summary>Builds the open page again (something on it changed), keeping what was chosen.</summary>
-        void Redraw() => Show(Open);
+        public void Redraw() => Show(Open);
 
         void Close() => Show(Page.None);
 
@@ -145,8 +150,34 @@ namespace GuWorld.UI
             Show(Page.Death);
         }
 
+        Text fpsLine;
+        float fpsTime;
+        int fpsFrames;
+
+        /// <summary>The frames-per-second line in the corner (the settings' "Показывать FPS"), over every page.</summary>
+        void TickFps()
+        {
+            fpsLine.enabled = Prefs.ShowFps;
+
+            if (!Prefs.ShowFps)
+            {
+                return;
+            }
+
+            fpsFrames++;
+            fpsTime += Time.unscaledDeltaTime;
+
+            if (fpsTime >= 0.5f)
+            {
+                fpsLine.text = $"{fpsFrames / fpsTime:0} FPS · {1000 * fpsTime / fpsFrames:0.0} мс";
+                fpsFrames = 0;
+                fpsTime = 0;
+            }
+        }
+
         void Update()
         {
+            TickFps();
             TickHud();
 
             if (!Game.Playing || Time.frameCount == born)
@@ -215,16 +246,9 @@ namespace GuWorld.UI
             {
                 DialogueKeys();
             }
-            else if (Open == Page.Controls)
-            {
-                ControlsKeys();
-            }
             else if (Open == Page.Settings)
             {
-                if (Keys.Down(Key.Escape))
-                {
-                    Show(Page.Pause);
-                }
+                // The page's own keys (PageKeys): Esc back, Q E the tabs, a key being bound.
             }
             else if (Open == Page.Help)
             {
@@ -235,7 +259,8 @@ namespace GuWorld.UI
             }
             else if (Open == Page.Death)
             {
-                if (Keys.Down(Key.Enter) || Keys.Down(Key.Space))
+                // The lantern's Enter; the other rules' pages have their own keys.
+                if ((Keys.Down(Key.Enter) || Keys.Down(Key.Space)) && (S.State.Settings.Death == DeathRule.Lantern || Game.SandboxOnly))
                 {
                     Game.Wake();
                 }
@@ -436,7 +461,7 @@ namespace GuWorld.UI
                 UiKit.Disp(name, who, 30, UiKit.GoldText).Size(36);
                 UiKit.Lbl(title, who, 11, UiKit.Muted, 0.3f).Size(36);
                 UiKit.Rule(words);
-                var said = UiKit.Disp($"«{Words.Fill(line.Text, S.State)}»", words, 26, UiKit.Hex(0xF2EADB), TextAnchor.UpperLeft);
+                var said = UiKit.Disp($"«{Words.Fill(line.Text, S.State)}»", words, Prefs.LargeText ? 31 : 26, UiKit.Hex(0xF2EADB), TextAnchor.UpperLeft);
                 said.horizontalOverflow = HorizontalWrapMode.Wrap;
                 said.lineSpacing = 1.05f;
                 said.Size(-1).flexibleHeight = 1;
@@ -444,7 +469,7 @@ namespace GuWorld.UI
             else
             {
                 // The narrator: no name, quieter.
-                var told = UiKit.Disp(Words.Fill(line.Text, S.State), words, 24, UiKit.Hex(0xC9D3D5), TextAnchor.UpperLeft);
+                var told = UiKit.Disp(Words.Fill(line.Text, S.State), words, Prefs.LargeText ? 29 : 24, UiKit.Hex(0xC9D3D5), TextAnchor.UpperLeft);
                 told.fontStyle = FontStyle.Italic;
                 told.horizontalOverflow = HorizontalWrapMode.Wrap;
                 told.lineSpacing = 1.08f;
@@ -472,6 +497,6 @@ namespace GuWorld.UI
             fade.color = new Color(0, 0, 0, alpha);
         }
 
-        public void Hurt() => hurt.color = new Color(0.7f, 0.08f, 0.05f, 0.55f);
+        public void Hurt() => hurt.color = new Color(0.7f, 0.08f, 0.05f, Prefs.NoFlashes ? 0.22f : 0.55f);
     }
 }

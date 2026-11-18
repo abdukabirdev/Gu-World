@@ -648,10 +648,14 @@ namespace GuWorld.Core
         /// <summary>Days until the Cicada wakes (0: awake).</summary>
         public int CicadaSleepLeft => Math.Max(0, State.CicadaDay - State.Day);
 
-        /// <summary>The hero fell: a tenth of the stones is lost, and they wake whole at their lantern. The stones lost.</summary>
+        /// <summary>
+        /// The hero fell: by the lantern rule a share of the stones is lost (the path's) and they wake whole at
+        /// their lantern; by rebirth and hardcore nothing is taken here — the game itself goes back an arc or
+        /// ends (Game). The stones lost.
+        /// </summary>
         public int Die()
         {
-            var lost = (int)(State.Stones * DifficultyRules.DeathLoss(State.Settings.Difficulty));
+            var lost = State.Settings.Death == DeathRule.Lantern ? (int)(State.Stones * DifficultyRules.DeathLoss(State.Settings.Difficulty)) : 0;
             statuses.Clear();
             State.Effects.RemoveAll(e => !e.Source.StartsWith("blessing"));
             State.Stones -= lost;

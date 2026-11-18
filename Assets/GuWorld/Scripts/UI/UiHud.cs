@@ -47,6 +47,8 @@ namespace GuWorld.UI
         float wordsIn;
 
         RectTransform hudRoot, floats;
+        CanvasGroup hudFade;
+        DesignStage hudStage;
         Meter health, essence, stamina, insight, bossBar;
         Text heroName, heroRank, stones, pills, questTitle, questStep, promptText, bossName, bossTitle, markText, bannerLabel, bannerTitle, effects;
         RectTransform promptRoot, bossRoot, questRoot, markRoot, targetMark, bannerRoot, toastRoot;
@@ -85,7 +87,9 @@ namespace GuWorld.UI
         {
             hudRoot = UiKit.Rect("HUD", hudCanvas.transform);
             hudRoot.Fill();
+            hudFade = hudRoot.gameObject.AddComponent<CanvasGroup>();
             var stage = UiKit.Stage(hudRoot);
+            hudStage = stage.GetComponent<DesignStage>();
 
             // The hero.
             var hero = UiKit.Rect("Hero", stage);
@@ -243,7 +247,7 @@ namespace GuWorld.UI
         /// <summary>A number rising off a struck one; a blow of its weakness is marked «!», of its resistance shown grey and small.</summary>
         public void DamageNumber(Vector3 at, float amount, bool critical, bool onHero, int affinity = 0)
         {
-            if (floats == null || numbers.Count > 40)
+            if (floats == null || numbers.Count > 40 || Prefs.DamageNumbers == 2 || (onHero && Prefs.DamageNumbers == 1))
             {
                 return;
             }
@@ -259,7 +263,7 @@ namespace GuWorld.UI
         /// <summary>A word rising off a creature (a reaction's name), bigger than a number and slower to fade.</summary>
         public void FloatWord(Vector3 at, string word, Color colour)
         {
-            if (floats == null || numbers.Count > 40)
+            if (floats == null || numbers.Count > 40 || !Prefs.ReactionWords)
             {
                 return;
             }
@@ -358,6 +362,10 @@ namespace GuWorld.UI
         {
             var dt = Time.unscaledDeltaTime;
             hurt.color = new Color(0.7f, 0.08f, 0.05f, Mathf.MoveTowards(hurt.color.a, 0, dt * 1.6f));
+
+            // The HUD as the settings have it: how big, how solid.
+            hudFade.alpha = Mathf.Clamp(Prefs.HudOpacity, 0.3f, 1);
+            hudStage.Zoom = Mathf.Clamp(Prefs.HudScale, 0.7f, 1.4f);
 
             // The banner: one at a time, each for three seconds.
             bannerAge += dt;

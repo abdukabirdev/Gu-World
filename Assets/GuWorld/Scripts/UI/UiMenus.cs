@@ -1,6 +1,7 @@
 using System;
 using GuWorld.Core;
 using UnityEngine;
+using UnityEngine.InputSystem;
 using UnityEngine.UI;
 
 namespace GuWorld.UI
@@ -20,52 +21,6 @@ namespace GuWorld.UI
             middle.Stack<VerticalLayoutGroup>(6, null, TextAnchor.UpperCenter);
 
             return middle;
-        }
-
-        void Title()
-        {
-            var stage = UiKit.Stage(pageRoot);
-            UiKit.Backdrop(stage, "蛊", 620);
-            var middle = Centre(stage, 620, 150, 700);
-            UiKit.Lbl("Лунная тень Цинмао", middle, 12, UiKit.LabelGold, 0.5f, TextAnchor.MiddleCenter).Size(18);
-            var name = UiKit.Disp("GU WORLD", middle, 96, UiKit.Text, TextAnchor.MiddleCenter);
-            name.Track(0.18f);
-            name.Size(110);
-            UiKit.Image("Rule", middle, UiKit.Gold, UiKit.FadeBoth).Size(1);
-            Gap(middle, 34);
-            var keys = middle.gameObject.AddComponent<MenuKeys>();
-            var save = Game.ReadSave();
-
-            if (save != null)
-            {
-                var minutes = Mathf.RoundToInt(save.PlayedSeconds / 60);
-                keys.Add(UiKit.Entry("Продолжить", $"Гу Юэ {save.HeroName} · {DifficultyRules.Name(DifficultyRules.Of(save))} · {Cultivation.Name(save.Step)} · {minutes} мин", middle, () => Game.Instance.Begin(false)).Centre());
-            }
-
-            keys.Add(UiKit.Entry("Новая игра", save != null ? $"Выбор пути и героя · в ячейке {Game.Slot + 1} прежнее будет заменено" : "Выбор пути и героя", middle, StartNewGame).Centre());
-            keys.Add(UiKit.Entry($"Ячейка сохранения: {Game.Slot + 1} из {Game.Slots}", SlotLine(Game.Slot + 1 < Game.Slots ? Game.Slot + 1 : 0, "Следующая: "), middle, () =>
-            {
-                Game.Slot = (Game.Slot + 1) % Game.Slots;
-                Show(Page.Title);
-            }).Centre());
-            keys.Add(UiKit.Entry($"Качество: {Quality.Names[Quality.Level]}", Quality.Level == 2 ? "Полная модель героя, дальние тени, свечение" : Quality.Level == 0 ? "Для слабой встроенной графики" : "Для ноутбука без видеокарты", middle, () =>
-            {
-                Quality.Set((Quality.Level + 1) % 3);
-                Game.Rig.Dress();
-                Show(Page.Title);
-            }).Centre());
-            keys.Add(UiKit.Entry("Выйти", null, middle, Game.Quit).Centre());
-            var credit = UiKit.Label(Credits, stage, 11, UiKit.Muted.A(0.7f), TextAnchor.MiddleCenter);
-            credit.rectTransform.Place(new Vector2(0, 0), new Vector2(1, 0), 0, 60, 0, -78);
-            UiKit.Footer(stage, new[] { ("↑↓", "Выбор"), ("Enter", "Открыть") }).GetComponent<HorizontalLayoutGroup>().childAlignment = TextAnchor.MiddleCenter;
-        }
-
-        /// <summary>A line about what a slot holds.</summary>
-        static string SlotLine(int slot, string lead)
-        {
-            var data = Game.ReadSlot(slot);
-
-            return data == null ? lead + $"ячейка {slot + 1} пуста" : lead + $"{slot + 1} — Гу Юэ {data.HeroName}, {Cultivation.Name(data.Step)}, {Mathf.RoundToInt(data.PlayedSeconds / 60)} мин";
         }
 
         void LoadingPage()
@@ -99,34 +54,102 @@ namespace GuWorld.UI
 
         void PausePage()
         {
-            var stage = Dim(UiKit.Hex(0x2A3A50, 0.35f), "息");
-            var middle = Centre(stage, 520, 150, 640);
+            var stage = Dim(UiKit.Hex(0x2A3A50, 0.35f), "靜");
+            UiKit.Orbit(stage, 620, UiKit.Gold.A(0.08f), 140, 10);
+            UiKit.Orbit(stage, 820, UiKit.Gold.A(0.05f), -220, 0);
+
+            // The title and the menu.
+            var middle = Centre(stage, 480, 120, 700);
             UiKit.Lbl("Время остановлено", middle, 11, UiKit.LabelGold, 0.34f, TextAnchor.MiddleCenter).Size(16);
             var title = UiKit.Disp("ПАУЗА", middle, 72, UiKit.Text, TextAnchor.MiddleCenter);
             title.Track(0.2f);
             title.Size(84);
             UiKit.Image("Rule", middle, UiKit.Gold, UiKit.FadeBoth).Size(1);
-            Gap(middle, 24);
+            Gap(middle, 18);
             var keys = middle.gameObject.AddComponent<MenuKeys>();
-            keys.Add(UiKit.Entry("Продолжить", null, middle, Close).Centre());
-            keys.Add(UiKit.Entry("Управление", null, middle, () => Show(Page.Help)).Centre());
-            keys.Add(UiKit.Entry("Клавиши", "Сменить клавиши действий", middle, () => Show(Page.Controls)).Centre());
-            keys.Add(World.Aperture.Inside
-                ? UiKit.Entry("Покинуть апертуру", "Всё вернётся, как было", middle, () => { Close(); World.Aperture.Leave(); }).Centre()
-                : UiKit.Entry("Апертура бессмертного", "Полигон: любые Гу, ранги и приёмы, ничего не считается", middle, () => { Close(); World.Aperture.Enter(); }).Centre());
-            keys.Add(UiKit.Entry("Настройки игры", $"{DifficultyRules.Name(S.State.Settings.Difficulty)} · голод Гу: {(S.State.Settings.Hunger == HungerRule.Off ? "нет" : S.State.Settings.Hunger == HungerRule.Soft ? "мягкий" : "канон")}", middle, () => Show(Page.Settings)).Centre());
-            keys.Add(UiKit.Entry($"Качество: {Quality.Names[Quality.Level]}", "Деревья и модель героя сменятся при следующем входе в игру", middle, () =>
+            keys.Add(UiKit.Entry("Продолжить", null, middle, Close).Restyle(28, 62).Centre());
+
+            if (Game.SandboxOnly)
             {
-                Quality.Set((Quality.Level + 1) % 3);
-                Game.Rig.Dress();
-                Show(Page.Pause);
-            }).Centre());
-            keys.Add(UiKit.Entry("Главное меню", "Игра сохранится", middle, () => Game.Instance.ToTitle()).Centre());
-            keys.Add(UiKit.Entry("Выйти из игры", null, middle, Game.Quit).Centre());
-            var minutes = Mathf.RoundToInt(S.State.PlayedSeconds / 60);
-            var note = UiKit.Label($"Глава {S.Chapter} · {Story.ChapterNames[S.Chapter]} · в игре {minutes} мин · побед {S.State.Kills} · смертей {S.State.Deaths}", stage, 13, UiKit.Muted, TextAnchor.MiddleCenter);
-            note.rectTransform.Place(new Vector2(0, 0), new Vector2(1, 0), 0, 64, 0, -84);
+                keys.Add(UiKit.Entry("Настройки", null, middle, () => OpenSettings(Page.Pause)).Centre());
+                keys.Add(UiKit.Entry("Управление", null, middle, () => Show(Page.Help)).Centre());
+                keys.Add(UiKit.Entry("Покинуть апертуру", "В главное меню · ничего не сохраняется", middle, () => Game.Instance.ToTitle(false)).Centre());
+            }
+            else
+            {
+                keys.Add(UiKit.Entry("Сохранить", "Игра и так сохраняется сама", middle, () => { Game.Save(); Toast("Сохранено"); Close(); }).Centre());
+                keys.Add(UiKit.Entry("Настройки", null, middle, () => OpenSettings(Page.Pause)).Centre());
+                keys.Add(UiKit.Entry("Управление", "Клавиши и как играть", middle, () => Show(Page.Help)).Centre());
+                keys.Add(World.Aperture.Inside
+                    ? UiKit.Entry("Покинуть апертуру", "Всё вернётся, как было", middle, () => { Close(); World.Aperture.Leave(); }).Centre()
+                    : UiKit.Entry("Апертура бессмертного", "Полигон: любые Гу, ранги и приёмы", middle, () => { Close(); World.Aperture.Enter(); }).Centre());
+                keys.Add(UiKit.Entry("Главное меню", "Игра сохранится", middle, () => Game.Instance.ToTitle()).Centre());
+            }
+
+            keys.Add(UiKit.Entry("Выйти из игры", null, middle, Game.Quit).Quiet(50).Centre());
+
+            // The hero, at the left.
+            var state = S.State;
+            var hero = UiKit.Rect("Hero", stage);
+            hero.Place(new Vector2(0, 0.5f), new Vector2(0, 0.5f), 72, -170, -420, -170);
+            hero.Stack<VerticalLayoutGroup>(8);
+            UiKit.Lbl("Герой", hero, 11, UiKit.LabelGold).Size(16);
+            UiKit.Disp($"Гу Юэ {state.HeroName}", hero, 30, UiKit.GoldText).Size(38);
+            UiKit.Label($"{Cultivation.Name(state.Step)} · талант {Cultivation.TalentName(state.Talent)}", hero, 13, UiKit.Hex(0xA8B6B8)).Size(18);
+            UiKit.Label($"{DifficultyRules.Name(state.Settings.Born)} · {DeathRules.Name(state.Settings.Death)}", hero, 13, UiKit.Muted).Size(18);
+            Gap(hero, 6);
+            PauseBar(hero, "Здоровье", state.Health / Mathf.Max(1, S.Stats.MaxHealth), UiKit.BarKind.Health);
+            PauseBar(hero, "Эссенция", state.Essence / Mathf.Max(1, S.Stats.MaxEssence), UiKit.BarKind.Essence);
+            PauseBar(hero, "Прорыв", S.InsightShare, UiKit.BarKind.System);
+            Gap(hero, 4);
+            var hour = World.Atmosphere.Hour;
+            UiKit.Label($"День {state.Day} · {(int)hour:00}:{(int)(hour % 1 * 60):00} · {Story.ChapterNames[S.Chapter]}", hero, 13, UiKit.Muted).Size(18);
+
+            // What is in hand, at the right.
+            var now = UiKit.Rect("Now", stage);
+            now.Place(new Vector2(1, 0.5f), new Vector2(1, 0.5f), -420, -170, 72, -170);
+            now.Stack<VerticalLayoutGroup>(8);
+            UiKit.Lbl("Сейчас", now, 11, UiKit.LabelGold, 0.34f, TextAnchor.MiddleRight).Size(16);
+            var main = S.MainQuest;
+
+            if (Game.SandboxOnly || World.Aperture.Inside)
+            {
+                UiKit.Disp("Апертура бессмертного", now, 26, UiKit.Text, TextAnchor.MiddleRight).Size(34);
+                Para("Полигон: ничего не сохраняется и не считается.", now, 14, UiKit.Muted).alignment = TextAnchor.UpperRight;
+            }
+            else if (main != null)
+            {
+                var def = Story.Get(main.Quest);
+                UiKit.Lbl($"Глава {def.Chapter} · задание", now, 11, UiKit.Muted, 0.3f, TextAnchor.MiddleRight).Size(16);
+                var name = UiKit.Disp(def.Title, now, 26, UiKit.Text, TextAnchor.MiddleRight);
+                name.horizontalOverflow = HorizontalWrapMode.Wrap;
+                name.Size(36);
+                Para(S.StepText(main), now, 15, UiKit.Text2).alignment = TextAnchor.UpperRight;
+            }
+            else
+            {
+                UiKit.Disp("Сюжет пройден", now, 26, UiKit.Text, TextAnchor.MiddleRight).Size(34);
+                Para("Поручения — у досок в деревнях.", now, 14, UiKit.Muted).alignment = TextAnchor.UpperRight;
+            }
+
+            Gap(now, 8);
+            var minutes = Mathf.RoundToInt(state.PlayedSeconds / 60);
+            UiKit.Label($"В игре {minutes} мин · побед {state.Kills} · смертей {state.Deaths}{(state.Rebirths > 0 ? $" · перерождений {state.Rebirths}" : "")}", now, 12, UiKit.Muted, TextAnchor.MiddleRight).Size(18);
+            UiKit.Label(Game.SandboxOnly ? "Без сохранения" : $"Игра сохраняется сама каждые {(Prefs.Autosave >= 60 ? $"{Prefs.Autosave / 60} мин" : $"{Prefs.Autosave} с")}", now, 12, UiKit.Muted, TextAnchor.MiddleRight).Size(18);
+
             UiKit.Footer(stage, new[] { ("↑↓", "Выбор"), ("Enter", "Открыть"), ("Esc", "Вернуться в игру") }).GetComponent<HorizontalLayoutGroup>().childAlignment = TextAnchor.MiddleCenter;
+        }
+
+        /// <summary>A line of the pause's hero: a name and a thin bar filled to a share.</summary>
+        static void PauseBar(RectTransform parent, string name, float share, UiKit.BarKind kind)
+        {
+            var row = UiKit.Rect(name, parent);
+            row.Size(30);
+            UiKit.Label(name, row, 12, UiKit.Muted).rectTransform.Place(new Vector2(0, 0.5f), new Vector2(1, 1));
+            UiKit.Label($"{Mathf.RoundToInt(Mathf.Clamp01(share) * 100)}%", row, 12, UiKit.Text2, TextAnchor.MiddleRight).rectTransform.Place(new Vector2(0, 0.5f), new Vector2(1, 1));
+            var bar = UiKit.Rect("Bar", row);
+            bar.Place(Vector2.zero, new Vector2(1, 0.4f));
+            UiKit.Bar(bar, kind, Mathf.Clamp01(share), 4);
         }
 
         void HelpPage()
@@ -136,14 +159,15 @@ namespace GuWorld.UI
             var right = Column(body, 0.54f, 0.92f, 4);
             UiKit.Lbl("В мире", left, 11, UiKit.LabelGold).Size(22);
 
-            foreach (var (key, what) in new[]
-            {
-                ("W A S D", "Идти"), ("Shift", "Бежать быстрее (тратит силы)"), ("Мышь", "Смотреть"), ("Колесо", "Ближе и дальше"),
-                ("Пробел", "Прыжок (через кольца молний)"), ("ПКМ / Alt", "Перекат: в нём вас не задеть"), ("Ctrl", "Блок; поставленный в последний миг — парирование"), ("ЛКМ", "Удар ладонью, три подряд"),
-                ("Q E R F Z C", "Гу в слотах"), ("V · X", "Убийственный приём · следующий"), ("Tab / СКМ", "Держать цель"), ("H", "Пилюля заживления"), ("G", "Впитать первобытный камень"), ("T", "Говорить, взять, открыть"),
-            })
+            // The fixed ones, then every action with the key it has now (Settings → Управление changes them).
+            foreach (var (key, what) in new[] { ("W A S D", "Идти"), ("Мышь", "Смотреть"), ("Колесо", "Ближе и дальше"), ("ЛКМ", "Удар ладонью, три подряд"), ("ПКМ", "Перекат") })
             {
                 Fact(left, what, key, UiKit.GoldText);
+            }
+
+            foreach (var action in Actors.Bindings.All)
+            {
+                Fact(left, action.Name, Actors.Bindings.Label(action.Key), UiKit.GoldText);
             }
 
             UiKit.Lbl("Страницы", right, 11, UiKit.LabelGold).Size(22);
@@ -163,17 +187,49 @@ namespace GuWorld.UI
 
         void DeathPage()
         {
+            var rule = S.State.Settings.Death;
             var stage = Dim(UiKit.Hex(0x5A1410, 0.5f), "死");
-            var middle = Centre(stage, 620, 260, 400);
-            UiKit.Lbl("Тьма", middle, 11, UiKit.Danger, 0.5f, TextAnchor.MiddleCenter).Size(16);
-            var title = UiKit.Disp("ВЫ ПАЛИ", middle, 78, UiKit.Hex(0xF2D6CE), TextAnchor.MiddleCenter);
+            var middle = Centre(stage, 760, 220, 520);
+            var hardcore = rule == DeathRule.Hardcore && !Game.SandboxOnly;
+            UiKit.Lbl(hardcore ? "Одна жизнь" : rule == DeathRule.Rebirth ? "Перерождение" : "Тьма", middle, 11, UiKit.Danger, 0.5f, TextAnchor.MiddleCenter).Size(16);
+            var title = UiKit.Disp(hardcore ? "ПУТЬ ОКОНЧЕН" : "ВЫ ПАЛИ", middle, 78, UiKit.Hex(0xF2D6CE), TextAnchor.MiddleCenter);
             title.Track(0.2f);
             title.Size(90);
             UiKit.Image("Rule", middle, UiKit.Danger, UiKit.FadeBoth).Size(1);
             Gap(middle, 16);
+            var state = S.State;
+            var row = UiKit.Rect("Row", middle);
+
+            if (hardcore)
+            {
+                var minutes = Mathf.RoundToInt(state.PlayedSeconds / 60);
+                Para($"Гу Юэ {state.HeroName} · {Cultivation.Name(state.Step)} · глава {S.Chapter}", middle, 18, UiKit.Text2).alignment = TextAnchor.MiddleCenter;
+                Para($"{DifficultyRules.Name(state.Settings.Born)} · {minutes} мин в пути · побед {state.Kills}. Сохранение удалено.", middle, 15, UiKit.Muted).alignment = TextAnchor.MiddleCenter;
+                Gap(middle, 22);
+                row = UiKit.Rect("Row", middle);
+                row.Size(56);
+                UiKit.HexButton("Главное меню", row, () => Game.Instance.ToTitle(false), UiKit.HexKind.Main, 14, 56, "Enter").GetComponent<RectTransform>().At(new Vector2(0.5f, 0.5f), Vector2.zero, new Vector2(380, 56));
+                stage.gameObject.AddComponent<PageKeys>().On(Key.Enter, () => Game.Instance.ToTitle(false));
+
+                return;
+            }
+
+            if (rule == DeathRule.Rebirth && !Game.SandboxOnly)
+            {
+                var arc = DeathRules.RebirthArc(S.Chapter);
+                Para($"Вы родитесь заново в начале главы {arc} — «{Story.ChapterNames[arc]}». С собой — только память: кодекс, достижения, подсказки.", middle, 16, UiKit.Text2).alignment = TextAnchor.MiddleCenter;
+                Gap(middle, 22);
+                row = UiKit.Rect("Row", middle);
+                row.Size(56);
+                UiKit.HexButton("Переродиться", row, () => Game.Instance.Reborn(), UiKit.HexKind.Main, 14, 56, "Enter").GetComponent<RectTransform>().At(new Vector2(0.5f, 0.5f), Vector2.zero, new Vector2(380, 56));
+                stage.gameObject.AddComponent<PageKeys>().On(Key.Enter, () => Game.Instance.Reborn());
+
+                return;
+            }
+
             UiKit.Label(lostStones > 0 ? $"Потеряно первобытных камней: {lostStones}" : "Терять было нечего", middle, 16, UiKit.Text2, TextAnchor.MiddleCenter).Size(24);
             Gap(middle, 26);
-            var row = UiKit.Rect("Row", middle);
+            row = UiKit.Rect("Row", middle);
             row.Size(56);
             UiKit.HexButton("Очнуться у лунного фонаря", row, Game.Wake, UiKit.HexKind.Main, 14, 56, "Enter").GetComponent<RectTransform>().At(new Vector2(0.5f, 0.5f), Vector2.zero, new Vector2(460, 56));
         }

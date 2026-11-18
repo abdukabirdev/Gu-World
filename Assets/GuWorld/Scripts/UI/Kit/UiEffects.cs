@@ -16,7 +16,10 @@ namespace GuWorld.UI
     public class DesignStage : MonoBehaviour
     {
         public const float Height = 900;
+        /// <summary>How much bigger than the design the stage's things are drawn (the HUD's size setting); 1 as designed.</summary>
+        public float Zoom = 1;
         Vector2 fitted;
+        float fittedZoom = 1;
 
         public void Fit()
         {
@@ -36,7 +39,8 @@ namespace GuWorld.UI
             }
 
             fitted = size;
-            var scale = size.y / Height;
+            fittedZoom = Zoom;
+            var scale = size.y / Height * Mathf.Max(0.1f, Zoom);
             rect.anchorMin = rect.anchorMax = new Vector2(0.5f, 0.5f);
             rect.pivot = new Vector2(0.5f, 0.5f);
             rect.anchoredPosition = Vector2.zero;
@@ -46,7 +50,7 @@ namespace GuWorld.UI
 
         void LateUpdate()
         {
-            if (transform.parent is RectTransform parent && parent.rect.size != fitted)
+            if (transform.parent is RectTransform parent && (parent.rect.size != fitted || !Mathf.Approximately(Zoom, fittedZoom)))
             {
                 Fit();
             }

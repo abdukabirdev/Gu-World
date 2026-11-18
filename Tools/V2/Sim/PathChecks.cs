@@ -108,6 +108,32 @@ static partial class Program
         Check(Words.Shares(30) == "тридцать долей" && Words.Shares(21) == "двадцать одна доля" && Words.Shares(100) == "сто долей" && Words.Shares(13) == "тринадцать долей",
             "shares in words agree with their number");
 
+        // What a fall costs: the lantern takes the path's share of the stones; rebirth and hardcore take none here.
+        Check(DeathRules.All.Length == 3 && DeathRules.All.Select(DeathRules.Name).Distinct().Count() == 3, "three death rules, each its own name");
+        var lanternRules = new Settings { Death = DeathRule.Lantern };
+        var lanternHero = new Session(Session.NewGame("x", Difficulty.Hard, lanternRules, 1), 1);
+        lanternHero.State.Stones = 100;
+        Check(lanternHero.Die() == 10 && lanternHero.State.Stones == 90, "the lantern: a fall on the hard path costs a tenth of the stones");
+        var rebornHero = new Session(Session.NewGame("x", Difficulty.Hard, new Settings { Death = DeathRule.Rebirth }, 1), 1);
+        rebornHero.State.Stones = 100;
+        Check(rebornHero.Die() == 0 && rebornHero.State.Stones == 100 && rebornHero.State.Deaths == 1, "rebirth: the fall itself takes no stones (the arc does)");
+        Check(DeathRules.RebirthArc(1) == 1 && DeathRules.RebirthArc(2) == 1 && DeathRules.RebirthArc(5) == 4, "rebirth goes to the start of the arc before");
+
+        var arcStart = Session.NewGame("Мо", Difficulty.Hard, new Settings { Death = DeathRule.Rebirth }, 1);
+        arcStart.Codex.Add("lore_apertures");
+        var life = Session.NewGame("Мо", Difficulty.Hard, new Settings { Death = DeathRule.Rebirth }, 1);
+        life.Codex.Add("lore_apertures");
+        life.Codex.Add("lore_feeding");
+        life.Achievements.Add("first_blood");
+        life.Stones = 999;
+        life.PlayedSeconds = 3600;
+        life.Kills = 40;
+        life.Deaths = 2;
+        var reborn = DeathRules.Reborn(arcStart, life);
+        Check(reborn.Stones == arcStart.Stones && reborn.Codex.Count == 2 && reborn.Achievements.Contains("first_blood"), "the reborn keep their memories, not their stones");
+        Check(reborn.PlayedSeconds == 3600 && reborn.Kills == 40 && reborn.Deaths == 3 && reborn.Rebirths == 1, "the reborn keep the time played and count the fall");
+        Check(Session.NewGame("x", Difficulty.Normal, new Settings { Death = DeathRule.Hardcore }, 1).Settings.Death == DeathRule.Hardcore, "a new game keeps its death rule");
+
         // The story raises the talent by the same amount on every path (C 44 → B 62 → A 82 on the reference path, as before).
         var gains = Story.All.Where(q => q.Reward != null && q.Reward.TalentGain > 0).ToList();
         Check(gains.Count == 2 && Math.Abs(gains.Sum(q => q.Reward.TalentGain) - 0.38f) < 1e-4f, "the story raises the talent twice, by 38 points in all");
