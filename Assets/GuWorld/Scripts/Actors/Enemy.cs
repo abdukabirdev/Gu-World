@@ -223,11 +223,43 @@ namespace GuWorld.Actors
 
             if (hero == null || !hero.Alive || (FlatDistance(home) > 75 && !Def.Boss))
             {
-                // Lost them: back home, healed.
+                // Lost them: back home, healed (a patrol will warn again next time).
                 aware = false;
+                provoked = false;
+                warnedUntil = -1;
                 Health = Mathf.Min(MaxHealth, Health + MaxHealth * 0.2f * dt);
                 Wander(dt);
                 return;
+            }
+
+            // A clan's patrol warns before it fights (ROADMAP 12.9): it turns to the hero and calls out; it
+            // strikes only if they come close, strike first, or are still there when the warning runs out.
+            if (Warns && !provoked)
+            {
+                if (warnedUntil < 0)
+                {
+                    warnedUntil = Time.time + 6;
+
+                    if (Time.time - lastWarning > 8)
+                    {
+                        lastWarning = Time.time;
+                        var clan = Core.Clans.Get(Def.Clan);
+                        Game.Ui?.Banner(Def.Name, clan != null ? $"«Земля клана {clan.Name}. Уходи, пока цел!»" : "«Уходи, пока цел!»");
+                        Sound.AudioDirector.Play(Core.Audio.Sounds.VoiceOf(Def), transform.position, 0.8f, 0.1f);
+                    }
+                }
+
+                if (Time.time < warnedUntil && distance > 7)
+                {
+                    var toHero = hero.transform.position - transform.position;
+                    toHero.y = 0;
+                    Face(toHero, 360, dt);
+                    Animate("idle");
+
+                    return;
+                }
+
+                provoked = true;
             }
 
             switch (Def.Mind)
@@ -241,6 +273,12 @@ namespace GuWorld.Actors
                 case EnemyMind.Caster: Caster(hero, distance, dt); break;
             }
         }
+
+        /// <summary>A clan's patrol (its id ends "_patrol"): it warns before it fights.</summary>
+        bool Warns => Def.Id.EndsWith("_patrol") && !string.IsNullOrEmpty(Def.Clan);
+        bool provoked;
+        float warnedUntil = -1;
+        static float lastWarning = -99;
 
         void LateUpdate()
         {
@@ -798,6 +836,8 @@ namespace GuWorld.Actors
             {
                 React(Reactions.Meet(statuses, status, statusPower, frozen && stunTime > 0), damage);
             }
+
+            provoked = true;
 
             if (!aware)
             {
