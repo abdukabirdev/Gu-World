@@ -143,7 +143,7 @@ namespace GuWorld.UI
             Choice(list, "Числа урона", "Над тем, по кому пришёлся удар", new[] { "Все", "По врагам", "Нет" }, Prefs.DamageNumbers, i => Prefs.DamageNumbers = i);
             Switch(list, "Слова реакций", "«Пар», «Раскол» над врагом", Prefs.ReactionWords, on => Prefs.ReactionWords = on);
             Choice(list, "Метка задания", "Ромб над местом задания и стрелка у края экрана", new[] { "В мире", "Компас", "Нет" }, Prefs.QuestMark, i => Prefs.QuestMark = i);
-            Switch(list, "Режим разработчика", "F3 — строки отладки, / — консоль команд, F10 — панель. Игра помечает, что команды были", Prefs.DevMode, on => Prefs.DevMode = on);
+            Switch(list, "Режим разработчика", "F3 — строки отладки, F7 — хитбоксы, / — консоль команд, F10 — панель. Игра помечает, что команды были", Prefs.DevMode, on => Prefs.DevMode = on);
             Choice(list, "Автосохранение", "Игра сохраняется сама, при паузе и при выходе", new[] { "30 с", "2 мин", "5 мин" },
                 Math.Max(0, Array.IndexOf(Prefs.AutosaveChoices, Prefs.Autosave)), i => Prefs.Autosave = Prefs.AutosaveChoices[i]);
 

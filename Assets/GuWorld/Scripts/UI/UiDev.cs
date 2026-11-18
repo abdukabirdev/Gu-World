@@ -189,6 +189,12 @@ namespace GuWorld.UI
                 devOverlay = !devOverlay;
             }
 
+            if (Keys.Down(Key.F7))
+            {
+                Fx.Hitboxes.Toggle();
+                Toast(Fx.Hitboxes.On ? "Хитбоксы: тела красные, триггеры жёлтые, остальное зелёное (F7)" : "Хитбоксы скрыты");
+            }
+
             if (Game.Playing && Open == Page.None)
             {
                 if (Keys.Down(Key.Slash) || Keys.Down(Key.Backquote))
@@ -226,7 +232,7 @@ namespace GuWorld.UI
             }
 
             lines += "\n" + Stats();
-            lines += "\nF3 — эти строки · / — консоль · F10 — панель";
+            lines += "\nF3 — эти строки · F7 — хитбоксы · / — консоль · F10 — панель";
             devLine.text = lines;
         }
 
