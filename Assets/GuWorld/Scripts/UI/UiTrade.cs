@@ -132,11 +132,19 @@ namespace GuWorld.UI
                 var uid = int.Parse(pickedSale.Substring(2));
                 GuDetail(right, session.FindGu(uid), false);
                 Gap(right, 12);
-                UiKit.HexButton($"Продать · {chosen.price} камней", right, () =>
+                // A fine Gu, or one of rank three and up, is sold only by holding (ROADMAP 2.12): it will not come back.
+                var sold = session.FindGu(uid);
+                var dear = sold != null && (sold.Quality >= 2 || GuBook.Get(sold.Def).Rank >= 3);
+                var sell = UiKit.HexButton(dear ? $"Удерживать — продать · {chosen.price} камней" : $"Продать · {chosen.price} камней", right, () =>
                 {
                     session.SellGu(uid);
                     Redraw();
-                }, UiKit.HexKind.Main, 13, 54);
+                }, dear ? UiKit.HexKind.Bad : UiKit.HexKind.Main, 13, 54);
+
+                if (dear)
+                {
+                    sell.Held(1.2f);
+                }
             }
             else
             {

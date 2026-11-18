@@ -251,6 +251,12 @@ namespace GuWorld.Core
         /// <summary>Checks every achievement not yet had (cheap: a few dozen comparisons).</summary>
         public void Achieve()
         {
+            // A save the developer's commands touched earns no achievements (they would not be honest).
+            if (Has("dev_used"))
+            {
+                return;
+            }
+
             foreach (var achievement in Codex.Achievements)
             {
                 if (State.Achievements.Contains(achievement.Id) || Progress(achievement) < achievement.Goal)
