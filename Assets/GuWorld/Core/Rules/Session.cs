@@ -289,7 +289,7 @@ namespace GuWorld.Core
         public void Tick(float dt, bool sprinting = false)
         {
             State.PlayedSeconds += dt;
-            State.Essence = Math.Min(Stats.MaxEssence, State.Essence + Stats.EssenceRegen * dt);
+            State.Essence = Math.Min(Stats.MaxEssence, State.Essence + Stats.EssenceRegen * dt * (Meditating ? 4 : 1));
 
             if (sprinting)
             {
@@ -626,6 +626,9 @@ namespace GuWorld.Core
         }
 
         public bool Dead => State.Health <= 0;
+
+        /// <summary>The hero sits in meditation (Y, or at the spring): the essence flows four times faster, wounds heal twice as fast.</summary>
+        public bool Meditating { get; set; }
 
         /// <summary>The developer's immortality (/god): blows still land, but no lower than one.</summary>
         public bool Godmode { get; set; }

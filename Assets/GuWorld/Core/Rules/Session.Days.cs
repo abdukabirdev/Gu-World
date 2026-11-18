@@ -36,7 +36,7 @@ namespace GuWorld.Core
 
                 if (woundClock >= 0.25f)
                 {
-                    HealWounds(woundClock);
+                    HealWounds(woundClock * (Meditating ? 2 : 1));
                     woundClock = 0;
                 }
             }

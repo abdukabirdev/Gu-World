@@ -28,6 +28,7 @@ namespace GuWorld.Actors
             A("guard", "Блок", Key.LeftCtrl), A("sprint", "Бежать быстрее", Key.LeftShift), A("roll", "Перекат", Key.LeftAlt),
             A("jump", "Прыжок", Key.Space), A("target", "Держать цель", Key.Tab), A("heal", "Пилюля заживления", Key.H),
             A("absorb", "Впитать камень", Key.G), A("use", "Говорить, взять, открыть", Key.T),
+            A("meditate", "Медитация: сесть · встать", Key.Y),
         };
 
         static Action A(string id, string name, Key key) => new Action { Id = id, Name = name, Default = key, Key = key };

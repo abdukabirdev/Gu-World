@@ -170,12 +170,20 @@ namespace GuWorld.Actors
             }
 
             Aura(dt);
+            Session.Meditating = mode == Mode.Sitting;
 
             switch (mode)
             {
                 case Mode.Sitting:
                     Walk(Vector3.zero, dt);
                     Animate("sit", 0.35f);
+
+                    // Meditation ends with its key or a step.
+                    if (free && (Bindings.Down("meditate") || Keys.Move.sqrMagnitude > 0.1f))
+                    {
+                        Sit(false);
+                    }
+
                     break;
                 case Mode.Free:
                     Free(dt, free);
@@ -407,6 +415,19 @@ namespace GuWorld.Actors
             else if (Bindings.Down("move")) { TryKillerMove(); }
             // The next killer move ready.
             else if (Bindings.Down("next_move")) { NextKillerMove(); }
+
+            if (Bindings.Down("meditate"))
+            {
+                if (Game.Fighting)
+                {
+                    Note("Не время садиться: враг рядом");
+                }
+                else
+                {
+                    Sit(true);
+                    Note("Медитация: эссенция течёт вчетверо быстрее, раны заживают вдвое быстрее");
+                }
+            }
 
             if (Bindings.Down("heal"))
             {
