@@ -16,7 +16,7 @@ namespace GuWorld.UI
     /// </summary>
     public partial class Ui : MonoBehaviour
     {
-        public enum Page { None, Title, Loading, Talk, Aperture, Bag, Journal, Map, Shop, Gamble, Board, Fusion, Spring, Pause, Help, Death, Ending, Choice, Dialogue, Alchemy, Bounties, Codex, Clans, Travel, Inn, Settings, Moves, Sandbox, Paths, Home, Treasury, NewPath, NewHero, Slots, About, Console, Dev, Status }
+        public enum Page { None, Title, Loading, Talk, Aperture, Bag, Journal, Map, Shop, Gamble, Board, Fusion, Spring, Pause, Help, Death, Ending, Choice, Dialogue, Alchemy, Bounties, Codex, Clans, Travel, Inn, Settings, Moves, Sandbox, Paths, Home, Treasury, NewPath, NewHero, Slots, About, Console, Dev, Status, Splash }
 
         public Page Open { get; private set; } = Page.Title;
 
@@ -58,7 +58,7 @@ namespace GuWorld.UI
 
         // ------------------------------------------------------------------ Pages
 
-        static bool Stops(Page page) => page != Page.None && page != Page.Talk && page != Page.Dialogue && page != Page.Spring && page != Page.Title && page != Page.Loading && page != Page.NewPath && page != Page.NewHero && page != Page.Slots && page != Page.About && page != Page.Console;
+        static bool Stops(Page page) => page != Page.None && page != Page.Talk && page != Page.Dialogue && page != Page.Spring && page != Page.Title && page != Page.Loading && page != Page.NewPath && page != Page.NewHero && page != Page.Slots && page != Page.About && page != Page.Console && page != Page.Splash;
 
         public void Show(Page page)
         {
@@ -105,6 +105,7 @@ namespace GuWorld.UI
                 case Page.Console: ConsolePage(); break;
                 case Page.Dev: DevPage(); break;
                 case Page.Status: StatusPage(); break;
+                case Page.Splash: SplashPage(); break;
                 case Page.Loading: LoadingPage(); break;
                 case Page.Talk: TalkPage(); break;
                 case Page.Aperture: AperturePage(); break;
@@ -183,6 +184,7 @@ namespace GuWorld.UI
         void Update()
         {
             TickFps();
+            TickSaving();
             TickLoading();
             TickHud();
             DevTick();

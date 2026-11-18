@@ -288,7 +288,7 @@ namespace GuWorld
             Sound.AudioDirector.Make(transform);
             Ui = new GameObject("Interface").AddComponent<Ui>();
             Ui.transform.SetParent(transform, false);
-            Ui.Show(Ui.Page.Title);
+            Ui.Show(AutoTest.On ? Ui.Page.Title : Ui.Page.Splash);
 
             if (AutoTest.On)
             {
@@ -358,6 +358,7 @@ namespace GuWorld
                 }
 
                 File.Move(fresh, path);
+                Ui?.Saved();
             }
             catch (System.Exception error)
             {
