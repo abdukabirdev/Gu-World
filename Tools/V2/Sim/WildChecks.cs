@@ -72,5 +72,43 @@ static partial class Program
         }
 
         Check(caught > 230 && caught < 330, $"a rank one Gu is caught about seven times in ten at rank one ({caught} of 400)");
+
+        // Herbs over the mountain.
+        foreach (Biome biome in Enum.GetValues(typeof(Biome)))
+        {
+            foreach (var (item, _) in Forage.GrowsIn(biome))
+            {
+                Check(ItemBook.Get(item) != null, $"forage: {item} is a thing that exists");
+            }
+        }
+
+        var patches = new List<ThingDef>();
+
+        for (var cz = -60; cz <= 60; cz++)
+        {
+            for (var cx = -60; cx <= 60; cx++)
+            {
+                var patch = Forage.Patch(cx, cz, ByBand);
+
+                if (patch != null)
+                {
+                    patches.Add(patch);
+                }
+            }
+        }
+
+        var rare = new HashSet<string> { "ginseng", "cloud_tea", "spirit_moss", "frost_lotus", "blood_vine" };
+        Check(patches.Count > 121 * 121 * 0.45f && patches.Count < 121 * 121 * 0.65f, $"a little over half the cells have a herb patch ({patches.Count})");
+        Check(patches.Where(p => Math.Sqrt(p.At.X * p.At.X + p.At.Z * p.At.Z) < 1000).All(p => !rare.Contains(p.Content)), "no rare herbs near the village");
+        Check(patches.Any(p => rare.Contains(p.Content)), "rare herbs far from it");
+        var one = patches[0];
+        var back = Forage.FromId(one.Id);
+        Check(back != null && back.Content == one.Content && back.At.X == one.At.X && back.Kind == ThingKind.Herb, "a patch is found again by its key");
+        var g = new Session(Session.NewGame("Травник"), 9);
+        var had = g.Count(one.Content);
+        Check(g.UseThing(one.Id).Ok && g.Count(one.Content) > had && g.Count(one.Content) <= had + 3, "gathering a patch gives one to three");
+        Check(!g.UseThing(one.Id).Ok && !g.ForageOut(one.Id), "a patch gathered is bare");
+        g.State.Day += 3;
+        Check(g.ForageOut(one.Id), "and grows back in a day or two");
     }
 }

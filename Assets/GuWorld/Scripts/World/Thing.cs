@@ -424,7 +424,12 @@ namespace GuWorld.World
                     {
                         Sound.AudioDirector.Play("pick", transform.position);
                         regrow = Def.Regrow > 0 ? Def.Regrow : 99999;
-                        Population.Picked(Def.Id, regrow);
+
+                        // The mountain's own patches grow back by the game's days (the session keeps them, ForageField shows them).
+                        if (!Def.Id.StartsWith(Core.Forage.Prefix))
+                        {
+                            Population.Picked(Def.Id, regrow);
+                        }
                         body.SetActive(false);
                         Effects.Burst(transform.position + Vector3.up * 0.5f, new Color(0.7f, 1f, 0.8f), 1.2f, 0.3f);
                     }

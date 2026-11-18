@@ -475,6 +475,13 @@ namespace GuWorld.Core
         {
             var thing = Atlas.Thing(id);
 
+            if (thing == null && id != null && id.StartsWith(Forage.Prefix))
+            {
+                var patch = Forage.FromId(id);
+
+                return patch == null ? new Use { Message = "" } : GatherPatch(patch);
+            }
+
             if (thing == null)
             {
                 return new Use { Message = "" };
