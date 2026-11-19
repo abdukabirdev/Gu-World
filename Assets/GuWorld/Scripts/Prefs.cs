@@ -41,6 +41,8 @@ namespace GuWorld
         public static int TextSpeed { get => Int("gw2.textspeed", 1); set => Int("gw2.textspeed", value, true); }
         /// <summary>The interface's own sounds (pointing, choosing).</summary>
         public static bool UiSounds { get => Bool("gw2.uisounds", true); set => Bool("gw2.uisounds", value, true); }
+        /// <summary>How loud the interface's own sounds are (0–1).</summary>
+        public static float UiVolume { get => Float("gw2.uivolume", 1); set => Float("gw2.uivolume", value, true); }
 
         /// <summary>The camera's field of view, degrees.</summary>
         public static float Fov { get => Float("gw2.fov", 58); set => Float("gw2.fov", value, true); }
@@ -116,7 +118,7 @@ namespace GuWorld
 
         public static void ResetSound()
         {
-            Delete("gw2.background", "gw2.uisounds");
+            Delete("gw2.background", "gw2.uisounds", "gw2.uivolume");
             Sound.AudioDirector.SetVolumes(0.9f, 0.9f, 0.55f, 0.7f);
         }
 

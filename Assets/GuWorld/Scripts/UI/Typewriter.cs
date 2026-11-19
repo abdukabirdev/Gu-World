@@ -76,20 +76,20 @@ namespace GuWorld.UI
 
         public static void Hover()
         {
-            if (!Prefs.UiSounds || Time.unscaledTime - lastHover < 0.06f)
+            if (!Prefs.UiSounds || Prefs.UiVolume <= 0.01f || Time.unscaledTime - lastHover < 0.06f)
             {
                 return;
             }
 
             lastHover = Time.unscaledTime;
-            Sound.AudioDirector.Play("hover", null, 0.22f);
+            Sound.AudioDirector.Play("hover", null, 0.22f * Prefs.UiVolume);
         }
 
         public static void Click()
         {
-            if (Prefs.UiSounds)
+            if (Prefs.UiSounds && Prefs.UiVolume > 0.01f)
             {
-                Sound.AudioDirector.Play("click", null, 0.4f);
+                Sound.AudioDirector.Play("click", null, 0.4f * Prefs.UiVolume);
             }
         }
     }

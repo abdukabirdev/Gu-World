@@ -293,6 +293,8 @@ namespace GuWorld.UI
                 v => Sound.AudioDirector.SetVolumes(Sound.AudioDirector.Master, Sound.AudioDirector.Effects, Sound.AudioDirector.MusicVolume, v));
             Choice(list, "Звук в фоне", "Когда окно игры не впереди", new[] { "Как есть", "Тише", "Нет" }, Prefs.Background, i => Prefs.Background = i);
             Switch(list, "Звуки интерфейса", "Наведение и выбор в меню и на страницах", Prefs.UiSounds, on => Prefs.UiSounds = on);
+            var ui = Slide(list, "Громкость интерфейса", "Наведение и щелчки · отпустите — прозвучит проба", 0, 1, Prefs.UiVolume, v => $"{v * 100:0}%", v => Prefs.UiVolume = v);
+            ui.gameObject.AddComponent<OnRelease>().Released = UiSound.Click;
         }
 
         void InterfaceTab(RectTransform list)
