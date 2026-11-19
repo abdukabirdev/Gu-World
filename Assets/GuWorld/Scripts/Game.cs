@@ -615,6 +615,7 @@ namespace GuWorld
             WeatherFx.Make(world.transform);
             WildGuField.Make(world.transform);
             ForageField.Make(world.transform);
+            BanditField.Make(world.transform);
             Ui.LoadingProgress(0.96f, "Звери и герой");
             yield return null;
             spawns = world.AddComponent<Spawns>();

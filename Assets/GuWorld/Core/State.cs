@@ -93,6 +93,8 @@ namespace GuWorld.Core
         public List<Tally> WildTaken = new List<Tally>();
         /// <summary>Herb patches gathered: the patch's key and the day it has grown back.</summary>
         public List<Tally> ForageTaken = new List<Tally>();
+        /// <summary>Bandits' ambushes beaten (ROADMAP 12.9): the spot's key and the day it is manned again.</summary>
+        public List<Tally> BanditsBeaten = new List<Tally>();
         /// <summary>The hour of the day, 0–24.</summary>
         public float Hour = 9;
 

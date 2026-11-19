@@ -95,3 +95,62 @@ static partial class Program
         Check(Machine.Preset("NVIDIA GeForce RTX 4080", 16384, 4000, 16) == 0 && Machine.Preset("Anything", 4096, 16000, 2) == 0, "too little memory or too few cores: the minimum");
     }
 }
+
+static partial class Program
+{
+    /// <summary>The bandits' ambushes in the wild (ROADMAP 12.9).</summary>
+    static void BanditRules()
+    {
+        var spots = new List<BanditSpot>();
+
+        for (var cz = -24; cz <= 24; cz++)
+        {
+            for (var cx = -24; cx <= 24; cx++)
+            {
+                var spot = Bandits.Spot(cx, cz, false);
+
+                if (spot != null)
+                {
+                    spots.Add(spot);
+                    var again = Bandits.Spot(cx, cz, false);
+                    Check(again.Key == spot.Key && again.X == spot.X && again.Members.Length == spot.Members.Length, "a cell's band is the same every time");
+                }
+            }
+        }
+
+        float Far(BanditSpot s) => (float)Math.Sqrt(s.X * s.X + s.Z * s.Z);
+        Check(spots.Count > 20, $"there are bands about the mountain ({spots.Count})");
+        Check(spots.All(s => Far(s) >= Bandits.Bands[0]), "none in the Gu Yue valley");
+        Check(spots.All(s => Bandits.Clear(s.X, s.Z)), "none in a village or at a named place");
+        Check(spots.All(s => s.Members.All(m => Bestiary.Get(m) != null)), "every bandit exists in the bestiary");
+        var near = spots.Where(s => s.Band == 0).ToList();
+        var deep = spots.Where(s => s.Band == 3).ToList();
+        Check(near.Count > 0 && deep.Count > 0, "bands near the valley and in the wild lands");
+        int Strength(BanditSpot s) => s.Members.Max(m => Bestiary.Get(m).Level);
+        Check(near.All(s => Strength(s) < deep.Min(d => Strength(d))), "the deeper, the stronger");
+        var thinner = 0;
+
+        for (var cz = -24; cz <= 24; cz++)
+        {
+            for (var cx = -24; cx <= 24; cx++)
+            {
+                var spot = Bandits.Spot(cx, cz, true);
+                thinner += spot != null && spot.Band <= 1 ? 1 : 0;
+            }
+        }
+
+        Check(thinner < spots.Count(s => s.Band <= 1), "with the Black Tail dead the nearer bands thin out");
+
+        // Out, beaten, resting.
+        var s0 = new Session(Session.NewGame("Путник"), 9);
+        var one = near.First();
+        Check(s0.BanditsOut(one), "a band waits for a hero the bandits hate");
+        Check(s0.BanditSpotOf(one.Key)?.Key == one.Key && s0.BanditSpotOf("wolves:1:2") == null, "a band's id leads back to its spot");
+        s0.BanditsBeaten(one);
+        Check(!s0.BanditsOut(one), "a band beaten is not there");
+        s0.State.Day += 6;
+        Check(s0.BanditsOut(one), "…and is back some days later");
+        s0.ChangeReputation("bandit", 200, true);
+        Check(!s0.BanditsOut(one), "a hero the bandits do not hate is let be");
+    }
+}
