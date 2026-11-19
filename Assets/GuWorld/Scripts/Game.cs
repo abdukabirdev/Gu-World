@@ -326,6 +326,7 @@ namespace GuWorld
 
         void Awake()
         {
+            ErrorLog.Start();
             AutoTest.Detect();
             Quality.Load();
             Prefs.ApplyScreen();

@@ -20,6 +20,9 @@ namespace GuWorld.World
         /// <summary>Where the camera is (F5 turns through them, ROADMAP 12.2): behind the right shoulder, the hero's own eyes, behind the left shoulder.</summary>
         public enum View { Behind, FirstPerson, OtherShoulder }
 
+        Vector3 lastHeroAt;
+        float heroSpeed, bobPhase, bobWeight;
+
         public View Mode { get; private set; } = View.Behind;
         /// <summary>The eyes' view is in use now (it gives way to the shoulder in talks and when the hero is down).</summary>
         bool firstNow;
@@ -167,10 +170,27 @@ namespace GuWorld.World
                 view.fieldOfView = eyes ? Mathf.Min(110, Prefs.Fov + 8) : Prefs.Fov;
             }
 
+            // How fast the hero goes over the ground (for the bob of the steps).
+            var flat = hero.transform.position - lastHeroAt;
+            flat.y = 0;
+            heroSpeed = Mathf.Lerp(heroSpeed, dt > 0 ? flat.magnitude / dt : 0, 1 - Mathf.Exp(-10 * dt));
+            lastHeroAt = hero.transform.position;
+
             if (eyes)
             {
                 var look = Quaternion.Euler(pitch, yaw, 0);
                 var at1 = hero.transform.position + Vector3.up * 1.62f + Quaternion.Euler(0, yaw, 0) * Vector3.forward * 0.12f;
+
+                // The steps bob the view (ROADMAP 12.2): up and down twice a stride, side to side once; as much as the settings allow.
+                var stepping = hero.Grounded && heroSpeed > 0.6f && heroSpeed < 20;
+                bobWeight = Mathf.Lerp(bobWeight, stepping ? Mathf.Clamp01(heroSpeed / 6) : 0, 1 - Mathf.Exp(-8 * dt));
+                bobPhase += dt * Mathf.Lerp(6.5f, 10.5f, Mathf.Clamp01((heroSpeed - 2) / 5));
+                var bob = Prefs.HeadBob * bobWeight;
+
+                if (bob > 0.001f)
+                {
+                    at1 += Vector3.up * (Mathf.Sin(bobPhase * 2) * 0.04f * bob) + Quaternion.Euler(0, yaw, 0) * Vector3.right * (Mathf.Sin(bobPhase) * 0.025f * bob);
+                }
 
                 if (shake > 0.001f)
                 {

@@ -148,6 +148,12 @@ namespace GuWorld.UI
             Choice(list, "Автосохранение", "Игра сохраняется сама, при паузе и при выходе", new[] { "30 с", "2 мин", "5 мин" },
                 Math.Max(0, Array.IndexOf(Prefs.AutosaveChoices, Prefs.Autosave)), i => Prefs.Autosave = Prefs.AutosaveChoices[i]);
 
+            Section(list, "Файлы");
+            var saves = Row(list, "Сохранения и настройки", Application.persistentDataPath);
+            UiKit.HexButton("Открыть папку", saves, () => ErrorLog.Open(Application.persistentDataPath), UiKit.HexKind.Ghost, 11, 40).Size(40, 200, 0);
+            var log = Row(list, "Журнал ошибок", ErrorLog.Count == 0 ? "В этом запуске ошибок нет. Если что-то сломается — пришлите файл из этой папки" : $"В этом запуске ошибок: {ErrorLog.Count}. Пришлите файл {System.IO.Path.GetFileName(ErrorLog.File)} из этой папки");
+            UiKit.HexButton("Открыть папку", log, () => ErrorLog.Open(ErrorLog.Folder), UiKit.HexKind.Ghost, 11, 40).Size(40, 200, 0);
+
             if (InGame)
             {
                 Section(list, "Опасно");
@@ -167,6 +173,7 @@ namespace GuWorld.UI
             Switch(list, "Инверсия по вертикали", "Мышь вверх — камера вниз", Prefs.InvertY, on => Prefs.InvertY = on);
             Slide(list, "Поле зрения", "Шире — больше видно, сильнее искажение по краям", 50, 100, Prefs.Fov, v => $"{v:0}°", v => { Prefs.Fov = Mathf.Round(v); Game.Rig?.Dress(); });
             Slide(list, "Тряска камеры", "От ударов и взрывов", 0, 1, Prefs.CameraShake, v => $"{v * 100:0}%", v => Prefs.CameraShake = v);
+            Slide(list, "Покачивание головы", "Вид глазами героя (F5): шаги качают взгляд", 0, 1, Prefs.HeadBob, v => $"{v * 100:0}%", v => Prefs.HeadBob = v);
             Choice(list, "Бег во весь дух", "Удерживать клавишу — или нажать раз: бег до остановки", new[] { "Удерживать", "Переключать" }, Prefs.SprintToggle ? 1 : 0, i => Prefs.SprintToggle = i == 1);
             Choice(list, "Захват цели", "Нажать — взять и отпустить цель; или держать, пока клавиша нажата", new[] { "Нажатием", "Удержанием" }, Prefs.TargetHold ? 1 : 0, i => Prefs.TargetHold = i == 1);
 
@@ -287,8 +294,8 @@ namespace GuWorld.UI
         {
             Slide(list, "Размер HUD", "Полосы, слоты, задание", 0.8f, 1.3f, Prefs.HudScale, v => $"{v * 100:0}%", v => Prefs.HudScale = Mathf.Round(v * 20) / 20);
             Slide(list, "Прозрачность HUD", "Насколько он плотный", 0.4f, 1, Prefs.HudOpacity, v => $"{v * 100:0}%", v => Prefs.HudOpacity = v);
-            Switch(list, "Компас", "Полоса сторон света вверху экрана · появится в следующем шаге", Prefs.Compass, on => Prefs.Compass = on);
-            Switch(list, "Миникарта", "Круг местности в углу · появится в следующем шаге", Prefs.Minimap, on => Prefs.Minimap = on);
+            Switch(list, "Компас", "Полоса сторон света вверху экрана: задание, фонари, деревни, набеги", Prefs.Compass, on => Prefs.Compass = on);
+            Switch(list, "Миникарта", "Круг местности в углу: враги рядом, фонари, задание, набеги", Prefs.Minimap, on => Prefs.Minimap = on);
             Switch(list, "Крупный текст в разговорах", "Реплики и ответы крупнее", Prefs.LargeText, on => Prefs.LargeText = on);
         }
 
@@ -296,6 +303,7 @@ namespace GuWorld.UI
         {
             Switch(list, "Без вспышек", "Красная вспышка раны тише", Prefs.NoFlashes, on => Prefs.NoFlashes = on);
             Slide(list, "Тряска камеры", "От ударов и взрывов", 0, 1, Prefs.CameraShake, v => $"{v * 100:0}%", v => Prefs.CameraShake = v);
+            Slide(list, "Покачивание головы", "Если от вида глазами героя укачивает — уберите до нуля", 0, 1, Prefs.HeadBob, v => $"{v * 100:0}%", v => Prefs.HeadBob = v);
             Switch(list, "Цвета для дальтоников", "Добро — голубое, вред — оранжевый; значки эффектов различаются ещё и формой рамки", Prefs.ColourBlind, on => Prefs.ColourBlind = on);
         }
 

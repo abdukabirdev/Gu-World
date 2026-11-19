@@ -59,9 +59,17 @@ namespace GuWorld.UI
         Text moveSeal;
         readonly List<Floating> numbers = new List<Floating>();
         readonly List<OverBar> overBars = new List<OverBar>();
-        readonly List<(Text text, float age)> toasts = new List<(Text, float)>();
+        /// <summary>The lines at the bottom left (ROADMAP 3.1): at most three at once, the rest wait their turn; a line said again is counted, not repeated.</summary>
+        readonly List<(Text text, float age, string line, int count)> toasts = new List<(Text, float, string, int)>();
+        readonly Queue<string> toastsWaiting = new Queue<string>();
+        const int ToastsShown = 3;
+        bool errorTold;
+        const float ToastLife = 5;
         readonly Queue<(string label, string title)> banners = new Queue<(string, string)>();
         float bannerAge = 99;
+        /// <summary>How long the banner up now stays: shorter when more wait behind it.</summary>
+        float bannerHold = 3;
+        string bannerNow = "";
 
         static Meter MakeMeter(Transform parent, float width, float height, Color from, Color to, bool valued)
         {
@@ -227,26 +235,70 @@ namespace GuWorld.UI
             // The console keeps what happened too (the developer's log).
             LogEvent(line);
 
-            if (toasts.Count > 0 && toasts[toasts.Count - 1].text.text == line && toasts[toasts.Count - 1].age < 1)
+            // Said again while it is up: counted («×3») and kept up longer.
+            for (var i = 0; i < toasts.Count; i++)
             {
+                var (shown, age, said, count) = toasts[i];
+
+                if (said == line)
+                {
+                    count++;
+                    shown.text = $"{line}  ×{count}";
+                    toasts[i] = (shown, Mathf.Min(age, 1), said, count);
+
+                    return;
+                }
+            }
+
+            // Three up already: it waits, and the oldest makes way sooner.
+            if (toasts.Count >= ToastsShown)
+            {
+                if (toastsWaiting.Count < 12 && !toastsWaiting.Contains(line))
+                {
+                    toastsWaiting.Enqueue(line);
+                }
+
+                var (first, firstAge, firstLine, firstCount) = toasts[0];
+                toasts[0] = (first, Mathf.Max(firstAge, ToastLife - 0.8f), firstLine, firstCount);
+
                 return;
             }
 
+            ShowToast(line);
+        }
+
+        void ShowToast(string line)
+        {
             var text = UiKit.Label(line, toastRoot, 15, UiKit.Text).Shadowed();
             text.Size(22);
-            toasts.Add((text, 0));
-
-            while (toasts.Count > 7)
-            {
-                Destroy(toasts[0].text.gameObject);
-                toasts.RemoveAt(0);
-            }
+            toasts.Add((text, 0, line, 1));
         }
 
         public void Banner(string label, string title)
         {
-            banners.Enqueue((label, title));
             LogEvent($"{label}: {title}");
+
+            // The same news up or waiting already: once is enough.
+            if (bannerNow == label + "\n" + title && bannerAge < bannerHold)
+            {
+                return;
+            }
+
+            foreach (var (waitingLabel, waitingTitle) in banners)
+            {
+                if (waitingLabel == label && waitingTitle == title)
+                {
+                    return;
+                }
+            }
+
+            banners.Enqueue((label, title));
+
+            // The oldest news gives way when much comes at once.
+            while (banners.Count > 4)
+            {
+                banners.Dequeue();
+            }
         }
 
         public void Place(string name) => Toast("— " + name + " —");
@@ -328,32 +380,47 @@ namespace GuWorld.UI
             hudFade.alpha = Mathf.Clamp(Prefs.HudOpacity, 0.3f, 1);
             hudStage.Zoom = Mathf.Clamp(Prefs.HudScale, 0.7f, 1.4f);
 
-            // The banner: one at a time, each for three seconds.
+            // The banner: one at a time, three seconds each (two when more wait), never two over each other.
             bannerAge += dt;
 
-            if (bannerAge > 3.2f && banners.Count > 0 && Open == Page.None)
+            if (bannerAge > bannerHold + 0.2f && banners.Count > 0 && Open == Page.None)
             {
                 var (label, title) = banners.Dequeue();
                 bannerLabel.text = label.ToUpperInvariant();
                 bannerTitle.text = title;
                 bannerTitle.fontSize = title.Length > 34 ? 26 : title.Length > 22 ? 34 : 46;
+                bannerNow = label + "\n" + title;
+                bannerHold = banners.Count > 0 ? 2.2f : 3;
                 bannerAge = 0;
             }
 
-            bannerGroup.alpha = Mathf.Clamp01(Mathf.Min(bannerAge / 0.3f, (3 - bannerAge) / 0.6f));
+            bannerGroup.alpha = Mathf.Clamp01(Mathf.Min(bannerAge / 0.3f, (bannerHold - bannerAge) / 0.6f));
 
             for (var i = toasts.Count - 1; i >= 0; i--)
             {
-                var (text, age) = toasts[i];
+                var (text, age, line, count) = toasts[i];
                 age += dt;
-                toasts[i] = (text, age);
-                text.color = new Color(text.color.r, text.color.g, text.color.b, Mathf.Clamp01((5 - age) / 0.8f));
+                toasts[i] = (text, age, line, count);
+                text.color = new Color(text.color.r, text.color.g, text.color.b, Mathf.Clamp01(Mathf.Min(age / 0.2f, (ToastLife - age) / 0.8f)));
 
-                if (age > 5)
+                if (age > ToastLife)
                 {
                     Destroy(text.gameObject);
                     toasts.RemoveAt(i);
                 }
+            }
+
+            // The first error of a run: where its log is (ROADMAP 9).
+            if (ErrorLog.TakeUnseen() > 0 && !errorTold)
+            {
+                errorTold = true;
+                Toast("Случилась ошибка — она записана в журнал (Настройки → Игра → «Журнал ошибок»)");
+            }
+
+            // The waiting lines take the places freed.
+            while (toasts.Count < ToastsShown && toastsWaiting.Count > 0)
+            {
+                ShowToast(toastsWaiting.Dequeue());
             }
 
             var session = S;
