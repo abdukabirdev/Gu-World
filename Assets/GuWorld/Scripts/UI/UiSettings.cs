@@ -348,6 +348,7 @@ namespace GuWorld.UI
         {
             Slide(list, "Размер HUD", "Полосы, слоты, задание", 0.8f, 1.3f, Prefs.HudScale, v => $"{v * 100:0}%", v => Prefs.HudScale = Mathf.Round(v * 20) / 20);
             Slide(list, "Прозрачность HUD", "Насколько он плотный", 0.4f, 1, Prefs.HudOpacity, v => $"{v * 100:0}%", v => Prefs.HudOpacity = v);
+            Switch(list, "Прятать HUD в покое", "Полосы, слоты и задание уходят, когда нет боя и всё полно; возвращаются при угрозе, ране или трате. Сообщения остаются", Prefs.HudCalm, on => Prefs.HudCalm = on);
             Switch(list, "Компас", "Полоса сторон света вверху экрана: задание, фонари, деревни, набеги", Prefs.Compass, on => Prefs.Compass = on);
             Switch(list, "Миникарта", "Круг местности в углу: враги рядом, фонари, задание, набеги", Prefs.Minimap, on => Prefs.Minimap = on);
             Switch(list, "Часы и погода", "Над миникартой: знак неба, час, погода, день", Prefs.Clock, on => Prefs.Clock = on);

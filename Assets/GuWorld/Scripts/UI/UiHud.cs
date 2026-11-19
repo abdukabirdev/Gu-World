@@ -48,6 +48,9 @@ namespace GuWorld.UI
 
         RectTransform hudRoot, floats;
         CanvasGroup hudFade;
+        /// <summary>What fades away while all is calm (a setting): the hero's bars, the slots, the quest.</summary>
+        readonly System.Collections.Generic.List<CanvasGroup> calmParts = new System.Collections.Generic.List<CanvasGroup>();
+        float calmShown = 1, calmFor;
         DesignStage hudStage;
         Meter health, essence, stamina, insight, bossBar;
         Text heroName, heroRank, stones, pills, questTitle, questStep, promptText, bossName, bossTitle, markText, bannerLabel, bannerTitle, effects;
@@ -150,6 +153,7 @@ namespace GuWorld.UI
             // The hero.
             var hero = UiKit.Rect("Hero", stage);
             hero.TopLeft(40, 32, 460, 222);
+            calmParts.Add(hero.gameObject.AddComponent<CanvasGroup>());
             var column = hero.Stack<VerticalLayoutGroup>(5);
             column.childForceExpandWidth = false;
             heroName = UiKit.Disp("", hero, 26, UiKit.Text).Shadowed();
@@ -176,6 +180,7 @@ namespace GuWorld.UI
 
             // The Gu in the slots.
             var slots = UiKit.Rect("Slots", stage);
+            calmParts.Add(slots.gameObject.AddComponent<CanvasGroup>());
             slots.At(new Vector2(0.5f, 0), new Vector2(0, 64), new Vector2(680, 72));
             var slotRow = slots.Stack<HorizontalLayoutGroup>(14, null, TextAnchor.MiddleCenter);
             slotRow.childForceExpandWidth = false;
@@ -220,6 +225,7 @@ namespace GuWorld.UI
 
             // The quest in hand.
             questRoot = UiKit.Rect("Quest", stage);
+            calmParts.Add(questRoot.gameObject.AddComponent<CanvasGroup>());
             questRoot.TopRight(40, 36, 380, 150);
             questRoot.Stack<VerticalLayoutGroup>(6, null, TextAnchor.UpperRight);
             UiKit.Lbl("Задание · J", questRoot, 11, UiKit.LabelGold, 0.3f, TextAnchor.MiddleRight).Shadowed().Size(14);
@@ -435,6 +441,21 @@ namespace GuWorld.UI
             // The HUD as the settings have it: how big, how solid.
             hudFade.alpha = Mathf.Clamp(Prefs.HudOpacity, 0.3f, 1);
             hudStage.Zoom = Mathf.Clamp(Prefs.HudScale, 0.7f, 1.4f);
+
+            // Calm (a setting): no beast after the hero, nothing hurt or spent, no target, a while since the last blow —
+            // the bars, the slots and the quest go after three seconds of it; anything else brings them back at once.
+            var calmSession = Game.Session;
+            var calmHero = Game.Hero;
+            var calmNow = Prefs.HudCalm && calmSession != null && calmHero != null && calmHero.Alive && !Game.Fighting && calmHero.Target == null && calmHero.SinceFight > 6
+                && calmSession.State.Health >= calmSession.Stats.MaxHealth - 0.5f && calmSession.State.Essence >= calmSession.Stats.MaxEssence * 0.98f
+                && calmSession.Stamina >= calmSession.Stats.StaminaMax - 0.5f && calmSession.Wounds.Count == 0;
+            calmFor = calmNow ? calmFor + dt : 0;
+            calmShown = Mathf.MoveTowards(calmShown, calmFor > 3 ? 0 : 1, dt * (calmFor > 3 ? 0.9f : 5));
+
+            foreach (var part in calmParts)
+            {
+                part.alpha = calmShown;
+            }
 
             // The banner: one at a time, three seconds each (two when more wait), never two over each other.
             bannerAge += dt;
