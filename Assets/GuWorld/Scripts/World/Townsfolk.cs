@@ -45,8 +45,9 @@ namespace GuWorld.World
             root.transform.SetParent(parent, false);
             var folk = root.AddComponent<Townsfolk>();
             folk.walkers.AddRange(plan.Walkers);
-            folk.reach = Quality.Level >= 2 ? 95 : Quality.Level == 1 ? 70 : 45;
-            folk.most = Quality.Level >= 2 ? 48 : Quality.Level == 1 ? 28 : 14;
+            // The tier's own, times the settings' share (Settings → Picture → «Люди»).
+            folk.reach = (Quality.Level >= 2 ? 95 : Quality.Level == 1 ? 70 : 45) * Quality.People;
+            folk.most = Mathf.RoundToInt((Quality.Level >= 2 ? 48 : Quality.Level == 1 ? 28 : 14) * Quality.People);
 
             return folk;
         }

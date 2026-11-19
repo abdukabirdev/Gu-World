@@ -268,6 +268,8 @@ namespace GuWorld.UI
                 v => { var n = Quality.Now; n.Trees = Mathf.Round(v * 20) / 20; Quality.Change(n); });
             Slide(list, "Трава", "Густота и дальность травы · сменится при загрузке мира", 0.3f, 1.6f, Quality.Grass, v => $"{v * 100:0}%",
                 v => { var n = Quality.Now; n.Grass = Mathf.Round(v * 20) / 20; Quality.Change(n); });
+            Slide(list, "Люди", "Сколько горожан видно и как далеко · сменится при загрузке мира", 0.5f, 1.5f, Quality.People, v => $"{v * 100:0}%",
+                v => { var n = Quality.Now; n.People = Mathf.Round(v * 20) / 20; Quality.Change(n); });
             Choice(list, "Модель героя", "Полная — 626 тыс. треугольников, средняя — 70 тыс. · сменится при загрузке мира", new[] { "По уровню", "Полная", "Средняя" }, Mathf.Clamp(now.Hero, 0, 2),
                 i => { var n = Quality.Now; n.Hero = i; Quality.Change(n); });
             Choice(list, "Детализация мира", InGame ? "Лес, трава, люди, рельеф — перестроятся при загрузке" : "Лес, трава, люди, рельеф", new[] { "Лёгкая", "Обычная", "Высокая" }, now.Tier, i =>
