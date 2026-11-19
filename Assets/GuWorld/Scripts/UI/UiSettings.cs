@@ -183,13 +183,17 @@ namespace GuWorld.UI
             {
                 var id = action.Id;
                 var waiting = rebinding == id;
-                var row = Row(list, action.Name, action.Key != action.Default ? $"изменено · было {Bindings.Label(action.Default)}" : null);
+                // A key the game uses for something fixed (walking, a page): both would happen at once.
+                var clash = Bindings.ClashOf(action.Key);
+                var hint = clash != "" ? $"<color=#{ColorUtility.ToHtmlStringRGB(Accessible.Harm)}>занята: {clash} — выберите другую</color>"
+                    : action.Key != action.Default ? $"изменено · было {Bindings.Label(action.Default)}" : null;
+                var row = Row(list, action.Name, hint);
                 var key = UiKit.HexButton(waiting ? "…нажмите" : Bindings.Label(action.Key), row, () => { rebinding = id; Redraw(); },
-                    waiting ? UiKit.HexKind.Solid : UiKit.HexKind.Ghost, 12, 40);
+                    waiting ? UiKit.HexKind.Solid : clash != "" ? UiKit.HexKind.Bad : UiKit.HexKind.Ghost, 12, 40);
                 key.Size(40, 200, 0);
             }
 
-            Para("ЛКМ — удар, ПКМ — перекат, колесо — дистанция и цель, WASD — идти: эти пока не меняются. Esc отменяет ожидание клавиши.", list, 13, UiKit.Muted);
+            Para("ЛКМ — удар, ПКМ — перекат, колесо — дистанция и цель, WASD — идти, буквы страниц (K U P I J M B L O) и F-клавиши: эти пока не меняются. Клавиша, уже занятая другим действием, переходит к нему в обмен. Esc отменяет ожидание клавиши.", list, 13, UiKit.Muted);
         }
 
         void KeyCaught(Key key)

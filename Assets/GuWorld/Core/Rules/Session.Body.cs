@@ -14,6 +14,22 @@ namespace GuWorld.Core
     /// </summary>
     public static class Body
     {
+        /// <summary>
+        /// What a healer asks to treat all the hero's wounds (ROADMAP 12.4): by kind and how bad — a bruise
+        /// is cheap, a broken bone dear — and dearer on the harder paths. 0 when there is nothing to treat.
+        /// </summary>
+        public static int TreatPrice(SaveData state)
+        {
+            var sum = 0f;
+
+            foreach (var wound in state.Wounds)
+            {
+                sum += (wound.Kind == WoundKind.Bruise ? 3 : wound.Kind == WoundKind.Cut ? 6 : wound.Kind == WoundKind.Burn ? 8 : 20) * wound.Severity;
+            }
+
+            return sum <= 0 ? 0 : Math.Max(5, (int)Math.Round(sum * DifficultyRules.Prices(state.Settings.Difficulty)));
+        }
+
         public static readonly Trait[] Traits = { Trait.Strength, Trait.Agility, Trait.Endurance, Trait.Toughness };
         public static readonly BodyPart[] Parts = { BodyPart.Head, BodyPart.Torso, BodyPart.LeftArm, BodyPart.RightArm, BodyPart.LeftLeg, BodyPart.RightLeg };
 
@@ -343,6 +359,28 @@ namespace GuWorld.Core
 
             Recompute();
             Changed?.Invoke();
+        }
+
+        /// <summary>What the healer asks now for all the wounds.</summary>
+        public int TreatPrice => Body.TreatPrice(State);
+
+        /// <summary>A healer treats every wound for her price. False if there is none, or the stones are short.</summary>
+        public bool TreatAll()
+        {
+            var price = TreatPrice;
+
+            if (State.Wounds.Count == 0 || State.Stones < price)
+            {
+                return false;
+            }
+
+            State.Stones -= price;
+            State.Wounds.Clear();
+            Recompute();
+            Say($"Раны перевязаны: −{price} камней");
+            Touch();
+
+            return true;
         }
 
         /// <summary>A healing pill's touch: the lightest wound loses a day of healing (a bruise or a cut usually closes).</summary>

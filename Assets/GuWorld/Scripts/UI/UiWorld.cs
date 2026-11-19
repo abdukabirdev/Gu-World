@@ -204,7 +204,7 @@ namespace GuWorld.UI
                 var inside = answerRow.Stack<HorizontalLayoutGroup>(12, new RectOffset(16, 14, 0, 0), TextAnchor.MiddleLeft);
                 inside.childForceExpandWidth = false;
                 UiKit.Key($"{i + 1}", answerRow, answer.Enabled ? UiKit.Gold : UiKit.Muted);
-                UiKit.Label(answer.Text, answerRow, 17, answer.Enabled ? UiKit.Text : UiKit.Muted).Size(38, -1, 1);
+                UiKit.Label(Words.Fill(answer.Text, S.State), answerRow, 17, answer.Enabled ? UiKit.Text : UiKit.Muted).Size(38, -1, 1);
 
                 if (!answer.Enabled && answer.Why != "")
                 {

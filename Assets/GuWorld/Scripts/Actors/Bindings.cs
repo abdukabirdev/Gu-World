@@ -82,6 +82,22 @@ namespace GuWorld.Actors
 
         public static string LabelOf(string id) => Label(KeyOf(id));
 
+        /// <summary>
+        /// Keys the game uses that are not rebound here (walking, the pages, the function keys): an action bound
+        /// to one of them clashes — both happen at once. The settings mark such a key (ROADMAP 2.7).
+        /// </summary>
+        public static readonly Dictionary<Key, string> Fixed = new Dictionary<Key, string>
+        {
+            [Key.W] = "идти", [Key.A] = "идти", [Key.S] = "идти", [Key.D] = "идти",
+            [Key.K] = "апертура", [Key.U] = "приёмы", [Key.P] = "пути", [Key.I] = "сумка", [Key.J] = "журнал",
+            [Key.M] = "карта", [Key.B] = "кодекс", [Key.L] = "кланы", [Key.O] = "статус",
+            [Key.F3] = "отладка", [Key.F5] = "вид", [Key.F7] = "хитбоксы", [Key.F10] = "панель",
+            [Key.Slash] = "консоль", [Key.Backquote] = "консоль", [Key.Escape] = "меню",
+        };
+
+        /// <summary>What else a key does, if it is one of the fixed ones ("" if it clashes with nothing).</summary>
+        public static string ClashOf(Key key) => Fixed.TryGetValue(key, out var what) ? what : "";
+
         /// <summary>Binds an action to a key; an action that had the key takes the old one.</summary>
         public static void Bind(string id, Key key)
         {

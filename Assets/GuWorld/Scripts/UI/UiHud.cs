@@ -51,7 +51,7 @@ namespace GuWorld.UI
         DesignStage hudStage;
         Meter health, essence, stamina, insight, bossBar;
         Text heroName, heroRank, stones, pills, questTitle, questStep, promptText, bossName, bossTitle, markText, bannerLabel, bannerTitle, effects;
-        RectTransform promptRoot, bossRoot, questRoot, markRoot, targetMark, bannerRoot, toastRoot;
+        RectTransform promptRoot, bossRoot, questRoot, markRoot, markArrow, targetMark, bannerRoot, toastRoot;
         CanvasGroup bannerGroup;
         readonly Cell[] slotCells = new Cell[6];
         readonly Text[] slotSeals = new Text[6];
@@ -214,6 +214,10 @@ namespace GuWorld.UI
             gem.rectTransform.At(new Vector2(0.5f, 1), new Vector2(0, -9), new Vector2(18, 18));
             markText = UiKit.Label("", markRoot, 13, UiKit.GoldText, TextAnchor.LowerCenter).Shadowed();
             markText.rectTransform.Fill();
+            // Held to the edge when the place is off the screen: an arrow says which way (ROADMAP 3.1).
+            markArrow = UiKit.Image("Edge", markRoot, UiKit.GoldLit, UiKit.Arrow).rectTransform;
+            markArrow.sizeDelta = new Vector2(16, 16);
+            markArrow.gameObject.SetActive(false);
             targetMark = UiKit.Image("Target", floats, UiKit.Danger, UiKit.Diamond).rectTransform;
             targetMark.sizeDelta = new Vector2(14, 14);
             var dot = UiKit.Image("Aim", floats, new Color(1, 1, 1, 0.45f), UiKit.Disc);
@@ -522,10 +526,23 @@ namespace GuWorld.UI
                         }
 
                         var margin = new Vector2(70, 70);
+                        var free = flat;
                         flat.x = Mathf.Clamp(flat.x, margin.x, Screen.width - margin.x);
                         flat.y = Mathf.Clamp(flat.y, margin.y + 90, Screen.height - margin.y - 40);
                         markRoot.position = flat;
                         markText.text = $"{Mathf.RoundToInt(distance)} м";
+
+                        // Off the screen: the arrow beside the mark points on toward the place.
+                        var atEdge = screen.z < 0 || (free - flat).sqrMagnitude > 1;
+                        markArrow.gameObject.SetActive(atEdge);
+
+                        if (atEdge)
+                        {
+                            var way = (free - centre).normalized;
+                            markArrow.anchorMin = markArrow.anchorMax = new Vector2(0.5f, 0.5f);
+                            markArrow.anchoredPosition = new Vector2(0, -9) + way * 26;
+                            markArrow.localRotation = Quaternion.Euler(0, 0, -Mathf.Atan2(way.x, way.y) * Mathf.Rad2Deg);
+                        }
                     }
                 }
             }

@@ -60,7 +60,7 @@ namespace GuWorld.Core
             },
             new NpcDef
             {
-                Id = "herbalist", Name = "Гу Юэ Яо", Title = "Лекарка", Look = "herbalist", At = new MapPoint(37, 32), Facing = 270,
+                Id = "herbalist", Name = "Гу Юэ Яо", Title = "Лекарка", Look = "herbalist", At = new MapPoint(37, 32), Facing = 270, Dialogue = "herbalist",
                 Barks = new[] { "Пилюли у Баошаня. Он берёт у меня и продаёт вдвое.", "Орхидеи у опушки рви с корнем — тогда вырастут снова." }
             },
             new NpcDef

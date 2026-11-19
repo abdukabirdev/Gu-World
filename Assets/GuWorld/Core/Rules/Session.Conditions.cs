@@ -53,6 +53,8 @@ namespace GuWorld.Core
             {
                 case "night": return Night;
                 case "day": return !Night;
+                case "wounded": return State.Wounds.Count > 0;
+                case "can_treat": return State.Wounds.Count > 0 && State.Stones >= TreatPrice;
             }
 
             var colon = condition.IndexOf(':');
@@ -188,6 +190,16 @@ namespace GuWorld.Core
                     case "rank": return $"Нужен {number}-й ранг";
                     case "step": return $"Нужна ступень {number}";
                 }
+            }
+
+            if (condition == "can_treat")
+            {
+                return $"Нужно {TreatPrice} камней";
+            }
+
+            if (condition == "wounded")
+            {
+                return "Ран нет";
             }
 
             return "Пока недоступно";
@@ -339,6 +351,10 @@ namespace GuWorld.Core
                 case "heal":
                     Restore();
                     Touch();
+                    break;
+
+                case "treat_wounds":
+                    TreatAll();
                     break;
 
                 case "sleep":

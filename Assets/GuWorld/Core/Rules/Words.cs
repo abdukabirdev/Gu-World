@@ -40,7 +40,9 @@ namespace GuWorld.Core
                 .Replace("{bowl}", Bowl(talent))
                 .Replace("{elder_eyes}", ElderEyes(talent, state.ExtremePhysique))
                 .Replace("{elder_well}", high ? "Глубокий колодец — ещё не вода. Носить её придётся, как всем." : "Колодец мелок — значит, будешь носить воду чаще других.")
-                .Replace("{instructor}", high ? "Не задирай нос." : "Ничего.");
+                .Replace("{instructor}", high ? "Не задирай нос." : "Ничего.")
+                .Replace("{treat_price}", Body.TreatPrice(state).ToString())
+                .Replace("{treat_cost}", Body.TreatPrice(state) > 0 ? $" ({Body.TreatPrice(state)} камней)" : "");
         }
 
         static string Bowl(float talent) =>

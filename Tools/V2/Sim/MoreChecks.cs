@@ -12,7 +12,7 @@ using GuWorld.Core;
 static partial class Program
 {
     static readonly string[] ConditionKinds = { "flag", "quest", "done", "gu", "visited", "codex", "pill", "rep", "item", "kills", "standing" };
-    static readonly string[] EffectKinds = { "flag", "unflag", "give", "take", "stones", "rep", "quest", "learn", "insight", "gu", "codex", "heal", "sleep", "shop", "gamble", "board", "fight", "alchemy", "travel" };
+    static readonly string[] EffectKinds = { "flag", "unflag", "give", "take", "stones", "rep", "quest", "learn", "insight", "gu", "codex", "heal", "treat_wounds", "sleep", "shop", "gamble", "board", "fight", "alchemy", "travel" };
 
     static bool Known(string id) => ItemBook.Get(id) != null || GuBook.Get(id) != null;
 

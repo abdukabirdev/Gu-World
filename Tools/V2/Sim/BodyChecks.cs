@@ -87,3 +87,42 @@ static partial class Program
         Check(god.Wounds.Count == 0, "no wounds under /god");
     }
 }
+
+static partial class Program
+{
+    /// <summary>The village's healer (ROADMAP 12.4): her price by the wounds, treating all of them, her answer only when there is something to treat.</summary>
+    static void HealerRules()
+    {
+        var s = new Session(Session.NewGame("Раненый"), 6);
+        Check(s.TreatPrice == 0 && !s.TreatAll(), "nothing to treat: no price, no treatment");
+        s.AddWound(BodyPart.LeftLeg, WoundKind.Fracture, 1);
+        s.AddWound(BodyPart.Torso, WoundKind.Bruise, 1);
+        var price = s.TreatPrice;
+        Check(price >= 5, $"a broken leg and a bruise have a price ({price})");
+        s.State.Stones = price - 1;
+        Check(!s.TreatAll() && s.Wounds.Count == 2, "short of stones: nothing treated");
+        Check(s.Explain("can_treat") == $"Нужно {price} камней", "the answer says how many stones are needed");
+        s.State.Stones = price + 10;
+        var slowed = s.LegFactor;
+        Check(s.Meets("can_treat") && s.TreatAll(), "with the stones she treats");
+        Check(s.Wounds.Count == 0 && s.State.Stones == 10 && s.LegFactor >= slowed, "every wound gone, the price paid, the leg whole");
+
+        var hard = new Session(Session.NewGame("Раненый", Difficulty.Impossible, null, 0), 6);
+        var easy = new Session(Session.NewGame("Раненый", Difficulty.Normal, null, 0), 6);
+        hard.AddWound(BodyPart.Torso, WoundKind.Burn, 1);
+        easy.AddWound(BodyPart.Torso, WoundKind.Burn, 1);
+        Check(hard.TreatPrice >= easy.TreatPrice, "dearer on the harder paths");
+
+        // Her conversation: the treatment answer, and the price in its words.
+        var run = new Session(Session.NewGame("Гость"), 7);
+        var talk = run.TalkTo("herbalist");
+        Check(talk != null && talk.Dialogue != null, "the healer has a conversation");
+        Check(talk.Dialogue.Answers.Any(a => a.Text.StartsWith("Перевяжите") && !a.Enabled && a.Why == "Ран нет"), "unhurt: the answer is shown, closed");
+        run.AddWound(BodyPart.RightArm, WoundKind.Cut, 2);
+        run.State.Stones = 500;
+        var again = run.Converse("herbalist");
+        var index = again.Answers.FindIndex(a => a.Text.StartsWith("Перевяжите") && a.Enabled);
+        Check(index >= 0 && Words.Fill(again.Answers[index].Text, run.State).Contains($"({run.TreatPrice} камней)"), "hurt: open, with her price in the words");
+        Check(again.Choose(index) && run.Wounds.Count == 0, "choosing it treats the wounds");
+    }
+}
