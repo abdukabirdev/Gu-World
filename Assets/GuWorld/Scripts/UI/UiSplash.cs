@@ -46,7 +46,8 @@ namespace GuWorld.UI
             breathe.High = 0.9f;
             Appear(holder.gameObject, 2.8f, 0.6f);
 
-            stage.gameObject.AddComponent<SplashWait>().Done = () => Show(Page.Title);
+            // The very first run: the picture's level and the brightness before the menu.
+            stage.gameObject.AddComponent<SplashWait>().Done = () => Show(Prefs.FirstRunDone ? Page.Title : Page.FirstRun);
         }
 
         /// <summary>Fades a part in after a delay (its own CanvasGroup).</summary>

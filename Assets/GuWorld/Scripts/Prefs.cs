@@ -47,6 +47,8 @@ namespace GuWorld
         /// <summary>How much blows shake the camera, 0…1.</summary>
         public static float CameraShake { get => Float("gw2.shake", 1); set => Float("gw2.shake", value, true); }
         /// <summary>How much the view bobs with the steps from the hero's eyes (0–1; weak by default).</summary>
+        /// <summary>The first run's page (the picture's level, the brightness) has been passed.</summary>
+        public static bool FirstRunDone { get => Bool("gw2.firstrun", false); set => Bool("gw2.firstrun", value, true); }
         public static float HeadBob { get => Float("gw2.headbob", 0.3f); set => Float("gw2.headbob", value, true); }
 
         // ------------------------------------------------------------------ Picture
