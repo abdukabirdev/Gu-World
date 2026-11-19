@@ -282,12 +282,12 @@ namespace GuWorld.UI
 
         void SoundTab(RectTransform list)
         {
-            Slide(list, "Общая громкость", "Всё сразу", 0, 1, Sound.AudioDirector.Master, v => $"{v * 100:0}%",
-                v => Sound.AudioDirector.SetVolumes(v, Sound.AudioDirector.Effects, Sound.AudioDirector.MusicVolume, Sound.AudioDirector.Beds));
+            Volume(list, "Общая громкость", "Всё сразу · отпустите — прозвучит проба", Sound.AudioDirector.Master,
+                v => Sound.AudioDirector.SetVolumes(v, Sound.AudioDirector.Effects, Sound.AudioDirector.MusicVolume, Sound.AudioDirector.Beds), "palm");
             Slide(list, "Музыка", "Деревня, бой, меню", 0, 1, Sound.AudioDirector.MusicVolume, v => $"{v * 100:0}%",
                 v => Sound.AudioDirector.SetVolumes(Sound.AudioDirector.Master, Sound.AudioDirector.Effects, v, Sound.AudioDirector.Beds));
-            Slide(list, "Удары и Гу", "Бой, приёмы, интерфейс", 0, 1, Sound.AudioDirector.Effects, v => $"{v * 100:0}%",
-                v => Sound.AudioDirector.SetVolumes(Sound.AudioDirector.Master, v, Sound.AudioDirector.MusicVolume, Sound.AudioDirector.Beds));
+            Volume(list, "Удары и Гу", "Бой, приёмы, интерфейс · отпустите — прозвучит проба", Sound.AudioDirector.Effects,
+                v => Sound.AudioDirector.SetVolumes(Sound.AudioDirector.Master, v, Sound.AudioDirector.MusicVolume, Sound.AudioDirector.Beds), "cast_moon");
             Slide(list, "Окружение", "Ветер, вода, лес, рынок", 0, 1, Sound.AudioDirector.Beds, v => $"{v * 100:0}%",
                 v => Sound.AudioDirector.SetVolumes(Sound.AudioDirector.Master, Sound.AudioDirector.Effects, Sound.AudioDirector.MusicVolume, v));
             Choice(list, "Звук в фоне", "Когда окно игры не впереди", new[] { "Как есть", "Тише", "Нет" }, Prefs.Background, i => Prefs.Background = i);
@@ -367,12 +367,20 @@ namespace GuWorld.UI
         }
 
         /// <summary>A slider (its number beside it changes as it moves; the page is not built again).</summary>
-        static void Slide(RectTransform list, string name, string hint, float min, float max, float value, Func<float, string> show, Action<float> change)
+        static Slider Slide(RectTransform list, string name, string hint, float min, float max, float value, Func<float, string> show, Action<float> change)
         {
             var row = Row(list, name, hint);
             var holder = UiKit.Rect("Slider", row);
             holder.Size(48, 360, 0);
-            UiKit.Slider(holder, min, max, Mathf.Clamp(value, min, max), show, change);
+
+            return UiKit.Slider(holder, min, max, Mathf.Clamp(value, min, max), show, change);
+        }
+
+        /// <summary>A volume slider: when it is let go, a sound at the new loudness (ROADMAP 2.7.4).</summary>
+        static void Volume(RectTransform list, string name, string hint, float value, Action<float> change, string sample)
+        {
+            var slider = Slide(list, name, hint, 0, 1, value, v => $"{v * 100:0}%", change);
+            slider.gameObject.AddComponent<OnRelease>().Released = () => Sound.AudioDirector.Play(sample, null, 0.8f, 0);
         }
 
         /// <summary>A choice turned through with ‹ and ›: the value in gold between them.</summary>
@@ -384,6 +392,14 @@ namespace GuWorld.UI
             UiKit.Label(show(options[at]), row, 16, UiKit.GoldText, TextAnchor.MiddleCenter).Size(40, 220, 0);
             UiKit.HexButton("›", row, () => { pick((at + 1) % count); Game.Ui.Redraw(); }, UiKit.HexKind.Ghost, 14, 40).Size(40, 56, 0);
         }
+    }
+
+    /// <summary>Calls back when the pointer lets go of the thing (a slider let go).</summary>
+    public class OnRelease : MonoBehaviour, UnityEngine.EventSystems.IPointerUpHandler
+    {
+        public Action Released;
+
+        public void OnPointerUp(UnityEngine.EventSystems.PointerEventData data) => Released?.Invoke();
     }
 
     /// <summary>Waits for the next key pressed (a key being bound) and hands it on; Esc hands on Escape (cancel).</summary>
