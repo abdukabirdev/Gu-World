@@ -74,6 +74,8 @@ namespace GuWorld
         public static int FpsCap { get => Int("gw2.fpscap", 0); set { Int("gw2.fpscap", value, true); ApplyScreen(); } }
         public static bool ShowFps { get => Bool("gw2.showfps", false); set => Bool("gw2.showfps", value, true); }
         /// <summary>Brightness, 0.6…1.4 (the post-processing's exposure; from the medium preset up).</summary>
+        /// <summary>The glow of light (bloom), 0 none … 1.5; from the medium preset up.</summary>
+        public static float Bloom { get => Float("gw2.bloom", 1); set { Float("gw2.bloom", value, true); Game.Rig?.Dress(); } }
         public static float Brightness { get => Float("gw2.brightness", 1); set { Float("gw2.brightness", value, true); Game.Rig?.Dress(); } }
 
         // ------------------------------------------------------------------ Sound
@@ -117,8 +119,9 @@ namespace GuWorld
 
         public static void ResetPicture()
         {
-            Delete("gw2.window", "gw2.resolution", "gw2.vsync", "gw2.fpscap", "gw2.showfps", "gw2.brightness");
-            Quality.Set(SystemInfo.graphicsMemorySize >= 3500 ? 3 : 2);
+            Delete("gw2.window", "gw2.resolution", "gw2.vsync", "gw2.fpscap", "gw2.showfps", "gw2.brightness", "gw2.bloom");
+            // Back to the level the machine was given at first (Core.Machine).
+            Quality.Set(Core.Machine.Preset(SystemInfo.graphicsDeviceName, SystemInfo.graphicsMemorySize, SystemInfo.systemMemorySize, SystemInfo.processorCount));
             ApplyScreen();
         }
 

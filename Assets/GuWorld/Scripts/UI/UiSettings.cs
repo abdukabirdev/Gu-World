@@ -287,6 +287,7 @@ namespace GuWorld.UI
 
             Switch(list, "Авто-детализация", "Трава, горожане и тени убавляются сами, если кадров мало", World.Governor.On, on => World.Governor.On = on);
             Slide(list, "Яркость", Quality.Level >= 1 ? "Экспозиция картинки" : "Работает от «Среднего» уровня", 0.6f, 1.4f, Prefs.Brightness, v => $"{v * 100:0}%", v => Prefs.Brightness = v);
+            Slide(list, "Свечение", Quality.Level >= 1 ? "Ореол света Гу, огней и луны" : "Работает от «Среднего» уровня", 0, 1.5f, Prefs.Bloom, v => v < 0.02f ? "нет" : $"{v * 100:0}%", v => Prefs.Bloom = v);
             Switch(list, "Показывать FPS", "Кадры в секунду в углу экрана", Prefs.ShowFps, on => Prefs.ShowFps = on);
         }
 

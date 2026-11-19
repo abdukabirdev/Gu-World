@@ -84,6 +84,12 @@ namespace GuWorld.World
             volume.enabled = Quality.Level >= 1;
             view.fieldOfView = firstNow ? Prefs.FovFirst : Prefs.Fov;
 
+            // The glow of the Gu's light, as the settings set it (0: none).
+            if (volume.profile != null && volume.profile.TryGet<Bloom>(out var glow))
+            {
+                glow.intensity.Override(0.9f * Mathf.Clamp(Prefs.Bloom, 0, 1.5f));
+            }
+
             // Brightness: the exposure, as the settings set it (the post-processing runs from the medium preset up).
             if (volume.profile != null && volume.profile.TryGet<ColorAdjustments>(out var adjust))
             {
