@@ -91,6 +91,9 @@ namespace GuWorld.UI
 
         public void On(Key key, Action act) => keys.Add((key, act));
 
+        /// <summary>Whether the page answers a key itself (the page's keyboard navigation then leaves it alone).</summary>
+        public bool Has(Key key) => keys.Exists(k => k.key == key);
+
         void Update()
         {
             var keyboard = Keyboard.current;

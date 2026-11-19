@@ -65,6 +65,8 @@ namespace UnityEngine.InputSystem
         public Controls.KeyControl tabKey => null;
         public Controls.KeyControl leftShiftKey => null;
         public Controls.KeyControl rightShiftKey => null;
+        /// <summary>Either shift (the real one is a synthetic button over both).</summary>
+        public Controls.ButtonControl shiftKey => null;
         public Controls.KeyControl leftCtrlKey => null;
         public Controls.KeyControl leftAltKey => null;
         public Controls.KeyControl upArrowKey => null;

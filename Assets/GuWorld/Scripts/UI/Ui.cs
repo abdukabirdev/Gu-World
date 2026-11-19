@@ -137,6 +137,59 @@ namespace GuWorld.UI
                 case Page.Ending: EndingPage(); break;
                 case Page.Choice: ChoicePage(); break;
             }
+
+            // The keyboard on the pages outside the game and the settings (ROADMAP 2.1); a menu of its own (MenuKeys) has its ↑↓ already.
+            if (Navigable(page) && pageRoot.GetComponentInChildren<MenuKeys>() == null)
+            {
+                var nav = new GameObject("Keyboard");
+                nav.transform.SetParent(pageRoot, false);
+                nav.AddComponent<PageNav>().Page = page;
+            }
+
+            Dip(was, page);
+        }
+
+        static bool Navigable(Page page) => page == Page.NewPath || page == Page.NewHero || page == Page.Slots || page == Page.Settings || page == Page.About ||
+                                            page == Page.FirstRun || page == Page.Death || page == Page.Ending;
+
+        /// <summary>The screens before the game, and the ones it opens on: a change between them dips through the dark (ROADMAP 2.1).</summary>
+        static bool Outside(Page page) => page == Page.Title || page == Page.NewPath || page == Page.NewHero || page == Page.Slots || page == Page.About ||
+                                          page == Page.FirstRun || page == Page.Settings && !Game.Playing || page == Page.Codex && !Game.Playing;
+
+        Coroutine dip;
+
+        /// <summary>
+        /// From one screen outside the game to another: the new one rises out of the dark in a third of a second.
+        /// Not when a page is only built again, not over a longer fade under way (loading, a door, a fall).
+        /// </summary>
+        void Dip(Page was, Page page)
+        {
+            if (was == page || !Outside(was) || !Outside(page) || (dip == null && fade.color.a > 0.05f))
+            {
+                return;
+            }
+
+            if (dip != null)
+            {
+                StopCoroutine(dip);
+            }
+
+            dip = StartCoroutine(Dipping());
+        }
+
+        IEnumerator Dipping()
+        {
+            const float seconds = 0.3f;
+
+            for (var t = 0f; t < seconds; t += Time.unscaledDeltaTime)
+            {
+                var k = 1 - t / seconds;
+                fade.color = new Color(0, 0, 0, 0.8f * k * k);
+                yield return null;
+            }
+
+            fade.color = new Color(0, 0, 0, 0);
+            dip = null;
         }
 
         /// <summary>Builds the open page again (something on it changed), keeping what was chosen.</summary>

@@ -60,7 +60,7 @@ namespace GuWorld.UI
             }
 
             UiKit.Header(stage, null, "Настройки", InGame ? "Этот компьютер · и правила этой игры" : "Хранятся на этом компьютере", tabs, LeaveSettings, null, "设");
-            UiKit.Footer(stage, new[] { ("Q E", "Раздел"), ("Esc", "Назад") });
+            UiKit.Footer(stage, new[] { ("↑↓", "Строка"), ("← →", "Значение"), ("Enter", "Взять"), ("Q E", "Раздел"), ("Esc", "Назад") });
             var body = UiKit.Rect("Body", stage);
             body.Place(Vector2.zero, Vector2.one, 56, 70, 56, 108);
 

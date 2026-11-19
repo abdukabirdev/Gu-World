@@ -300,6 +300,14 @@ namespace GuWorld.Sound
                 wanted = Music.MoodOf(settlement?.Clan ?? "", place != null && place.Cave, World.Atmosphere.Night, Game.Fighting, boss, sacred, forest);
             }
 
+            // While a game loads, the pieces it may open with are made beforehand, so the menu's theme hands over to one the moment the hero stands.
+            if (!Game.Playing && Game.Ui != null && Game.Ui.Open == UI.Ui.Page.Loading)
+            {
+                var day = session != null ? session.State.Day : 1;
+                Ask(Mood.Valley, 1 + day % 3);
+                Ask(Mood.Night, 1 + day % 3);
+            }
+
             if (wanted != mood || musicNow == "")
             {
                 mood = wanted;
@@ -311,6 +319,8 @@ namespace GuWorld.Sound
 
             if (key != musicNow && pieces.TryGetValue(key, out var clip))
             {
+                // From the menu's theme into the game (or back): a slow hand-over, not a cut.
+                handOver = musicNow.StartsWith("Title", System.StringComparison.Ordinal) != key.StartsWith("Title", System.StringComparison.Ordinal);
                 musicNow = key;
                 musicOnA = !musicOnA;
                 var source = musicOnA ? musicA : musicB;
@@ -320,18 +330,24 @@ namespace GuWorld.Sound
             }
         }
 
+        /// <summary>The music now crossing between the menu's theme and the game's: slower.</summary>
+        bool handOver;
+
         void MusicFade()
         {
-            var speed = mood == Mood.Combat || mood == Mood.Boss ? 0.8f : 0.3f;
+            var speed = mood == Mood.Combat || mood == Mood.Boss ? 0.8f : handOver ? 0.16f : 0.3f;
             var on = musicOnA ? musicA : musicB;
             var off = musicOnA ? musicB : musicA;
-            var want = MusicVolume * Master * (Game.Frozen && Game.Playing ? 0.5f : 1);
+            // Softer under a pause and while the world loads.
+            var loading = Game.Ui != null && Game.Ui.Open == UI.Ui.Page.Loading;
+            var want = MusicVolume * Master * (Game.Frozen && Game.Playing ? 0.5f : 1) * (loading ? 0.7f : 1);
             on.volume = Mathf.MoveTowards(on.volume, want, Time.unscaledDeltaTime * speed);
             off.volume = Mathf.MoveTowards(off.volume, 0, Time.unscaledDeltaTime * speed);
 
             if (off.volume <= 0 && off.isPlaying)
             {
                 off.Stop();
+                handOver = false;
             }
         }
 

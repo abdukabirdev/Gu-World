@@ -93,7 +93,7 @@ namespace GuWorld.UI
             UiKit.Label($"Выбрано: <color=#FFF1CF>{chosen.Name}</color> · талант {chosen.Grade} · {chosen.Talent * 100:0}%", foot, 15, UiKit.Muted).Size(52, -1, 1);
             UiKit.HexButton("К герою", foot, () => Show(Page.NewHero), UiKit.HexKind.Solid, 14, 52, "Enter").Size(52, 300, 0);
 
-            UiKit.Footer(stage, new[] { ("← →", "Путь"), ("Enter", "Дальше"), ("Esc", "Назад") });
+            UiKit.Footer(stage, new[] { ("← →", "Путь"), ("↑↓", "Правила"), ("Пробел", "Взять"), ("Enter", "Дальше"), ("Esc", "Назад") });
 
             var keys = stage.gameObject.AddComponent<PageKeys>();
             keys.On(Key.LeftArrow, () => PickPath(-1));
@@ -372,7 +372,7 @@ namespace GuWorld.UI
             UiKit.HexButton("Назад", foot, () => Show(Page.NewPath), UiKit.HexKind.Ghost, 13, 52, "Esc").Size(52, 190, 0);
             UiKit.HexButton("Начать путь", foot, BeginNewGame, UiKit.HexKind.Solid, 14, 52, "Enter").Size(52, 300, 0);
 
-            UiKit.Footer(stage, new[] { ("Enter", "Начать"), ("Esc", "Назад") });
+            UiKit.Footer(stage, new[] { ("↑↓←→", "Выбор"), ("Пробел", "Взять"), ("Enter", "Начать"), ("Esc", "Назад") });
 
             var keys = stage.gameObject.AddComponent<PageKeys>();
             keys.On(Key.Enter, BeginNewGame);
