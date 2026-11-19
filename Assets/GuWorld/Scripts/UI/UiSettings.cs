@@ -75,7 +75,8 @@ namespace GuWorld.UI
             Gap(aside, 6);
             Para("Каждая настройка действует сразу.", aside, 13, UiKit.Muted);
             Gap(aside, 10);
-            UiKit.HexButton("Вернуть как было", aside, ResetTab, UiKit.HexKind.Ghost, 12, 44).Size(44, 260, 0);
+            // A tab's own settings all go back at once: held, so a stray click undoes nothing (ROADMAP 2.12).
+            UiKit.HexButton("Удерживать — вернуть как было", aside, ResetTab, UiKit.HexKind.Ghost, 12, 44).Held(1.2f).Size(44, 320, 0);
 
             switch (settingsTab)
             {

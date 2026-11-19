@@ -408,14 +408,19 @@ namespace GuWorld.UI
                 Fact(column, "Камни", $"{cost.Stones}", session.State.Stones >= cost.Stones ? UiKit.GoldText : UiKit.Danger);
                 Fact(column, "Удача", $"{Mathf.RoundToInt(cost.Chance * 100)}%" + (gu.Tempered > 0 ? $" · неудач {gu.Tempered}" : ""), UiKit.Essence);
                 var why = session.WhyNoTemper(gu);
-                UiKit.HexButton("Закалить", column, () =>
+                // What tempering costs is gone whether it holds or not: held to confirm (ROADMAP 2.12).
+                var temper = UiKit.HexButton(why == null ? "Удерживать — закалить" : "Закалить", column, () =>
                 {
                     var result = session.Temper(uid);
                     Sound.AudioDirector.Play(result.Held ? "temper" : "temper_fail", null, 0.8f, 0);
                     Redraw();
                 }, why == null ? UiKit.HexKind.Main : UiKit.HexKind.Off, 13, 48);
 
-                if (why != null)
+                if (why == null)
+                {
+                    temper.Held(1.2f);
+                }
+                else
                 {
                     Para(why, column, 13, UiKit.Danger);
                 }
@@ -437,8 +442,16 @@ namespace GuWorld.UI
                     var row = UiKit.Rect("Affix", column);
                     row.Stack<HorizontalLayoutGroup>(8, null, TextAnchor.MiddleLeft).childForceExpandWidth = false;
                     row.Size(40);
-                    UiKit.Label(GuBook.AffixText(gu.Affixes[i]), row, 14, UiKit.SystemBlue).Size(40, 260, 0);
-                    UiKit.HexButton("Перековать", row, () => { session.Reforge(uid, at); Redraw(); }, session.WhyNoReforge(gu, at) == null ? UiKit.HexKind.Ghost : UiKit.HexKind.Off, 12, 36).Size(36, 130, 0);
+                    UiKit.Label(GuBook.AffixText(gu.Affixes[i]), row, 14, UiKit.SystemBlue).Size(40, 220, 0);
+                    // The old property is lost for a new one by chance: held to confirm.
+                    var ready = session.WhyNoReforge(gu, at) == null;
+                    var reforge = UiKit.HexButton(ready ? "Удерживать — перековать" : "Перековать", row, () => { session.Reforge(uid, at); Redraw(); }, ready ? UiKit.HexKind.Ghost : UiKit.HexKind.Off, 12, 36);
+                    reforge.Size(36, ready ? 210 : 130, 0);
+
+                    if (ready)
+                    {
+                        reforge.Held(1f);
+                    }
                 }
             }
 
@@ -448,7 +461,8 @@ namespace GuWorld.UI
 
             if (twins.Count > 0)
             {
-                UiKit.HexButton($"Поглотить двойника · мастерство +{Session.TwinMastery(twins[0])} (их {twins.Count})", column, () => { session.FeedTwin(uid); Redraw(); }, UiKit.HexKind.Ghost, 12, 42);
+                // The twin is gone for good: held to confirm.
+                UiKit.HexButton($"Удерживать — поглотить двойника · мастерство +{Session.TwinMastery(twins[0])} (их {twins.Count})", column, () => { session.FeedTwin(uid); Redraw(); }, UiKit.HexKind.Ghost, 12, 42).Held(1.2f);
             }
             else
             {
