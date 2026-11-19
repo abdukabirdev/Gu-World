@@ -175,7 +175,8 @@ namespace GuWorld.World
             }
 
             var head = hero.transform.position + Vector3.up * (hero.Sitting ? 1.0f : 1.55f);
-            focus = Vector3.Lerp(focus, head, 1 - Mathf.Exp(-18 * dt));
+            // How closely the view follows (a setting: tight … soft).
+            focus = Vector3.Lerp(focus, head, 1 - Mathf.Exp(-Mathf.Lerp(30, 6, Mathf.Clamp01(Prefs.CameraSmooth)) * dt));
 
             // The hero's own eyes: the camera at the head, the body seen only by its shadow; back to the shoulder in talks and when down.
             var eyes = Mode == View.FirstPerson && free && hero.Alive && !hero.Sitting;
