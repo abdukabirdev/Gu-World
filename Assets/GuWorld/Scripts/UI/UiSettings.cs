@@ -150,6 +150,13 @@ namespace GuWorld.UI
             }
 
             Switch(list, "Подсказки", "Строка совета о клавишах, пока вы их не освоили", Prefs.Hints, on => Prefs.Hints = on);
+
+            // The hints this game has shown, shown again from the start (ROADMAP 2.7.1).
+            if (Game.Playing && S.State.Hints != null && S.State.Hints.Count > 0)
+            {
+                var again = Row(list, "Показанные подсказки", $"Уже показано: {S.State.Hints.Count} из {Hints.All.Length}. Каждая появится снова, когда придёт её время");
+                UiKit.HexButton("Показать заново", again, () => { S.State.Hints.Clear(); Toast("Подсказки покажутся снова"); Redraw(); }, UiKit.HexKind.Ghost, 11, 40).Size(40, 200, 0);
+            }
             Choice(list, "Числа урона", "Над тем, по кому пришёлся удар", new[] { "Все", "По врагам", "Нет" }, Prefs.DamageNumbers, i => Prefs.DamageNumbers = i);
             Switch(list, "Слова реакций", "«Пар», «Раскол» над врагом", Prefs.ReactionWords, on => Prefs.ReactionWords = on);
             Choice(list, "Метка задания", "Ромб над местом задания и стрелка у края экрана", new[] { "В мире", "Компас", "Нет" }, Prefs.QuestMark, i => Prefs.QuestMark = i);
