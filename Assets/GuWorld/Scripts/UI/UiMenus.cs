@@ -185,6 +185,12 @@ namespace GuWorld.UI
             var hour = World.Atmosphere.Hour;
             UiKit.Label($"День {state.Day} · {(int)hour:00}:{(int)(hour % 1 * 60):00} · {Story.ChapterNames[S.Chapter]}", hero, 13, UiKit.Muted).Size(18);
 
+            // The title won by deeds, if any (ROADMAP 12.4).
+            if (S.Title != "")
+            {
+                UiKit.Label($"Титул: «{S.Title}»", hero, 13, UiKit.GoldText).Size(18);
+            }
+
             // What is in hand, at the right.
             var now = UiKit.Rect("Now", stage);
             now.Place(new Vector2(1, 0.5f), new Vector2(1, 0.5f), -420, -170, 72, -170);
