@@ -27,9 +27,12 @@ namespace GuWorld.UI
 
         enum EffectSort { Gift, Harm, Wound, Hunger, Stat }
 
+        RectTransform effectsRow;
+
         void BuildEffectsRow(RectTransform hero)
         {
             var row = UiKit.Rect("Effects", hero);
+            effectsRow = row;
             row.Size(46, 440, 0);
             var line = row.Stack<HorizontalLayoutGroup>(6, null, TextAnchor.MiddleLeft);
             line.childForceExpandWidth = false;
@@ -93,6 +96,17 @@ namespace GuWorld.UI
         /// <summary>The icons as things stand (called with the HUD's words, ten times a second).</summary>
         void TickEffectsRow(Session session)
         {
+            // Turned off in the settings (Interface): the row is not shown at all.
+            if (effectsRow != null && effectsRow.gameObject.activeSelf != Prefs.EffectsRow)
+            {
+                effectsRow.gameObject.SetActive(Prefs.EffectsRow);
+            }
+
+            if (!Prefs.EffectsRow)
+            {
+                return;
+            }
+
             var now = new List<(string key, string seal, EffectSort sort, float left)>();
 
             foreach (BuffKind kind in System.Enum.GetValues(typeof(BuffKind)))

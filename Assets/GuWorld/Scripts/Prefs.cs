@@ -97,6 +97,12 @@ namespace GuWorld
         public static bool Minimap { get => Bool("gw2.minimap", true); set => Bool("gw2.minimap", value, true); }
         /// <summary>The hour, the sky and the day by the minimap.</summary>
         public static bool Clock { get => Bool("gw2.clock", true); set => Bool("gw2.clock", value, true); }
+        /// <summary>The row of what weighs on the hero and what helps them (icons under the bars).</summary>
+        public static bool EffectsRow { get => Bool("gw2.effects", true); set => Bool("gw2.effects", value, true); }
+        /// <summary>The names of the people one can talk to, over their heads when near.</summary>
+        public static bool Names { get => Bool("gw2.names", true); set => Bool("gw2.names", value, true); }
+        /// <summary>Bars over the beasts: 0 the hurt ones and the target, 1 all that are near, 2 the target only, 3 none (a boss's bar stays).</summary>
+        public static int EnemyBars { get => Int("gw2.enemybars", 0); set => Int("gw2.enemybars", value, true); }
         /// <summary>Text to read bigger (ROADMAP 2.7.6): the conversations' words, the pages' paragraphs, the HUD's lines.</summary>
         public static bool LargeText { get => Bool("gw2.largetext", false); set => Bool("gw2.largetext", value, true); }
 
@@ -137,7 +143,7 @@ namespace GuWorld
 
         public static void ResetInterface()
         {
-            Delete("gw2.hudscale", "gw2.hudalpha", "gw2.compass", "gw2.minimap", "gw2.clock", "gw2.largetext", "gw2.noflash", "gw2.colourblind");
+            Delete("gw2.hudscale", "gw2.hudalpha", "gw2.compass", "gw2.minimap", "gw2.clock", "gw2.effects", "gw2.names", "gw2.enemybars", "gw2.largetext", "gw2.noflash", "gw2.colourblind");
         }
 
         // ------------------------------------------------------------------ The screen

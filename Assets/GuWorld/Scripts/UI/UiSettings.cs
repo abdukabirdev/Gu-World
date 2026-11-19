@@ -344,6 +344,9 @@ namespace GuWorld.UI
             Switch(list, "Компас", "Полоса сторон света вверху экрана: задание, фонари, деревни, набеги", Prefs.Compass, on => Prefs.Compass = on);
             Switch(list, "Миникарта", "Круг местности в углу: враги рядом, фонари, задание, набеги", Prefs.Minimap, on => Prefs.Minimap = on);
             Switch(list, "Часы и погода", "Над миникартой: знак неба, час, погода, день", Prefs.Clock, on => Prefs.Clock = on);
+            Switch(list, "Строка эффектов", "Значки под полосами: что помогает герою и что на нём висит", Prefs.EffectsRow, on => Prefs.EffectsRow = on);
+            Switch(list, "Имена над людьми", "Имя того, с кем можно говорить, над его головой, когда он рядом", Prefs.Names, on => Prefs.Names = on);
+            Choice(list, "Полоски врагов", "Над головой зверя: раненые и цель · все рядом · только цель · нет (полоса босса остаётся)", new[] { "Раненые", "Все", "Цель", "Нет" }, Prefs.EnemyBars, i => Prefs.EnemyBars = i);
         }
 
         void AccessTab(RectTransform list)

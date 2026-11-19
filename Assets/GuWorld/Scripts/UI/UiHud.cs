@@ -59,6 +59,7 @@ namespace GuWorld.UI
         Text moveSeal;
         readonly List<Floating> numbers = new List<Floating>();
         readonly List<OverBar> overBars = new List<OverBar>();
+        readonly List<Text> nameTags = new List<Text>();
         /// <summary>The lines at the bottom left (ROADMAP 3.1): at most three at once, the rest wait their turn; a line said again is counted, not repeated.</summary>
         readonly List<(Text text, float age, string line, int count)> toasts = new List<(Text, float, string, int)>();
         readonly Queue<string> toastsWaiting = new Queue<string>();
@@ -636,12 +637,17 @@ namespace GuWorld.UI
                 bossBar.Set(boss.Health / boss.MaxHealth);
             }
 
-            // Bars over those who are hurt or held as the target.
+            // Bars over the beasts, as the settings have it: the hurt ones and the target, all that are near, the target only, none.
             var used = 0;
+            var bars = Prefs.EnemyBars;
 
             foreach (var enemy in Enemy.Living)
             {
-                if (enemy.Def.Boss || (enemy.SinceHurt > 5 && enemy != hero.Target) || !OnScreen(camera, enemy.transform.position + Vector3.up * (enemy.Height + 0.35f), out var screen))
+                var shown = bars == 1 ? !enemy.Peaceful && hero.FlatDistance(enemy.transform.position) < 35 || enemy == hero.Target
+                    : bars == 2 ? enemy == hero.Target
+                    : bars == 0 && (enemy.SinceHurt <= 5 || enemy == hero.Target);
+
+                if (enemy.Def.Boss || !shown || !OnScreen(camera, enemy.transform.position + Vector3.up * (enemy.Height + 0.35f), out var screen))
                 {
                     continue;
                 }
@@ -666,6 +672,47 @@ namespace GuWorld.UI
             for (var i = used; i < overBars.Count; i++)
             {
                 overBars[i].Root.gameObject.SetActive(false);
+            }
+
+            // The names of the people near enough to talk to, fading in as the hero comes close.
+            var named = 0;
+
+            if (Prefs.Names && !Game.Talking)
+            {
+                foreach (var npc in World.Npc.All)
+                {
+                    if (npc == null || !npc.isActiveAndEnabled || npc.Def == null)
+                    {
+                        continue;
+                    }
+
+                    var distance = hero.FlatDistance(npc.transform.position);
+
+                    if (distance > 12 || !OnScreen(camera, npc.transform.position + Vector3.up * 2.15f, out var place))
+                    {
+                        continue;
+                    }
+
+                    if (named >= nameTags.Count)
+                    {
+                        var tag = UiKit.Label("", floats, Ui.Read(13), UiKit.GoldText, TextAnchor.MiddleCenter).Shadowed();
+                        tag.rectTransform.sizeDelta = new Vector2(260, 24);
+                        tag.raycastTarget = false;
+                        nameTags.Add(tag);
+                    }
+
+                    var label = nameTags[named++];
+                    label.gameObject.SetActive(true);
+                    label.text = npc.Def.Name;
+                    label.rectTransform.position = new Vector2(place.x, place.y);
+                    var c = label.color;
+                    label.color = new Color(c.r, c.g, c.b, Mathf.Clamp01((12 - distance) / 5));
+                }
+            }
+
+            for (var i = named; i < nameTags.Count; i++)
+            {
+                nameTags[i].gameObject.SetActive(false);
             }
 
             var target = hero.Target;
