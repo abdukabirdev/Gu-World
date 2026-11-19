@@ -157,6 +157,19 @@ namespace GuWorld.Core
         public List<int> Nursery = new List<int>();
         /// <summary>How the hero looks (chosen at a new game; a save from before has the model's own look).</summary>
         public Appearance Appearance = new Appearance();
+        /// <summary>The map's cells the hero has seen (Session.Explore: a bit a cell, base64; "" — none yet).</summary>
+        public string Explored = "";
+        /// <summary>The hero's own marks on the map.</summary>
+        public List<MapMark> Marks = new List<MapMark>();
+    }
+
+    /// <summary>A mark the player put on the map (right click), with an optional word.</summary>
+    [Serializable]
+    public class MapMark
+    {
+        public float X;
+        public float Z;
+        public string Name = "";
     }
 
     /// <summary>

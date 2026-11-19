@@ -104,6 +104,9 @@ namespace GuWorld.Core
             State.Nursery = State.Nursery ?? new List<int>();
             // A save from before the hero's looks were chosen wears the model's own; a look out of the tables is brought back into them.
             State.Appearance = Appearances.Clamp(State.Appearance);
+            State.Explored = State.Explored ?? "";
+            State.Marks = State.Marks ?? new List<MapMark>();
+            ExploreOldSave();
             // A game stopped inside the immortal aperture: its loans go back.
             DropBorrowed();
             State.Move = State.Move ?? "";

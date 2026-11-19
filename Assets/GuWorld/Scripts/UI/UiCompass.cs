@@ -450,6 +450,26 @@ namespace GuWorld.UI
                 dot.rectTransform.sizeDelta = new Vector2(7, 7);
             }
 
+            // The player's own marks from the map (gold).
+            foreach (var mark in session.State.Marks)
+            {
+                if (used >= minimapDots.Count)
+                {
+                    break;
+                }
+
+                if ((new Vector2(mark.X, mark.Z) - here).sqrMagnitude > MinimapReach * MinimapReach * 0.9f)
+                {
+                    continue;
+                }
+
+                var dot = minimapDots[used++];
+                dot.gameObject.SetActive(true);
+                dot.color = UiKit.GoldLit;
+                dot.rectTransform.anchoredPosition = OnMap(mark.X, mark.Z);
+                dot.rectTransform.sizeDelta = new Vector2(8, 8);
+            }
+
             // Wild Gu out near: small lights of their colour.
             if (WildGuField.Instance != null)
             {

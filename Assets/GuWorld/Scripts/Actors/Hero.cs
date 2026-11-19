@@ -1418,6 +1418,8 @@ namespace GuWorld.Actors
 
             placeWait = 0.5f;
             var point = new MapPoint(transform.position.x, transform.position.z);
+            // What the hero sees of the land goes on their map for good (farther from high ground).
+            Session.Explore(point.X, point.Z, Session.Sight * (1 + Mathf.Clamp01((transform.position.y - 200) / 800)));
             var settlement = Atlas.SettlementAt(point);
             var here = Atlas.PlaceAt(point);
             var id = settlement != null ? settlement.Id : here?.Id;

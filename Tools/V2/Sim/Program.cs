@@ -112,6 +112,7 @@ static partial class Program
         SaveRoundTrip();
         LookRules();
         RebindRules();
+        MapRules();
         var report = new List<string>();
 
         if (Array.IndexOf(args, "audio") >= 0 || Array.IndexOf(args, "all") >= 0)

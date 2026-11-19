@@ -713,6 +713,17 @@ namespace GuWorld.UI
             var picked = Story.Get(pickedQuest);
             UiKit.Lbl(picked.Main ? $"Глава {picked.Chapter} · {Story.ChapterNames[picked.Chapter]}" : "Поручение", right, 11, UiKit.LabelGold).Size(16);
             UiKit.Disp(picked.Title, right, 34, UiKit.Text).Size(42);
+
+            // Where its step leads, on the map (M).
+            if (session.MarkerOf(state, out var goal))
+            {
+                var showRow = UiKit.Rect("Show", right);
+                showRow.Size(40);
+                var showRowGroup = showRow.Stack<HorizontalLayoutGroup>(10, null, TextAnchor.MiddleLeft);
+                showRowGroup.childForceExpandWidth = false;
+                var target = goal;
+                UiKit.HexButton("Показать на карте", showRow, () => { mapFocus = target; mapPick = ("quest", pickedQuest, -1, target); Show(Page.Map); }, UiKit.HexKind.Ghost, 12, 40, "M").Size(40, 240, 0);
+            }
             UiKit.Rule(right);
             Para(picked.Summary, right, 16);
             Gap(right, 10);
@@ -817,133 +828,6 @@ namespace GuWorld.UI
             mapTexture.Apply();
 
             return mapTexture;
-        }
-
-        void MapPage()
-        {
-            var session = S;
-            var hero = Game.Hero;
-            var here = Atlas.PlaceAt(new MapPoint(hero.transform.position.x, hero.transform.position.z));
-            var body = Frame("图", "Карта", here != null ? here.Name : "Долина Цинмао", true, null, null, new[] { ("Q E", "Страницы"), ("Esc", "Закрыть") });
-            const float side = 700;
-            var frame = UiKit.Panel("Map", body, UiKit.Ink, UiKit.Gold.A(0.25f));
-            frame.rectTransform.At(new Vector2(0, 0.5f), new Vector2(side * 0.5f + 20, 0), new Vector2(side + 16, side + 16));
-            var picture = UiKit.Rect("Picture", frame.transform).gameObject.AddComponent<RawImage>();
-            picture.texture = MapTexture();
-            picture.rectTransform.Fill(8);
-            picture.raycastTarget = false;
-            var over = UiKit.Rect("Marks", frame.transform);
-            over.Fill(8);
-
-            Vector2 On(MapPoint point) => new Vector2((point.X + Ground.Half) / (Ground.Half * 2), (point.Z + Ground.Half) / (Ground.Half * 2));
-
-            foreach (var place in Valley.Places)
-            {
-                if (place.Id == "yard" || place.Id == "forest_edge" || (place.Cave && !session.Has(place.Id == "hermit_cave" ? "hermit_open" : "blood_open")) || (Ground.Big && place.Radius < 30))
-                {
-                    continue;
-                }
-
-                var label = UiKit.Lbl(place.Name, over, 10, UiKit.Hex(place.Colour), 0.1f, TextAnchor.MiddleCenter).Shadowed();
-                label.rectTransform.At(On(place.At), new Vector2(0, 12), new Vector2(220, 16));
-            }
-
-            if (Ground.Big)
-            {
-                // What the hero has not been to is not on their map — until the peak shows them the whole mountain.
-                var revealed = session.Has("map_revealed");
-
-                foreach (var settlement in Core.Regions.Settlements)
-                {
-                    if (!revealed && !session.InCodex("place:" + settlement.Id))
-                    {
-                        continue;
-                    }
-
-                    var label = UiKit.Lbl(settlement.Name, over, 10, UiKit.Hex(settlement.Colour), 0.1f, TextAnchor.MiddleCenter).Shadowed();
-                    label.rectTransform.At(On(settlement.At), new Vector2(0, 10), new Vector2(220, 16));
-                    var dot = UiKit.Image("Settlement", over, UiKit.Hex(settlement.Colour), UiKit.Diamond);
-                    dot.rectTransform.At(On(settlement.At), Vector2.zero, new Vector2(8, 8));
-                }
-
-                foreach (var place in Core.Regions.Places)
-                {
-                    if (!revealed && !session.InCodex("place:" + place.Id))
-                    {
-                        continue;
-                    }
-
-                    var label = UiKit.Lbl(place.Name, over, 9, UiKit.Hex(place.Colour).A(0.8f), 0.1f, TextAnchor.MiddleCenter).Shadowed();
-                    label.rectTransform.At(On(place.At), new Vector2(0, 10), new Vector2(220, 14));
-                }
-            }
-
-            foreach (var thing in Atlas.Things)
-            {
-                if (thing.Kind == ThingKind.Lantern && (Atlas.InValley(thing) || session.Lit(thing.Id)))
-                {
-                    var dot = UiKit.Image("Lantern", over, thing.Id == session.State.Lantern ? UiKit.Moon : session.Lit(thing.Id) ? UiKit.Moon.A(0.8f) : UiKit.Moon.A(0.3f), UiKit.Disc);
-                    dot.rectTransform.At(On(thing.At), Vector2.zero, new Vector2(7, 7));
-                }
-            }
-
-            // The side quests taken: small rings where their steps lead.
-            foreach (var taken in session.ActiveQuests())
-            {
-                if (taken != session.MainQuest && session.MarkerOf(taken, out var at))
-                {
-                    var small = UiKit.Image("Side", over, UiKit.Essence.A(0.8f), UiKit.Ring);
-                    small.rectTransform.At(On(at), Vector2.zero, new Vector2(14, 14));
-                }
-            }
-
-            var quest = session.MainQuest;
-
-            if (quest != null && session.MarkerOf(quest, out var mark))
-            {
-                var ring = UiKit.Image("Quest", over, UiKit.Gold, UiKit.Ring);
-                ring.rectTransform.At(On(mark), Vector2.zero, new Vector2(26, 26));
-                ring.gameObject.AddComponent<Pulse>();
-                var gem = UiKit.Image("Gem", over, UiKit.GoldLit, UiKit.Diamond);
-                gem.rectTransform.At(On(mark), Vector2.zero, new Vector2(10, 10));
-            }
-
-            var me = UiKit.Image("Hero", over, UiKit.Essence, UiKit.Diamond);
-            me.rectTransform.At(On(new MapPoint(hero.transform.position.x, hero.transform.position.z)), Vector2.zero, new Vector2(14, 14));
-            UiKit.HaloAt(me.transform, UiKit.Essence.A(0.6f), Vector2.zero, 40);
-
-            var right = UiKit.Rect("Legend", body);
-            right.Place(new Vector2(0, 0), new Vector2(1, 1), side + 80, 0, 0, 0);
-            right.Stack<VerticalLayoutGroup>(8);
-            UiKit.Lbl("Вы здесь", right, 11, UiKit.LabelGold).Size(16);
-            UiKit.Disp(here != null ? here.Name : "Долина", right, 30, UiKit.Text).Size(36);
-            Gap(right, 8);
-
-            if (quest != null)
-            {
-                UiKit.Lbl("Задание", right, 11, UiKit.LabelGold).Size(16);
-                UiKit.Disp(Story.Get(quest.Quest).Title, right, 22, UiKit.GoldText).Size(28);
-                Para(session.StepText(quest), right, 15);
-                Gap(right, 8);
-            }
-
-            UiKit.Rule(right);
-            Fact(right, "Золотое кольцо", "куда ведёт задание", UiKit.GoldText);
-            Fact(right, "Бирюзовый ромб", "вы", UiKit.Essence);
-            Fact(right, "Голубые точки", "лунные фонари", UiKit.Moon);
-            Fact(right, "Бирюзовые кольца", "поручения", UiKit.Essence);
-            Gap(right, 8);
-
-            if (session.State.Lanterns.Count > 1)
-            {
-                UiKit.HexButton("Перейти к фонарю", right, () => Show(Page.Travel), UiKit.HexKind.Ghost, 12, 44);
-                Gap(right, 6);
-            }
-
-            var sky = Weather.At(session.State.Day, session.State.Hour, hero.transform.position.y);
-            Fact(right, "День", $"{session.State.Day} · {(int)session.State.Hour}:{(int)(session.State.Hour % 1 * 60):00}");
-            Fact(right, "Погода", Weather.Name(sky));
-            Para("Дороги ведут из деревни: на север — к воротам, опушке и Волчьему гребню; на запад — в бамбуковую рощу; на восток — к броду и водопаду; на юг — к тракту и пограничному камню.", right, 14, UiKit.Muted);
         }
     }
 }

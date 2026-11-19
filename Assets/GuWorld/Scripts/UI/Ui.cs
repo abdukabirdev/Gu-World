@@ -70,6 +70,17 @@ namespace GuWorld.UI
             var was = Open;
             Open = page;
 
+            // The map opened afresh: on the hero, nothing picked (the journal may have asked for a point: mapFocus).
+            if (page == Page.Map && was != Page.Map)
+            {
+                mapCentre = null;
+
+                if (mapFocus == null)
+                {
+                    mapPick = null;
+                }
+            }
+
             if (Game.Playing && page != Page.Talk && page != Page.Dialogue)
             {
                 if (was == Page.None && page != Page.None)
