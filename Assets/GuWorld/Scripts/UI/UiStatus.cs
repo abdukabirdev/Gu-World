@@ -169,5 +169,66 @@ namespace GuWorld.UI
         }
 
         static string Capital(string text) => text.Length == 0 ? text : char.ToUpperInvariant(text[0]) + text.Substring(1);
+
+        // ------------------------------------------------------------------ The small figure on the HUD (ROADMAP 12.4)
+
+        RectTransform hudFigure;
+        readonly Image[] hudParts = new Image[6];
+
+        static readonly (BodyPart part, Vector2 centre, Vector2 size)[] SmallBody =
+        {
+            (BodyPart.Head, new Vector2(0, -6), new Vector2(10, 11)),
+            (BodyPart.Torso, new Vector2(0, -28), new Vector2(18, 30)),
+            (BodyPart.RightArm, new Vector2(-14, -28), new Vector2(6, 29)),
+            (BodyPart.LeftArm, new Vector2(14, -28), new Vector2(6, 29)),
+            (BodyPart.RightLeg, new Vector2(-5, -61), new Vector2(8, 35)),
+            (BodyPart.LeftLeg, new Vector2(5, -61), new Vector2(8, 35)),
+        };
+
+        /// <summary>A little body by the hero's panel, shown only while a wound is worse than light: which part, how bad.</summary>
+        void BuildHudFigure(RectTransform stage)
+        {
+            hudFigure = UiKit.Rect("Wounds", stage);
+            hudFigure.TopLeft(52, 32 + 222 + 14, 52, 84);
+
+            for (var i = 0; i < SmallBody.Length; i++)
+            {
+                var (part, centre, size) = SmallBody[i];
+                hudParts[i] = UiKit.Image(part.ToString(), hudFigure, UiKit.Moon.A(0.2f), part == BodyPart.Head ? UiKit.Disc : UiKit.Rounded);
+                hudParts[i].rectTransform.At(new Vector2(0.5f, 1), centre, size);
+            }
+
+            var label = UiKit.Label("раны · O", hudFigure, 10, UiKit.Muted, TextAnchor.UpperCenter);
+            label.rectTransform.Place(new Vector2(0, 0), new Vector2(1, 0), -20, -16, -20, 2);
+            hudFigure.gameObject.SetActive(false);
+        }
+
+        void TickHudFigure(Session session)
+        {
+            if (hudFigure == null)
+            {
+                return;
+            }
+
+            var worst = 0;
+
+            foreach (var wound in session.Wounds)
+            {
+                worst = Mathf.Max(worst, wound.Severity);
+            }
+
+            hudFigure.gameObject.SetActive(worst >= 2 && !Game.Busy);
+
+            if (worst < 2)
+            {
+                return;
+            }
+
+            for (var i = 0; i < SmallBody.Length; i++)
+            {
+                var wound = session.WoundOn(SmallBody[i].part);
+                hudParts[i].color = wound == null ? UiKit.Moon.A(0.2f) : WoundColour(wound.Severity).A(0.85f);
+            }
+        }
     }
 }

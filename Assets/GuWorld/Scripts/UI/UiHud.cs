@@ -270,6 +270,7 @@ namespace GuWorld.UI
             BuildCompass(stage);
             BuildMinimap(stage);
             BuildClock(stage);
+            BuildHudFigure(stage);
             hudRoot.gameObject.SetActive(false);
         }
 
@@ -599,6 +600,7 @@ namespace GuWorld.UI
             TickCompass(session, hero, camera);
             TickMinimap(session, hero, camera);
             TickClock(session);
+            TickHudFigure(session);
 
             // A boss that has seen the hero.
             Enemy boss = null;
