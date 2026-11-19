@@ -1255,6 +1255,8 @@ namespace GuWorld.Actors
         // ------------------------------------------------------------------ Being hit, dying, coming back
 
         /// <summary>A blow on the hero: what of it landed (0 if it was dodged, swallowed by the ward, or the hero is out of reach of blows).</summary>
+        float dodgeShown = -9;
+
         /// <summary>The guard is up (Ctrl held).</summary>
         public bool Guarding { get; private set; }
         float guardSince;
@@ -1263,6 +1265,15 @@ namespace GuWorld.Actors
         {
             if (mode == Mode.Dead || invulnerable > 0 || Game.Busy)
             {
+                // A blow that met a roll is shown, so the dodge is felt (ROADMAP 4: «неуязвимость видна»).
+                if (invulnerable > 0 && mode == Mode.Rolling && Time.time - dodgeShown > 0.5f)
+                {
+                    dodgeShown = Time.time;
+                    Game.Ui?.FloatWord(transform.position + Vector3.up * 2.1f, "Уклон", UI.UiKit.Moon);
+                    Effects.Burst(Centre, new Color(0.7f, 0.85f, 1f, 0.6f), 1.6f, 0.25f);
+                    Sound.AudioDirector.Play("whoosh", transform.position, 0.5f, 0.1f);
+                }
+
                 return 0;
             }
 
