@@ -77,9 +77,26 @@ namespace GuWorld.UI
                     Redraw();
                 }, can ? UiKit.HexKind.Main : UiKit.HexKind.Off, 13, 54);
 
+                // Things (not Gu) also by five, when the stones allow (ROADMAP 3.2: «покупка нескольких»).
+                if (picked.Gu == null && session.State.Stones >= cost * 5)
+                {
+                    UiKit.HexButton($"Купить пять · {cost * 5} камней", right, () =>
+                    {
+                        for (var i = 0; i < 5; i++)
+                        {
+                            if (!session.Buy(picked, shopClan))
+                            {
+                                break;
+                            }
+                        }
+
+                        Redraw();
+                    }, UiKit.HexKind.Ghost, 12, 46);
+                }
+
                 if (!can)
                 {
-                    Para("Не хватает первобытных камней.", right, 14, UiKit.Danger);
+                    Para($"Не хватает {cost - session.State.Stones} первобытных камней.", right, 14, Accessible.Harm);
                 }
 
                 return;
