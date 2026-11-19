@@ -17,7 +17,7 @@ namespace GuWorld.Actors
         public const float RunSpeed = 5.4f;
         public const float SprintSpeed = 7.8f;
 
-        enum Mode { Free, Striking, Casting, Rolling, Dashing, Hurt, Dead, Sitting, Climbing, Hanging, Mantling, WallRunning }
+        enum Mode { Free, Striking, Casting, Rolling, Dashing, Hurt, Dead, Sitting, Climbing, Hanging, Mantling, WallRunning, Finishing, Kicking }
 
         Mode mode;
         float modeTime;
@@ -227,6 +227,12 @@ namespace GuWorld.Actors
                     break;
                 case Mode.WallRunning:
                     WallRun(dt, free);
+                    break;
+                case Mode.Finishing:
+                    Finishing(dt);
+                    break;
+                case Mode.Kicking:
+                    Kicking(dt);
                     break;
                 case Mode.Striking:
                     Striking(dt, free);
@@ -497,10 +503,19 @@ namespace GuWorld.Actors
 
             if (Bindings.Down("strike") && Grounded && !guarding)
             {
-                // A blow is struck standing.
+                // A blow is struck standing: at a beast left open, the finishing blow; running, a kick in a leap (ROADMAP 13).
                 if (Rise())
                 {
-                    BeginStrike(0);
+                    var open = OpenFoe();
+
+                    if (open != null)
+                    {
+                        BeginFinisher(open);
+                    }
+                    else if (!(Sprinting && moving && TryKick(wish)))
+                    {
+                        BeginStrike(0);
+                    }
                 }
 
                 return;
@@ -1420,6 +1435,7 @@ namespace GuWorld.Actors
 
                 if (guard.Parried)
                 {
+                    Session.SetFlag("parried");
                     Sound.AudioDirector.Play("ward", transform.position, 0.9f);
                     Effects.Burst(Centre + transform.forward * 0.5f, new Color(1f, 0.95f, 0.7f), 1.2f, 0.25f);
                     Game.Ui?.Toast("Парировано");

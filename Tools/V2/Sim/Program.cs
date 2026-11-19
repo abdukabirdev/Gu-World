@@ -114,6 +114,7 @@ static partial class Program
         RebindRules();
         MapRules();
         MoveRules();
+        BlowRules();
         var report = new List<string>();
 
         if (Array.IndexOf(args, "audio") >= 0 || Array.IndexOf(args, "all") >= 0)

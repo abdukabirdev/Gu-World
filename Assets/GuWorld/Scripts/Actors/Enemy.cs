@@ -1099,7 +1099,39 @@ namespace GuWorld.Actors
             }
         }
 
-        /// <summary>Its blow was parried: it reels (a boss only for a moment).</summary>
+        float openUntil = -1;
+
+        /// <summary>Left open to a finishing blow (ROADMAP 13): reeling from a parry, or stunned.</summary>
+        public bool Open => alive && Def.Mind != EnemyMind.Still && (Time.time < openUntil || stunTime > 0);
+
+        /// <summary>The finishing blow has come: it is open no longer.</summary>
+        public void Finished() => openUntil = -1;
+
+        /// <summary>Thrown back and reeling (a running kick); a great one is barely moved and does not reel.</summary>
+        public void Knock(Vector3 from, float push, float stagger)
+        {
+            if (!alive || Def.Mind == EnemyMind.Still)
+            {
+                return;
+            }
+
+            var away = transform.position - from;
+            away.y = 0;
+
+            if (body != null && body.enabled && away.sqrMagnitude > 0.0001f)
+            {
+                body.Move(away.normalized * (Def.Boss ? push * 0.25f : push));
+            }
+
+            if (!Def.Boss)
+            {
+                Interrupt();
+                staggerTime = Mathf.Max(staggerTime, stagger);
+                rig?.Play(rig.Has("hit") ? "hit" : "idle", 0.05f, true);
+            }
+        }
+
+        /// <summary>Its blow was parried: it reels (a boss only for a moment), open to a finishing blow meanwhile.</summary>
         public void Parried()
         {
             if (!Alive)
@@ -1108,6 +1140,7 @@ namespace GuWorld.Actors
             }
 
             Interrupt();
+            openUntil = Time.time + Core.Blows.OpenAfterParry(Def.Boss);
             staggerTime = Def.Boss ? 0.5f : 1.4f;
             attackWait = Mathf.Max(attackWait, Def.Boss ? 0.8f : 1.6f);
             rig?.Play(rig.Has("hit") ? "hit" : "idle", 0.05f, true);

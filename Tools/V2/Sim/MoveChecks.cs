@@ -161,3 +161,29 @@ static partial class Program
         Check(items.All(id => id == "stones" || ItemBook.Get(id) != null) && items.Count >= 3, $"trees: a nest holds things that exist ({string.Join(", ", items)})");
     }
 }
+
+static partial class Program
+{
+    /// <summary>The finishing blow and the running kick (ROADMAP 13).</summary>
+    static void BlowRules()
+    {
+        var s = new Session(Session.NewGame("Мин"), 5);
+        var wolf = Bestiary.All.First(e => !e.Boss && e.Health >= 60 && e.Mind != EnemyMind.Still);
+        var boss = Bestiary.All.First(e => e.Boss);
+        var palm = HeroStats.ComboDamage[2] * s.Stats.Melee * (1 - wolf.Armour);
+        var half = s.Finish(wolf, wolf.Health * 0.4f, wolf.Health);
+        Check(half.Damage > wolf.Health * 0.4f && half.Critical, $"blows: a finishing blow kills a {wolf.Name} with less than half its health left");
+        var full = s.Finish(wolf, wolf.Health, wolf.Health);
+        Check(full.Damage < wolf.Health && full.Damage >= wolf.Health * 0.5f - 0.01f && full.Damage >= palm * 4 - 0.01f, $"blows: a fresh {wolf.Name} loses half its health to it ({full.Damage:0} of {wolf.Health:0})");
+        var great = s.Finish(boss, boss.Health, boss.Health);
+        Check(Math.Abs(great.Damage - HeroStats.ComboDamage[2] * s.Stats.Melee * (1 - boss.Armour) * 4) < 0.01f && great.Damage < boss.Health, $"blows: a great beast ({boss.Name}) takes four palms, no more");
+        Check(Blows.OpenAfterParry(true) < Blows.OpenAfterParry(false), "blows: a great beast is left open for less time");
+
+        s.Stamina = 100;
+        Check(s.BeginKick() && Math.Abs(s.Stamina - (100 - Blows.KickStamina)) < 0.01f, $"blows: a running kick takes {Blows.KickStamina} stamina");
+        var kick = s.KickHit(wolf);
+        Check(kick.Damage > palm * 1.05f && kick.Damage < palm * 1.4f, $"blows: a kick is worth a little more than the third palm ({kick.Damage:0} against {palm:0})");
+        s.Stamina = 5;
+        Check(!s.BeginKick() && Math.Abs(s.Stamina - 5) < 0.01f, "blows: out of breath, no kick (and nothing spent)");
+    }
+}

@@ -610,6 +610,57 @@ def field_work(t):
     return pose
 
 
+# ---------------------------------------------------------------------------- Two more blows (ROADMAP 13: «удар ногой, добивание»)
+
+def finish_gather():
+    """The finishing blow drawn up: low and coiled, both hands pulled back to the hips, the weight on the back leg."""
+    pose = stand(0.9)
+    torso(pose, lean=8, twist=-18, head=(-6, 14, 0))
+    for side in 'LR':
+        arm(pose, side, swing=-32, out=14, elbow=118, wrist=-24)
+        pose['fingers_' + side] = 0.15
+    leg(pose, 'L', swing=30, knee=58, spread=6)
+    leg(pose, 'R', swing=-10, knee=52, spread=10, twist=-18)
+    return pose
+
+
+def finish_thrust():
+    """Both palms driven through the beast in a long lunge, the back leg straight, the whole body behind them."""
+    pose = stand(0.8)
+    torso(pose, lean=24, twist=6)
+    for side in 'LR':
+        arm(pose, side, swing=86, out=-4, elbow=4, wrist=-66)
+        pose['fingers_' + side] = 0.0
+    leg(pose, 'L', swing=58, knee=78, spread=6)
+    leg(pose, 'R', swing=-38, knee=8, spread=8, twist=-14)
+    pose['offset'] = (0, -0.28, pose['offset'][2] - 0.06)
+    return pose
+
+
+def kick_chamber():
+    """The running kick gathered in the air: the kicking knee drawn up high, the arms out for balance."""
+    pose = blank()
+    torso(pose, lean=-4, head=(4, 0, 0))
+    leg(pose, 'R', swing=104, knee=122, foot=20, spread=4)
+    leg(pose, 'L', swing=-8, knee=34, spread=6)
+    arm(pose, 'L', swing=40, out=34, elbow=50)
+    arm(pose, 'R', swing=-20, out=30, elbow=40)
+    pose['fingers_L'] = pose['fingers_R'] = 0.6
+    return pose
+
+
+def kick_out():
+    """The foot driven out straight into the beast, the body leaning back behind it."""
+    pose = blank()
+    torso(pose, lean=-16, head=(14, 0, 0))
+    leg(pose, 'R', swing=92, knee=6, foot=30, spread=2)
+    leg(pose, 'L', swing=-12, knee=24, spread=6)
+    arm(pose, 'L', swing=-26, out=40, elbow=30)
+    arm(pose, 'R', swing=30, out=44, elbow=36)
+    pose['fingers_L'] = pose['fingers_R'] = 0.8
+    return pose
+
+
 G = guard()
 CLIPS = [
     # name, seconds, loop, pose(t)
@@ -641,6 +692,9 @@ CLIPS = [
     ('squat', 4.0, True, squat),
     ('talk', 3.5, True, talk),
     ('field_work', 3.0, True, field_work),
+    # The finishing blow lands at half its time, the kick at 0.4 (Hero.Finishing, Hero.Kicking).
+    ('finisher', 0.8, False, keyed([(0, G), (0.3, finish_gather()), (0.5, finish_thrust()), (0.72, finish_thrust()), (1, G)])),
+    ('kick', 0.55, False, keyed([(0, stand(0.3)), (0.2, kick_chamber()), (0.4, kick_out()), (0.62, kick_out()), (0.8, kick_chamber()), (1, stand(0.35))])),
 ]
 
 FINGERS = ['index', 'middle', 'ring', 'pinky']
