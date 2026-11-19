@@ -143,7 +143,7 @@ namespace GuWorld.UI
             var keyboard = Keyboard.current;
 
             // Not the press that opened the page; nothing while a key is being bound (the settings' catcher takes it).
-            if (keyboard == null || Time.frameCount == born || (transform.parent != null && transform.parent.GetComponentInChildren<KeyCatcher>() != null))
+            if (keyboard == null || Time.frameCount == born || Modal.Blocks(transform) || (transform.parent != null && transform.parent.GetComponentInChildren<KeyCatcher>() != null))
             {
                 return;
             }

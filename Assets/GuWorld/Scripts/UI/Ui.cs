@@ -67,6 +67,10 @@ namespace GuWorld.UI
                 Destroy(child.gameObject);
             }
 
+            // A question open over the old page goes with it.
+            asking = null;
+            Modal.Top = null;
+
             var was = Open;
             Open = page;
 
@@ -219,11 +223,13 @@ namespace GuWorld.UI
         {
             lostStones = lost;
             deathBane = Game.Hero != null ? Game.Hero.Bane : null;
+            // Where it happened and on which day (UI-Overlays: «Серый волк · у южных ворот · день 3»).
+            deathWhere = Game.Hero != null ? $"{Atlas.NameAt(new MapPoint(Game.Hero.transform.position.x, Game.Hero.transform.position.z))} · день {S.State.Day}" : null;
             Show(Page.Death);
         }
 
         /// <summary>What felled the hero (a beast's name, a fall), as the death page tells it.</summary>
-        string deathBane;
+        string deathBane, deathWhere;
 
         Text fpsLine;
         float fpsTime;
@@ -259,6 +265,12 @@ namespace GuWorld.UI
             DevTick();
 
             if (!Game.Playing || Time.frameCount == born)
+            {
+                return;
+            }
+
+            // A question is open: it alone answers the keys (UiAsk).
+            if (Modal.Open)
             {
                 return;
             }

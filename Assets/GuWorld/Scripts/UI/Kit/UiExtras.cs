@@ -61,7 +61,7 @@ namespace GuWorld.UI
         {
             var keyboard = Keyboard.current;
 
-            if (keyboard == null || entries.Count == 0)
+            if (keyboard == null || entries.Count == 0 || Modal.Blocks(transform))
             {
                 return;
             }
@@ -98,8 +98,8 @@ namespace GuWorld.UI
         {
             var keyboard = Keyboard.current;
 
-            // Not the press that opened the page.
-            if (keyboard == null || Time.frameCount == born)
+            // Not the press that opened the page; nothing under an open question.
+            if (keyboard == null || Time.frameCount == born || Modal.Blocks(transform))
             {
                 return;
             }

@@ -153,7 +153,8 @@ namespace GuWorld.UI
             {
                 keys.Add(UiKit.Entry("Настройки", null, middle, () => OpenSettings(Page.Pause)).Centre());
                 keys.Add(UiKit.Entry("Управление", null, middle, () => Show(Page.Help)).Centre());
-                keys.Add(UiKit.Entry("Покинуть апертуру", "В главное меню · ничего не сохраняется", middle, () => Game.Instance.ToTitle(false)).Centre());
+                keys.Add(UiKit.Entry("Покинуть апертуру", "В главное меню · ничего не сохраняется", middle,
+                    () => Ask("Покинуть апертуру?", "Всё, что было в полигоне, исчезнет; вы выйдете в главное меню.", "Покинуть", () => Game.Instance.ToTitle(false))).Centre());
             }
             else
             {
@@ -163,10 +164,12 @@ namespace GuWorld.UI
                 keys.Add(World.Aperture.Inside
                     ? UiKit.Entry("Покинуть апертуру", "Всё вернётся, как было", middle, () => { Close(); World.Aperture.Leave(); }).Centre()
                     : UiKit.Entry("Апертура бессмертного", "Полигон: любые Гу, ранги и приёмы", middle, () => { Close(); World.Aperture.Enter(); }).Centre());
-                keys.Add(UiKit.Entry("Главное меню", "Игра сохранится", middle, () => Game.Instance.ToTitle()).Centre());
+                keys.Add(UiKit.Entry("Главное меню", "Игра сохранится", middle,
+                    () => Ask("В главное меню?", "Игра сохранится — продолжить можно с титула, «Продолжить».", "В меню", () => Game.Instance.ToTitle())).Centre());
             }
 
-            keys.Add(UiKit.Entry("Выйти из игры", null, middle, Game.Quit).Quiet(50).Centre());
+            keys.Add(UiKit.Entry("Выйти из игры", null, middle,
+                () => Ask("Выйти из игры?", Game.SandboxOnly ? "Апертура не сохраняется." : "Игра сохранится перед выходом.", "Выйти", Game.Quit)).Quiet(50).Centre());
 
             // The hero, at the left.
             var state = S.State;
@@ -314,9 +317,10 @@ namespace GuWorld.UI
             }
 
             // What felled the hero, where they wake, what is lost and what stays (ROADMAP 2.x «Вы пали»).
-            if (!string.IsNullOrEmpty(deathBane))
+            if (!string.IsNullOrEmpty(deathBane) || !string.IsNullOrEmpty(deathWhere))
             {
-                UiKit.Label("Сразило: " + deathBane, middle, 16, UiKit.Hex(0xE8B4A8), TextAnchor.MiddleCenter).Size(24);
+                var how = string.IsNullOrEmpty(deathBane) ? deathWhere : string.IsNullOrEmpty(deathWhere) ? deathBane : deathBane + " · " + deathWhere;
+                UiKit.Label(char.ToUpperInvariant(how[0]) + how.Substring(1), middle, 16, UiKit.Hex(0xE8B4A8), TextAnchor.MiddleCenter).Size(24);
             }
 
             UiKit.Label(lostStones > 0 ? $"Потеряно первобытных камней: {lostStones}" : "Терять было нечего", middle, 16, UiKit.Text2, TextAnchor.MiddleCenter).Size(24);
