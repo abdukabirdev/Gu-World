@@ -766,7 +766,7 @@ namespace GuWorld
 
                 if (hint != null)
                 {
-                    Ui.Banner("Подсказка", hint.Text);
+                    Ui.Banner("Подсказка", Bindings.Fill(hint.Text));
                 }
             }
 

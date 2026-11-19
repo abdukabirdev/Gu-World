@@ -82,6 +82,22 @@ namespace GuWorld.Actors
 
         public static string LabelOf(string id) => Label(KeyOf(id));
 
+        /// <summary>A text with keys named by action ({key:guard}, {key:slot1}…) told as they are bound now.</summary>
+        public static string Fill(string text)
+        {
+            if (string.IsNullOrEmpty(text) || text.IndexOf("{key:", StringComparison.Ordinal) < 0)
+            {
+                return text;
+            }
+
+            foreach (var action in All)
+            {
+                text = text.Replace("{key:" + action.Id + "}", Label(action.Key));
+            }
+
+            return text;
+        }
+
         /// <summary>
         /// Keys the game uses that are not rebound here (walking, the pages, the function keys): an action bound
         /// to one of them clashes — both happen at once. The settings mark such a key (ROADMAP 2.7).
