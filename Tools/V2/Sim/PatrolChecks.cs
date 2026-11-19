@@ -241,3 +241,20 @@ static partial class Program
         Check(Words.Fill("{Title}!", s.State) == "Защитник хутора!", "people say it in their words");
     }
 }
+
+static partial class Program
+{
+    /// <summary>The Gu of the Grass of Life eases wounds (ROADMAP 12.4).</summary>
+    static void GrassRules()
+    {
+        var s = new Session(Session.NewGame("Травник"), 4);
+        var grass = s.MakeGu("life_grass", 0, true);
+        s.AddGu(grass);
+        Check(s.Equip(grass.Uid, false, 0), "the grass of life goes into a slot");
+        s.AddWound(BodyPart.LeftArm, WoundKind.Cut, 1);
+        var before = s.Wounds[0].Hours;
+        s.State.Essence = s.Stats.MaxEssence;
+        Check(s.CastSlot(0) != null, "it is cast");
+        Check(s.Wounds.Count == 0 || s.Wounds[0].Hours <= before - Body.EaseHours + 0.01f, "it takes hours off the lightest wound");
+    }
+}

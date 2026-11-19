@@ -14,6 +14,9 @@ namespace GuWorld.Core
     /// </summary>
     public static class Body
     {
+        /// <summary>Hours a wood path healing Gu takes off the lightest wound, per its rank.</summary>
+        public const float EaseHours = 4;
+
         /// <summary>
         /// What a healer asks to treat all the hero's wounds (ROADMAP 12.4): by kind and how bad — a bruise
         /// is cheap, a broken bone dear — and dearer on the harder paths. 0 when there is nothing to treat.
@@ -381,6 +384,28 @@ namespace GuWorld.Core
             Touch();
 
             return true;
+        }
+
+        /// <summary>A wood path healing Gu's touch: the lightest wound loses some hours of healing.</summary>
+        public void EaseWound(float hours)
+        {
+            if (State.Wounds == null || State.Wounds.Count == 0 || hours <= 0)
+            {
+                return;
+            }
+
+            var lightest = State.Wounds[0];
+
+            foreach (var wound in State.Wounds)
+            {
+                if (wound.Hours < lightest.Hours)
+                {
+                    lightest = wound;
+                }
+            }
+
+            lightest.Hours -= hours;
+            HealWounds(0.001f);
         }
 
         /// <summary>A healing pill's touch: the lightest wound loses a day of healing (a bruise or a cut usually closes).</summary>

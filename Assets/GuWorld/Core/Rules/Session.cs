@@ -507,6 +507,12 @@ namespace GuWorld.Core
                 healLeft += cast.Power;
                 healTime = Math.Max(0.1f, skill.Duration);
                 GainMastery(gu, 3);
+
+                // The wood path's healing (the Gu of the Grass of Life) also eases the lightest wound (ROADMAP 12.4).
+                if (def.Path == GuPath.Wood)
+                {
+                    EaseWound(Body.EaseHours * def.Rank);
+                }
             }
             else
             {
