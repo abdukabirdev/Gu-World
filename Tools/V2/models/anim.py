@@ -556,6 +556,60 @@ def vault_land():
     return pose
 
 
+# ---------------------------------------------------------------------------- The townsfolk's day (ROADMAP: «сидеть, работать у лотка»)
+# What a townsperson does while standing in their day's plan (Core/Gen/Crowd.cs: Leg.Doing), played by
+# World/Townsfolk.cs: a trader busy behind the stall, a rest or a meal squatting on the heels, talk, field work.
+
+def stall_work(t):
+    """Behind a stall: hands busy on the counter (sorting, wrapping), a glance aside now and then."""
+    phase = t * 2 * math.pi
+    glance = max(0.0, math.sin(phase * 0.5)) ** 4
+    pose = stand(0.1)
+    torso(pose, lean=14 + 3 * math.sin(phase), twist=6 * math.sin(phase * 0.5), head=(14 - 12 * glance, -22 * glance, 0))
+    for side, shift in (('L', 0.0), ('R', math.pi * 0.7)):
+        busy = math.sin(phase * 2 + shift)
+        arm(pose, side, swing=36 + 10 * busy, out=14, elbow=76 + 14 * busy, wrist=-10 + 12 * busy)
+        pose['fingers_' + side] = 0.45 + 0.25 * busy
+    return pose
+
+
+def squat(t):
+    """Resting on the heels in a deep squat, the forearms on the knees, breathing: the village's way to sit at a meal or a rest."""
+    breath = math.sin(t * 2 * math.pi)
+    pose = blank()
+    torso(pose, lean=30 + breath, head=(-20, 0, 0))
+    for side in 'LR':
+        leg(pose, side, swing=96, knee=150, spread=16)
+        arm(pose, side, swing=58, out=10, elbow=62 + 3 * breath, wrist=10)
+        pose['fingers_' + side] = 0.4
+    return pose
+
+
+def talk(t):
+    """Standing and talking: the weight shifting, one hand and then the other making a point, the head nodding."""
+    phase = t * 2 * math.pi
+    pose = stand()
+    torso(pose, lean=3 + 1.5 * math.sin(phase * 2), twist=5 * math.sin(phase), side=1.2 * math.sin(phase), head=(4 * math.sin(phase * 3), 8 * math.sin(phase), 0))
+    for side, shift in (('L', 0.0), ('R', math.pi)):
+        point = max(0.0, math.sin(phase + shift)) ** 2
+        arm(pose, side, swing=10 + 38 * point, out=8 + 8 * point, elbow=24 + 50 * point, wrist=-20 * point)
+        pose['fingers_' + side] = 0.25 - 0.15 * point
+    return pose
+
+
+def field_work(t):
+    """Field work: bending down to the crop with both hands and straightening again (weeding, picking)."""
+    phase = t * 2 * math.pi
+    bend = 0.5 - 0.5 * math.cos(phase)
+    pose = blank()
+    torso(pose, lean=12 + 78 * bend, head=(-10 - 34 * bend, 0, 0))
+    for side in 'LR':
+        leg(pose, side, swing=12 + 18 * bend, knee=18 + 26 * bend, spread=9)
+        arm(pose, side, swing=16 + 40 * bend, out=10, elbow=30 - 18 * bend)
+        pose['fingers_' + side] = 0.3 + 0.5 * bend
+    return pose
+
+
 G = guard()
 CLIPS = [
     # name, seconds, loop, pose(t)
@@ -583,6 +637,10 @@ CLIPS = [
     # The keys at the times of Movement.PullKeys and VaultKeys.
     ('pullup', 0.95, False, keyed([(0, hang(0)), (0.3, pull_chest()), (0.45, pull_press()), (0.65, pull_knee()), (0.85, pull_rise()), (1, pull_stand())])),
     ('vault', 0.6, False, keyed([(0, vault_land()), (0.35, vault_plant()), (0.55, vault_plant()), (0.8, vault_over()), (1, vault_land())])),
+    ('stall_work', 4.0, True, stall_work),
+    ('squat', 4.0, True, squat),
+    ('talk', 3.5, True, talk),
+    ('field_work', 3.0, True, field_work),
 ]
 
 FINGERS = ['index', 'middle', 'ring', 'pinky']

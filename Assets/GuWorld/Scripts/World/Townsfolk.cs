@@ -323,6 +323,37 @@ namespace GuWorld.World
             }
         }
 
+        /// <summary>
+        /// The clip for what a townsperson does standing in their day (Crowd: Leg.Doing): a trader busy behind the
+        /// stall, a porter at the goods, a farmer bent over the crop, a meal or a rest squatting on the heels, talk;
+        /// a guard on watch and the rest stand at ease.
+        /// </summary>
+        static string StandingClip(Walker walker, string doing)
+        {
+            switch (doing)
+            {
+                case "stall": return "stall_work";
+                case "work": return walker.Trade == Trade.Farmer ? "field_work" : "stall_work";
+                case "sit": return "squat";
+                case "talk":
+                case "play": return "talk";
+                default: return "idle";
+            }
+        }
+
+        /// <summary>A body set to its standing clip, each at its own point of the loop (a square of people does not move as one).</summary>
+        static void Stand(Body body, string doing, float fade)
+        {
+            var clip = StandingClip(body.Walker, doing);
+
+            if (body.Rig == null || !body.Rig.Has(clip))
+            {
+                clip = "idle";
+            }
+
+            body.Rig?.Play(clip, fade, false, 0.9f + 0.2f * (body.Walker.Id * 0.37f % 1), body.Walker.Id * 0.618f % 1);
+        }
+
         /// <summary>A new body appears where its person is by the plan, part way along a walk if they are walking.</summary>
         void Place(Body body, float hour)
         {
@@ -345,7 +376,7 @@ namespace GuWorld.World
             {
                 body.Walking = false;
                 body.Facing = pose.Facing;
-                body.Rig?.Play("idle", 0);
+                Stand(body, pose.Doing, 0);
             }
         }
 
@@ -392,6 +423,7 @@ namespace GuWorld.World
                     else if (leg != null)
                     {
                         body.Facing = leg.Facing;
+                        Stand(body, leg.Doing, 0.4f);
                     }
                 }
             }
