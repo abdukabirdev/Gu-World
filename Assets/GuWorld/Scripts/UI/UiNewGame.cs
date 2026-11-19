@@ -354,7 +354,7 @@ namespace GuWorld.UI
 
             LookPanel(stage);
 
-            // The hero in the middle, where the stage is wide enough for three columns.
+            // The hero in the middle, where the stage is wide enough for three columns (16:10 and wider).
             if (Screen.height > 0 && Screen.width * 900f / Screen.height >= 1400)
             {
                 var middle = UiKit.Rect("Figure", stage);
@@ -530,11 +530,12 @@ namespace GuWorld.UI
         }
 
         /// <summary>
-        /// The hero as a paper cut-out on the pad in the rings: boots, the robe in its dye with the sash and
-        /// the white of the under-robe at the throat, sleeves with dark bracers, the skin's tone, the loose
-        /// hair and its style; taller or shorter with the height. Stands in for the model until it is shown here.
+        /// The hero as a paper cut-out on the pad in the rings: boots, the robe in its dye flaring to the hem
+        /// with the sash and the white of the under-robe at the throat, short sleeves with pale cuffs and dark
+        /// bracers, the skin's tone, the loose hair and its style; taller or shorter with the height. Stands in
+        /// for the model until the model itself is shown here.
         /// </summary>
-        static void LookFigure(RectTransform box, Appearance look)
+        void LookFigure(RectTransform box, Appearance look)
         {
             UiKit.Orbit(box, 360, UiKit.Gold.A(0.15f), 140, 0).rectTransform.anchoredPosition = new Vector2(0, 60);
             UiKit.Orbit(box, 290, UiKit.Gold.A(0.12f), 0, 4).rectTransform.anchoredPosition = new Vector2(0, 60);
@@ -543,70 +544,125 @@ namespace GuWorld.UI
             var padRing = UiKit.Image("Pad ring", box, new Color(160 / 255f, 240 / 255f, 220 / 255f, 0.35f), UiKit.RingLine(240));
             padRing.rectTransform.At(new Vector2(0.5f, 0), new Vector2(0, 40), new Vector2(240, 40));
 
-            // The figure stands on the pad; its height is the look's, the steps drawn a little larger than life so they show.
-            var h = 420 * (1 + (Appearances.Stature(look.Height) - 1) * 2.2f);
-            var robe = UiKit.Hex(Appearances.Robes[look.Robe].Swatch);
-            var skin = UiKit.Hex(Appearances.Skins[look.Skin].Swatch);
-            var hair = UiKit.Hex(HeroHair.HairColour).A(1);
-            var dark = UiKit.Hex(0x1E2024);
-            var foot = 44f;
-
-            Image Part(string name, Color colour, Sprite sprite, float x, float y, float w, float height, float turn = 0)
+            if (figure != null)
             {
-                var part = UiKit.Image(name, box, colour, sprite);
-                part.rectTransform.At(new Vector2(0.5f, 0), new Vector2(x, foot + y), new Vector2(w, height));
-                part.rectTransform.localRotation = Quaternion.Euler(0, 0, turn);
-
-                return part;
+                Destroy(figure);
             }
 
-            // The ribbon's tails hang behind everything.
+            figure = PaintFigure(look);
+            var picture = UiKit.Rect("Hero", box).gameObject.AddComponent<RawImage>();
+            picture.texture = figure;
+            picture.raycastTarget = false;
+            picture.rectTransform.At(new Vector2(0.5f, 0), new Vector2(0, 280), new Vector2(300, 520));
+
+            var words = UiKit.Lbl(Appearances.Describe(look), box, 10, UiKit.Hex(0x8A9A9D), 0.12f, TextAnchor.MiddleCenter);
+            words.rectTransform.At(new Vector2(0.5f, 0), new Vector2(0, 8), new Vector2(380, 16));
+        }
+
+        Texture2D figure;
+
+        /// <summary>The cut-out itself, painted (300 × 520, the feet at 500): flat shapes in the look's colours over a soft glow, so black hair reads on the dark page.</summary>
+        static Texture2D PaintFigure(Appearance look)
+        {
+            var s = 1 + (Appearances.Stature(look.Height) - 1) * 2.2f;
+            var across = 0.97f + 0.03f * s;
+            var paint = new UiPainter(300, 520, 2);
+            var robe = UiKit.Hex(Appearances.Robes[look.Robe].Swatch);
+            var shade = new Color(robe.r * 0.78f, robe.g * 0.78f, robe.b * 0.78f);
+            var skin = UiKit.Hex(Appearances.Skins[look.Skin].Swatch);
+            var hair = UiKit.Hex(HeroHair.HairColour);
+            var dark = UiKit.Hex(0x1E2024);
+            var white = UiKit.Hex(0xE6E4DE);
+            var ribbon = UiKit.Hex(0xE6ECF2);
+
+            // Taller or shorter about the feet.
+            Vector2 At(float x, float y) => new Vector2(150 + (x - 150) * across, 500 - (500 - y) * s);
+
+            Vector2[] Shape(bool mirrored, params float[] xy)
+            {
+                var points = new Vector2[xy.Length / 2];
+
+                for (var i = 0; i < points.Length; i++)
+                {
+                    points[i] = At(mirrored ? 300 - xy[i * 2] : xy[i * 2], xy[i * 2 + 1]);
+                }
+
+                return points;
+            }
+
+            void Fill(Color colour, params float[] xy) => paint.Polygon(Shape(false, xy), colour);
+            void Both(Color colour, params float[] xy)
+            {
+                paint.Polygon(Shape(false, xy), colour);
+                paint.Polygon(Shape(true, xy), colour);
+            }
+
+            void Oval(float x, float y, float rx, float ry, Color colour) => paint.Soft(At(x, y), new Vector2(rx * across, ry * s), colour, 0.6f);
+
+            void Line(float x0, float y0, float x1, float y1, float width, Color colour)
+            {
+                var a = At(x0, y0);
+                var b = At(x1, y1);
+                var side = new Vector2(-(b - a).y, (b - a).x).normalized * (width * 0.5f);
+                paint.Polygon(new[] { a + side, b + side, b - side, a - side }, colour);
+            }
+
+            paint.Soft(new Vector2(150, 255), new Vector2(110, 215), new Color(60 / 255f, 140 / 255f, 140 / 255f, 0.35f), 40);
+
             if (look.Hair == 3)
             {
-                Part("Tail L", UiKit.Hex(0xE6ECF2), UiKit.Plain, -12, h * 0.86f, 7, h * 0.22f, 4);
-                Part("Tail R", UiKit.Hex(0xE6ECF2), UiKit.Plain, 12, h * 0.86f, 7, h * 0.22f, -4);
+                Line(147, 84, 140, 176, 5, ribbon);
+                Line(153, 84, 161, 176, 5, ribbon);
             }
 
-            Part("Hair", hair, UiKit.Rounded, 0, h * 0.83f, 84, h * 0.26f);
-            Part("Boot L", dark, UiKit.Rounded, -21, h * 0.1f, 32, h * 0.2f);
-            Part("Boot R", dark, UiKit.Rounded, 21, h * 0.1f, 32, h * 0.2f);
-            Part("Sleeve L", robe, UiKit.Rounded, -70, h * 0.6f, 36, h * 0.3f, -8);
-            Part("Sleeve R", robe, UiKit.Rounded, 70, h * 0.6f, 36, h * 0.3f, 8);
-            Part("Bracer L", dark, UiKit.Rounded, -75, h * 0.47f, 26, h * 0.08f, -8);
-            Part("Bracer R", dark, UiKit.Rounded, 75, h * 0.47f, 26, h * 0.08f, 8);
-            Part("Hand L", skin, UiKit.Disc, -77, h * 0.41f, 20, 22);
-            Part("Hand R", skin, UiKit.Disc, 77, h * 0.41f, 20, 22);
-            Part("Skirt", robe, UiKit.Rounded, 0, h * 0.35f, 128, h * 0.38f);
-            Part("Body", robe, UiKit.Rounded, 0, h * 0.64f, 108, h * 0.27f);
-            Part("Sash", dark, UiKit.Plain, 0, h * 0.525f, 112, h * 0.045f);
-            Part("Neck", skin, UiKit.Plain, 0, h * 0.775f, 22, h * 0.05f);
-            Part("Under-robe", UiKit.Hex(0xE6E4DE), UiKit.Diamond, 0, h * 0.74f, 30, h * 0.09f);
-            Part("Locks L", hair, UiKit.Rounded, -24, h * 0.76f, 14, h * 0.12f);
-            Part("Locks R", hair, UiKit.Rounded, 24, h * 0.76f, 14, h * 0.12f);
-            Part("Head", skin, UiKit.Disc, 0, h * 0.885f, 52, h * 0.15f);
-            Part("Crown", hair, UiKit.Disc, 0, h * 0.935f, 58, h * 0.09f);
+            // The loose hair behind the shoulders, the boots.
+            Fill(hair, 120, 100, 180, 100, 190, 140, 188, 196, 112, 196, 110, 140);
+            Fill(dark, 126, 446, 146, 446, 147, 500, 118, 500, 122, 470);
+            Fill(dark, 154, 446, 174, 446, 178, 470, 182, 500, 153, 500);
+
+            // The sleeves to the elbow, their pale cuffs, the bracers, the hands.
+            Both(robe, 114, 172, 84, 192, 70, 262, 102, 268, 114, 214);
+            Both(white, 70, 262, 102, 268, 101, 280, 70, 274);
+            Both(dark, 74, 274, 100, 280, 97, 334, 80, 334);
+            Oval(89, 346, 10, 13, skin);
+            Oval(211, 346, 10, 13, skin);
+
+            // The robe flaring to the hem, its lower half and its front fold in shade; the sash and its ends.
+            Fill(robe, 114, 170, 186, 170, 184, 262, 208, 450, 92, 450, 116, 262);
+            Fill(shade, 116, 330, 184, 330, 208, 450, 92, 450);
+            Fill(shade, 150, 262, 160, 262, 176, 452, 168, 452);
+            Fill(dark, 115, 252, 185, 252, 186, 280, 114, 280);
+            Fill(dark, 158, 280, 168, 280, 166, 334, 157, 330);
+
+            // The neck, the white under-robe at the throat, the head, the hair framing the face and its two locks.
+            Fill(skin, 140, 148, 160, 148, 160, 176, 140, 176);
+            Fill(white, 132, 170, 168, 170, 150, 212);
+            Oval(150, 122, 23, 29, skin);
+            Fill(hair, 124, 130, 124, 102, 134, 88, 150, 82, 166, 88, 176, 102, 176, 130, 170, 110, 160, 100, 150, 98, 140, 100, 130, 110);
+            Both(hair, 124, 108, 132, 110, 130, 186, 119, 190);
 
             if (look.Hair > 0)
             {
-                Part("Knot", hair, UiKit.Disc, 0, h * 0.985f, 28, 26);
+                Oval(150, 77, 15, 12, hair);
             }
 
             switch (look.Hair)
             {
                 case 1:
-                    Part("Pin", UiKit.Hex(0x7A5034), UiKit.Plain, 0, h * 0.99f, 64, 4, 6);
+                    Line(124, 76, 176, 70, 3, UiKit.Hex(0x7A5034));
+                    Oval(176, 70, 3, 3, UiKit.Hex(0x7A5034));
                     break;
                 case 2:
-                    Part("Guan", UiKit.Hex(0xB9BFC7), UiKit.Rounded, 0, h * 0.98f, 34, 14);
-                    Part("Pin", UiKit.Hex(0x6FB592), UiKit.Plain, 0, h * 0.985f, 66, 4, 6);
+                    Oval(150, 72, 15, 7, UiKit.Hex(0xB9BFC7));
+                    Fill(UiKit.Hex(0xB9BFC7), 141, 70, 159, 70, 156, 62, 144, 62);
+                    Line(122, 76, 178, 72, 3, UiKit.Hex(0x6FB592));
                     break;
                 case 3:
-                    Part("Ribbon", UiKit.Hex(0xE6ECF2), UiKit.Plain, 0, h * 0.968f, 30, 6);
+                    Fill(ribbon, 137, 80, 163, 80, 163, 86, 137, 86);
                     break;
             }
 
-            var words = UiKit.Lbl(Appearances.Describe(look), box, 10, UiKit.Hex(0x8A9A9D), 0.12f, TextAnchor.MiddleCenter);
-            words.rectTransform.At(new Vector2(0.5f, 0), new Vector2(0, 8), new Vector2(380, 16));
+            return paint.Texture();
         }
 
         /// <summary>The right of the hero's page: the path chosen, what a fall costs, what lies ahead, and a warning if the slot is taken.</summary>
@@ -621,7 +677,7 @@ namespace GuWorld.UI
             var card = UiKit.Image("Path", right, Color.white, UiKit.Plain);
             card.Gradient(new Color(12 / 255f, 16 / 255f, 24 / 255f, 0.72f), new Color(5 / 255f, 7 / 255f, 12 / 255f, 0.84f));
             UiKit.Frame(card.transform, new Color(200 / 255f, 230 / 255f, 240 / 255f, 0.1f));
-            card.Size(188);
+            card.Size(206);
             var inside = UiKit.Rect("Inside", card.transform).Fill();
             inside.Stack<VerticalLayoutGroup>(6, new RectOffset(22, 22, 16, 14));
             UiKit.Lbl("Ваш путь", inside, 11, UiKit.LabelGold).Size(16);
