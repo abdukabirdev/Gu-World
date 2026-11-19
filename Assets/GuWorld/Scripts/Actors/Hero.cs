@@ -855,7 +855,20 @@ namespace GuWorld.Actors
                 hit = true;
             }
 
-            Sound.AudioDirector.Play(hit ? (combo == 2 ? "palm_heavy" : "palm") : "whoosh", transform.position + transform.forward, hit ? 1 : 0.5f);
+            // No beast in reach: a trunk, a rock or a wall before the palm answers to it by what it is made of.
+            if (!hit && Physics.Raycast(origin + Vector3.up * 1.1f, transform.forward, out var solid, reach * 0.75f, ~0, QueryTriggerInteraction.Ignore) && solid.collider.GetComponentInParent<Actor>() == null && solid.normal.y < 0.6f)
+            {
+                var name = solid.collider.gameObject.name.ToLowerInvariant();
+                var stone = solid.collider.GetComponentInParent<World.TreeSolid>() == null && (name.Contains("boulder") || name.Contains("rock") || name.Contains("stone") || name.Contains("wall") || name.Contains("cliff"));
+                Sound.AudioDirector.Play(stone ? "hit_stone" : "hit_wood", solid.point, combo == 2 ? 1 : 0.75f, 0.1f);
+                Effects.Burst(solid.point + solid.normal * 0.05f, stone ? new Color(0.75f, 0.72f, 0.66f, 0.6f) : new Color(0.55f, 0.42f, 0.28f, 0.6f), combo == 2 ? 0.9f : 0.6f, 0.2f);
+                Game.Shake(combo == 2 ? 0.1f : 0.05f);
+                Game.HitStop(0.03f);
+            }
+            else
+            {
+                Sound.AudioDirector.Play(hit ? (combo == 2 ? "palm_heavy" : "palm") : "whoosh", transform.position + transform.forward, hit ? 1 : 0.5f);
+            }
 
             if (hit)
             {

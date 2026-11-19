@@ -67,6 +67,9 @@ namespace GuWorld.Core.Audio
             ["creak"] = v => Struck(Modes.Wood, 96 + 7 * v, 0.7f, v, 0.35f).Normalise(0.35f),
             ["crack"] = v => Struck(Modes.Wood, 540 + 25 * v, 0.24f, v, 0.65f).Normalise(0.8f),
             ["grab"] = v => Step(v, 2300, 0.7f, 0.06f),
+            // A palm meeting no beast but a trunk or a wall (ROADMAP 13: «удары по телу, дереву, камню»).
+            ["hit_wood"] = v => Struck(Modes.Wood, 170 + 9 * v, 0.32f, v, 0.35f).Normalise(0.75f),
+            ["hit_stone"] = v => Struck(Modes.Stone, 250 + 14 * v, 0.24f, v, 0.5f).Normalise(0.75f),
 
             // ---------------------------------------------------------------- Beasts
             ["howl"] = Howl,
