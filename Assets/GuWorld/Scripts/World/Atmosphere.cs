@@ -198,13 +198,15 @@ namespace GuWorld.World
             var height = night ? Mathf.Repeat(angle - 180, 360) : angle;
             sun.transform.rotation = Quaternion.Euler(Mathf.Clamp(Mathf.Sin(height * Mathf.Deg2Rad) * 62, 9, 62), 115 + (night ? 180 : 0) + height * 0.35f, 0);
             sun.color = Color.Lerp(key.Sun, tint * 0.8f + Color.white * 0.1f, cave * 0.7f);
-            sun.intensity = Mathf.Lerp(key.Strength * (1 - 0.5f * Gloom), 0.35f, cave) + flash * 2.2f * (1 - cave);
+            // «Без вспышек»: the sky only brightens a little when lightning strikes.
+            var flashSeen = Prefs.NoFlashes ? flash * 0.15f : flash;
+            sun.intensity = Mathf.Lerp(key.Strength * (1 - 0.5f * Gloom), 0.35f, cave) + flashSeen * 2.2f * (1 - cave);
             var ambient = Color.Lerp(key.Ambient, Color.Lerp(new Color(0.05f, 0.06f, 0.08f), tint, 0.3f), cave);
             RenderSettings.ambientLight = ambient * 1.15f;
             var horizon = Color.Lerp(key.Horizon, Color.Lerp(new Color(0.01f, 0.012f, 0.02f), tint, 0.12f), cave);
             var top = Color.Lerp(key.Top, new Color(0.004f, 0.005f, 0.01f), cave);
             // Weather greys the horizon; fog brings it close.
-            horizon = Color.Lerp(horizon, new Color(0.42f, 0.46f, 0.5f) * (key.Strength * 0.6f + 0.1f), Gloom * 0.55f) + new Color(0.5f, 0.55f, 0.7f) * flash * 0.3f;
+            horizon = Color.Lerp(horizon, new Color(0.42f, 0.46f, 0.5f) * (key.Strength * 0.6f + 0.1f), Gloom * 0.55f) + new Color(0.5f, 0.55f, 0.7f) * flashSeen * 0.3f;
             RenderSettings.fogColor = horizon;
             // The water reflects the sky.
             Shader.SetGlobalColor("_GW_SkyTop", new Color(top.r, top.g, top.b, 1));

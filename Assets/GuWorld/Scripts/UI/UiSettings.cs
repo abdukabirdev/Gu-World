@@ -351,7 +351,7 @@ namespace GuWorld.UI
 
         void AccessTab(RectTransform list)
         {
-            Switch(list, "Без вспышек", "Красная вспышка раны тише", Prefs.NoFlashes, on => Prefs.NoFlashes = on);
+            Switch(list, "Без вспышек", "Тише: красная вспышка раны, свет ударов и Гу, прорыв, молнии и небо в грозу (знаки опасности остаются)", Prefs.NoFlashes, on => Prefs.NoFlashes = on);
             Slide(list, "Тряска камеры", "От ударов и взрывов", 0, 1, Prefs.CameraShake, v => $"{v * 100:0}%", v => Prefs.CameraShake = v);
             Slide(list, "Покачивание головы", "Если от вида глазами героя укачивает — уберите до нуля", 0, 1, Prefs.HeadBob, v => $"{v * 100:0}%", v => Prefs.HeadBob = v);
             Switch(list, "Цвета для дальтоников", "Добро — голубое, вред — оранжевый; значки эффектов различаются ещё и формой рамки", Prefs.ColourBlind, on => Prefs.ColourBlind = on);

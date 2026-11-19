@@ -321,9 +321,19 @@ namespace GuWorld.Fx
 
     public static class Effects
     {
+        /// <summary>
+        /// «Без вспышек» (Accessibility, ROADMAP 2.7.6): the bright lights of blows, casts, breakthroughs and lightning
+        /// at less than half their strength and a little smaller; what warns of danger (telegraphs) is left as it is.
+        /// </summary>
+        static Color Soft(Color colour) => Prefs.NoFlashes ? new Color(colour.r, colour.g, colour.b, colour.a * 0.4f) : colour;
+
+        static float Smaller(float size) => Prefs.NoFlashes ? size * 0.75f : size;
+
         /// <summary>A flash of light that swells and fades.</summary>
         public static void Burst(Vector3 at, Color colour, float size, float life)
         {
+            colour = Soft(colour);
+            size = Smaller(size);
             var root = new GameObject("Burst");
             root.transform.position = at;
             Models.Part("Glow", root.transform, Models.Quad, Models.Glow(colour), Vector3.zero, Vector3.one).AddComponent<Billboard>();
@@ -337,6 +347,7 @@ namespace GuWorld.Fx
         /// <summary>A ring that runs out over the ground to a radius.</summary>
         public static void Wave(Vector3 at, Color colour, float radius, float life)
         {
+            colour = Soft(colour);
             var root = new GameObject("Wave");
             root.transform.position = Game.Ground(at) + Vector3.up * 0.1f;
             Models.Part("Ring", root.transform, Models.Ring, Models.Glow(colour), Vector3.zero, Vector3.one);
@@ -351,6 +362,8 @@ namespace GuWorld.Fx
         /// <summary>A pillar of light standing on the ground for a moment (a lightning strike, a breakthrough).</summary>
         public static void Pillar(Vector3 at, Color colour, float width, float height, float life)
         {
+            colour = Soft(colour);
+            width = Smaller(width);
             var root = new GameObject("Pillar");
             root.transform.position = Game.Ground(at);
             var beam = Models.Part("Beam", root.transform, Models.Quad, Models.Glow(colour), new Vector3(0, height * 0.5f, 0), new Vector3(width, height, 1));
@@ -369,7 +382,7 @@ namespace GuWorld.Fx
             var root = new GameObject("Bolt");
             var line = root.AddComponent<LineRenderer>();
             line.sharedMaterial = Models.Glow(Color.white, true, Texture2D.whiteTexture);
-            line.startColor = line.endColor = colour;
+            line.startColor = line.endColor = Soft(colour);
             line.startWidth = 0.16f;
             line.endWidth = 0.1f;
             const int points = 8;
