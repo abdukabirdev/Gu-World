@@ -62,6 +62,7 @@ namespace GuWorld.Actors
         {
             Def = def;
             Group = group;
+            warns = def.Id.EndsWith("_patrol", StringComparison.Ordinal) && !string.IsNullOrEmpty(def.Clan);
             // The difficulty makes them tougher or softer.
             maxHealth = def.Health * (Game.Session != null ? DifficultyRules.EnemyHealth(Game.Session.State.Settings.Difficulty) : 1);
             Health = maxHealth;
@@ -313,7 +314,8 @@ namespace GuWorld.Actors
         }
 
         /// <summary>A clan's patrol (its id ends "_patrol"): it warns before it fights.</summary>
-        bool Warns => Def.Id.EndsWith("_patrol") && !string.IsNullOrEmpty(Def.Clan);
+        bool Warns => warns;
+        bool warns;
         bool provoked;
         bool greeted;
         float warnedUntil = -1;
