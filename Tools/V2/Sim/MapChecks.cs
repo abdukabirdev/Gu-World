@@ -88,6 +88,11 @@ static partial class Program
             Check(grows.Length > 10, $"journal: a gathering says where it grows ({grows})");
         }
 
+        // The codex's «Где взять»: every Gu that is sold, dropped, fused or wild says so.
+        var silent = GuBook.All.Where(g => g.Price > 0 && Codex.WhereToGet(g.Id).Count == 0).Select(g => g.Id).ToList();
+        Check(silent.Count == 0, "codex: every Gu with a price says where it is to be had" + (silent.Count > 0 ? ": " + string.Join(", ", silent.Take(8)) : ""));
+        Check(Codex.WhereToGet("moonlight").Count > 0, "codex: the moonlight Gu says where it is to be had: " + string.Join("; ", Codex.WhereToGet("moonlight")));
+
         var first2 = b.BountiesTaken()[0];
         Check(b.BountyDaysLeft(first2) == Session.BountyDays, "journal: a fresh errand has all its days");
         Check(b.AbandonBounty(first2) && !b.BountiesTaken().Contains(first2) && !b.AbandonBounty(first2), "journal: an errand left frees its place, once");

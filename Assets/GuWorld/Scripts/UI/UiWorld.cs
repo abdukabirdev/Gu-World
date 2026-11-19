@@ -400,6 +400,8 @@ namespace GuWorld.UI
 
         CodexKind codexKind = CodexKind.Lore;
         string pickedPage;
+        /// <summary>The codex's Gu by rank (0: all).</summary>
+        int codexRank;
 
         static string CodexName(CodexKind kind)
         {
@@ -419,14 +421,16 @@ namespace GuWorld.UI
             var session = S;
             var fromTitle = !Game.Playing;
             var body = Frame("典", "Кодекс", fromTitle ? $"Открыто во всех ячейках: {session.State.Codex.Count}" : $"Открыто страниц: {session.State.Codex.Count}",
-                !fromTitle, fromTitle ? () => Show(Page.Title) : (Action)null, null, new[] { ("Q E", "Страницы"), ("Tab", "Раздел"), ("Esc", "Закрыть") });
+                !fromTitle, fromTitle ? () => Show(Page.Title) : (Action)null, null, new[] { ("Q E", "Страницы"), ("Tab", "Раздел"), ("R", "Ранг Гу"), ("Esc", "Закрыть") });
 
             if (fromTitle)
             {
                 body.gameObject.AddComponent<PageKeys>().On(Key.Escape, () => Show(Page.Title));
             }
             var kinds = (CodexKind[])Enum.GetValues(typeof(CodexKind));
-            body.gameObject.AddComponent<PageKeys>().On(Key.Tab, () => { codexKind = kinds[(Array.IndexOf(kinds, codexKind) + 1) % kinds.Length]; pickedPage = null; Redraw(); });
+            var codexKeys = body.gameObject.AddComponent<PageKeys>();
+            codexKeys.On(Key.Tab, () => { codexKind = kinds[(Array.IndexOf(kinds, codexKind) + 1) % kinds.Length]; pickedPage = null; codexRank = 0; Redraw(); });
+            codexKeys.On(Key.R, () => { if (codexKind == CodexKind.Gu) { codexRank = (codexRank + 1) % 6; pickedPage = null; Redraw(); } });
             var left = Column(body, 0, 0.42f, 6);
             var tabs = UiKit.Rect("Tabs", left);
             tabs.Stack<HorizontalLayoutGroup>(16, null, TextAnchor.MiddleLeft).childForceExpandWidth = false;
@@ -439,8 +443,27 @@ namespace GuWorld.UI
                 UiKit.Tb($"{CodexName(kind)} {open}/{all}", tabs, kind == codexKind, () => { codexKind = k; pickedPage = null; Redraw(); }, 11);
             }
 
+            // The Gu by their rank (UI-Codex.dc.html: «Ранг · все I II III IV V»).
+            if (codexKind == CodexKind.Gu)
+            {
+                var ranks = UiKit.Rect("Ranks", left);
+                ranks.Size(32);
+                ranks.Stack<HorizontalLayoutGroup>(6, null, TextAnchor.MiddleLeft).childForceExpandWidth = true;
+
+                for (var r = 0; r <= 5; r++)
+                {
+                    var rank = r;
+                    UiKit.Tb(r == 0 ? "Все" : GuBook.RankNumerals[r], ranks, codexRank == r, () => { codexRank = rank; pickedPage = null; Redraw(); }, 11).Size(32, -1, 1);
+                }
+            }
+
             var list = Scroll(Rest(left));
             var pages = session.CodexPages(codexKind);
+
+            if (codexKind == CodexKind.Gu && codexRank > 0)
+            {
+                pages.RemoveAll(p => GuBook.Get(p.Id.Substring(p.Id.IndexOf(':') + 1))?.Rank != codexRank);
+            }
 
             if (!pages.Exists(p => p.Id == pickedPage))
             {
@@ -450,7 +473,16 @@ namespace GuWorld.UI
             foreach (var page in pages)
             {
                 var id = page.Id;
-                ListLine(list, Seal(page), page.Title, "", UiKit.Text2, id == pickedPage, () => { pickedPage = id; Redraw(); });
+                var right2 = codexKind == CodexKind.Gu ? GuBook.RankNumerals[GuBook.Get(id.Substring(id.IndexOf(':') + 1))?.Rank ?? 1] : "";
+                ListLine(list, Seal(page), page.Title, right2, UiKit.Text2, id == pickedPage, () => { pickedPage = id; Redraw(); });
+            }
+
+            // What is left to find, without telling what (the design's «???»).
+            var (opened, total) = session.CodexCount(codexKind);
+
+            if (total > opened && codexRank == 0)
+            {
+                ListLine(list, "隐", $"Не открыто: {total - opened}", "???", UiKit.Muted, false, null);
             }
 
             var right = Column(body, 0.48f, 1, 8);
@@ -542,6 +574,18 @@ namespace GuWorld.UI
                         {
                             Fact(right, "Хранит", Clans.Get(gu.Clan)?.Name ?? gu.Clan);
                         }
+
+                        var where = Codex.WhereToGet(id);
+
+                        if (where.Count > 0)
+                        {
+                            Gap(right, 6);
+                            UiKit.Lbl("Где взять", right, 11, UiKit.LabelGold).Size(16);
+                            Para(string.Join(" · ", where), right, 14, UiKit.Text2);
+                        }
+
+                        var owned = S.State.Gu.FindAll(g => g.Def == id).Count;
+                        Fact(right, "У вас", owned > 0 ? $"{owned}" : "нет", owned > 0 ? UiKit.Ok : UiKit.Muted);
                     }
 
                     break;

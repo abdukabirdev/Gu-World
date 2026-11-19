@@ -1,6 +1,7 @@
 using System.Collections.Generic;
 using GuWorld.Core;
 using UnityEngine;
+using UnityEngine.InputSystem;
 using UnityEngine.UI;
 
 namespace GuWorld.UI
@@ -256,12 +257,56 @@ namespace GuWorld.UI
 
         // ------------------------------------------------------------------ Fusion
 
+        /// <summary>The recipe book's filter: all, ready, the result's rank II, III, IV and up.</summary>
+        int fusionFilter;
+        /// <summary>What the last fusion made, shown over the recipe until another is picked.</summary>
+        string fusionMade;
+
+        /// <summary>
+        /// The altar of fusion (after Rite.dc.html): the recipe book at the left, filtered (all · ready · by the
+        /// result's rank), the unknown ones hidden in it; the recipe picked at the right — what it makes, what it
+        /// takes (have / need), the rite held on Space or the button until the ring closes. Fusion always
+        /// holds (GDD): the quality is the best of what went in, now and then a step better.
+        /// </summary>
         void FusionPage()
         {
             var session = S;
-            var body = Frame("炼", "Алтарь слияния", "Два Гу и их корм становятся одним, рангом выше", false, null, Purse);
+            var body = Frame("炼", "Алтарь слияния", "Два Гу и их корм становятся одним, рангом выше", false, null, Purse,
+                new[] { ("ЛКМ", "Рецепт"), ("F", "Фильтр"), ("Пробел", "Удерживать — слить"), ("Esc", "Назад") });
             var left = Column(body, 0, 0.44f, 6);
-            UiKit.Lbl("Рецепты", left, 11, UiKit.LabelGold).Size(18);
+            var known = 0;
+
+            foreach (var recipe in Recipes.All)
+            {
+                known += session.KnowsRecipe(recipe.Id) ? 1 : 0;
+            }
+
+            UiKit.Lbl($"Книга рецептов · {known} из {Recipes.All.Length}", left, 11, UiKit.LabelGold).Size(18);
+            var filters = UiKit.Rect("Filters", left);
+            filters.Size(34);
+            filters.Stack<HorizontalLayoutGroup>(6, null, TextAnchor.MiddleLeft).childForceExpandWidth = true;
+            var names = new[] { "Все", "Готовы", "II", "III", "IV+" };
+
+            for (var i = 0; i < names.Length; i++)
+            {
+                var at = i;
+                UiKit.Tb(names[i], filters, fusionFilter == i, () => { fusionFilter = at; Redraw(); }, 11).Size(34, -1, 1);
+            }
+
+            bool Shown(RecipeDef recipe)
+            {
+                var rank = GuBook.Get(recipe.Result).Rank;
+
+                switch (fusionFilter)
+                {
+                    case 1: return session.KnowsRecipe(recipe.Id) && session.FusionInputs(recipe, out _) != null;
+                    case 2: return rank == 2;
+                    case 3: return rank == 3;
+                    case 4: return rank >= 4;
+                    default: return true;
+                }
+            }
+
             var list = Scroll(Rest(left));
 
             if (pickedRecipe == null)
@@ -275,21 +320,35 @@ namespace GuWorld.UI
                 }
             }
 
+            var unknown = 0;
+
             foreach (var recipe in Recipes.All)
             {
+                if (!Shown(recipe))
+                {
+                    continue;
+                }
+
                 var result = GuBook.Get(recipe.Result);
                 var id = recipe.Id;
 
                 if (!session.KnowsRecipe(id))
                 {
-                    ListLine(list, "隐", "Неизвестный рецепт", $"ранг {GuBook.RankNumerals[result.Rank]}", UiKit.Muted, false, null);
+                    unknown++;
                     continue;
                 }
 
                 var ready = session.FusionInputs(recipe, out _) != null;
-                ListLine(list, result.Seal, result.Name, ready ? "готово" : $"ранг {GuBook.RankNumerals[result.Rank]}", UiKit.Hex(result.Colour), id == pickedRecipe, () => { pickedRecipe = id; Redraw(); },
+                ListLine(list, result.Seal, result.Name, ready ? "готово" : $"ранг {GuBook.RankNumerals[result.Rank]}", UiKit.Hex(result.Colour), id == pickedRecipe, () => { pickedRecipe = id; fusionMade = null; Redraw(); },
                     ready ? UiKit.Ok : UiKit.Muted);
             }
+
+            if (unknown > 0)
+            {
+                ListLine(list, "隐", $"Неизвестных рецептов: {unknown}", "", UiKit.Muted, false, null);
+            }
+
+            Para("Новые рецепты — у наставников, в наследиях и тайниках; свиток читают из сумки.", list, 13, UiKit.Muted);
 
             var right = Column(body, 0.5f, 1, 6);
             var picked = pickedRecipe != null ? Recipes.Get(pickedRecipe) : null;
@@ -300,22 +359,27 @@ namespace GuWorld.UI
                 return;
             }
 
-            var made = GuBook.Get(picked.Result);
+            if (fusionMade != null)
+            {
+                UiKit.Lbl("Слияние удалось", right, 11, UiKit.Ok).Size(16);
+                Para(fusionMade, right, 15, UiKit.GoldText);
+                Gap(right, 4);
+            }
+
             GuDetail(right, session.MakeGu(picked.Result, 0, true), false);
             Gap(right, 8);
-            UiKit.Lbl("Нужно", right, 11, UiKit.LabelGold).Size(18);
-            var used = new List<GuInstance>();
+            UiKit.Lbl("Состав", right, 11, UiKit.LabelGold).Size(18);
+            var needs = new Dictionary<string, int>();
 
             foreach (var need in picked.Gu)
             {
-                var have = session.State.Gu.Find(g => g.Def == need && g.Refined && !used.Contains(g));
+                needs[need] = needs.TryGetValue(need, out var n) ? n + 1 : 1;
+            }
 
-                if (have != null)
-                {
-                    used.Add(have);
-                }
-
-                Fact(right, GuBook.Get(need).Name, have != null ? "есть" : "нет", have != null ? UiKit.Ok : UiKit.Danger);
+            foreach (var pair in needs)
+            {
+                var have = session.State.Gu.FindAll(g => g.Def == pair.Key && g.Refined).Count;
+                Fact(right, GuBook.Get(pair.Key).Name, $"{have} / {pair.Value}", have >= pair.Value ? UiKit.Ok : UiKit.Danger);
             }
 
             foreach (var (item, count) in picked.Items)
@@ -327,15 +391,25 @@ namespace GuWorld.UI
             Fact(right, "Первобытные камни", $"{session.State.Stones} / {picked.Stones}", session.State.Stones >= picked.Stones ? UiKit.Ok : UiKit.Danger);
             Gap(right, 8);
             var inputs = session.FusionInputs(picked, out var why);
-            UiKit.HexButton("Слить", right, () =>
+            var rite = UiKit.HexButton(inputs != null ? "Удерживать — слить" : "Слить", right, () =>
             {
-                if (session.Fuse(picked.Id) != null)
+                var made = session.Fuse(picked.Id);
+
+                if (made != null)
                 {
+                    fusionMade = $"{GuBook.Get(made.Def).Name}" + (made.Quality > 0 ? $" · {GuBook.QualityNames[made.Quality]}" : "") + " — в апертуре" + (System.Array.IndexOf(session.State.Active, made.Uid) >= 0 || System.Array.IndexOf(session.State.Passive, made.Uid) >= 0 ? ", на месте вошедшего" : "") + ".";
+                    Sound.AudioDirector.Play("temper", null, 0.9f, 0);
                     Game.Save();
                 }
 
                 Redraw();
             }, inputs != null ? UiKit.HexKind.Solid : UiKit.HexKind.Off, 14, 56);
+
+            if (inputs != null)
+            {
+                // The rite is held, on the button or on Space, until its ring closes.
+                rite.Held(1.4f, Key.Space);
+            }
 
             if (why != null)
             {
@@ -343,8 +417,10 @@ namespace GuWorld.UI
             }
             else
             {
-                Para("Качество будет не хуже лучшего из вошедших Гу; каждый четвёртый раз оно поднимается на ступень.", right, 13, UiKit.Muted);
+                Para("Слияние всегда удаётся. Качество — не хуже лучшего из вошедших Гу; каждый четвёртый раз оно поднимается на ступень. Вошедшие Гу и материалы уходят.", right, 13, UiKit.Muted);
             }
+
+            body.gameObject.AddComponent<PageKeys>().On(Key.F, () => { fusionFilter = (fusionFilter + 1) % 5; Redraw(); });
         }
     }
 }

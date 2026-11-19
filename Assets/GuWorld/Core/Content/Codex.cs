@@ -1,3 +1,4 @@
+using System;
 using System.Collections.Generic;
 
 namespace GuWorld.Core
@@ -191,6 +192,103 @@ namespace GuWorld.Core
             foreach (var npc in Atlas.AllNpcs)
             {
                 yield return new CodexEntry { Id = "person:" + npc.Id, Kind = CodexKind.Person, Title = npc.Name, Text = npc.Title ?? "" };
+            }
+        }
+
+        /// <summary>
+        /// Where a Gu is to be had (the codex's «Где взять», ROADMAP 3.2): the shops that sell it, the beasts and
+        /// men whose loot holds it, fusion, the wild — in a few words each.
+        /// </summary>
+        public static List<string> WhereToGet(string gu)
+        {
+            var where = new List<string>();
+            var def = GuBook.Get(gu);
+
+            if (def == null)
+            {
+                return where;
+            }
+
+            var shops = new List<string>();
+
+            foreach (var id in Markets.Ids)
+            {
+                foreach (var entry in Markets.Get(id))
+                {
+                    if (entry.Gu == gu)
+                    {
+                        var name = ShopName(id);
+
+                        if (!shops.Contains(name))
+                        {
+                            shops.Add(name);
+                        }
+                    }
+                }
+            }
+
+            if (shops.Count > 0)
+            {
+                where.Add("продают: " + string.Join(", ", shops));
+            }
+
+            var droppers = new List<string>();
+
+            foreach (var table in Bestiary.Tables)
+            {
+                if (Array.IndexOf(table.GuPool, gu) < 0)
+                {
+                    continue;
+                }
+
+                foreach (var enemy in Bestiary.All)
+                {
+                    if (enemy.Loot == table.Id && !droppers.Contains(enemy.Name) && droppers.Count < 4)
+                    {
+                        droppers.Add(enemy.Name);
+                    }
+                }
+            }
+
+            if (droppers.Count > 0)
+            {
+                where.Add("с добычи: " + string.Join(", ", droppers));
+            }
+
+            foreach (var recipe in Recipes.All)
+            {
+                if (recipe.Result == gu)
+                {
+                    where.Add("слиянием у алтаря");
+                    break;
+                }
+            }
+
+            if (WildGu.Wild(def) && def.Rank <= 3)
+            {
+                where.Add($"дикий — ловят в местах пути «{GuBook.PathName(def.Path)}»" + (def.Rank >= 2 ? ", дальше от деревни" : ""));
+            }
+
+            if (def.Clan != "")
+            {
+                where.Add($"хранит клан {Clans.Get(def.Clan)?.Name ?? def.Clan}");
+            }
+
+            return where;
+        }
+
+        static string ShopName(string id)
+        {
+            switch (id)
+            {
+                case "valley": return "лавка Гу Юэ";
+                case "bai_shop": case "bai_gu": return "клан Бай";
+                case "xiong_shop": case "xiong_smith": case "xiong_gu": return "клан Сюн";
+                case "hamlet": return "хутора";
+                case "wander_shop": return "торговый пост";
+                case "black_market": return "чёрный рынок";
+                case "fair": return "ярмарка";
+                default: return "лотки города";
             }
         }
     }
