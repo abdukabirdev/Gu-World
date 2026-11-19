@@ -226,6 +226,15 @@ namespace GuWorld.World
             {
                 light.GetComponent<WildFlight>().Flee(Game.Hero.transform.position);
                 Sound.AudioDirector.Play("whoosh", null, 0.6f);
+
+                // It struck back as it went.
+                if (result.Stung > 0)
+                {
+                    Game.Ui?.Hurt();
+                    Game.Ui?.DamageNumber(Game.Hero.transform.position + Vector3.up * 2f, result.Stung, false, true);
+                    Effects.Burst(Game.Hero.transform.position + Vector3.up * 1.3f, colour, 1.2f, 0.25f);
+                    Sound.AudioDirector.Play("hurt", null, 0.7f);
+                }
             }
 
             Game.Say(result.Message);

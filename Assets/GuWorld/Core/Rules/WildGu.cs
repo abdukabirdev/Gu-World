@@ -19,6 +19,8 @@ namespace GuWorld.Core
         public bool Caught;
         public string Message;
         public GuInstance Gu;
+        /// <summary>What the Gu's sting took from the hero as it got away (0 if it only fled).</summary>
+        public float Stung;
     }
 
     /// <summary>
@@ -134,6 +136,12 @@ namespace GuWorld.Core
         }
 
         /// <summary>The essence an attempt costs: more for a Gu of a higher rank.</summary>
+        /// <summary>How likely a Gu that got away strikes back: never at the first rank, more often the higher.</summary>
+        public static double StingChance(int rank) => rank <= 1 ? 0 : Math.Min(0.6, 0.25 + 0.1 * (rank - 2));
+
+        /// <summary>How hard the sting of a Gu that got away is (before the hero's defences).</summary>
+        public static float Sting(int rank) => 6f * rank * rank;
+
         public static float Cost(int rank) => 8 * rank * rank;
     }
 
@@ -194,6 +202,15 @@ namespace GuWorld.Core
 
             if (Random.NextDouble() >= chance)
             {
+                // A Gu of the second rank or higher may strike back before it goes (ROADMAP 12.7).
+                if (Random.NextDouble() < WildGu.StingChance(def.Rank))
+                {
+                    var stung = TakeDamage(WildGu.Sting(def.Rank));
+                    Say($"{def.Name} ужалил и ускользнул");
+
+                    return new CatchResult { Message = $"{def.Name} ужалил и ускользнул", Stung = stung };
+                }
+
                 Say($"{def.Name} ускользнул");
 
                 return new CatchResult { Message = $"{def.Name} ускользнул" };

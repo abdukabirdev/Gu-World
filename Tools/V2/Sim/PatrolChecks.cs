@@ -154,3 +154,36 @@ static partial class Program
         Check(!s0.BanditsOut(one), "a hero the bandits do not hate is let be");
     }
 }
+
+static partial class Program
+{
+    /// <summary>A wild Gu that gets away may sting (ROADMAP 12.7).</summary>
+    static void StingRules()
+    {
+        Check(WildGu.StingChance(1) == 0 && WildGu.StingChance(2) > 0 && WildGu.StingChance(3) > WildGu.StingChance(2), "first-rank Gu never sting; the higher, the likelier");
+        Check(WildGu.Sting(3) > WildGu.Sting(2), "a higher Gu stings harder");
+
+        // Many tries at a third-rank Gu by a first-rank hero: some sting, none of the stings kill a healthy hero outright.
+        var stings = 0;
+        var tries = 0;
+
+        for (var seed = 1; seed <= 60; seed++)
+        {
+            var s = new Session(Session.NewGame("Ловец"), seed);
+            var gu = GuBook.All.First(g => g.Rank == 3 && WildGu.Wild(g));
+            var spot = new WildSpot { Gu = gu.Id, Key = "test:" + seed, X = 3000, Z = 0 };
+            s.State.Essence = 1000;
+            var before = s.State.Health;
+            var result = s.Catch(spot);
+            tries++;
+
+            if (result.Stung > 0)
+            {
+                stings++;
+                Check(s.State.Health < before && s.State.Health > 0, "a sting hurts but does not kill a healthy hero");
+            }
+        }
+
+        Check(stings > 0 && stings < tries, $"some third-rank Gu sting as they go ({stings} of {tries})");
+    }
+}

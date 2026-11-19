@@ -98,6 +98,7 @@ static partial class Program
         HealerRules();
         MachineRules();
         BanditRules();
+        StingRules();
         SaveRoundTrip();
         var report = new List<string>();
 
