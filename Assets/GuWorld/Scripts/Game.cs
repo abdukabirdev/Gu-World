@@ -914,6 +914,35 @@ namespace GuWorld
         public static Vector3 Ground(Vector3 at) => new Vector3(at.x, World.Ground.SampleHeight(at), at.z);
 
         public static void Shake(float amount) => Rig?.Shake(amount);
+
+        /// <summary>The world held still for a blink when a blow lands (ROADMAP 4: «стоп-кадр 40–60 мс»), so it is felt.</summary>
+        public static void HitStop(float seconds)
+        {
+            if (Instance == null || Frozen || hitStopping || seconds <= 0)
+            {
+                return;
+            }
+
+            Run(HoldStill(seconds));
+        }
+
+        static bool hitStopping;
+        const float HitStopScale = 0.06f;
+
+        static IEnumerator HoldStill(float seconds)
+        {
+            hitStopping = true;
+            Time.timeScale = HitStopScale;
+            yield return new WaitForSecondsRealtime(seconds);
+
+            // Only if nothing else (a page that stops time) changed it meanwhile.
+            if (Mathf.Approximately(Time.timeScale, HitStopScale))
+            {
+                Time.timeScale = 1;
+            }
+
+            hitStopping = false;
+        }
         public static void Say(string line) => Ui?.Toast(line);
         public static Coroutine Run(IEnumerator routine) => Instance.runner.StartCoroutine(routine);
 

@@ -716,6 +716,8 @@ namespace GuWorld.Actors
             {
                 SinceFight = 0;
                 Game.Shake(combo == 2 ? 0.22f : 0.08f);
+                // A blink of stillness: longer for the third, heavy blow.
+                Game.HitStop(combo == 2 ? 0.065f : 0.04f);
             }
 
             if (combo == 2)
