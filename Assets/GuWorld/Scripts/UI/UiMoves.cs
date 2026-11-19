@@ -19,7 +19,7 @@ namespace GuWorld.UI
             var state = session.State;
             var ready = session.ReadyMoves();
             var body = Frame("招", "Убийственные приёмы", $"Постигнуто {state.Moves.Count} из {KillerMoves.All.Length} · готово сейчас {ready.Count}", true, null, null,
-                new[] { ("V", "Приём"), ("X", "Следующий"), ("Q E", "Страницы"), ("Esc", "Закрыть") });
+                new[] { (Actors.Bindings.LabelOf("move"), "Приём"), (Actors.Bindings.LabelOf("next_move"), "Следующий"), ("Q E", "Страницы"), ("Esc", "Закрыть") });
 
             var left = Column(body, 0, 0.42f, 6);
             UiKit.Lbl($"Прозрение · {(int)state.Insight}", left, 11, UiKit.LabelGold).Size(18);

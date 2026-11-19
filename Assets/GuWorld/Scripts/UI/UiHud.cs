@@ -64,6 +64,8 @@ namespace GuWorld.UI
         readonly Queue<string> toastsWaiting = new Queue<string>();
         const int ToastsShown = 3;
         bool errorTold;
+        RectTransform promptKey;
+        string promptKeyLabel = "";
 
         // ------------------------------------------------------------------ A level too heavy (ROADMAP 2.7.3)
 
@@ -209,7 +211,9 @@ namespace GuWorld.UI
             promptRoot.At(new Vector2(0.5f, 0), new Vector2(0, 150), new Vector2(520, 34));
             var promptRow = promptRoot.Stack<HorizontalLayoutGroup>(10, null, TextAnchor.MiddleCenter);
             promptRow.childForceExpandWidth = false;
-            UiKit.Key("T", promptRoot, UiKit.Gold.A(0.7f), UiKit.GoldLit);
+            // The use key as it is bound now (rebinding it rebuilds the HUD's prompt key, see TickHud).
+            promptKeyLabel = Bindings.LabelOf("use");
+            promptKey = UiKit.Key(promptKeyLabel, promptRoot, UiKit.Gold.A(0.7f), UiKit.GoldLit);
             promptText = UiKit.Label("", promptRoot, 17, UiKit.Text).Shadowed();
             promptText.Size(34);
 
@@ -540,6 +544,15 @@ namespace GuWorld.UI
             }
 
             promptRoot.gameObject.SetActive(Game.Prompt != null && Open == Page.None);
+
+            // The use key rebound since: the keycap anew, first in the row.
+            if (promptKeyLabel != Bindings.LabelOf("use"))
+            {
+                promptKeyLabel = Bindings.LabelOf("use");
+                Destroy(promptKey.gameObject);
+                promptKey = UiKit.Key(promptKeyLabel, promptRoot, UiKit.Gold.A(0.7f), UiKit.GoldLit);
+                promptKey.SetAsFirstSibling();
+            }
 
             if (Game.Prompt != null)
             {
