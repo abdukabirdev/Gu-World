@@ -187,3 +187,41 @@ static partial class Program
         Check(stings > 0 && stings < tries, $"some third-rank Gu sting as they go ({stings} of {tries})");
     }
 }
+
+static partial class Program
+{
+    /// <summary>Herbs on a clan's land and the rare ones by night (ROADMAP 12.8).</summary>
+    static void HerbLandRules()
+    {
+        var bai = Regions.Settlements.First(v => v.Clan == "bai");
+        var guYue = Regions.Settlements.FirstOrDefault(v => v.Clan == "gu_yue");
+        Check(Forage.OwnerAt(bai.At.X + bai.Radius + 100, bai.At.Z) == "bai", "near the Bai village it is Bai land");
+        Check(Forage.OwnerAt(bai.At.X + bai.Radius + Forage.ClanLand + 50, bai.At.Z) == "", "farther it is no one's");
+        Check(guYue == null || Forage.OwnerAt(guYue.At.X, guYue.At.Z) == "", "the hero's own clan does not count it theft");
+        Check(Forage.OwnerAt(0, 0) == "", "the valley's middle is no clan's land");
+        Check(Forage.Rare("ginseng") && Forage.Rare("frost_lotus") && !Forage.Rare("red_cap"), "the rare herbs are known");
+
+        // Gathered on Bai land while Bai is not a friend: the clan takes it ill; a friend may.
+        var s = new Session(Session.NewGame("Травник"), 12);
+        var x = bai.At.X + bai.Radius + 100;
+        var patch = new ThingDef { Id = $"forage:{(int)(x / Forage.Cell)}:{(int)(bai.At.Z / Forage.Cell)}:red_cap", Kind = ThingKind.Herb, Content = "red_cap", At = new MapPoint(x, bai.At.Z) };
+        var before = s.ReputationOf("bai");
+        s.GatherForTest(patch);
+        Check(s.ReputationOf("bai") < before && s.Count("red_cap") > 0, "gathered on Bai land unasked: Bai thinks less of the hero");
+        var f = new Session(Session.NewGame("Друг"), 12);
+        f.ChangeReputation("bai", 40, true);
+        var friendly = f.ReputationOf("bai");
+        f.GatherForTest(patch);
+        Check(f.ReputationOf("bai") == friendly, "a friend of the clan may gather");
+
+        // By night a rare patch gives one more than by day, on the same luck.
+        var day = new Session(Session.NewGame("Днём"), 21);
+        var night = new Session(Session.NewGame("Ночью"), 21);
+        var rare = new ThingDef { Id = "forage:90:90:ginseng", Kind = ThingKind.Herb, Content = "ginseng", At = new MapPoint(6300, 6300) };
+        day.SetClock(12);
+        night.SetClock(23);
+        day.GatherForTest(rare);
+        night.GatherForTest(rare);
+        Check(night.Count("ginseng") == day.Count("ginseng") + 1, "a rare herb gives one more by night");
+    }
+}

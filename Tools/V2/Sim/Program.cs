@@ -99,6 +99,7 @@ static partial class Program
         MachineRules();
         BanditRules();
         StingRules();
+        HerbLandRules();
         SaveRoundTrip();
         var report = new List<string>();
 

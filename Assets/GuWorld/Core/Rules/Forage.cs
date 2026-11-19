@@ -33,6 +33,47 @@ namespace GuWorld.Core
             [Biome.Riverbank] = new[] { ("marsh_reed", false), ("dew_gourd", false), ("frost_lotus", true) },
         };
 
+        /// <summary>The rare herbs (worth more, grow far from the village).</summary>
+        public static bool Rare(string item)
+        {
+            foreach (var pair in Grows)
+            {
+                foreach (var (grown, rare) in pair.Value)
+                {
+                    if (grown == item)
+                    {
+                        return rare;
+                    }
+                }
+            }
+
+            return false;
+        }
+
+        /// <summary>How far round a clan's village its land reaches past the village itself, metres.</summary>
+        public const float ClanLand = 400;
+
+        /// <summary>
+        /// The clan whose land a point is on (ROADMAP 12.8: «грядки клана — с разрешения»): within 400 m of a
+        /// clan's village (not the hero's own Gu Yue, not the free hamlets); "" if no one's.
+        /// </summary>
+        public static string OwnerAt(float x, float z)
+        {
+            var p = new MapPoint(x, z);
+
+            foreach (var settlement in Regions.Settlements)
+            {
+                var clan = Clans.Get(settlement.Clan);
+
+                if (clan != null && clan.Id != Patrols.HomeClan && clan.Guards && settlement.At.DistanceTo(p) < settlement.Radius + ClanLand)
+                {
+                    return clan.Id;
+                }
+            }
+
+            return "";
+        }
+
         /// <summary>What grows in a biome (none in the settlements' streets).</summary>
         public static (string item, bool rare)[] GrowsIn(Biome biome) => Grows.TryGetValue(biome, out var list) ? list : new (string, bool)[0];
 
@@ -133,6 +174,9 @@ namespace GuWorld.Core
             return taken == null || State.Day >= taken.Count;
         }
 
+        /// <summary>Gathers a patch as the hero would (for the tests).</summary>
+        public Use GatherForTest(ThingDef patch) => GatherPatch(patch);
+
         /// <summary>A patch gathered: one to three of it; it grows back in a day or two.</summary>
         Use GatherPatch(ThingDef patch)
         {
@@ -142,7 +186,23 @@ namespace GuWorld.Core
             }
 
             var count = 1 + Random.Next(3);
+
+            // The rare ones give more by night, when they open (ROADMAP 12.8).
+            if (Night && Forage.Rare(patch.Content))
+            {
+                count++;
+            }
+
             AddItem(patch.Content, count);
+
+            // Gathered on a clan's land by one it does not count a friend: theft, and the clan hears of it.
+            var owner = Forage.OwnerAt(patch.At.X, patch.At.Z);
+
+            if (owner != "" && StandingWith(owner) < Standing.Friendly)
+            {
+                ChangeReputation(owner, -2, false);
+                Say($"Это земля клана {Clans.Get(owner)?.Name.Replace("Клан ", "")} — сбор без спроса им не понравится");
+            }
             State.ForageTaken = State.ForageTaken ?? new List<Tally>();
             State.ForageTaken.RemoveAll(t => t.Id == patch.Id);
             State.ForageTaken.Add(new Tally { Id = patch.Id, Count = State.Day + 1 + Random.Next(2) });
