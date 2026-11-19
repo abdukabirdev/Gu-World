@@ -55,6 +55,23 @@ namespace GuWorld.UI
 
         // ------------------------------------------------------------------ The engine's commands
 
+        /// <summary>The world as it is, without the HUD (ROADMAP 12.1: /shot): two frames hidden, a picture, the HUD back.</summary>
+        System.Collections.IEnumerator ShotWithoutHud()
+        {
+            yield return null;
+            var was = hudRoot.gameObject.activeSelf;
+            hudRoot.gameObject.SetActive(false);
+            yield return new WaitForEndOfFrame();
+            var folder = System.IO.Path.Combine(Application.persistentDataPath, "Shots");
+            System.IO.Directory.CreateDirectory(folder);
+            var file = System.IO.Path.Combine(folder, $"gu-world-{System.DateTime.Now:yyyyMMdd-HHmmss}.png");
+            ScreenCapture.CaptureScreenshot(file);
+            yield return null;
+            yield return null;
+            hudRoot.gameObject.SetActive(was);
+            Toast($"Снимок: Shots/{System.IO.Path.GetFileName(file)}");
+        }
+
         void AddEngineCommands()
         {
             Commands.Add(new CommandDef { Name = "tp", Usage = "/tp <место | x z>", About = "Перенести героя: id или имя места, деревни, фонаря — или координаты", Run = Teleport });
@@ -72,6 +89,8 @@ namespace GuWorld.UI
             Commands.Add(new CommandDef { Name = "aperture", Usage = "/aperture", About = "В апертуру бессмертного", Run = (s, a) => { Close(); Aperture.Enter(); return "Апертура"; } });
             Commands.Add(new CommandDef { Name = "fps", Usage = "/fps", About = "Счётчик кадров: вкл / выкл", Run = (s, a) => { Prefs.ShowFps = !Prefs.ShowFps; return Prefs.ShowFps ? "FPS показан" : "FPS скрыт"; } });
             Commands.Add(new CommandDef { Name = "stats", Usage = "/stats", About = "Что сейчас в мире: враги, люди, память", Run = (s, a) => Stats() });
+            Commands.Add(new CommandDef { Name = "shot", Usage = "/shot", About = "Снимок мира без HUD — в папку Shots рядом с сохранениями", Run = (s, a) => { Close(); Game.Run(ShotWithoutHud()); return "Снимок…"; } });
+            Commands.Add(new CommandDef { Name = "hitbox", Usage = "/hitbox", About = "Хитбоксы: вкл / выкл (то же, что F7)", Run = (s, a) => { Fx.Hitboxes.Toggle(); return "Хитбоксы переключены"; } });
         }
 
         static string Teleport(Session session, string[] words)
