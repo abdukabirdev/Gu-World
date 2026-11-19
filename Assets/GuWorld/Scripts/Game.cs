@@ -34,6 +34,8 @@ namespace GuWorld
             public bool Smaa;
             /// <summary>How thick and how far the grass is, as a share of the tier's own (0.3–1.6).</summary>
             public float Grass;
+            /// <summary>The hero's model: 0 as the tier has it, 1 the full one (626k), 2 the medium one (70k).</summary>
+            public int Hero;
         }
 
         public static readonly Numbers[] Presets =
@@ -51,7 +53,7 @@ namespace GuWorld
         public static Numbers Now { get; private set; } = Presets[2];
         /// <summary>The tier the world was (or will be) built for: 0 light, 1 ordinary, 2 high.</summary>
         public static int Level => Now.Tier;
-        public static bool FullHero => Level >= 2;
+        public static bool FullHero => Now.Hero == 1 || (Now.Hero == 0 && Level >= 2);
         /// <summary>The share of the plan's trees that are planted.</summary>
         public static float Trees => Now.Trees;
         /// <summary>The grass's share of its tier's thickness and reach.</summary>
@@ -78,6 +80,7 @@ namespace GuWorld
                     Trees = PlayerPrefs.GetFloat("gw2.q.trees", 0.75f),
                     Smaa = PlayerPrefs.GetInt("gw2.q.smaa", 0) == 1,
                     Grass = PlayerPrefs.GetFloat("gw2.q.grass", 1),
+                    Hero = PlayerPrefs.GetInt("gw2.q.hero", 0),
                 };
                 Preset = Custom;
                 Apply();
@@ -120,6 +123,7 @@ namespace GuWorld
             PlayerPrefs.SetFloat("gw2.q.trees", numbers.Trees);
             PlayerPrefs.SetInt("gw2.q.smaa", numbers.Smaa ? 1 : 0);
             PlayerPrefs.SetFloat("gw2.q.grass", numbers.Grass);
+            PlayerPrefs.SetInt("gw2.q.hero", numbers.Hero);
             PlayerPrefs.Save();
             Apply();
         }
