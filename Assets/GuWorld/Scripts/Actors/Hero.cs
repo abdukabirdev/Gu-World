@@ -75,7 +75,10 @@ namespace GuWorld.Actors
         /// <summary>The hero's height against a middling one's (the look chosen at a new game): the model's scale, the camera's eyes.</summary>
         public float Stature => Appearances.Stature(Session?.State.Appearance?.Height ?? 1);
 
-        /// <summary>The model for the quality chosen (the full 626 000-triangle one on high), in the hero's look.</summary>
+        /// <summary>Which model the hero wears now: the full one (626 000 triangles) or the game's (70 000).</summary>
+        public bool FullModel { get; private set; }
+
+        /// <summary>The model for the quality chosen (the full 626 000-triangle one on high), in the hero's look. Again when the settings change it.</summary>
         public void MakeModel()
         {
             if (model != null)
@@ -83,12 +86,19 @@ namespace GuWorld.Actors
                 Destroy(model.gameObject);
             }
 
-            model = Models.Human(transform, "hero", true, Quality.FullHero, out rig).transform;
+            FullModel = Quality.FullHero;
+            model = Models.Human(transform, "hero", true, FullModel, out rig).transform;
             // Still at rest: the look's skin, robe and hair go on before the first pose.
             HeroLook.Apply(model, Session?.State.Appearance, rig != null && rig.Mirrored);
             model.localScale = Vector3.one * Appearances.ModelScale * Stature;
             rig?.Play("idle", 0);
             springs = Quality.Level >= 1 ? new SpringBones(model) : null;
+
+            // Made again while seen through the hero's own eyes: only its shadow.
+            if (Game.Rig != null && Game.Rig.Eyes)
+            {
+                ShowBody(false);
+            }
         }
 
         void SetMode(Mode next)
@@ -392,13 +402,13 @@ namespace GuWorld.Actors
                 }
             }
 
-            if ((Keys.RightDown || Bindings.Down("roll")) && Grounded)
+            if (Bindings.Down("roll") && Grounded)
             {
                 TryRoll(wish);
                 return;
             }
 
-            if (Keys.LeftDown && Grounded && !guarding)
+            if (Bindings.Down("strike") && Grounded && !guarding)
             {
                 BeginStrike(0);
                 return;
@@ -407,7 +417,7 @@ namespace GuWorld.Actors
             if (Prefs.TargetHold)
             {
                 // Held: a target while the key is down, none when it is let go.
-                var held = Bindings.Held("target") || (UnityEngine.InputSystem.Mouse.current != null && UnityEngine.InputSystem.Mouse.current.middleButton.isPressed);
+                var held = Bindings.Held("target");
 
                 if (held && Target == null)
                 {
@@ -418,7 +428,7 @@ namespace GuWorld.Actors
                     Target = null;
                 }
             }
-            else if (Bindings.Down("target") || Keys.MiddleDown)
+            else if (Bindings.Down("target"))
             {
                 PickTarget();
             }
@@ -660,12 +670,12 @@ namespace GuWorld.Actors
             var ahead = Nearest(1.5f, 60);
             Walk(t > 0.15f && t < StrikeAt[combo] + 0.1f && ahead == null ? transform.forward * (combo == 2 ? 4.2f : 2.6f) : Vector3.zero, dt);
 
-            if (free && Keys.LeftDown)
+            if (free && Bindings.Down("strike"))
             {
                 comboQueued = true;
             }
 
-            if (free && (Keys.RightDown || Bindings.Down("roll")) && t > StrikeAt[combo])
+            if (free && Bindings.Down("roll") && t > StrikeAt[combo])
             {
                 TryRoll(MoveWish());
                 return;

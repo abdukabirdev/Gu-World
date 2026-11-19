@@ -45,11 +45,26 @@ namespace GuWorld.World
             root.transform.SetParent(parent, false);
             var folk = root.AddComponent<Townsfolk>();
             folk.walkers.AddRange(plan.Walkers);
-            // The tier's own, times the settings' share (Settings → Picture → «Люди»).
-            folk.reach = (Quality.Level >= 2 ? 95 : Quality.Level == 1 ? 70 : 45) * Quality.People;
-            folk.most = Mathf.RoundToInt((Quality.Level >= 2 ? 48 : Quality.Level == 1 ? 28 : 14) * Quality.People);
+            folk.Tune();
 
             return folk;
+        }
+
+        /// <summary>How far and how many: the tier's own, times the settings' share (Settings → Picture → «Люди»).</summary>
+        void Tune()
+        {
+            reach = (Quality.Level >= 2 ? 95 : Quality.Level == 1 ? 70 : 45) * Quality.People;
+            most = Mathf.RoundToInt((Quality.Level >= 2 ? 48 : Quality.Level == 1 ? 28 : 14) * Quality.People);
+        }
+
+        /// <summary>The settings changed how many townsfolk are shown: every town takes the new numbers at once (its next count of who is near).</summary>
+        public static void Retune()
+        {
+            foreach (var folk in all)
+            {
+                folk.Tune();
+                folk.wait = 0;
+            }
         }
 
         static readonly List<Townsfolk> all = new List<Townsfolk>();

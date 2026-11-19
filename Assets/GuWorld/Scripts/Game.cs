@@ -153,6 +153,16 @@ namespace GuWorld
             {
                 Game.Rig.Dress();
             }
+
+            // What the world already holds is fitted again at once (ROADMAP 2.7.3): the hero's model, the grass, the
+            // townsfolk; the trees thin by their own every second. The tier's own (terrain, the forest's reach) waits for the world to be built anew.
+            if (Game.Hero != null && Game.Hero.FullModel != FullHero)
+            {
+                Game.Hero.MakeModel();
+            }
+
+            World.GrassField.Retune();
+            World.Townsfolk.Retune();
         }
     }
 

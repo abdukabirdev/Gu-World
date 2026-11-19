@@ -94,6 +94,8 @@ namespace UnityEngine.InputSystem
         public Controls.ButtonControl leftButton => null;
         public Controls.ButtonControl rightButton => null;
         public Controls.ButtonControl middleButton => null;
+        public Controls.ButtonControl forwardButton => null;
+        public Controls.ButtonControl backButton => null;
         public Controls.DeltaControl scroll => null;
         public void WarpCursorPosition(Vector2 position) { }
     }

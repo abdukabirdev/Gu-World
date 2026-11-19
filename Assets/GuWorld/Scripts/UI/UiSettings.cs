@@ -22,16 +22,18 @@ namespace GuWorld.UI
         static readonly (SettingsTab tab, string name, string about)[] SettingsTabs =
         {
             (SettingsTab.Game, "Игра", "Подсказки, числа и метки над миром, автосохранение. Из паузы — ещё и правила этой игры: голод Гу, кормление, переходы. Путь и цену смерти выбирают один раз, в новой игре."),
-            (SettingsTab.Controls, "Управление", "Мышь, камера и клавиши. Нажмите на действие, потом новую клавишу; клавиша, занятая другим действием, переходит к нему в обмен. ЛКМ, ПКМ, колесо и WASD пока не меняются."),
-            (SettingsTab.Picture, "Графика", "Пять уровней качества — или свои числа. Масштаб, сглаживание, тени и яркость меняются сразу; лес, трава и люди («детализация мира») — когда мир строится заново."),
+            (SettingsTab.Controls, "Управление", "Мышь, камера и клавиши. Нажмите на клавишу действия, потом новую — клавишу, кнопку мыши или колесо; у каждого действия их две. Занятая другим действием переходит к нему в обмен."),
+            (SettingsTab.Picture, "Графика", "Пять уровней качества — или свои числа. Всё меняется сразу, кроме «детализации мира» (рельеф и дальность леса): она — когда мир строится заново."),
             (SettingsTab.Sound, "Звук", "Громкость по слоям: музыка, удары и Гу, окружение. И что делать со звуком, когда окно игры не впереди."),
-            (SettingsTab.Interface, "Интерфейс", "Размер и прозрачность HUD, компас и миникарта, крупный текст в разговорах."),
-            (SettingsTab.Access, "Доступность", "Меньше вспышек и тряски, цвета для дальтоников."),
+            (SettingsTab.Interface, "Интерфейс", "Размер и прозрачность HUD, компас, миникарта, часы."),
+            (SettingsTab.Access, "Доступность", "Меньше вспышек и тряски, цвета для дальтоников, крупный текст. Моно — во вкладке «Звук»."),
         };
 
         SettingsTab settingsTab = SettingsTab.Game;
         Page settingsBack = Page.Title;
         string rebinding;
+        /// <summary>Which of the action's two places waits for an input: 0 the main one, 1 the second.</summary>
+        int rebindSlot;
         int rebindEnded = -1;
 
         void OpenSettings(Page back)
@@ -95,6 +97,13 @@ namespace GuWorld.UI
 
             if (rebinding != null)
             {
+                // While an input is awaited, a click is that input, not a press of a button under it: a veil over the page takes the clicks and the wheel.
+                var veil = UiKit.Image("Waiting", stage, new Color(0, 0, 0, 0.35f), UiKit.Plain);
+                veil.rectTransform.Fill();
+                veil.raycastTarget = true;
+                var asked = UiKit.Label($"{Array.Find(Bindings.All, a => a.Id == rebinding)?.Name} · {(rebindSlot == 0 ? "основная" : "вторая")}: нажмите клавишу, кнопку мыши или поверните колесо · Backspace — убрать · Esc — отмена",
+                    veil.transform, 16, UiKit.GoldLit, TextAnchor.MiddleCenter);
+                asked.rectTransform.Place(new Vector2(0, 0.5f), new Vector2(1, 0.5f), 56, -30, 56, -30);
                 stage.gameObject.AddComponent<KeyCatcher>().Caught = KeyCaught;
             }
         }
@@ -187,25 +196,43 @@ namespace GuWorld.UI
             foreach (var action in Bindings.All)
             {
                 var id = action.Id;
-                var waiting = rebinding == id;
                 // A key the game uses for something fixed (walking, a page): both would happen at once.
-                var clash = Bindings.ClashOf(action.Key);
-                var hint = clash != "" ? $"<color=#{ColorUtility.ToHtmlStringRGB(Accessible.Harm)}>занята: {clash} — выберите другую</color>"
-                    : action.Key != action.Default ? $"изменено · было {Bindings.Label(action.Default)}" : null;
+                var clash = Bindings.ClashOf(action.Inputs[0]);
+                var clash2 = Bindings.ClashOf(action.Inputs[1]);
+                var hint = action.Inputs[0] == 0 ? $"<color=#{ColorUtility.ToHtmlStringRGB(Accessible.Harm)}>не назначено — без клавиши действие недоступно</color>"
+                    : clash != "" || clash2 != "" ? $"<color=#{ColorUtility.ToHtmlStringRGB(Accessible.Harm)}>занята: {(clash != "" ? clash : clash2)} — выберите другую</color>"
+                    : action.Changed ? $"изменено · было {Bindings.Label(action.Defaults[0])}{(action.Defaults[1] != 0 ? " · " + Bindings.Label(action.Defaults[1]) : "")}" : null;
                 var row = Row(list, action.Name, hint);
-                var key = UiKit.HexButton(waiting ? "…нажмите" : Bindings.Label(action.Key), row, () => { rebinding = id; Redraw(); },
-                    waiting ? UiKit.HexKind.Solid : clash != "" ? UiKit.HexKind.Bad : UiKit.HexKind.Ghost, 12, 40);
-                key.Size(40, 200, 0);
+
+                for (var slot = 0; slot < 2; slot++)
+                {
+                    var at = slot;
+                    var waiting = rebinding == id && rebindSlot == slot;
+                    var input = action.Inputs[slot];
+                    var bad = (slot == 0 ? clash : clash2) != "";
+                    var words = waiting ? "…нажмите" : input == 0 ? (slot == 0 ? "—" : "+ вторая") : Bindings.Label(input);
+                    var button = UiKit.HexButton(words, row, () => { rebinding = id; rebindSlot = at; Redraw(); },
+                        waiting ? UiKit.HexKind.Solid : bad ? UiKit.HexKind.Bad : slot == 1 && input == 0 ? UiKit.HexKind.Off : UiKit.HexKind.Ghost, 12, 40);
+                    button.Size(40, 150, 0);
+                }
             }
 
-            Para("ЛКМ — удар, ПКМ — перекат, колесо — дистанция и цель, WASD — идти, буквы страниц (K U P I J M B L O) и F-клавиши: эти пока не меняются. Клавиша, уже занятая другим действием, переходит к нему в обмен. Esc отменяет ожидание клавиши.", list, 13, UiKit.Muted);
+            Para("У каждого действия две клавиши: основная (её показывают HUD и подсказки) и вторая. Годятся клавиши, кнопки мыши (ЛКМ, ПКМ, СКМ, боковые) и колесо вверх или вниз. Клавиша, уже занятая другим действием, переходит к нему в обмен. WASD, буквы страниц (K U P I J M B L O) и F-клавиши пока не меняются.", list, 13, UiKit.Muted);
         }
 
-        void KeyCaught(Key key)
+        /// <summary>The input caught for the place that waits: Esc cancels, Backspace or Delete empties the place.</summary>
+        void KeyCaught(int input)
         {
-            if (rebinding != null && key != Key.Escape)
+            if (rebinding != null)
             {
-                Bindings.Bind(rebinding, key);
+                if (input == (int)Key.Backspace || input == (int)Key.Delete)
+                {
+                    Bindings.Clear(rebinding, rebindSlot);
+                }
+                else if (input != (int)Key.Escape)
+                {
+                    Bindings.Bind(rebinding, rebindSlot, input);
+                }
             }
 
             rebinding = null;
@@ -265,13 +292,13 @@ namespace GuWorld.UI
             }
 
             Choice(list, "Тени", "Как далеко от камеры", new[] { "Нет", "30 м", "60 м", "130 м", "220 м" }, shadowAt, i => { var n = Quality.Now; n.Shadows = shadowSteps[i]; Quality.Change(n); });
-            Slide(list, "Деревья", "Сколько деревьев плана сажать", 0.3f, 1, now.Trees, v => $"{v * 100:0}%",
+            Slide(list, "Деревья", "Сколько дальних деревьев видно · сразу", 0.3f, 1, now.Trees, v => $"{v * 100:0}%",
                 v => { var n = Quality.Now; n.Trees = Mathf.Round(v * 20) / 20; Quality.Change(n); });
-            Slide(list, "Трава", "Густота и дальность травы · сменится при загрузке мира", 0.3f, 1.6f, Quality.Grass, v => $"{v * 100:0}%",
+            Slide(list, "Трава", "Густота и дальность травы · сразу", 0.3f, 1.6f, Quality.Grass, v => $"{v * 100:0}%",
                 v => { var n = Quality.Now; n.Grass = Mathf.Round(v * 20) / 20; Quality.Change(n); });
-            Slide(list, "Люди", "Сколько горожан видно и как далеко · сменится при загрузке мира", 0.5f, 1.5f, Quality.People, v => $"{v * 100:0}%",
+            Slide(list, "Люди", "Сколько горожан видно и как далеко · сразу", 0.5f, 1.5f, Quality.People, v => $"{v * 100:0}%",
                 v => { var n = Quality.Now; n.People = Mathf.Round(v * 20) / 20; Quality.Change(n); });
-            Choice(list, "Модель героя", "Полная — 626 тыс. треугольников, средняя — 70 тыс. · сменится при загрузке мира", new[] { "По уровню", "Полная", "Средняя" }, Mathf.Clamp(now.Hero, 0, 2),
+            Choice(list, "Модель героя", "Полная — 626 тыс. треугольников, средняя — 70 тыс. · сразу", new[] { "По уровню", "Полная", "Средняя" }, Mathf.Clamp(now.Hero, 0, 2),
                 i => { var n = Quality.Now; n.Hero = i; Quality.Change(n); });
             Choice(list, "Детализация мира", InGame ? "Лес, трава, люди, рельеф — перестроятся при загрузке" : "Лес, трава, люди, рельеф", new[] { "Лёгкая", "Обычная", "Высокая" }, now.Tier, i =>
             {
@@ -303,6 +330,7 @@ namespace GuWorld.UI
             Slide(list, "Окружение", "Ветер, вода, лес, рынок", 0, 1, Sound.AudioDirector.Beds, v => $"{v * 100:0}%",
                 v => Sound.AudioDirector.SetVolumes(Sound.AudioDirector.Master, Sound.AudioDirector.Effects, Sound.AudioDirector.MusicVolume, v));
             Choice(list, "Звук в фоне", "Когда окно игры не впереди", new[] { "Как есть", "Тише", "Нет" }, Prefs.Background, i => Prefs.Background = i);
+            Switch(list, "Моно", "Звук одинаков в обоих ушах: ничего не слышно только с одной стороны", Prefs.Mono, on => Prefs.Mono = on);
             Switch(list, "Звуки интерфейса", "Наведение и выбор в меню и на страницах", Prefs.UiSounds, on => Prefs.UiSounds = on);
             var ui = Slide(list, "Громкость интерфейса", "Наведение и щелчки · отпустите — прозвучит проба", 0, 1, Prefs.UiVolume, v => $"{v * 100:0}%", v => Prefs.UiVolume = v);
             ui.gameObject.AddComponent<OnRelease>().Released = UiSound.Click;
@@ -315,7 +343,6 @@ namespace GuWorld.UI
             Switch(list, "Компас", "Полоса сторон света вверху экрана: задание, фонари, деревни, набеги", Prefs.Compass, on => Prefs.Compass = on);
             Switch(list, "Миникарта", "Круг местности в углу: враги рядом, фонари, задание, набеги", Prefs.Minimap, on => Prefs.Minimap = on);
             Switch(list, "Часы и погода", "Над миникартой: знак неба, час, погода, день", Prefs.Clock, on => Prefs.Clock = on);
-            Switch(list, "Крупный текст в разговорах", "Реплики и ответы крупнее", Prefs.LargeText, on => Prefs.LargeText = on);
         }
 
         void AccessTab(RectTransform list)
@@ -324,6 +351,7 @@ namespace GuWorld.UI
             Slide(list, "Тряска камеры", "От ударов и взрывов", 0, 1, Prefs.CameraShake, v => $"{v * 100:0}%", v => Prefs.CameraShake = v);
             Slide(list, "Покачивание головы", "Если от вида глазами героя укачивает — уберите до нуля", 0, 1, Prefs.HeadBob, v => $"{v * 100:0}%", v => Prefs.HeadBob = v);
             Switch(list, "Цвета для дальтоников", "Добро — голубое, вред — оранжевый; значки эффектов различаются ещё и формой рамки", Prefs.ColourBlind, on => Prefs.ColourBlind = on);
+            Switch(list, "Крупный текст", "Реплики, описания на страницах, строки событий и подсказка на HUD крупнее (HUD — с новой загрузки)", Prefs.LargeText, on => { Prefs.LargeText = on; Redraw(); });
         }
 
         // ------------------------------------------------------------------ The rows
@@ -416,10 +444,10 @@ namespace GuWorld.UI
         public void OnPointerUp(UnityEngine.EventSystems.PointerEventData data) => Released?.Invoke();
     }
 
-    /// <summary>Waits for the next key pressed (a key being bound) and hands it on; Esc hands on Escape (cancel).</summary>
+    /// <summary>Waits for the next input — a key, a mouse button, a wheel notch — and hands it on once (Esc too: the page cancels on it).</summary>
     public class KeyCatcher : MonoBehaviour
     {
-        public Action<Key> Caught;
+        public Action<int> Caught;
         int born;
 
         void Awake() => born = Time.frameCount;
@@ -431,13 +459,13 @@ namespace GuWorld.UI
                 return;
             }
 
-            var key = Bindings.Pressed();
+            var input = Bindings.PressedInput();
 
-            if (key != Key.None)
+            if (input != 0)
             {
                 var caught = Caught;
                 Caught = null;
-                caught(key);
+                caught(input);
             }
         }
     }

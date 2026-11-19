@@ -393,9 +393,12 @@ namespace GuWorld.UI
         }
 
         /// <summary>Words that wrap, as tall as they need.</summary>
+        /// <summary>A size of text to read, bigger with «Крупный текст» (Settings → Доступность).</summary>
+        public static int Read(int size) => Prefs.LargeText ? size + Mathf.Max(2, Mathf.RoundToInt(size * 0.15f)) : size;
+
         static Text Para(string text, Transform parent, int size = 15, Color? colour = null)
         {
-            var words = UiKit.Label(text, parent, size, colour ?? UiKit.Text2, TextAnchor.UpperLeft);
+            var words = UiKit.Label(text, parent, Read(size), colour ?? UiKit.Text2, TextAnchor.UpperLeft);
             words.horizontalOverflow = HorizontalWrapMode.Wrap;
             words.verticalOverflow = VerticalWrapMode.Overflow;
             words.lineSpacing = 1.15f;

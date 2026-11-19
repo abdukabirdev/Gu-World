@@ -30,11 +30,16 @@ namespace GuWorld.World
         Mesh[] meshes;
         Material material;
         readonly Dictionary<long, Cell> cells = new Dictionary<long, Cell>();
-        readonly ConcurrentQueue<(long key, List<Tuft> tufts)> planted = new ConcurrentQueue<(long, List<Tuft>)>();
+        readonly ConcurrentQueue<(long key, int generation, List<Tuft> tufts)> planted = new ConcurrentQueue<(long, int, List<Tuft>)>();
         readonly Matrix4x4[] chunk = new Matrix4x4[1023];
         Vector2Int lastCell = new Vector2Int(int.MinValue, int.MinValue);
 
         static long Key(int x, int z) => ((long)x << 32) ^ (uint)z;
+
+        static readonly List<GrassField> fields = new List<GrassField>();
+
+        void OnEnable() => fields.Add(this);
+        void OnDisable() => fields.Remove(this);
 
         public static GrassField Make(Transform parent, WorldPlan plan)
         {
@@ -42,11 +47,7 @@ namespace GuWorld.World
             root.transform.SetParent(parent, false);
             var field = root.AddComponent<GrassField>();
             field.plan = plan;
-            // The tier's own, times the settings' share (thicker and a little farther, or thinner and nearer).
-            var share = Quality.Grass;
-            field.radius = (Quality.Level >= 2 ? 70 : Quality.Level == 1 ? 46 : 28) * Mathf.Lerp(0.8f, 1.2f, (share - 0.3f) / 1.3f);
-            field.baseRadius = field.radius;
-            field.density = (Quality.Level >= 2 ? 4f : Quality.Level == 1 ? 2.6f : 1.5f) * share;
+            field.Tune();
             field.meshes = new Mesh[Grass.Kinds];
 
             for (var kind = 0; kind < Grass.Kinds; kind++)
@@ -58,6 +59,36 @@ namespace GuWorld.World
 
             return field;
         }
+
+        /// <summary>How far and how thick: the tier's own, times the settings' share (thicker and a little farther, or thinner and nearer).</summary>
+        void Tune()
+        {
+            var share = Quality.Grass;
+            baseRadius = (Quality.Level >= 2 ? 70 : Quality.Level == 1 ? 46 : 28) * Mathf.Lerp(0.8f, 1.2f, (share - 0.3f) / 1.3f);
+            radius = baseRadius * Mathf.Lerp(0.55f, 1, (detailUsed - 0.4f) / 0.6f);
+            density = (Quality.Level >= 2 ? 4f : Quality.Level == 1 ? 2.6f : 1.5f) * share;
+        }
+
+        /// <summary>The settings changed the grass: every field planted again round the hero at the new thickness and reach (ROADMAP 2.7.3: no reload).</summary>
+        public static void Retune()
+        {
+            foreach (var field in fields)
+            {
+                var radius = field.radius;
+                var density = field.density;
+                field.Tune();
+
+                if (Mathf.Abs(radius - field.radius) > 0.01f || Mathf.Abs(density - field.density) > 0.001f)
+                {
+                    // What the workers are still planting at the old thickness is dropped as it comes (its cell is gone).
+                    field.cells.Clear();
+                    field.generation++;
+                    field.lastCell = new Vector2Int(int.MinValue, int.MinValue);
+                }
+            }
+        }
+
+        int generation;
 
         void Update()
         {
@@ -71,7 +102,7 @@ namespace GuWorld.World
             // What the workers have planted becomes matrices here (the engine's types belong to this thread).
             while (planted.TryDequeue(out var done))
             {
-                if (!cells.TryGetValue(done.key, out var cell))
+                if (done.generation != generation || !cells.TryGetValue(done.key, out var cell))
                 {
                     continue;
                 }
@@ -142,6 +173,7 @@ namespace GuWorld.World
                     var world = plan;
                     var x0 = cx * CellSize;
                     var z0 = cz * CellSize;
+                    var made = generation;
                     Task.Run(() =>
                     {
                         var tufts = new List<Tuft>();
@@ -155,7 +187,7 @@ namespace GuWorld.World
                             tufts.Clear();
                         }
 
-                        planted.Enqueue((key, tufts));
+                        planted.Enqueue((key, made, tufts));
                     });
                 }
             }

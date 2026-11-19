@@ -111,6 +111,7 @@ static partial class Program
         GreetingRules();
         SaveRoundTrip();
         LookRules();
+        RebindRules();
         var report = new List<string>();
 
         if (Array.IndexOf(args, "audio") >= 0 || Array.IndexOf(args, "all") >= 0)

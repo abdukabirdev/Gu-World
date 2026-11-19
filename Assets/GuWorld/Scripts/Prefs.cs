@@ -82,6 +82,8 @@ namespace GuWorld
 
         /// <summary>The sound while the window is not in front: 0 as it is, 1 quieter, 2 none.</summary>
         public static int Background { get => Int("gw2.background", 1); set => Int("gw2.background", value, true); }
+        /// <summary>One channel for both ears (ROADMAP 2.7.4): no sound comes from one side only — the world's sounds still fade with distance.</summary>
+        public static bool Mono { get => Bool("gw2.mono", false); set => Bool("gw2.mono", value, true); }
 
         // ------------------------------------------------------------------ Interface
 
@@ -93,7 +95,7 @@ namespace GuWorld
         public static bool Minimap { get => Bool("gw2.minimap", true); set => Bool("gw2.minimap", value, true); }
         /// <summary>The hour, the sky and the day by the minimap.</summary>
         public static bool Clock { get => Bool("gw2.clock", true); set => Bool("gw2.clock", value, true); }
-        /// <summary>The conversations' words bigger.</summary>
+        /// <summary>Text to read bigger (ROADMAP 2.7.6): the conversations' words, the pages' paragraphs, the HUD's lines.</summary>
         public static bool LargeText { get => Bool("gw2.largetext", false); set => Bool("gw2.largetext", value, true); }
 
         // ------------------------------------------------------------------ Accessibility
@@ -127,7 +129,7 @@ namespace GuWorld
 
         public static void ResetSound()
         {
-            Delete("gw2.background", "gw2.uisounds", "gw2.uivolume");
+            Delete("gw2.background", "gw2.uisounds", "gw2.uivolume", "gw2.mono");
             Sound.AudioDirector.SetVolumes(0.9f, 0.9f, 0.55f, 0.7f);
         }
 

@@ -214,7 +214,7 @@ namespace GuWorld.UI
             // The use key as it is bound now (rebinding it rebuilds the HUD's prompt key, see TickHud).
             promptKeyLabel = Bindings.LabelOf("use");
             promptKey = UiKit.Key(promptKeyLabel, promptRoot, UiKit.Gold.A(0.7f), UiKit.GoldLit);
-            promptText = UiKit.Label("", promptRoot, 17, UiKit.Text).Shadowed();
+            promptText = UiKit.Label("", promptRoot, Read(17), UiKit.Text).Shadowed();
             promptText.Size(34);
 
             // The quest in hand.
@@ -324,8 +324,8 @@ namespace GuWorld.UI
 
         void ShowToast(string line)
         {
-            var text = UiKit.Label(line, toastRoot, 15, UiKit.Text).Shadowed();
-            text.Size(22);
+            var text = UiKit.Label(line, toastRoot, Read(15), UiKit.Text).Shadowed();
+            text.Size(Read(22));
             toasts.Add((text, 0, line, 1));
         }
 

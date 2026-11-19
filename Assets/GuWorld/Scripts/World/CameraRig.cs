@@ -27,6 +27,9 @@ namespace GuWorld.World
         public View Mode { get; private set; } = View.Behind;
         /// <summary>The eyes' view is in use now (it gives way to the shoulder in talks and when the hero is down).</summary>
         bool firstNow;
+
+        /// <summary>Seen through the hero's own eyes now (the hero's body shows only its shadow).</summary>
+        public bool Eyes => firstNow;
         Volume volume;
         public Camera Camera => view;
         /// <summary>A fixed viewpoint for the autotest's tour (position, rotation); null: follow the hero.</summary>
@@ -143,11 +146,15 @@ namespace GuWorld.World
                     Mode = (View)(((int)Mode + 1) % 3);
                     Game.Say(Mode == View.FirstPerson ? "Вид: глазами героя (F5)" : Mode == View.OtherShoulder ? "Вид: из-за левого плеча (F5)" : "Вид: из-за правого плеча (F5)");
                 }
-                var wheel = Keys.Scroll;
-
-                if (Mathf.Abs(wheel) > 0.01f)
+                // Nearer and farther: the wheel's notches by default, rebindable (Settings → Управление).
+                if (Actors.Bindings.Down("zoom_in"))
                 {
-                    distance = Mathf.Clamp(distance - Mathf.Sign(wheel) * 0.7f, 2.4f, 11);
+                    distance = Mathf.Clamp(distance - 0.7f, 2.4f, 11);
+                }
+
+                if (Actors.Bindings.Down("zoom_out"))
+                {
+                    distance = Mathf.Clamp(distance + 0.7f, 2.4f, 11);
                 }
 
                 // The settings' default distance, until the wheel moves it (ROADMAP 2.7.2).

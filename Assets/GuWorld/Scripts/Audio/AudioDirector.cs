@@ -188,7 +188,21 @@ namespace GuWorld.Sound
             source.clip = clip;
             source.volume = volume * Effects * Master;
             source.pitch = 1 + Random.Range(-pitchSpread, pitchSpread);
-            source.spatialBlend = at.HasValue ? 1 : 0;
+            // Mono (a setting): the world's sounds come from no side, flat, and fade with distance as the voices' 3–60 m would.
+            var flat = at.HasValue && Prefs.Mono;
+            source.spatialBlend = at.HasValue && !flat ? 1 : 0;
+
+            if (flat)
+            {
+                var ear = Game.Rig != null && Game.Rig.Camera != null ? Game.Rig.Camera.transform.position : at.Value;
+                var distance = Vector3.Distance(ear, at.Value);
+                source.volume *= Mathf.Clamp01(1 - (distance - 3) / 57);
+
+                if (source.volume <= 0.001f)
+                {
+                    return;
+                }
+            }
 
             if (at.HasValue)
             {

@@ -246,14 +246,14 @@ namespace GuWorld.UI
             UiKit.Lbl("В мире", left, 11, UiKit.LabelGold).Size(22);
 
             // The fixed ones, then every action with the key it has now (Settings → Управление changes them).
-            foreach (var (key, what) in new[] { ("W A S D", "Идти"), ("Мышь", "Смотреть"), ("Колесо", "Ближе и дальше"), ("ЛКМ", "Удар ладонью, три подряд"), ("ПКМ", "Перекат"), ("F5", "Вид: плечо · глаза героя · другое плечо") })
+            foreach (var (key, what) in new[] { ("W A S D", "Идти"), ("Мышь", "Смотреть"), ("F5", "Вид: плечо · глаза героя · другое плечо") })
             {
                 Fact(left, what, key, UiKit.GoldText);
             }
 
             foreach (var action in Actors.Bindings.All)
             {
-                Fact(left, action.Name, Actors.Bindings.Label(action.Key), UiKit.GoldText);
+                Fact(left, action.Id == "strike" ? action.Name + ", три подряд" : action.Name, Actors.Bindings.LabelsOf(action.Id), UiKit.GoldText);
             }
 
             UiKit.Lbl("Страницы", right, 11, UiKit.LabelGold).Size(22);
