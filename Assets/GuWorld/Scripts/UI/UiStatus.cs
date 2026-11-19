@@ -27,6 +27,14 @@ namespace GuWorld.UI
             UiKit.Lbl("Система · герой", left, 11, UiKit.SystemBlue).Size(16);
             UiKit.Disp($"Гу Юэ {state.HeroName}", left, 30, UiKit.Text).Size(38);
             UiKit.Label(Body.Title(session.BodyLevel).ToUpperInvariant(), left, 13, UiKit.Moon).Track(0.2f).Size(20);
+
+            // The title won by deeds (what people call the hero), and how many there are.
+            var titles = Titles.All(state);
+
+            if (titles.Count > 0)
+            {
+                UiKit.Label($"Титул: «{titles[0]}»{(titles.Count > 1 ? $" · ещё {titles.Count - 1}" : "")}", left, 13, UiKit.GoldText).Size(20);
+            }
             var level = UiKit.Rect("Level", left);
             level.Size(86);
             var number = UiKit.Disp($"{session.BodyLevel}", level, 72, UiKit.Moon, TextAnchor.MiddleLeft);

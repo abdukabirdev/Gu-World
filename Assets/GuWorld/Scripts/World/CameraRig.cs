@@ -81,7 +81,7 @@ namespace GuWorld.World
             }
 
             volume.enabled = Quality.Level >= 1;
-            view.fieldOfView = Prefs.Fov;
+            view.fieldOfView = firstNow ? Prefs.FovFirst : Prefs.Fov;
 
             // Brightness: the exposure, as the settings set it (the post-processing runs from the medium preset up).
             if (volume.profile != null && volume.profile.TryGet<ColorAdjustments>(out var adjust))
@@ -167,7 +167,7 @@ namespace GuWorld.World
             {
                 firstNow = eyes;
                 hero.ShowBody(!eyes);
-                view.fieldOfView = eyes ? Mathf.Min(110, Prefs.Fov + 8) : Prefs.Fov;
+                view.fieldOfView = eyes ? Mathf.Clamp(Prefs.FovFirst, 50, 110) : Prefs.Fov;
             }
 
             // How fast the hero goes over the ground (for the bob of the steps).

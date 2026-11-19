@@ -225,3 +225,19 @@ static partial class Program
         Check(night.Count("ginseng") == day.Count("ginseng") + 1, "a rare herb gives one more by night");
     }
 }
+
+static partial class Program
+{
+    /// <summary>Titles won by deeds (ROADMAP 12.4).</summary>
+    static void TitleRules()
+    {
+        Check(Titles.Ordered.All(t => Codex.Achievements.Any(a => a.Id == t.achievement)), "every title comes from an achievement that exists");
+        var s = new Session(Session.NewGame("Герой"), 3);
+        Check(s.Title == "" && Words.Fill("Садись, {title}.", s.State) == "Садись, ученик.", "no title yet: people say «ученик»");
+        s.State.Achievements.Add("hunter");
+        s.State.Achievements.Add("raid");
+        Check(s.Title == "Защитник хутора", "the highest title won is worn");
+        Check(Titles.All(s.State).Count == 2 && Titles.All(s.State)[0] == "Защитник хутора", "all the titles, the highest first");
+        Check(Words.Fill("{Title}!", s.State) == "Защитник хутора!", "people say it in their words");
+    }
+}

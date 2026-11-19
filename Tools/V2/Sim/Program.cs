@@ -100,6 +100,7 @@ static partial class Program
         BanditRules();
         StingRules();
         HerbLandRules();
+        TitleRules();
         SaveRoundTrip();
         var report = new List<string>();
 

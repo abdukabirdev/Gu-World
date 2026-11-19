@@ -81,7 +81,7 @@ namespace GuWorld.UI
             var night = World.Atmosphere.Night;
             clockSeal.text = SealOf(sky, night);
             clockSeal.color = night ? UiKit.Moon : UiKit.GoldLit;
-            clockLine.text = $"{(int)hour:00}:{minutes:00} · {Weather.Name(sky).ToLowerInvariant()} · день {session.State.Day}";
+            clockLine.text = $"{(int)hour:00}:{minutes:00} · {Weather.Name(sky).ToLowerInvariant()} · день {session.State.Day}{(session.Meditating ? $" · время ×{World.Atmosphere.MeditationPace:0}" : "")}";
         }
         readonly List<(RectTransform mark, Text name)> compassPlaces = new List<(RectTransform, Text)>();
 

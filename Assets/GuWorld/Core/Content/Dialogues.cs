@@ -52,7 +52,7 @@ namespace GuWorld.Core
             // ================================================================== Gu Yue Yao, the village's healer — treats wounds (ROADMAP 12.4)
 
             D("herbalist",
-                N("start", Say(("herbalist", "Садись. Показывай, где болит.")),
+                N("start", Say(("herbalist", "Садись, {title}. Показывай, где болит.")),
                     O("Перевяжите мои раны{treat_cost}.", "treated", "?wounded", "?can_treat", "treat_wounds", "locked"),
                     O("Что лучше от ран — время или пилюли?", "advice"),
                     O("Где растут лунные орхидеи?", "orchids"),

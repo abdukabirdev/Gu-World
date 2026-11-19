@@ -172,6 +172,7 @@ namespace GuWorld.UI
             Slide(list, "Мышь по вертикали", "Скорость наклона камеры", 0.2f, 3, Prefs.SensitivityY, v => $"{v:0.0}", v => Prefs.SensitivityY = v);
             Switch(list, "Инверсия по вертикали", "Мышь вверх — камера вниз", Prefs.InvertY, on => Prefs.InvertY = on);
             Slide(list, "Поле зрения", "Шире — больше видно, сильнее искажение по краям", 50, 100, Prefs.Fov, v => $"{v:0}°", v => { Prefs.Fov = Mathf.Round(v); Game.Rig?.Dress(); });
+            Slide(list, "Поле зрения глазами героя", "Вид от первого лица (F5)", 55, 110, Prefs.FovFirst, v => $"{v:0}°", v => { Prefs.FovFirst = Mathf.Round(v); Game.Rig?.Dress(); });
             Slide(list, "Тряска камеры", "От ударов и взрывов", 0, 1, Prefs.CameraShake, v => $"{v * 100:0}%", v => Prefs.CameraShake = v);
             Slide(list, "Покачивание головы", "Вид глазами героя (F5): шаги качают взгляд", 0, 1, Prefs.HeadBob, v => $"{v * 100:0}%", v => Prefs.HeadBob = v);
             Choice(list, "Бег во весь дух", "Удерживать клавишу — или нажать раз: бег до остановки", new[] { "Удерживать", "Переключать" }, Prefs.SprintToggle ? 1 : 0, i => Prefs.SprintToggle = i == 1);

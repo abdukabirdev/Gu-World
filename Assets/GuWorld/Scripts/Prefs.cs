@@ -44,6 +44,8 @@ namespace GuWorld
 
         /// <summary>The camera's field of view, degrees.</summary>
         public static float Fov { get => Float("gw2.fov", 58); set => Float("gw2.fov", value, true); }
+        /// <summary>The field of view from the hero's eyes (F5), degrees; wider than behind the shoulder by default.</summary>
+        public static float FovFirst { get => Float("gw2.fov1", 66); set => Float("gw2.fov1", value, true); }
         /// <summary>How much blows shake the camera, 0…1.</summary>
         public static float CameraShake { get => Float("gw2.shake", 1); set => Float("gw2.shake", value, true); }
         /// <summary>How much the view bobs with the steps from the hero's eyes (0–1; weak by default).</summary>
@@ -101,7 +103,7 @@ namespace GuWorld
 
         public static void ResetControls()
         {
-            Delete("gw2.sensx", "gw2.sensy", "gw2.inverty", "gw2.fov", "gw2.shake", "gw2.headbob", "gw2.sprinttoggle", "gw2.targethold");
+            Delete("gw2.sensx", "gw2.sensy", "gw2.inverty", "gw2.fov", "gw2.fov1", "gw2.shake", "gw2.headbob", "gw2.sprinttoggle", "gw2.targethold");
             Actors.Bindings.Reset();
         }
 

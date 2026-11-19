@@ -15,6 +15,8 @@ namespace GuWorld.World
         /// <summary>The hour of the day, 0–24.</summary>
         public static float Hour = 9;
         const float SecondsPerHour = 60;
+        /// <summary>How much faster the hours go while the hero sits in meditation.</summary>
+        public const float MeditationPace = 6;
         /// <summary>The sky over the hero now (from the day, the hour and the hero's height: the same on every machine).</summary>
         public static Sky Sky { get; private set; } = Sky.Clear;
         /// <summary>How much of the weather is in the picture, 0 clear – 1 full (it eases from one sky to the next).</summary>
@@ -155,7 +157,9 @@ namespace GuWorld.World
         {
             if (Game.Playing && !Game.Frozen)
             {
-                Hour = Mathf.Repeat(Hour + Time.deltaTime / SecondsPerHour, 24);
+                // Sitting in meditation the hours go by six times as fast (ROADMAP 12.3): wait out the night, let wounds close.
+                var pace = Game.Session != null && Game.Session.Meditating ? MeditationPace : 1;
+                Hour = Mathf.Repeat(Hour + Time.deltaTime * pace / SecondsPerHour, 24);
             }
 
             Apply();
