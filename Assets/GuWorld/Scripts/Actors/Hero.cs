@@ -636,8 +636,15 @@ namespace GuWorld.Actors
                 // Nothing before the chest: over the edge of a limb or the top of a stump. Up onto it, if it is there.
                 var over = chest - climbNormal * 0.7f + Vector3.up * 1.2f;
 
-                if (Bark(over, Vector3.down, 2.6f, out var top) && top.normal.y > 0.5f && ClimbOnto(top.point))
+                if (Bark(over, Vector3.down, 2.6f, out var top) && top.normal.y > 0.5f)
                 {
+                    // No room for the pull up's path (another limb in the way): onto it as before.
+                    if (!ClimbOnto(top.point))
+                    {
+                        Teleport(top.point + Vector3.up * 0.06f);
+                        SetMode(Mode.Free);
+                    }
+
                     return;
                 }
 
