@@ -29,20 +29,12 @@ namespace GuWorld.Core
         /// <summary>Hours of the game's time until a post's fallen men are replaced.</summary>
         public const float ReturnHours = 6;
 
-        public static PatrolStance StanceOf(string clan, Standing standing)
-        {
-            if (standing == Standing.Hated)
-            {
-                return PatrolStance.Fight;
-            }
-
-            if (standing >= Standing.Friendly || (clan == HomeClan && standing >= Standing.Neutral))
-            {
-                return PatrolStance.Pass;
-            }
-
-            return PatrolStance.Warn;
-        }
+        /// <summary>
+        /// Hated: attacked. Disliked: told to leave, and struck if they come too close. Indifferent and better:
+        /// let by (the indifferent with a curt word) — the villages stay open to a hero they do not mind.
+        /// </summary>
+        public static PatrolStance StanceOf(string clan, Standing standing) =>
+            standing == Standing.Hated ? PatrolStance.Fight : standing == Standing.Disliked ? PatrolStance.Warn : PatrolStance.Pass;
 
         /// <summary>Seconds a patrol gives the hero to go before it strikes.</summary>
         public static float WarnSeconds(PatrolStance stance) => stance == PatrolStance.Warn ? 8 : stance == PatrolStance.Fight ? 2 : 0;
@@ -61,9 +53,9 @@ namespace GuWorld.Core
             }
         }
 
-        /// <summary>What a patrol says to a hero it lets by, who has a title: by the title (ROADMAP 12.4: «видят NPC»).</summary>
-        public static string Greeting(string clanName, string title) =>
-            string.IsNullOrEmpty(title) ? Line(PatrolStance.Pass, clanName) : $"«Проходи, {title}. Слава о тебе дошла и до нас.»";
+        /// <summary>What a patrol says to a hero it lets by: a friend by the clan (or by the title, ROADMAP 12.4), the indifferent curtly.</summary>
+        public static string Greeting(string clanName, string title, bool friend = true) =>
+            !friend ? "«Проходи. И без глупостей.»" : string.IsNullOrEmpty(title) ? Line(PatrolStance.Pass, clanName) : $"«Проходи, {title}. Слава о тебе дошла и до нас.»";
 
         /// <summary>"Клан Бай" → "Бай".</summary>
         static string Short(string clanName) => clanName.StartsWith("Клан ") ? clanName.Substring(5) : clanName;

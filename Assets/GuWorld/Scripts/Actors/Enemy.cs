@@ -216,7 +216,8 @@ namespace GuWorld.Actors
                 {
                     greeted = true;
                     var friend = Core.Clans.Get(Def.Clan);
-                    Game.Ui?.Toast($"{Def.Name}: {Patrols.Greeting(friend != null ? friend.Name : "", Game.Session?.Title)}");
+                    var friendly = Game.Session != null && Game.Session.StandingWith(Def.Clan) >= Standing.Friendly;
+                    Game.Ui?.Toast($"{Def.Name}: {Patrols.Greeting(friend != null ? friend.Name : "", Game.Session?.Title, friendly)}");
                 }
                 else if (distance > 25)
                 {
@@ -271,14 +272,29 @@ namespace GuWorld.Actors
                     }
                 }
 
-                if (Time.time < warnedUntil && distance > Patrols.TooClose)
+                if (distance > Patrols.TooClose)
                 {
-                    var toHero = hero.transform.position - transform.position;
-                    toHero.y = 0;
-                    Face(toHero, 360, dt);
-                    Animate("idle");
+                    // A warning: it watches the hero while it calls out, then goes on its way; it strikes only if
+                    // they come close or strike first. An attack: a shout, and when it runs out, the fight.
+                    var watching = Time.time < warnedUntil;
+                    var attacking = Game.Session != null && Game.Session.PatrolStanceOf(Def.Clan) == PatrolStance.Fight;
 
-                    return;
+                    if (watching)
+                    {
+                        var toHero = hero.transform.position - transform.position;
+                        toHero.y = 0;
+                        Face(toHero, 360, dt);
+                        Animate("idle");
+
+                        return;
+                    }
+
+                    if (!attacking)
+                    {
+                        Wander(dt);
+
+                        return;
+                    }
                 }
 
                 provoked = true;

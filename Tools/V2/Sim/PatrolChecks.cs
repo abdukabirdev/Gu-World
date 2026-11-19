@@ -10,7 +10,8 @@ static partial class Program
     {
         // What a patrol does comes from the clan's regard.
         Check(Patrols.StanceOf("bai", Standing.Hated) == PatrolStance.Fight, "a clan that hates the hero attacks");
-        Check(Patrols.StanceOf("bai", Standing.Disliked) == PatrolStance.Warn && Patrols.StanceOf("bai", Standing.Neutral) == PatrolStance.Warn, "the disliked and the indifferent are told to leave");
+        Check(Patrols.StanceOf("bai", Standing.Disliked) == PatrolStance.Warn, "the disliked are told to leave");
+        Check(Patrols.StanceOf("bai", Standing.Neutral) == PatrolStance.Pass, "the indifferent are let by (the villages stay open)");
         Check(Patrols.StanceOf("bai", Standing.Friendly) == PatrolStance.Pass && Patrols.StanceOf("xiong", Standing.Kin) == PatrolStance.Pass, "friends are let by");
         Check(Patrols.StanceOf("gu_yue", Standing.Neutral) == PatrolStance.Pass, "the hero's own clan lets them by while it is not against them");
         Check(Patrols.StanceOf("gu_yue", Standing.Disliked) == PatrolStance.Warn && Patrols.StanceOf("gu_yue", Standing.Hated) == PatrolStance.Fight, "…and turns on them when it is");
@@ -19,8 +20,10 @@ static partial class Program
 
         var s = new Session(Session.NewGame("Путник"), 3);
         Check(s.PatrolStanceOf("gu_yue") == PatrolStance.Pass, "at the start Gu Yue lets its own by");
-        Check(s.PatrolStanceOf("bai") == PatrolStance.Warn && s.PatrolStanceOf("xiong") == PatrolStance.Warn, "at the start Bai and Xiong warn");
-        s.ChangeReputation("bai", -60, true);
+        Check(s.PatrolStanceOf("bai") == PatrolStance.Pass && s.PatrolStanceOf("xiong") == PatrolStance.Pass, "at the start Bai and Xiong let the hero by (to visit their villages)");
+        s.ChangeReputation("bai", -20, true);
+        Check(s.PatrolStanceOf("bai") == PatrolStance.Warn, "Bai disliked: its patrols tell the hero to leave");
+        s.ChangeReputation("bai", -40, true);
         Check(s.PatrolStanceOf("bai") == PatrolStance.Fight, "Bai hated: its patrols attack");
         s.ChangeReputation("xiong", 40, true);
         Check(s.PatrolStanceOf("xiong") == PatrolStance.Pass, "Xiong friendly: its patrols let the hero by");
@@ -265,5 +268,6 @@ static partial class Program
     {
         Check(Patrols.Greeting("Клан Бай", "") == Patrols.Line(PatrolStance.Pass, "Клан Бай"), "no title: the plain greeting");
         Check(Patrols.Greeting("Клан Бай", "Защитник хутора").Contains("Защитник хутора"), "a title: the patrol says it");
+        Check(!Patrols.Greeting("Клан Бай", "Защитник хутора", false).Contains("Защитник"), "the indifferent get only a curt word");
     }
 }
