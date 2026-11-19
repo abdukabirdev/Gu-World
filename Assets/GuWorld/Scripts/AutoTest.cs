@@ -183,11 +183,26 @@ namespace GuWorld
                         var fps = 90 / (Time.realtimeSinceStartup - start);
                         Shot(level, n, name);
                         Note(string.Format("q{0} {1,-18} at ({2:0},{3:0}) fps {4:0.0}", level, name, at.x, at.z, fps));
+
+                        // The town and its people counted while standing in it (ROADMAP 13: the old log counted them at
+                        // the end of the tour, far off at the marsh — «0 raised, 0 drawn far», «0 townsfolk shown»).
+                        if (name == "town_market")
+                        {
+                            foreach (var town in Engine.FindAll<Town>())
+                            {
+                                Note("q" + level + " in town: " + town.Count());
+                            }
+
+                            foreach (var folk in Engine.FindAll<Townsfolk>())
+                            {
+                                Note("q" + level + " in town: " + folk.Count());
+                            }
+                        }
                     }
 
                     foreach (var town in Engine.FindAll<Town>())
                     {
-                        Note("q" + level + " " + town.Count());
+                        Note("q" + level + " after the tour: " + town.Count());
                     }
 
                     Note("q" + level + " governor detail " + Governor.Detail.ToString("0.00"));
@@ -200,7 +215,7 @@ namespace GuWorld
 
                     foreach (var folk in Engine.FindAll<Townsfolk>())
                     {
-                        Note("q" + level + " " + folk.Count());
+                        Note("q" + level + " after the tour: " + folk.Count());
                     }
 
                     // The immortal aperture: in, a Gu lent, wolves called, a killer move tried, out.
