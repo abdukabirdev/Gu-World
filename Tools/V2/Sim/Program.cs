@@ -113,6 +113,7 @@ static partial class Program
         LookRules();
         RebindRules();
         MapRules();
+        MoveRules();
         var report = new List<string>();
 
         if (Array.IndexOf(args, "audio") >= 0 || Array.IndexOf(args, "all") >= 0)

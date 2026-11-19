@@ -217,8 +217,8 @@ namespace GuWorld.Actors
 
         public float LengthOf(string name) => set != null && set.Clips.TryGetValue(name, out var found) ? found.Length : 0;
 
-        /// <summary>Starts a clip (or goes on with it if it is already playing and `restart` is not asked).</summary>
-        public void Play(string name, float fadeSeconds = 0.15f, bool restart = false, float speed = 1)
+        /// <summary>Starts a clip (or goes on with it if it is already playing and `restart` is not asked); `startAt` (0–1) starts it part of the way in.</summary>
+        public void Play(string name, float fadeSeconds = 0.15f, bool restart = false, float speed = 1, float startAt = 0)
         {
             if (!Bound || !set.Clips.TryGetValue(name, out var next))
             {
@@ -247,7 +247,7 @@ namespace GuWorld.Actors
             }
 
             clip = next;
-            time = 0;
+            time = Mathf.Clamp01(startAt) * next.Length;
             fade = fadeLeft = Mathf.Max(0, fadeSeconds);
         }
 

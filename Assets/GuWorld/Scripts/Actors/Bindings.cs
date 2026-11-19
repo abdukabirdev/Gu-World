@@ -40,6 +40,8 @@ namespace GuWorld.Actors
             A("jump", "Прыжок", (int)Key.Space), A("target", "Держать цель", (int)Key.Tab, MouseMiddle), A("heal", "Пилюля заживления", (int)Key.H),
             A("absorb", "Впитать камень", (int)Key.G), A("use", "Говорить, взять, открыть", (int)Key.T),
             A("meditate", "Медитация: сесть · встать", (int)Key.Y),
+            // C and Z hold the Gu of slots 6 and 5: crouching and crawling are on keys of their own (rebound in the settings).
+            A("crouch", "Присесть · встать", (int)Key.CapsLock), A("crawl", "Ползти · встать", (int)Key.N),
             A("zoom_in", "Камера ближе", WheelUp), A("zoom_out", "Камера дальше", WheelDown),
         };
 
@@ -180,6 +182,7 @@ namespace GuWorld.Actors
                 case Key.RightAlt: return "Alt";
                 case Key.Space: return "Пробел";
                 case Key.Tab: return "Tab";
+                case Key.CapsLock: return "Caps";
                 case Key.None: return "—";
                 default:
                     var name = key.ToString();

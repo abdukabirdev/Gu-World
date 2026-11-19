@@ -190,6 +190,7 @@ namespace GuWorld.UI
             Switch(list, "Камера сама за спину", "Идёте, не трогая мышь, — взгляд плавно встаёт за спиной героя", Prefs.CameraRecenter, on => Prefs.CameraRecenter = on);
             Choice(list, "Бег во весь дух", "Удерживать клавишу — или нажать раз: бег до остановки", new[] { "Удерживать", "Переключать" }, Prefs.SprintToggle ? 1 : 0, i => Prefs.SprintToggle = i == 1);
             Choice(list, "Захват цели", "Нажать — взять и отпустить цель; или держать, пока клавиша нажата", new[] { "Нажатием", "Удержанием" }, Prefs.TargetHold ? 1 : 0, i => Prefs.TargetHold = i == 1);
+            Choice(list, "Присесть", "Нажать — присесть и встать; или сидеть, пока клавиша нажата", new[] { "Переключать", "Удерживать" }, Prefs.CrouchHold ? 1 : 0, i => Prefs.CrouchHold = i == 1);
 
             Section(list, "Клавиши");
 

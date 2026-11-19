@@ -37,6 +37,8 @@ namespace GuWorld
         public static bool SprintToggle { get => Bool("gw2.sprinttoggle", false); set => Bool("gw2.sprinttoggle", value, true); }
         /// <summary>Holding a target: false — the key takes and drops it; true — only while the key is held.</summary>
         public static bool TargetHold { get => Bool("gw2.targethold", false); set => Bool("gw2.targethold", value, true); }
+        /// <summary>Crouching: false — the key crouches and stands (a toggle); true — crouched only while it is held.</summary>
+        public static bool CrouchHold { get => Bool("gw2.crouchhold", false); set => Bool("gw2.crouchhold", value, true); }
         /// <summary>The conversations' words: 0 at once, 1 typed fast, 2 typed slowly.</summary>
         public static int TextSpeed { get => Int("gw2.textspeed", 1); set => Int("gw2.textspeed", value, true); }
         /// <summary>The interface's own sounds (pointing, choosing).</summary>
@@ -115,7 +117,7 @@ namespace GuWorld
 
         public static void ResetControls()
         {
-            Delete("gw2.sensx", "gw2.sensy", "gw2.inverty", "gw2.fov", "gw2.fov1", "gw2.shake", "gw2.headbob", "gw2.camdist", "gw2.camrecenter", "gw2.camsmooth", "gw2.sprinttoggle", "gw2.targethold");
+            Delete("gw2.sensx", "gw2.sensy", "gw2.inverty", "gw2.fov", "gw2.fov1", "gw2.shake", "gw2.headbob", "gw2.camdist", "gw2.camrecenter", "gw2.camsmooth", "gw2.sprinttoggle", "gw2.targethold", "gw2.crouchhold");
             Actors.Bindings.Reset();
         }
 

@@ -188,7 +188,8 @@ namespace GuWorld.World
             }
 
             // The hero's height (the look chosen) moves the eyes and the point the camera follows.
-            var head = hero.transform.position + Vector3.up * (hero.Sitting ? 1.0f : 1.55f) * hero.Stature;
+            // Crouched or crawling, the eyes go down with the body (ROADMAP 12.3).
+            var head = hero.transform.position + Vector3.up * (hero.Sitting ? 1.0f : 1.55f * hero.EyeFactor) * hero.Stature;
             // How closely the view follows (a setting: tight … soft).
             focus = Vector3.Lerp(focus, head, 1 - Mathf.Exp(-Mathf.Lerp(30, 6, Mathf.Clamp01(Prefs.CameraSmooth)) * dt));
 
@@ -211,7 +212,7 @@ namespace GuWorld.World
             if (eyes)
             {
                 var look = Quaternion.Euler(pitch, yaw, 0);
-                var at1 = hero.transform.position + Vector3.up * 1.62f * hero.Stature + Quaternion.Euler(0, yaw, 0) * Vector3.forward * 0.12f;
+                var at1 = hero.transform.position + Vector3.up * 1.62f * hero.EyeFactor * hero.Stature + Quaternion.Euler(0, yaw, 0) * Vector3.forward * 0.12f;
 
                 // The steps bob the view (ROADMAP 12.2): up and down twice a stride, side to side once; as much as the settings allow.
                 var stepping = hero.Grounded && heroSpeed > 0.6f && heroSpeed < 20;

@@ -12,12 +12,12 @@ namespace GuWorld.Actors
     /// the palm in a combo of three, rolls out of blows, and casts the Gu in the slots. What a
     /// blow or a cast is worth is the Session's business; here it is given a shape.
     /// </summary>
-    public class Hero : Actor
+    public partial class Hero : Actor
     {
         public const float RunSpeed = 5.4f;
         public const float SprintSpeed = 7.8f;
 
-        enum Mode { Free, Striking, Casting, Rolling, Dashing, Hurt, Dead, Sitting, Climbing }
+        enum Mode { Free, Striking, Casting, Rolling, Dashing, Hurt, Dead, Sitting, Climbing, Hanging, Mantling, WallRunning }
 
         Mode mode;
         float modeTime;
@@ -103,6 +103,17 @@ namespace GuWorld.Actors
 
         void SetMode(Mode next)
         {
+            // Off a ledge or out of a move over an edge some other way (a blow, death): the body back in the world, clear of the wall.
+            if ((mode == Mode.Hanging || mode == Mode.Mantling) && next != Mode.Hanging && next != Mode.Mantling && body != null && !body.enabled)
+            {
+                if (mode == Mode.Hanging)
+                {
+                    transform.position += hangOut * Mathf.Max(0, Radius + 0.06f - Movement.HangOff);
+                }
+
+                body.enabled = true;
+            }
+
             mode = next;
             modeTime = 0;
         }
@@ -206,6 +217,15 @@ namespace GuWorld.Actors
                 case Mode.Climbing:
                     Climb(dt, free);
                     break;
+                case Mode.Hanging:
+                    Hang(dt, free);
+                    break;
+                case Mode.Mantling:
+                    Mantle();
+                    break;
+                case Mode.WallRunning:
+                    WallRun(dt, free);
+                    break;
                 case Mode.Striking:
                     Striking(dt, free);
                     break;
@@ -243,6 +263,10 @@ namespace GuWorld.Actors
                     break;
             }
 
+            TrackFall();
+            Underfoot(dt);
+            EyeFactor = Mathf.MoveTowards(EyeFactor, Movement.Eyes(Posture), 2.5f * dt);
+            OutOfReach = treeHere != null && mode != Mode.Dead && transform.position.y - Game.Ground(transform.position).y >= Movement.OutOfReach;
             Session.Tick(dt, Sprinting);
         }
 
@@ -264,8 +288,9 @@ namespace GuWorld.Actors
                 return;
             }
 
-            stepWait = 0.36f;
-            Sound.AudioDirector.Play(World.Ground.StepSound(transform.position), transform.position, Sprinting ? 0.55f : 0.4f, 0.1f);
+            // Crouched and crawling: slower steps, and quieter (ROADMAP 12.3).
+            stepWait = Posture == Posture.Stand ? 0.36f : Posture == Posture.Crouch ? 0.46f : 0.6f;
+            Sound.AudioDirector.Play(World.Ground.StepSound(transform.position), transform.position, (Sprinting ? 0.55f : 0.4f) * Movement.Steps(Posture), 0.1f);
         }
 
         /// <summary>A burning (or freezing) aura harms everything close, twice a second.</summary>
@@ -307,7 +332,10 @@ namespace GuWorld.Actors
             }
         }
 
-        void Animate(string clip, float fade = 0.15f, float speed = 1, bool restart = false) => rig?.Play(clip, fade, restart, speed);
+        void Animate(string clip, float fade = 0.15f, float speed = 1, bool restart = false, float startAt = 0) => rig?.Play(clip, fade, restart, speed, startAt);
+
+        /// <summary>A clip's length in seconds (or the given one if the rig has no such clip).</summary>
+        float ClipLength(string clip, float otherwise) => rig != null && rig.Has(clip) ? rig.LengthOf(clip) : otherwise;
 
         Vector3 MoveWish()
         {
@@ -343,26 +371,53 @@ namespace GuWorld.Actors
 
         void Free(float dt, bool free)
         {
+            if (free)
+            {
+                Postures();
+            }
+
             var wish = free ? MoveWish() : Vector3.zero;
             var moving = wish.sqrMagnitude > 0.01f;
             Moving = moving;
-            // The guard (Ctrl held): slower, no sprint, a parry in its first instant.
-            var guarding = free && Grounded && Bindings.Held("guard");
+            // The guard (Ctrl held): slower, no sprint, a parry in its first instant. Crouched, its key stands the hero up first.
+            var guardHeld = free && Grounded && Bindings.Held("guard");
+
+            if (guardHeld && Posture != Posture.Stand && Bindings.Down("guard"))
+            {
+                Rise();
+            }
+
+            var guarding = guardHeld && Posture == Posture.Stand;
             guardSince = guarding ? (Guarding ? guardSince + dt : 0) : 0;
             Guarding = guarding;
-            Sprinting = moving && free && !guarding && SprintWanted(moving) && Session.Stamina > 1 && Grounded;
-            // Cold and slowness drag, wind hastens.
-            var speed = (Sprinting ? SprintSpeed : RunSpeed) * Session.SpeedFactor * (guarding ? 0.45f : 1);
+            // Running hard stands a crouched hero up, if there is room.
+            var hard = moving && free && !guarding && SprintWanted(moving);
+
+            if (hard && Posture != Posture.Stand)
+            {
+                Rise(true);
+            }
+
+            Sprinting = hard && Posture == Posture.Stand && Session.Stamina > 1 && Grounded;
+            // Cold and slowness drag, wind hastens; crouched and crawling, slower.
+            var speed = (Sprinting ? SprintSpeed : RunSpeed) * Session.SpeedFactor * (guarding ? 0.45f : 1) * Movement.Speed(Posture);
             Walk(wish * speed, dt);
+            var pace = moving ? speed * Mathf.Min(1, wish.magnitude) : 0;
 
             if (moving)
             {
-                Face(wish, 720, dt);
+                Face(wish, Posture == Posture.Crawl ? 360 : 720, dt);
                 Steps(dt);
             }
             else if (Target != null && sinceStrike < 2)
             {
                 Face(Target.transform.position - transform.position, 540, dt);
+            }
+
+            // In the air, a ledge within the hands' reach before the hero is caught (ROADMAP 12.3).
+            if (free && !Grounded && Airborne && TryGrab(moving ? wish : transform.forward))
+            {
+                return;
             }
 
             if (!Grounded && Airborne)
@@ -372,6 +427,22 @@ namespace GuWorld.Actors
             else if (guarding)
             {
                 Animate("guard", 0.08f, moving ? 1.6f : 1f);
+            }
+            else if (Posture == Posture.Crawl)
+            {
+                // Played as fast as the body goes over the ground; held still when it stops.
+                Animate("crawl", 0.25f, pace / Movement.CrawlClipSpeed);
+            }
+            else if (Posture == Posture.Crouch)
+            {
+                if (moving)
+                {
+                    Animate("crouch_walk", 0.2f, pace / Movement.CrouchClipSpeed);
+                }
+                else
+                {
+                    Animate("crouch", 0.25f);
+                }
             }
             else if (moving)
             {
@@ -387,10 +458,24 @@ namespace GuWorld.Actors
                 return;
             }
 
-            // Jump — or, facing a tree's bark, take hold of it and climb (from the ground or out of the air).
+            // Jump: crouched, it stands the hero up; at a tree's bark, they take hold and climb; at a wall's edge, over
+            // it or up onto it; running at a high wall, up it (ROADMAP 12.3, 12.6); else a jump.
             if (Bindings.Down("jump"))
             {
-                if (TryClimb(moving ? wish.normalized : transform.forward))
+                if (Posture != Posture.Stand)
+                {
+                    Rise();
+                    return;
+                }
+
+                var ahead = moving ? wish.normalized : transform.forward;
+
+                if (TryClimb(ahead))
+                {
+                    return;
+                }
+
+                if (Grounded && TryLedge(ahead))
                 {
                     return;
                 }
@@ -410,7 +495,12 @@ namespace GuWorld.Actors
 
             if (Bindings.Down("strike") && Grounded && !guarding)
             {
-                BeginStrike(0);
+                // A blow is struck standing.
+                if (Rise())
+                {
+                    BeginStrike(0);
+                }
+
                 return;
             }
 
@@ -525,6 +615,8 @@ namespace GuWorld.Actors
             SetMode(Mode.Climbing);
             Moving = false;
             Guarding = false;
+            treeHere = hit.collider.GetComponentInParent<World.TreeSolid>();
+            Session.SetFlag("climbed");
 
             return true;
         }
@@ -541,12 +633,12 @@ namespace GuWorld.Actors
 
             if (!Bark(chest + climbNormal * 0.5f, -climbNormal, 1.7f, out var hit))
             {
-                // Nothing before the chest: over the edge of a limb or the top of a stump. Step up onto it, if it is there.
+                // Nothing before the chest: over the edge of a limb or the top of a stump. Up onto it, if it is there.
                 var over = chest - climbNormal * 0.7f + Vector3.up * 1.2f;
 
-                if (Bark(over, Vector3.down, 2.6f, out var top) && top.normal.y > 0.5f)
+                if (Bark(over, Vector3.down, 2.6f, out var top) && top.normal.y > 0.5f && ClimbOnto(top.point))
                 {
-                    Teleport(top.point + Vector3.up * 0.06f);
+                    return;
                 }
 
                 SetMode(Mode.Free);
@@ -555,12 +647,16 @@ namespace GuWorld.Actors
             }
 
             climbNormal = Vector3.Slerp(climbNormal, hit.normal, Mathf.Min(1, 12 * dt)).normalized;
+            treeHere = hit.collider.GetComponentInParent<World.TreeSolid>();
 
             // The bark has turned underfoot into something to stand on.
             if (hit.normal.y > 0.74f)
             {
-                Teleport(hit.point + Vector3.up * 0.06f);
-                SetMode(Mode.Free);
+                if (!ClimbOnto(hit.point))
+                {
+                    Teleport(hit.point + Vector3.up * 0.06f);
+                    SetMode(Mode.Free);
+                }
 
                 return;
             }
@@ -570,8 +666,18 @@ namespace GuWorld.Actors
             var right = Vector3.Cross(Vector3.up, -climbNormal);
             right = right.sqrMagnitude < 0.01f ? transform.right : right.normalized;
             var fast = SprintWanted(keys.sqrMagnitude > 0.01f) && Session.Stamina > 1;
-            Sprinting = fast && keys.sqrMagnitude > 0.01f;
-            var speed = (fast ? 5.2f : 3.2f) * Session.SpeedFactor;
+            Sprinting = false;
+            var speed = (fast ? Movement.ScrambleSpeed : Movement.ClimbSpeed) * Session.SpeedFactor;
+
+            // The arms tire (ROADMAP 12.6): the stamina goes by the second, and when it is spent the hands let go.
+            if (!Session.Climb(dt, keys.sqrMagnitude > 0.01f, fast))
+            {
+                Note("Руки разжались");
+                letGo = Time.time;
+                SetMode(Mode.Free);
+
+                return;
+            }
             var move = (up * keys.y + right * keys.x) * speed;
             // Held a hand's breadth off the bark.
             var hold = hit.point + climbNormal * (Radius + 0.1f) - chest;
@@ -810,6 +916,8 @@ namespace GuWorld.Actors
 
         void TryCast(int slot)
         {
+            // Gu are cast standing, if there is room for it (crawling under a log, they are cast as the hero lies).
+            Rise(true);
             var why = Session.WhyNot(slot);
 
             if (why != null)
@@ -842,6 +950,7 @@ namespace GuWorld.Actors
         /// </summary>
         void TryKillerMove()
         {
+            Rise(true);
             var move = Session.SelectedMove();
             var why = Session.WhyNoMove(move);
 
@@ -1343,12 +1452,7 @@ namespace GuWorld.Actors
 
             if (Session.Dead)
             {
-                StopAllCoroutines();
-                SetMode(Mode.Dead);
-                Target = null;
-                Animate("death", 0.1f, 1, true);
-                Sound.AudioDirector.Play("death", null, 1, 0);
-                Game.HeroDied();
+                Die();
                 return damage;
             }
 
@@ -1365,11 +1469,22 @@ namespace GuWorld.Actors
             return damage;
         }
 
+        void Die()
+        {
+            StopAllCoroutines();
+            SetMode(Mode.Dead);
+            Target = null;
+            Animate("death", 0.1f, 1, true);
+            Sound.AudioDirector.Play("death", null, 1, 0);
+            Game.HeroDied();
+        }
+
         public void Revive(Vector3 at)
         {
             StopAllCoroutines();
             Teleport(Game.Ground(at) + Vector3.up * 0.1f);
             SetMode(Mode.Free);
+            Stand();
             invulnerable = 2;
             Animate("idle", 0, 1, true);
         }

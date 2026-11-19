@@ -393,6 +393,169 @@ def slam_down():
     return pose
 
 
+# ---------------------------------------------------------------------------- Crouching, crawling, ledges (ROADMAP 12.3)
+# The ledge clips are made to the paths the game moves the body on (Core/Rules/Movement.cs: PullKeys,
+# VaultKeys): their keys fall at the same times, and the hands stay on the ledge's top all the way.
+
+def crouched(t):
+    """Low on the haunches, the weight forward, ready: the sneak at rest."""
+    breath = math.sin(t * 2 * math.pi)
+    pose = blank()
+    torso(pose, lean=26 + 1.2 * breath, side=0.6 * math.sin(t * math.pi * 2))
+    for side in 'LR':
+        leg(pose, side, swing=56, knee=96, spread=10)
+        arm(pose, side, swing=24 + breath, out=12, elbow=60 + 2 * breath)
+        pose['fingers_' + side] = 0.35
+    return pose
+
+
+def sneak(t):
+    """Crouched and walking: long low steps, the stance knee bending deeper under the hips so they stay level."""
+    phase = t * 2 * math.pi
+    pose = blank()
+    torso(pose, lean=24, twist=5 * math.sin(phase), side=1.5 * math.sin(phase))
+    for side, shift in (('L', 0.0), ('R', math.pi)):
+        p = phase + shift
+        swing = 42 + 24 * math.cos(p)
+        lift = max(0.0, math.sin(p + math.pi)) ** 1.2
+        stance = max(0.0, math.sin(p))
+        knee = 88 + 9 * stance + 34 * lift
+        leg(pose, side, swing=swing + 8 * lift, knee=knee, spread=9)
+        back = -math.cos(p)
+        arm(pose, side, swing=22 + 14 * back, out=11, elbow=58 + 8 * back)
+        pose['fingers_' + side] = 0.35
+    return pose
+
+
+def crawl(t):
+    """On hands and knees: the opposite hand and knee go forward together, the back sloping down to the shoulders, the head up."""
+    phase = t * 2 * math.pi
+    pose = blank()
+    torso(pose, lean=124, twist=4 * math.sin(phase), side=2 * math.sin(phase), head=(-66, 0, 0))
+    for side, shift in (('L', 0.0), ('R', math.pi)):
+        p = phase + shift
+        # The thigh hangs from the hips (as the world sees it), swinging evenly about the upright so both knees
+        # touch at the turn; the shin lies along the ground behind the knee, lifted a little as it comes through.
+        swing = 4 + 20 * math.cos(p)
+        lift = max(0.0, math.sin(p + math.pi))
+        leg(pose, side, swing=swing, knee=90 + swing + 12 * lift, foot=72, spread=10)
+        other = 'R' if side == 'L' else 'L'
+        arm(pose, other, swing=112 + 14 * math.cos(p), out=9, elbow=25 * lift, wrist=-38)
+        pose['fingers_' + other] = 0.2
+    return pose
+
+
+def hang(t):
+    """Hanging by the hands from a ledge: arms up, fingers over its edge, the legs still, swaying a little."""
+    sway = math.sin(t * 2 * math.pi)
+    pose = blank()
+    pose['free'] = True
+    torso(pose, lean=3 + 1.5 * sway, head=(-14, 0, 0))
+    for side in 'LR':
+        # The knuckles 0.22 m ahead of the body's axis and 1.75 m above its feet: just in from the edge of a
+        # wall 0.18 m off (Movement.HangOff, HangDrop), the body hanging clear of it.
+        arm(pose, side, swing=122, out=12, elbow=8, wrist=-40)
+        leg(pose, side, swing=-6 + 3 * sway, knee=6 + 4 * sway, foot=35, spread=3)
+        pose['fingers_' + side] = 0.9
+    return pose
+
+
+def pull_chest():
+    """The pull: elbows down by the ribs, the chest at the edge."""
+    pose = blank()
+    pose['free'] = True
+    torso(pose, lean=6, head=(-10, 0, 0))
+    for side in 'LR':
+        # The knuckles where the ledge's top is at this point of the rise (anim.py measure / Movement.PullKeys).
+        arm(pose, side, swing=0, out=16, elbow=80, wrist=-30)
+        leg(pose, side, swing=6, knee=30, foot=24, spread=4)
+        pose['fingers_' + side] = 0.7
+    return pose
+
+
+def pull_press():
+    """The press: arms straight under the shoulders, palms flat on the top, a knee starting up."""
+    pose = blank()
+    pose['free'] = True
+    torso(pose, lean=50, head=(-30, 0, 0))
+    for side in 'LR':
+        arm(pose, side, swing=40, out=10, elbow=10, wrist=-60)
+        pose['fingers_' + side] = 0.1
+    leg(pose, 'R', swing=18, knee=64, foot=10, spread=6)
+    leg(pose, 'L', swing=-8, knee=20, foot=18, spread=4)
+    return pose
+
+
+def pull_knee():
+    """A knee up onto the top, the foot set on it; the other leg still hanging."""
+    pose = blank()
+    pose['free'] = True
+    torso(pose, lean=55, head=(-34, 0, 0))
+    for side in 'LR':
+        arm(pose, side, swing=40, out=12, elbow=20, wrist=-40)
+        pose['fingers_' + side] = 0.1
+    leg(pose, 'R', swing=120, knee=115, spread=6)
+    leg(pose, 'L', swing=-8, knee=26, foot=16, spread=4)
+    return pose
+
+
+def pull_rise():
+    """Standing up on the top: the front leg straightening, the back one coming up after it."""
+    pose = blank()
+    pose['free'] = True
+    torso(pose, lean=18, head=(-6, 0, 0))
+    for side in 'LR':
+        arm(pose, side, swing=14, out=10, elbow=34)
+        pose['fingers_' + side] = 0.25
+    leg(pose, 'R', swing=35, knee=45, spread=5)
+    leg(pose, 'L', swing=52, knee=96, spread=5)
+    return pose
+
+
+def pull_stand():
+    pose = blank()
+    pose['free'] = True
+    torso(pose, lean=4)
+    for side in 'LR':
+        leg(pose, side, swing=4, knee=8, spread=2)
+        arm(pose, side, swing=6, out=6, elbow=16)
+    return pose
+
+
+def vault_plant():
+    """Over a low wall in a tucked hop: knees drawn up to the chest, the arms out ahead for balance (a Gu master's light step)."""
+    pose = blank()
+    pose['free'] = True
+    torso(pose, lean=22, head=(-12, 0, 0))
+    for side in 'LR':
+        arm(pose, side, swing=64, out=30, elbow=34)
+        leg(pose, side, swing=84, knee=122, foot=0, spread=7)
+        pose['fingers_' + side] = 0.3
+    return pose
+
+
+def vault_over():
+    """Over the top: the legs going out ahead, the planted hand pushing off."""
+    pose = blank()
+    pose['free'] = True
+    torso(pose, lean=12, head=(-8, 0, 0))
+    for side in 'LR':
+        arm(pose, side, swing=40, out=34, elbow=30)
+        leg(pose, side, swing=50, knee=64, foot=-6, spread=6)
+    return pose
+
+
+def vault_land():
+    """Landing beyond: knees soft, arms out for balance."""
+    pose = blank()
+    pose['free'] = True
+    torso(pose, lean=14, head=(-6, 0, 0))
+    for side in 'LR':
+        leg(pose, side, swing=24, knee=44, spread=5)
+        arm(pose, side, swing=20, out=22, elbow=30)
+    return pose
+
+
 G = guard()
 CLIPS = [
     # name, seconds, loop, pose(t)
@@ -413,6 +576,13 @@ CLIPS = [
     ('guard', 1.6, True, lambda t: keyed([(0, G), (0.5, dict(G, offset=(0, 0, G['offset'][2] - 0.015))), (1, G)])(t)),
     ('sit', 4.0, True, sit),
     ('climb', 1.0, True, climb),
+    ('crouch', 3.0, True, crouched),
+    ('crouch_walk', 0.9, True, sneak),
+    ('crawl', 1.1, True, crawl),
+    ('hang', 2.4, True, hang),
+    # The keys at the times of Movement.PullKeys and VaultKeys.
+    ('pullup', 0.95, False, keyed([(0, hang(0)), (0.3, pull_chest()), (0.45, pull_press()), (0.65, pull_knee()), (0.85, pull_rise()), (1, pull_stand())])),
+    ('vault', 0.6, False, keyed([(0, vault_land()), (0.35, vault_plant()), (0.55, vault_plant()), (0.8, vault_over()), (1, vault_land())])),
 ]
 
 FINGERS = ['index', 'middle', 'ring', 'pinky']
@@ -630,5 +800,44 @@ def bake(sheet=None):
         print('sheet:', sheet)
 
 
+def measure():
+    """Numbers the game moves the body by (Core/Rules/Movement.cs, Hero): where the hands grip in the hang,
+    how high the feet tuck in the vault, how fast the crouched walk and the crawl go over the ground."""
+    reset()
+    objects = load_glb(os.path.join(MODELS, 'gu-npc.glb'))
+    armature = armature_of(objects)
+    rig = Rig(armature)
+
+    def at(name):
+        bpy.context.view_layer.update()
+        return armature.matrix_world @ rig.bones[name].head
+
+    rig.apply(hang(0))
+    grip = (at('middle1_L') + at('middle1_R')) / 2
+    print(f'hang: grip {grip.z:.3f} m above the feet, {-grip.y:.3f} m ahead of the body')
+    rig.apply(pull_press())
+    press = (at('middle1_L') + at('middle1_R')) / 2
+    print(f'press: palms {press.z:.3f} m above the feet, {-press.y:.3f} m ahead')
+    rig.apply(vault_plant())
+    soles = min(at('foot_L').z, at('foot_R').z) - 0.06
+    print(f'vault: soles tucked {soles:.3f} m above the root')
+    for name, seconds, pose_at in (('crouch_walk', 0.9, sneak), ('crawl', 1.1, crawl)):
+        frames = 60
+        travel = 0.0
+        last = None
+        for i in range(frames + 1):
+            pose = pose_at(i / frames)
+            rig.apply(pose)
+            feet = {side: at('foot_' + side) for side in 'LR'}
+            low = min(feet, key=lambda side: feet[side].z)
+            if last is not None and last[0] == low:
+                travel += max(0.0, feet[low].y - last[1])
+            last = (low, feet[low].y)
+        print(f'{name}: {travel:.3f} m a cycle, {travel / seconds:.2f} m/s at speed 1; hips {at("hips").z:.3f} m')
+
+
 if __name__ == '__main__':
-    bake(sys.argv[2] if len(sys.argv) > 2 and sys.argv[1] == 'sheet' else None)
+    if len(sys.argv) > 1 and sys.argv[1] == 'measure':
+        measure()
+    else:
+        bake(sys.argv[2] if len(sys.argv) > 2 and sys.argv[1] == 'sheet' else None)

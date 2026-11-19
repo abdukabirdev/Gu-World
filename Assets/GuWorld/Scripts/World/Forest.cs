@@ -13,6 +13,30 @@ namespace GuWorld.World
     {
         public TreeSpecies Species;
         public float Height;
+        /// <summary>The trunk and the limbs one can climb or stand on, in the tree's own space (TreeModel.Climb; the transform scales them).</summary>
+        public List<Core.Gen.Flora.TreeLimb> Limbs;
+
+        /// <summary>The limb at a point of the world (its radius in metres, its depth: 0 the trunk), if one is within a hand of it.</summary>
+        public bool LimbAt(Vector3 point, out float radius, out int depth)
+        {
+            radius = 0;
+            depth = -1;
+            var local = transform.InverseTransformPoint(point);
+            var scale = Mathf.Max(0.01f, transform.lossyScale.x);
+
+            if (!Core.Movement.NearestLimb(Limbs, new Core.Gen.V3(local.x, local.y, local.z), out var r, out var d, out var gap) || gap * scale > 0.35f)
+            {
+                return false;
+            }
+
+            radius = r * scale;
+            depth = d;
+
+            return true;
+        }
+
+        /// <summary>The tree's key among the tops reached (its foot, to the metre).</summary>
+        public string Key => Core.Movement.TreeKey(transform.position.x, transform.position.z);
     }
 
     /// <summary>
@@ -786,6 +810,7 @@ namespace GuWorld.World
             }
 
             tree.GetComponent<TreeSolid>().Height = variant.Height * scale;
+            tree.GetComponent<TreeSolid>().Limbs = variant.Model?.Climb;
             tree.transform.SetPositionAndRotation(at - new Vector3(0, 0.1f, 0), Quaternion.Euler(0, yaw, 0));
             tree.transform.localScale = Vector3.one * scale;
             tree.SetActive(true);

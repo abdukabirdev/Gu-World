@@ -231,7 +231,10 @@ namespace GuWorld.Actors
 
             if (!aware)
             {
-                if (hero != null && hero.Alive && distance < sight && !Game.Talking)
+                // A crouching or crawling hero is seen later; a hero up a tree, not at all by a beast that cannot reach them there (ROADMAP 12.3, 12.6).
+                var seen = hero != null && distance < sight * Core.Movement.Seen(hero.Posture) && (!hero.OutOfReach || Core.Movement.ReachesUp(Def));
+
+                if (hero != null && hero.Alive && seen && !Game.Talking)
                 {
                     aware = true;
                     Alert();
@@ -253,6 +256,33 @@ namespace GuWorld.Actors
                 Wander(dt);
                 return;
             }
+
+            // Up a tree, out of reach of a beast that cannot climb, fly, shoot or cast (ROADMAP 12.6): it waits below, looking up, then gives up.
+            if (hero.OutOfReach && !Core.Movement.ReachesUp(Def))
+            {
+                waitedBelow += dt;
+
+                if (waitedBelow > Core.Movement.WaitBelow)
+                {
+                    waitedBelow = 0;
+                    aware = false;
+                    provoked = false;
+                    Wander(dt);
+
+                    return;
+                }
+
+                var below = hero.transform.position - transform.position;
+                below.y = 0;
+                var close = distance <= 2.5f + Radius;
+                Walk(close ? Vector3.zero : below.normalized * Def.Speed * 0.5f, dt);
+                Face(below, 360, dt);
+                Animate(close ? "idle" : "walk");
+
+                return;
+            }
+
+            waitedBelow = 0;
 
             // A clan's patrol warns before it fights (ROADMAP 12.9): it turns to the hero and calls out; it
             // strikes only if they come close, strike first, or are still there when the warning runs out.
@@ -318,6 +348,8 @@ namespace GuWorld.Actors
         bool warns;
         bool provoked;
         bool greeted;
+        /// <summary>Seconds spent below a tree the hero has climbed out of reach.</summary>
+        float waitedBelow;
         float warnedUntil = -1;
         static float lastWarning = -99;
 

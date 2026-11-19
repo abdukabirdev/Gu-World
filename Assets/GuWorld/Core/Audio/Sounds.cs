@@ -63,6 +63,10 @@ namespace GuWorld.Core.Audio
             ["step_mud"] = v => Step(v, 600, 0.8f, 0.12f),
             ["step_water"] = Splash,
             ["land"] = v => Thud(v, 60, 0.25f),
+            // A limb under the hero: its groan, its snap; a hand slapping onto a ledge (ROADMAP 12.3, 12.6).
+            ["creak"] = v => Struck(Modes.Wood, 96 + 7 * v, 0.7f, v, 0.35f).Normalise(0.35f),
+            ["crack"] = v => Struck(Modes.Wood, 540 + 25 * v, 0.24f, v, 0.65f).Normalise(0.8f),
+            ["grab"] = v => Step(v, 2300, 0.7f, 0.06f),
 
             // ---------------------------------------------------------------- Beasts
             ["howl"] = Howl,

@@ -161,6 +161,8 @@ namespace GuWorld.Core
         public string Explored = "";
         /// <summary>The hero's own marks on the map.</summary>
         public List<MapMark> Marks = new List<MapMark>();
+        /// <summary>The great trees whose tops the hero has reached (Movement.TreeKey: x:z to the metre).</summary>
+        public List<string> Treetops = new List<string>();
     }
 
     /// <summary>A mark the player put on the map (right click), with an optional word.</summary>
