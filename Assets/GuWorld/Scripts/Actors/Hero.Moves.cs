@@ -231,6 +231,7 @@ namespace GuWorld.Actors
 
             Sound.AudioDirector.Play("land", transform.position, 1, 0.1f);
             var damage = Session.Fall(drop);
+            Bane = damage > 0 ? $"падение с {drop:0} м" : Bane;
 
             if (damage <= 0)
             {

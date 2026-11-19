@@ -42,6 +42,8 @@ namespace GuWorld.Actors
         public bool Sitting => mode == Mode.Sitting;
         /// <summary>On a tree's bark, hand over hand.</summary>
         public bool Climbing => mode == Mode.Climbing;
+        /// <summary>What last hurt the hero (a beast's name, a fall), for the page when they fall; null if not known.</summary>
+        public string Bane { get; private set; }
         /// <summary>Seconds since the hero last struck or was struck (the HUD and the camera ease after a fight).</summary>
         public float SinceFight { get; private set; } = 99;
 
@@ -1442,6 +1444,12 @@ namespace GuWorld.Actors
 
             var damage = Session.TakeDamage(raw);
             SinceFight = 0;
+
+            if (damage > 0)
+            {
+                // Who struck last (the «Вы пали» page names them).
+                Bane = attacker != null ? attacker.Def.Name : null;
+            }
 
             if (damage <= 0)
             {

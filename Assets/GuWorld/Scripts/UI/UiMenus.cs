@@ -313,8 +313,23 @@ namespace GuWorld.UI
                 return;
             }
 
+            // What felled the hero, where they wake, what is lost and what stays (ROADMAP 2.x «Вы пали»).
+            if (!string.IsNullOrEmpty(deathBane))
+            {
+                UiKit.Label("Сразило: " + deathBane, middle, 16, UiKit.Hex(0xE8B4A8), TextAnchor.MiddleCenter).Size(24);
+            }
+
             UiKit.Label(lostStones > 0 ? $"Потеряно первобытных камней: {lostStones}" : "Терять было нечего", middle, 16, UiKit.Text2, TextAnchor.MiddleCenter).Size(24);
-            Gap(middle, 26);
+            var lantern = Atlas.Thing(state.Lantern) ?? Valley.Thing("lantern_village");
+
+            if (lantern != null)
+            {
+                UiKit.Label("Очнётесь у лунного фонаря: " + Atlas.NameAt(lantern.At), middle, 14, UiKit.Muted, TextAnchor.MiddleCenter).Size(22);
+            }
+
+            var stays = state.Wounds != null && state.Wounds.Exists(w => w.Kind == WoundKind.Burn || w.Kind == WoundKind.Fracture);
+            UiKit.Label(stays ? "Ушибы и порезы затянулись; ожоги и переломы остались" : "Свет фонаря затянул ушибы и порезы; действие пилюль и Гу развеялось", middle, 13, UiKit.Muted, TextAnchor.MiddleCenter).Size(20);
+            Gap(middle, 20);
             row = UiKit.Rect("Row", middle);
             row.Size(56);
             UiKit.HexButton("Очнуться у лунного фонаря", row, Game.Wake, UiKit.HexKind.Main, 14, 56, "Enter").GetComponent<RectTransform>().At(new Vector2(0.5f, 0.5f), Vector2.zero, new Vector2(460, 56));

@@ -218,8 +218,12 @@ namespace GuWorld.UI
         public void Death(int lost)
         {
             lostStones = lost;
+            deathBane = Game.Hero != null ? Game.Hero.Bane : null;
             Show(Page.Death);
         }
+
+        /// <summary>What felled the hero (a beast's name, a fall), as the death page tells it.</summary>
+        string deathBane;
 
         Text fpsLine;
         float fpsTime;
