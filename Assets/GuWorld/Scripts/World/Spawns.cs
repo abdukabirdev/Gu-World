@@ -17,6 +17,44 @@ namespace GuWorld.World
             public SpawnDef Def;
             public bool Out;
             public float BackAt;
+            /// <summary>For a clan's post or patrol: the game's hour (days × 24 + hour) its fallen are replaced.</summary>
+            public double BackAtHour;
+        }
+
+        /// <summary>The game's time in hours since the first day.</summary>
+        static double Hours(Session session) => session.State.Day * 24.0 + session.State.Hour;
+
+        static bool IsPatrol(SpawnDef def) => def.Enemy.EndsWith("_patrol");
+
+        /// <summary>How far the hero is from a group: from its road for a patrol that is not out, from its nearest living man when out.</summary>
+        static float DistanceTo(SpawnDef def, MapPoint here, bool isOut)
+        {
+            if (def.Route == null)
+            {
+                return def.At.DistanceTo(here);
+            }
+
+            if (isOut)
+            {
+                var best = float.MaxValue;
+
+                foreach (var enemy in Enemy.Living)
+                {
+                    if (enemy.Group == def.Id)
+                    {
+                        best = Mathf.Min(best, new MapPoint(enemy.transform.position.x, enemy.transform.position.z).DistanceTo(here));
+                    }
+                }
+
+                if (best < float.MaxValue)
+                {
+                    return best;
+                }
+            }
+
+            Patrols.Closest(def.Route, here, out var off);
+
+            return off;
         }
 
         readonly List<Group> groups = new List<Group>();
@@ -133,22 +171,27 @@ namespace GuWorld.World
             foreach (var group in groups)
             {
                 var def = group.Def;
-                var distance = def.At.DistanceTo(here);
                 var alive = Alive(def.Id);
+                var distance = DistanceTo(def, here, group.Out && alive > 0);
 
                 if (group.Out && alive == 0)
                 {
-                    // Wiped out: it comes back after a while, when the hero is not looking.
+                    // Wiped out: it comes back after a while, when the hero is not looking (a clan's post
+                    // after some hours of the game's time: Patrols.ReturnHours).
                     group.Out = false;
                     group.BackAt = def.Respawn > 0 ? Time.time + def.Respawn : float.MaxValue;
+                    group.BackAtHour = IsPatrol(def) ? Hours(session) + Patrols.ReturnHours : 0;
                 }
 
-                if (!group.Out && alive == 0 && distance < 120 && Time.time >= group.BackAt && Allowed(session, def)
-                    && (distance > 30 || group.BackAt == 0 || def.Enemy == "dummy"))
+                if (!group.Out && alive == 0 && distance < 120 && Time.time >= group.BackAt && Hours(session) >= group.BackAtHour && Allowed(session, def)
+                    && (distance > 30 || group.BackAt == 0 || def.Enemy == "dummy" || def.Route != null))
                 {
                     var enemy = Bestiary.Get(def.Enemy);
+                    // A patrol comes out on its road near the hero, but not on top of them.
+                    var start = def.Route != null ? Patrols.ComeOutAt(def.Route, here, 45) : 0;
+                    var first = def.Route != null ? Patrols.At(def.Route, start) : def.At;
 
-                    if (!Ground.Ready(new Vector3(def.At.X, 0, def.At.Z)))
+                    if (!Ground.Ready(new Vector3(first.X, 0, first.Z)))
                     {
                         continue;
                     }
@@ -157,7 +200,16 @@ namespace GuWorld.World
                     {
                         // Now and then one of a pack is an elite.
                         var one = Elites.Make(enemy, Elites.Roll(enemy, Game.Session.Rank, Game.Session.Random));
-                        var made = Enemy.Spawn(one, Around(def.At, 0, def.Radius, hero.transform.position), Random.Range(0, 360f), def.Id);
+                        var side = (i - (def.Count - 1) * 0.5f) * 1.6f;
+                        var at = def.Route != null ? Patrols.At(def.Route, start - i * 1.5f) : default;
+                        var made = def.Route != null
+                            ? Enemy.Spawn(one, new Vector3(at.X + side, 0, at.Z), 0, def.Id)
+                            : Enemy.Spawn(one, Around(def.At, 0, def.Radius, hero.transform.position), Random.Range(0, 360f), def.Id);
+
+                        if (def.Route != null && made != null)
+                        {
+                            made.WalkRoute(def.Route, start, side);
+                        }
 
                         if (one.Elite != "" && made != null)
                         {

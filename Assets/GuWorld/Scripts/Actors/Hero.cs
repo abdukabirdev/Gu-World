@@ -274,7 +274,7 @@ namespace GuWorld.Actors
 
             foreach (var enemy in new System.Collections.Generic.List<Enemy>(Enemy.Living))
             {
-                if (enemy.Alive && FlatDistance(enemy.transform.position) <= Session.AuraRadius + enemy.Radius)
+                if (enemy.Alive && !enemy.Peaceful && FlatDistance(enemy.transform.position) <= Session.AuraRadius + enemy.Radius)
                 {
                     enemy.TakeHit(Session.AuraDamage * 0.5f * Session.Stats.Power, false, transform.position, 0, Session.AuraStatus, Session.AuraStatusPower, 2);
                 }
@@ -703,7 +703,9 @@ namespace GuWorld.Actors
                 }
 
                 var blow = Session.MeleeHit(combo, enemy.Def);
-                enemy.TakeHit(blow.Damage, blow.Critical, origin, combo == 2 ? 1.1f : 0.35f);
+                var zone = ZoneOn(enemy);
+                enemy.TakeHit(blow.Damage * HitZones.Damage(zone), blow.Critical || HitZones.Critical(zone), origin, combo == 2 ? 1.1f : 0.35f);
+                Landed(enemy, zone);
                 Effects.Burst(enemy.Centre - to.normalized * enemy.Radius, new Color(1f, 0.95f, 0.8f), combo == 2 ? 1.8f : 1.1f, 0.18f);
                 hit = true;
             }
@@ -729,6 +731,11 @@ namespace GuWorld.Actors
 
             foreach (var enemy in Enemy.Living)
             {
+                if (enemy.Peaceful)
+                {
+                    continue;
+                }
+
                 var to = enemy.transform.position - transform.position;
                 to.y = 0;
                 var distance = to.magnitude - enemy.Radius;
@@ -758,7 +765,7 @@ namespace GuWorld.Actors
 
             foreach (var enemy in Enemy.Living)
             {
-                if (enemy.Def.Mind == EnemyMind.Still)
+                if (enemy.Def.Mind == EnemyMind.Still || enemy.Peaceful)
                 {
                     continue;
                 }
@@ -889,8 +896,69 @@ namespace GuWorld.Actors
             }
 
             var blow = Session.SkillHit(cast, enemy.Def);
-            enemy.TakeHit(blow.Damage, blow.Critical, transform.position, push, cast.Skill.Status, cast.Skill.StatusPower, cast.Skill.StatusTime, blow.Affinity);
+            var zone = ZoneOn(enemy);
+            enemy.TakeHit(blow.Damage * HitZones.Damage(zone), blow.Critical || HitZones.Critical(zone), transform.position, push, cast.Skill.Status, cast.Skill.StatusPower, cast.Skill.StatusTime, blow.Affinity);
+            Landed(enemy, zone);
             SinceFight = 0;
+        }
+
+        /// <summary>
+        /// Where on a man the blow lands (ROADMAP 12.4): the height at which the camera's middle passes by them —
+        /// aim the view at the head for a head blow. Beasts, bugs and blows not aimed at this one land on the body.
+        /// </summary>
+        HitZone ZoneOn(Enemy enemy)
+        {
+            var camera = Game.Rig != null ? Game.Rig.Camera : null;
+
+            if (enemy == null || camera == null || !HitZones.Applies(enemy.Def.Body) || enemy.Height <= 0.1f)
+            {
+                return HitZone.Body;
+            }
+
+            var from = camera.transform.position;
+            var way = camera.transform.forward;
+            var flat = new Vector2(way.x, way.z);
+            var to = new Vector2(enemy.transform.position.x - from.x, enemy.transform.position.z - from.z);
+
+            if (flat.sqrMagnitude < 1e-4f)
+            {
+                return HitZone.Body;
+            }
+
+            // Along the view to the point nearest the man's upright line, and how far it passes from it.
+            var t = Vector2.Dot(to, flat) / flat.sqrMagnitude;
+
+            if (t <= 0)
+            {
+                return HitZone.Body;
+            }
+
+            var miss = (Flat2(from) + flat * t - Flat2(enemy.transform.position)).magnitude;
+
+            if (miss > enemy.Radius * 1.6f + 0.3f)
+            {
+                return HitZone.Body;
+            }
+
+            var height = from.y + way.y * t - enemy.transform.position.y;
+
+            return HitZones.Of(height / enemy.Height);
+        }
+
+        static Vector2 Flat2(Vector3 v) => new Vector2(v.x, v.z);
+
+        /// <summary>What a head or a leg blow adds: the word over them, the legs slowed.</summary>
+        void Landed(Enemy enemy, HitZone zone)
+        {
+            if (zone == HitZone.Head)
+            {
+                Game.Ui?.FloatWord(enemy.transform.position + Vector3.up * (enemy.Height + 0.7f), "В голову", UI.UiKit.GoldLit);
+            }
+            else if (zone == HitZone.Legs)
+            {
+                enemy.Hobble(HitZones.LegSlow, HitZones.LegSlowSeconds);
+                Game.Ui?.FloatWord(enemy.transform.position + Vector3.up * (enemy.Height + 0.7f), "По ногам", UI.UiKit.Essence);
+            }
         }
 
         Vector3 Hand => transform.position + Vector3.up * 1.25f + transform.forward * 0.7f;

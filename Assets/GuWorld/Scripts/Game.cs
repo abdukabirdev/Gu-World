@@ -517,6 +517,12 @@ namespace GuWorld
                     spawns?.Refresh();
                 }
             };
+            // A raid or a tide foretold, hours before (ROADMAP 12.9): smoke, birds, howling; the compass shows where.
+            Session.Forewarned += (title, text) =>
+            {
+                Ui.Banner(title, text);
+                Sound.AudioDirector.Play(title.StartsWith("Вой") ? "howl" : "screech", null, 0.6f, 0);
+            };
             Session.TideChanged += up =>
             {
                 if (up)
@@ -1044,7 +1050,7 @@ namespace GuWorld
 
                 foreach (var enemy in Enemy.Living)
                 {
-                    if (enemy.Aware && enemy.Def.Mind != EnemyMind.Still && (enemy.transform.position - Hero.transform.position).sqrMagnitude < 30 * 30)
+                    if (enemy.Aware && enemy.Def.Mind != EnemyMind.Still && !enemy.Peaceful && (enemy.transform.position - Hero.transform.position).sqrMagnitude < 30 * 30)
                     {
                         return true;
                     }

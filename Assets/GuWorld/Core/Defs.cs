@@ -557,6 +557,8 @@ namespace GuWorld.Core
         public float Respawn = 180;
         public string Needs = "";
         public string GoneAfter = "";
+        /// <summary>A road the group walks there and back (a patrol), or null to keep about `At`.</summary>
+        public MapPoint[] Route;
     }
 
     public class WaveDef

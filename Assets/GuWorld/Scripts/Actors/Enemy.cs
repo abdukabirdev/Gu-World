@@ -207,6 +207,26 @@ namespace GuWorld.Actors
                 }
             }
 
+            // A clan's patrol that lets the hero by (ROADMAP 12.9) goes on its way, with a word when they pass close.
+            if (Peaceful)
+            {
+                aware = false;
+
+                if (hero != null && hero.Alive && distance < 8 && !greeted && !Game.Talking)
+                {
+                    greeted = true;
+                    var friend = Core.Clans.Get(Def.Clan);
+                    Game.Ui?.Toast($"{Def.Name}: {Patrols.Line(PatrolStance.Pass, friend != null ? friend.Name : "")}");
+                }
+                else if (distance > 25)
+                {
+                    greeted = false;
+                }
+
+                Wander(dt);
+                return;
+            }
+
             if (!aware)
             {
                 if (hero != null && hero.Alive && distance < sight && !Game.Talking)
@@ -234,22 +254,24 @@ namespace GuWorld.Actors
 
             // A clan's patrol warns before it fights (ROADMAP 12.9): it turns to the hero and calls out; it
             // strikes only if they come close, strike first, or are still there when the warning runs out.
+            // How long it waits comes from what the clan thinks of the hero (a hated one gets only a shout).
             if (Warns && !provoked)
             {
                 if (warnedUntil < 0)
                 {
-                    warnedUntil = Time.time + 6;
+                    var stance = Game.Session != null ? Game.Session.PatrolStanceOf(Def.Clan) : PatrolStance.Warn;
+                    warnedUntil = Time.time + Patrols.WarnSeconds(stance);
 
                     if (Time.time - lastWarning > 8)
                     {
                         lastWarning = Time.time;
                         var clan = Core.Clans.Get(Def.Clan);
-                        Game.Ui?.Banner(Def.Name, clan != null ? $"«Земля клана {clan.Name}. Уходи, пока цел!»" : "«Уходи, пока цел!»");
+                        Game.Ui?.Banner(Def.Name, Patrols.Line(stance, clan != null ? clan.Name : ""));
                         Sound.AudioDirector.Play(Core.Audio.Sounds.VoiceOf(Def), transform.position, 0.8f, 0.1f);
                     }
                 }
 
-                if (Time.time < warnedUntil && distance > 7)
+                if (Time.time < warnedUntil && distance > Patrols.TooClose)
                 {
                     var toHero = hero.transform.position - transform.position;
                     toHero.y = 0;
@@ -277,8 +299,84 @@ namespace GuWorld.Actors
         /// <summary>A clan's patrol (its id ends "_patrol"): it warns before it fights.</summary>
         bool Warns => Def.Id.EndsWith("_patrol") && !string.IsNullOrEmpty(Def.Clan);
         bool provoked;
+        bool greeted;
         float warnedUntil = -1;
         static float lastWarning = -99;
+
+        /// <summary>A patrol whose clan lets the hero by, not struck by them: not a foe to aim at, fight or fear.</summary>
+        public bool Peaceful => Warns && !provoked && alive && Game.Session != null && Game.Session.PatrolStanceOf(Def.Clan) == PatrolStance.Pass;
+
+        /// <summary>Struck while letting the hero by: the clan takes it ill, and the whole patrol turns on them.</summary>
+        void Betrayed()
+        {
+            Game.Session?.StruckFriendlyPatrol(Def.Clan);
+
+            foreach (var other in Living)
+            {
+                if (other.Group == Group)
+                {
+                    other.provoked = true;
+                    other.aware = true;
+                }
+            }
+        }
+
+        // ------------------------------------------------------------------ A road walked (a patrol)
+
+        MapPoint[] route;
+        float along;
+        int routeWay = 1;
+        Vector3 routeSide;
+
+        /// <summary>Sets this one to walk a road there and back, from `start` metres along it, a step to the side of the others.</summary>
+        public void WalkRoute(MapPoint[] road, float start, float side)
+        {
+            route = road;
+            along = start;
+            routeSide = new Vector3(side, 0, 0);
+        }
+
+        /// <summary>On along the road at a walk, a few metres ahead of where it is; at an end, back the other way.</summary>
+        void FollowRoute(float dt)
+        {
+            var length = Patrols.Length(route);
+            var here = new MapPoint(transform.position.x, transform.position.z);
+            along = Patrols.Closest(route, here, out var off);
+
+            if (routeWay > 0 && along >= length - 1.5f)
+            {
+                routeWay = -1;
+            }
+            else if (routeWay < 0 && along <= 1.5f)
+            {
+                routeWay = 1;
+            }
+
+            var aim = Patrols.At(route, Mathf.Clamp(along + routeWay * 4, 0, length));
+            var on = Patrols.At(route, along);
+            var forward = new Vector3(aim.X - on.X, 0, aim.Z - on.Z);
+            var right = forward.sqrMagnitude > 0.01f ? Vector3.Cross(Vector3.up, forward.normalized) : Vector3.right;
+            var goal = new Vector3(aim.X, transform.position.y, aim.Z) + right * routeSide.x;
+            var to = goal - transform.position;
+            to.y = 0;
+            // Far off the road (after a chase): back to it at a run.
+            var far = off > 12;
+
+            if (to.magnitude > 0.4f)
+            {
+                Face(to, 240, dt);
+                Walk(to.normalized * (far ? SpeedNow * 0.8f : SpeedNow * 0.4f), dt);
+                Animate(far ? "run" : "walk");
+            }
+            else
+            {
+                Walk(Vector3.zero, dt);
+                Animate("idle");
+            }
+
+            // Where it would go back to if it chased someone off the road.
+            home = transform.position;
+        }
 
         void LateUpdate()
         {
@@ -308,6 +406,12 @@ namespace GuWorld.Actors
 
         void Wander(float dt)
         {
+            if (route != null && route.Length > 1)
+            {
+                FollowRoute(dt);
+                return;
+            }
+
             wanderWait -= dt;
 
             if (wanderWait <= 0)
@@ -815,6 +919,18 @@ namespace GuWorld.Actors
 
         // ------------------------------------------------------------------ Being hit
 
+        /// <summary>A blow to the legs (ROADMAP 12.4): slower for a while (half as much on a boss).</summary>
+        public void Hobble(float power, float seconds)
+        {
+            if (!alive || Def.Mind == EnemyMind.Still)
+            {
+                return;
+            }
+
+            slowTime = Mathf.Max(slowTime, Def.Boss ? seconds * 0.5f : seconds);
+            slowPower = Mathf.Max(slowPower, Def.Boss ? power * 0.5f : power);
+        }
+
         public void TakeHit(float damage, bool critical, Vector3 from, float push = 0, StatusKind status = StatusKind.None, float statusPower = 0, float statusTime = 0, int affinity = 0)
         {
             if (!alive)
@@ -825,6 +941,11 @@ namespace GuWorld.Actors
             if (shieldTime > 0)
             {
                 damage *= 0.3f;
+            }
+
+            if (Peaceful)
+            {
+                Betrayed();
             }
 
             Health -= damage;

@@ -5,7 +5,7 @@ namespace GuWorld.Core
 {
     /// <summary>
     /// Who roams the wider mountain and where: packs and herds round the places, the Black Tail at
-    /// the mine and its fort, the clans' patrols when they hate the hero; and the staged fights —
+    /// the mine and its fort, the clans' posts and patrols on the roads; and the staged fights —
     /// the bosses of each place, the fort's assault, the duels with the clans' champions.
     /// </summary>
     public static class RegionSpawns
@@ -25,6 +25,10 @@ namespace GuWorld.Core
 
         static SpawnDef A(string id, string enemy, int count, float x, float z, float radius = 18, float respawn = 240, string needs = "") =>
             new SpawnDef { Id = id, Enemy = enemy, Count = count, At = new MapPoint(x, z), Radius = radius, Respawn = respawn, Needs = needs };
+
+        /// <summary>A patrol that walks a road there and back.</summary>
+        static SpawnDef R(string id, string enemy, int count, params MapPoint[] route) =>
+            new SpawnDef { Id = id, Enemy = enemy, Count = count, At = route[0], Radius = 3, Respawn = 300, Route = route };
 
         public static readonly SpawnDef[] Mountain =
         {
@@ -98,12 +102,13 @@ namespace GuWorld.Core
             S("fort_archers", "black_tail_archer", 3, "bandit_fort", 90, 0.6f, 10, 360, "", "black_tail_dead"),
             S("fort_masters", "black_tail_master", 2, "bandit_fort", 270, 0.5f, 8, 360, "", "black_tail_dead"),
 
-            // ------------------------------------------------------------------ The clans' patrols, when they hate the hero
-            A("patrol_bai_gate", "bai_patrol", 3, -1050, 3180, 14, 300, "rep:bai<=-50"),
-            A("patrol_bai_road", "bai_patrol", 2, -1150, 2600, 14, 300, "rep:bai<=-50"),
-            A("patrol_xiong_gate", "xiong_patrol", 3, 1780, -1580, 14, 300, "rep:xiong<=-50"),
-            A("patrol_xiong_road", "xiong_patrol", 2, 1200, -1250, 14, 300, "rep:xiong<=-50"),
-            A("patrol_gu_yue", "gu_yue_patrol", 3, 0, 520, 14, 300, "rep:gu_yue<=-50"),
+            // ------------------------------------------------------------------ The clans' posts and patrols (ROADMAP 12.9):
+            // always out; what they do comes from what their clan thinks of the hero (Patrols.StanceOf).
+            A("patrol_bai_gate", "bai_patrol", 3, -1050, 3180, 10, 300),
+            R("patrol_bai_road", "bai_patrol", 2, new MapPoint(-1085, 3070), new MapPoint(-1120, 2800), new MapPoint(-1150, 2450)),
+            A("patrol_xiong_gate", "xiong_patrol", 3, 1780, -1580, 10, 300),
+            R("patrol_xiong_road", "xiong_patrol", 2, new MapPoint(1700, -1530), new MapPoint(1450, -1380), new MapPoint(1200, -1250)),
+            R("patrol_gu_yue", "gu_yue_patrol", 3, new MapPoint(0, 420), new MapPoint(-20, 560), new MapPoint(-40, 700)),
         };
 
         static EncounterDef E(string id, string name, MapPoint at, float radius, string needs, params WaveDef[] waves) => new EncounterDef { Id = id, Name = name, At = at, Radius = radius, Needs = needs, Waves = waves };

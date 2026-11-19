@@ -72,6 +72,7 @@ namespace GuWorld.Core
         /// <summary>Called with the clock: raises the tide or lets it ebb.</summary>
         void UpdateTide(float hour)
         {
+            UpdateForewarnings(hour);
             UpdateRaid(hour);
             var should = TideNight(hour);
 

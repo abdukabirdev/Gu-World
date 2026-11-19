@@ -28,6 +28,9 @@ namespace GuWorld.UI
         readonly List<(RectTransform mark, Graphic look, float bearing)> compassFixed = new List<(RectTransform, Graphic, float)>();
         RectTransform compassQuest;
         Text compassQuestText;
+        /// <summary>Raids and tides on or foretold (ROADMAP 12.9): a red mark with the name and how far.</summary>
+        readonly List<(RectTransform mark, Text name)> compassThreats = new List<(RectTransform, Text)>();
+        readonly List<Image> minimapThreats = new List<Image>();
         readonly List<(RectTransform mark, Text name)> compassPlaces = new List<(RectTransform, Text)>();
 
         static readonly string[] Quarters = { "С", "СВ", "В", "ЮВ", "Ю", "ЮЗ", "З", "СЗ" };
@@ -84,6 +87,23 @@ namespace GuWorld.UI
             compassQuestText = UiKit.Label("", compassQuest, 11, UiKit.GoldText, TextAnchor.LowerCenter).Shadowed();
             compassQuestText.rectTransform.Fill();
             compassQuestText.rectTransform.offsetMin = new Vector2(0, -18);
+
+            for (var i = 0; i < 2; i++)
+            {
+                var threat = UiKit.Rect("Threat", compassTicks);
+                threat.sizeDelta = new Vector2(160, 40);
+                var mark = UiKit.Image("Gem", threat, Accessible.Harm, UiKit.Diamond);
+                mark.rectTransform.At(new Vector2(0.5f, 0.5f), new Vector2(0, 6), new Vector2(14, 14));
+                var beat = mark.gameObject.AddComponent<Pulse>();
+                beat.Period = 1.4f;
+                beat.Low = 0.4f;
+                beat.High = 1;
+                var label = UiKit.Label("", threat, 11, Accessible.Harm, TextAnchor.LowerCenter).Shadowed();
+                label.rectTransform.Fill();
+                label.rectTransform.offsetMin = new Vector2(0, -18);
+                threat.gameObject.SetActive(false);
+                compassThreats.Add((threat, label));
+            }
         }
 
         /// <summary>The bearing of a point from another, degrees from the north (+z) toward the east (+x).</summary>
@@ -144,6 +164,26 @@ namespace GuWorld.UI
             }
 
             compassQuest.gameObject.SetActive(questShown);
+
+            // Raids and tides, on or foretold.
+            var threats = session.Threats();
+
+            for (var i = 0; i < compassThreats.Count; i++)
+            {
+                var (mark, name) = compassThreats[i];
+
+                if (i >= threats.Count)
+                {
+                    mark.gameObject.SetActive(false);
+                    continue;
+                }
+
+                var threat = threats[i];
+                OnStrip(mark, Bearing(at, threat.At.X, threat.At.Z), facing);
+                var metres = Vector2.Distance(new Vector2(at.x, at.z), new Vector2(threat.At.X, threat.At.Z));
+                name.text = $"{threat.Name} · {(metres >= 1000 ? $"{metres / 1000:0.0} км" : $"{metres:0} м")}{(threat.Now ? "" : " · скоро")}";
+                name.color = Accessible.Harm.A(threat.Now ? 1 : 0.75f);
+            }
 
             // The lanterns lit and the villages known, nearest first, as many as there are marks.
             var near = new List<(float distance, float bearing, string name, Color colour)>();
@@ -255,6 +295,18 @@ namespace GuWorld.UI
             minimapQuest = UiKit.Image("Quest", minimapRoot, UiKit.GoldLit, UiKit.Diamond);
             minimapQuest.rectTransform.sizeDelta = new Vector2(12, 12);
             UiKit.Glow(minimapQuest.transform, UiKit.Gold.A(0.5f), 10);
+
+            for (var i = 0; i < 2; i++)
+            {
+                var threat = UiKit.Image("Threat", minimapRoot, Accessible.Harm, UiKit.Diamond);
+                threat.rectTransform.sizeDelta = new Vector2(12, 12);
+                var beat = threat.gameObject.AddComponent<Pulse>();
+                beat.Period = 1.4f;
+                beat.Low = 0.4f;
+                beat.High = 1;
+                threat.gameObject.SetActive(false);
+                minimapThreats.Add(threat);
+            }
             var north = UiKit.Label("С", minimapRoot, 13, UiKit.GoldLit, TextAnchor.MiddleCenter, FontStyle.Bold).Shadowed();
             minimapNorth = north.rectTransform;
             minimapNorth.sizeDelta = new Vector2(22, 22);
@@ -320,7 +372,9 @@ namespace GuWorld.UI
 
                 var dot = minimapDots[used++];
                 dot.gameObject.SetActive(true);
-                dot.color = enemy.Aware ? UiKit.Danger : UiKit.Danger.A(0.55f);
+                // A patrol that lets the hero by: its clan's colour, not the foe's red.
+                var clan = enemy.Peaceful ? Clans.Get(enemy.Def.Clan) : null;
+                dot.color = clan != null ? UiKit.Hex(clan.Colour).A(0.8f) : enemy.Aware ? Accessible.Harm : Accessible.Harm.A(0.55f);
                 dot.rectTransform.anchoredPosition = OnMap(e.x, e.z);
                 dot.rectTransform.sizeDelta = enemy.Def.Boss ? new Vector2(10, 10) : new Vector2(6, 6);
             }
@@ -393,6 +447,31 @@ namespace GuWorld.UI
             else
             {
                 minimapQuest.gameObject.SetActive(false);
+            }
+
+            // Raids and tides: on the map, or held to the rim.
+            var threats = session.Threats();
+
+            for (var i = 0; i < minimapThreats.Count; i++)
+            {
+                var mark = minimapThreats[i];
+                mark.gameObject.SetActive(i < threats.Count);
+
+                if (i >= threats.Count)
+                {
+                    continue;
+                }
+
+                var turned = (Vector2)(Quaternion.Euler(0, 0, facing) * OnMap(threats[i].At.X, threats[i].At.Z));
+                var rim = MinimapSize * 0.5f - 8;
+
+                if (turned.magnitude > rim)
+                {
+                    turned = turned.normalized * rim;
+                }
+
+                mark.rectTransform.anchorMin = mark.rectTransform.anchorMax = new Vector2(0.5f, 0.5f);
+                mark.rectTransform.anchoredPosition = turned;
             }
         }
 
