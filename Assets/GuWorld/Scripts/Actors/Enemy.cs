@@ -216,7 +216,7 @@ namespace GuWorld.Actors
                 {
                     greeted = true;
                     var friend = Core.Clans.Get(Def.Clan);
-                    Game.Ui?.Toast($"{Def.Name}: {Patrols.Line(PatrolStance.Pass, friend != null ? friend.Name : "")}");
+                    Game.Ui?.Toast($"{Def.Name}: {Patrols.Greeting(friend != null ? friend.Name : "", Game.Session?.Title)}");
                 }
                 else if (distance > 25)
                 {

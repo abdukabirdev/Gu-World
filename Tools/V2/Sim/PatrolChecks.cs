@@ -258,3 +258,12 @@ static partial class Program
         Check(s.Wounds.Count == 0 || s.Wounds[0].Hours <= before - Body.EaseHours + 0.01f, "it takes hours off the lightest wound");
     }
 }
+
+static partial class Program
+{
+    static void GreetingRules()
+    {
+        Check(Patrols.Greeting("Клан Бай", "") == Patrols.Line(PatrolStance.Pass, "Клан Бай"), "no title: the plain greeting");
+        Check(Patrols.Greeting("Клан Бай", "Защитник хутора").Contains("Защитник хутора"), "a title: the patrol says it");
+    }
+}

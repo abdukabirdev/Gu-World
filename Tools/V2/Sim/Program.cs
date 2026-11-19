@@ -102,6 +102,7 @@ static partial class Program
         HerbLandRules();
         TitleRules();
         GrassRules();
+        GreetingRules();
         SaveRoundTrip();
         var report = new List<string>();
 

@@ -61,6 +61,10 @@ namespace GuWorld.Core
             }
         }
 
+        /// <summary>What a patrol says to a hero it lets by, who has a title: by the title (ROADMAP 12.4: «видят NPC»).</summary>
+        public static string Greeting(string clanName, string title) =>
+            string.IsNullOrEmpty(title) ? Line(PatrolStance.Pass, clanName) : $"«Проходи, {title}. Слава о тебе дошла и до нас.»";
+
         /// <summary>"Клан Бай" → "Бай".</summary>
         static string Short(string clanName) => clanName.StartsWith("Клан ") ? clanName.Substring(5) : clanName;
 
