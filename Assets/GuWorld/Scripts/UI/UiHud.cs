@@ -64,6 +64,51 @@ namespace GuWorld.UI
         readonly Queue<string> toastsWaiting = new Queue<string>();
         const int ToastsShown = 3;
         bool errorTold;
+
+        // ------------------------------------------------------------------ A level too heavy (ROADMAP 2.7.3)
+
+        float heavyPlayed, heavyTime;
+        int heavyFrames;
+        bool heavyTold;
+
+        /// <summary>
+        /// After ten seconds of play (the first frames stutter while the world settles), counts twenty seconds of
+        /// frames with no page open; too few a second on a level above the lowest — one word, once a run, on
+        /// which level to try.
+        /// </summary>
+        void TickHeavy()
+        {
+            if (heavyTold || AutoTest.On || Open != Page.None || Game.Frozen || Quality.Preset == 0)
+            {
+                return;
+            }
+
+            var dt = Time.unscaledDeltaTime;
+            heavyPlayed += dt;
+
+            if (heavyPlayed < 10 || dt > 0.5f)
+            {
+                return;
+            }
+
+            heavyTime += dt;
+            heavyFrames++;
+
+            if (heavyTime < 20)
+            {
+                return;
+            }
+
+            var fps = heavyFrames / heavyTime;
+            heavyTold = true;
+
+            if (fps < Machine.TooFewFrames)
+            {
+                var lower = Quality.Preset == Quality.Custom ? 1 : Mathf.Max(0, Quality.Preset - 1);
+                Banner("Мало кадров", $"{fps:0} в секунду — попробуйте уровень «{Quality.Names[lower]}»");
+                Toast($"Настройки → Изображение: уровень «{Quality.Names[lower]}» легче нынешнего");
+            }
+        }
         const float ToastLife = 5;
         readonly Queue<(string label, string title)> banners = new Queue<(string, string)>();
         float bannerAge = 99;
@@ -437,6 +482,7 @@ namespace GuWorld.UI
                 return;
             }
 
+            TickHeavy();
             var state = session.State;
             var stats = session.Stats;
             wordsIn -= dt;

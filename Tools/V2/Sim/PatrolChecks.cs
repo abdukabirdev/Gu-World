@@ -80,3 +80,18 @@ static partial class Program
         Check(HitZones.Critical(HitZone.Head) && !HitZones.Critical(HitZone.Legs), "a head hit counts as critical");
     }
 }
+
+static partial class Program
+{
+    /// <summary>The first picture level for a new machine (ROADMAP 2.7.3).</summary>
+    static void MachineRules()
+    {
+        Check(Machine.Integrated("Intel(R) Iris(R) Xe Graphics") && Machine.Integrated("Intel(R) UHD Graphics 620") && Machine.Integrated("AMD Radeon(TM) Graphics"), "integrated cards are known");
+        Check(!Machine.Integrated("NVIDIA GeForce RTX 3060 Laptop GPU") && !Machine.Integrated("AMD Radeon RX 6600"), "discrete cards are not taken for integrated");
+        Check(Machine.Preset("Intel(R) Iris(R) Xe Graphics", 128, 16000, 8) == 2, "Iris Xe with 16 GB: medium (the autotest held 30+ frames there)");
+        Check(Machine.Preset("Intel(R) UHD Graphics 620", 128, 8000, 4) == 1, "an older integrated card: low");
+        Check(Machine.Preset("NVIDIA GeForce GTX 1050", 2048, 8000, 4) == 2 && Machine.Preset("NVIDIA GeForce RTX 3060", 6144, 16000, 6) == 3, "discrete cards by their memory");
+        Check(Machine.Preset("NVIDIA GeForce RTX 4080", 16384, 32000, 16) == 4, "a strong machine: ultra");
+        Check(Machine.Preset("NVIDIA GeForce RTX 4080", 16384, 4000, 16) == 0 && Machine.Preset("Anything", 4096, 16000, 2) == 0, "too little memory or too few cores: the minimum");
+    }
+}

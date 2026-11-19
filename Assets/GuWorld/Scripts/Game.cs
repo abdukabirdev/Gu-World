@@ -57,7 +57,8 @@ namespace GuWorld
         public static void Load()
         {
             // The old three levels (gw2.quality: light, ordinary, high) are the presets low, medium, high.
-            var guess = SystemInfo.graphicsMemorySize >= 3500 ? 3 : 2;
+            // A machine never seen before: the level from its card, memory and cores (Core.Machine).
+            var guess = Machine.Preset(SystemInfo.graphicsDeviceName, SystemInfo.graphicsMemorySize, SystemInfo.systemMemorySize, SystemInfo.processorCount);
             var old = PlayerPrefs.GetInt("gw2.quality", -1);
             var preset = PlayerPrefs.GetInt("gw2.preset", old >= 0 ? Mathf.Clamp(old, 0, 2) + 1 : guess);
 
