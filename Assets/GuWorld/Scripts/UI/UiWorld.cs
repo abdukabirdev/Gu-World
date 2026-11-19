@@ -653,12 +653,46 @@ namespace GuWorld.UI
             UiKit.Rule(right);
             Para(picked.Description, right, 15);
             Gap(right, 8);
+            var held = session.StandingWith(picked.Id);
+            Fact(right, "Репутация", $"{rep}", held <= Standing.Disliked ? UiKit.Danger : held >= Standing.Friendly ? UiKit.Ok : UiKit.Text2);
+
+            // What the next standing takes (ROADMAP 3.2: «репутация, ранги клана, заслуги»).
+            if (held < Standing.Kin)
+            {
+                var next = held + 1;
+                Fact(right, $"До «{Clans.StandingName(next)}»", $"ещё {Math.Max(0, Clans.Threshold(next) - rep)}", UiKit.Muted);
+            }
+
             Fact(right, "Цены в их лавках", $"{(int)Math.Round(Clans.PriceFactor(rep) * 100)}%", Clans.PriceFactor(rep) <= 1 ? UiKit.Ok : UiKit.Danger);
             Fact(right, "Торгуют с вами", Clans.Trades(rep) ? "да" : "нет", Clans.Trades(rep) ? UiKit.Ok : UiKit.Danger);
 
             if (picked.Guards)
             {
-                Fact(right, "Стража", session.Hostile(picked.Id) ? "нападает" : "пропускает", session.Hostile(picked.Id) ? UiKit.Danger : UiKit.Ok);
+                // The patrols on their roads, by what the clan thinks of the hero (ROADMAP 12.9).
+                var stance = session.PatrolStanceOf(picked.Id);
+                Fact(right, "Дозоры", stance == PatrolStance.Pass ? "пропускают" : stance == PatrolStance.Warn ? "прогоняют" : "нападают",
+                    stance == PatrolStance.Pass ? UiKit.Ok : stance == PatrolStance.Warn ? UiKit.GoldText : UiKit.Danger);
+            }
+
+            // The hero's own clan: its ranks, by the merit earned in all.
+            if (picked.Id == "gu_yue")
+            {
+                Gap(right, 8);
+                UiKit.Lbl($"Ранги клана · заслуги {session.State.Merit} (всего {session.State.MeritEarned})", right, 11, UiKit.LabelGold).Size(18);
+
+                for (var i = 0; i < Session.ClanRanks.Length; i++)
+                {
+                    var reached = session.State.MeritEarned >= Session.ClanRankNeeds[i];
+                    var current = i == session.ClanRank;
+                    Fact(right, Session.ClanRanks[i] + (current ? " — вы" : ""), i == 0 ? "с начала" : reached ? "есть" : $"{Session.ClanRankNeeds[i]} заслуг",
+                        current ? UiKit.GoldText : reached ? UiKit.Ok : UiKit.Muted);
+                }
+
+                Para("Заслуги дают поручения доски, задания старейшин и победы на арене; их тратят в сокровищнице клана.", right, 13, UiKit.Muted);
+            }
+            else
+            {
+                Para("Репутация растёт от их поручений и помощи их людям, падает от ударов по ним — и от дружбы с их соперниками.", right, 13, UiKit.Muted);
             }
 
             if (picked.Rivals.Length > 0)
