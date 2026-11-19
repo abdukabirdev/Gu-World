@@ -666,6 +666,34 @@ namespace GuWorld.UI
         /// <summary>How far through its rest it still is (0 ready … 1 just used): a shade rising from the foot.</summary>
         public void SetRest(float share) => Shade.rectTransform.anchorMax = new Vector2(1, Mathf.Clamp01(share));
 
+        Image sweep;
+
+        /// <summary>The rest as a shade sweeping round from the top, the way a clock's hand goes back (ROADMAP 3.1).</summary>
+        public void SetSweep(float share)
+        {
+            share = Mathf.Clamp01(share);
+
+            if (sweep == null)
+            {
+                if (share <= 0.001f)
+                {
+                    return;
+                }
+
+                sweep = UiKit.Image("Sweep", Shade.transform.parent, Shade.color, Shade.sprite);
+                sweep.rectTransform.Fill();
+                sweep.type = Image.Type.Filled;
+                sweep.fillMethod = Image.FillMethod.Radial360;
+                sweep.fillOrigin = 2;
+                sweep.fillClockwise = false;
+                sweep.raycastTarget = false;
+                sweep.transform.SetSiblingIndex(Shade.transform.GetSiblingIndex() + 1);
+            }
+
+            sweep.enabled = share > 0.001f;
+            sweep.fillAmount = share;
+        }
+
         public void OnPointerClick(PointerEventData data)
         {
             if (data.button == PointerEventData.InputButton.Left)

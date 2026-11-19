@@ -516,9 +516,10 @@ namespace GuWorld.UI
                 slotSeals[i].text = def != null ? def.Seal : open ? "" : "隐";
                 var can = def != null && state.Essence >= session.CostOf(gu);
                 slotSeals[i].color = def == null ? UiKit.Muted.A(0.4f) : can ? UiKit.Hex(def.Colour) : UiKit.Muted;
-                cell.SetRim(def != null ? QualityColour(gu.Quality).A(0.8f) : UiKit.Line);
+                // Short of essence: the rim in the harm's colour says why it will not cast.
+                cell.SetRim(def == null ? UiKit.Line : can ? QualityColour(gu.Quality).A(0.8f) : Accessible.Harm.A(0.85f));
                 var total = session.CooldownOf(i);
-                cell.SetRest(def != null && total > 0 ? session.CooldownLeft(i) / total : 0);
+                cell.SetSweep(def != null && total > 0 ? session.CooldownLeft(i) / total : 0);
                 cell.SetRank(def != null ? def.Rank : 0);
             }
 
@@ -533,7 +534,7 @@ namespace GuWorld.UI
                 moveSeal.color = move == null ? UiKit.Muted.A(0.4f) : castable ? UiKit.Hex(move.Colour) : UiKit.Muted;
                 moveCell.SetRim(move != null ? UiKit.Gold.A(castable ? 0.9f : 0.4f) : UiKit.Line);
                 var whole = move != null ? session.MoveCooldownOf(move) : 0;
-                moveCell.SetRest(whole > 0 ? session.MoveCooldownLeft(move) / whole : 0);
+                moveCell.SetSweep(whole > 0 ? session.MoveCooldownLeft(move) / whole : 0);
                 moveCell.SetRank(move != null ? move.Rank : 0);
             }
 
