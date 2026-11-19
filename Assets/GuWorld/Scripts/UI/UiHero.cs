@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using GuWorld.Core;
 using GuWorld.World;
 using UnityEngine;
+using UnityEngine.InputSystem;
 using UnityEngine.UI;
 
 namespace GuWorld.UI
@@ -675,15 +676,82 @@ namespace GuWorld.UI
 
         // ------------------------------------------------------------------ Journal
 
+        /// <summary>Which list the journal shows: what is under way, the boards' errands, what is done.</summary>
+        int journalTab;
+        BountyState journalBounty;
+
+        /// <summary>
+        /// The journal (J, after UI-Journal.dc.html): at the left, what is under way, the errands taken from the
+        /// boards (with how far along, and «Оставить»), or what is done; the one picked at the right — where it
+        /// stands, what it gives, «Показать на карте»; under it, the clan's merit and its rank.
+        /// </summary>
         void JournalPage()
         {
             var session = S;
-            var body = Frame("志", "Журнал", $"Глава {session.Chapter} · {Story.ChapterNames[session.Chapter]}", true, null, null, new[] { ("Q E", "Страницы"), ("Esc", "Закрыть") });
+            var body = Frame("志", "Журнал", $"Глава {session.Chapter} · {Story.ChapterNames[session.Chapter]}", true, null, null, new[] { ("1 2 3", "Списки"), ("Q E", "Страницы"), ("Esc", "Закрыть") });
             var left = Column(body, 0, 0.42f, 6);
-            UiKit.Lbl("Задания", left, 11, UiKit.LabelGold).Size(18);
-            var list = Scroll(Rest(left));
+            var bounties = session.BountiesTaken();
             var quests = new List<QuestState>(session.ActiveQuests());
             quests.Sort((a, b) => Story.Get(b.Quest).Main.CompareTo(Story.Get(a.Quest).Main));
+            var done = new List<QuestDef>();
+
+            foreach (var quest in Story.All)
+            {
+                if (session.IsDone(quest.Id) && !session.IsActive(quest.Id))
+                {
+                    done.Add(quest);
+                }
+            }
+
+            var tabs = UiKit.Rect("Lists", left);
+            tabs.Size(36);
+            tabs.Stack<HorizontalLayoutGroup>(6, null, TextAnchor.MiddleLeft).childForceExpandWidth = true;
+            var names = new[] { $"Сейчас · {quests.Count}", $"Поручения · {bounties.Count}", $"Выполнено · {done.Count}" };
+
+            for (var i = 0; i < names.Length; i++)
+            {
+                var tab = i;
+                UiKit.Tb(names[i], tabs, journalTab == i, () => { journalTab = tab; Redraw(); }, 11).Size(36, -1, 1);
+            }
+
+            var list = Scroll(Rest(left));
+            var right = Column(body, 0.48f, 1, 8);
+
+            switch (journalTab)
+            {
+                case 1:
+                    JournalBounties(list, right, bounties);
+                    break;
+                case 2:
+                    JournalDone(list, right, done);
+                    break;
+                default:
+                    JournalQuests(list, right, quests);
+                    break;
+            }
+
+            // The clan's merit (the treasury's coin) and rank, under whatever is shown.
+            var merit = UiKit.Panel("Merit", body);
+            merit.rectTransform.Place(new Vector2(0.48f, 0), new Vector2(1, 0), 0, 0, 0, -118);
+            var inside = UiKit.Rect("Inside", merit.transform).Fill();
+            inside.Stack<VerticalLayoutGroup>(4, new RectOffset(20, 20, 12, 10));
+            var rank = session.ClanRank;
+            var next = rank + 1 < Session.ClanRanks.Length ? Session.ClanRankNeeds[rank + 1] : 0;
+            UiKit.Lbl("Клан Гу Юэ · вклад", inside, 11, UiKit.LabelGold).Size(16);
+            UiKit.Disp($"{session.State.Merit} вклада · {Session.ClanRanks[rank]}", inside, 20, UiKit.GoldText).Size(26);
+            UiKit.Label(next > 0 ? $"Всего заработано {session.State.MeritEarned} · до «{Session.ClanRanks[rank + 1]}» — ещё {Mathf.Max(0, next - session.State.MeritEarned)}" : $"Всего заработано {session.State.MeritEarned} · выше ранга нет",
+                inside, 13, UiKit.Muted).Size(18);
+            UiKit.Label("Вклад дают задания и поручения клана; казначей в главном зале меняет его на Гу, которых не купить за камни.", inside, 12, UiKit.Muted).Size(18);
+
+            var keys = body.gameObject.AddComponent<PageKeys>();
+            keys.On(Key.Digit1, () => { journalTab = 0; Redraw(); });
+            keys.On(Key.Digit2, () => { journalTab = 1; Redraw(); });
+            keys.On(Key.Digit3, () => { journalTab = 2; Redraw(); });
+        }
+
+        void JournalQuests(RectTransform list, RectTransform right, List<QuestState> quests)
+        {
+            var session = S;
 
             if (pickedQuest == null || !session.IsActive(pickedQuest))
             {
@@ -694,7 +762,7 @@ namespace GuWorld.UI
             {
                 var def = Story.Get(quest.Quest);
                 var id = quest.Quest;
-                ListLine(list, def.Main ? "道" : "行", def.Title, def.Main ? "сюжет" : "поручение", def.Main ? UiKit.GoldText : UiKit.Text2, id == pickedQuest, () => { pickedQuest = id; Redraw(); });
+                ListLine(list, def.Main ? "道" : "行", def.Title, def.Main ? $"сюжет · {quest.Step + 1}/{def.Steps.Length}" : $"поручение · {quest.Step + 1}/{def.Steps.Length}", def.Main ? UiKit.GoldText : UiKit.Text2, id == pickedQuest, () => { pickedQuest = id; Redraw(); });
             }
 
             if (quests.Count == 0)
@@ -702,7 +770,6 @@ namespace GuWorld.UI
                 Para(session.Has("finished") ? "История рассказана. Доска поручений в деревне всё ещё платит." : "Заданий нет.", list, 15, UiKit.Muted);
             }
 
-            var right = Column(body, 0.48f, 1, 8);
             var state = pickedQuest != null ? session.StateOf(pickedQuest) : null;
 
             if (state == null)
@@ -724,6 +791,7 @@ namespace GuWorld.UI
                 var target = goal;
                 UiKit.HexButton("Показать на карте", showRow, () => { mapFocus = target; mapPick = ("quest", pickedQuest, -1, target); Show(Page.Map); }, UiKit.HexKind.Ghost, 12, 40, "M").Size(40, 240, 0);
             }
+
             UiKit.Rule(right);
             Para(picked.Summary, right, 16);
             Gap(right, 10);
@@ -732,7 +800,11 @@ namespace GuWorld.UI
             Gap(right, 10);
             UiKit.Lbl($"Шаг {state.Step + 1} из {picked.Steps.Length}", right, 11, UiKit.Muted).Size(16);
             UiKit.Bar(right, UiKit.BarKind.Stamina, state.Step / (float)picked.Steps.Length, 3);
-            var reward = picked.Reward;
+            JournalReward(right, picked.Reward);
+        }
+
+        static void JournalReward(RectTransform right, Reward reward)
+        {
             var gains = new List<string>();
 
             if (reward.Stones > 0) { gains.Add($"{reward.Stones} камней"); }
@@ -747,6 +819,95 @@ namespace GuWorld.UI
                 UiKit.Lbl("Награда", right, 11, UiKit.LabelGold).Size(16);
                 Para(string.Join(" · ", gains), right, 15);
             }
+        }
+
+        /// <summary>The errands taken from the boards: how far along each is, what it pays, where its board is; «Оставить» frees its place.</summary>
+        void JournalBounties(RectTransform list, RectTransform right, List<BountyState> bounties)
+        {
+            var session = S;
+
+            if (journalBounty == null || !bounties.Contains(journalBounty))
+            {
+                journalBounty = bounties.Count > 0 ? bounties[0] : null;
+            }
+
+            foreach (var bounty in bounties)
+            {
+                var one = bounty;
+                var ready = session.BountyReady(bounty);
+                ListLine(list, ready ? "成" : "任", session.BountyText(bounty), ready ? "готово" : BoardName(bounty), ready ? UiKit.Essence : UiKit.Text2, bounty == journalBounty, () => { journalBounty = one; Redraw(); });
+            }
+
+            Para(bounties.Count == 0 ? "Поручений нет. Доски в деревнях каждый день дают новые — до шести сразу." : $"Взято {bounties.Count} из 6. Сдают поручение у той доски, где его взяли.", list, 13, UiKit.Muted);
+
+            if (journalBounty == null)
+            {
+                return;
+            }
+
+            var picked = journalBounty;
+            var have = picked.Kind == "kill" ? picked.Progress : session.Count(picked.Target);
+            UiKit.Lbl($"Поручение · {BoardName(picked)}", right, 11, UiKit.LabelGold).Size(16);
+            UiKit.Disp(picked.Kind == "kill" ? Bestiary.Get(picked.Target)?.Name ?? picked.Target : ItemBook.Get(picked.Target)?.Name ?? picked.Target, right, 34, UiKit.Text).Size(42);
+            UiKit.Rule(right);
+            Para(picked.Kind == "kill" ? $"Победить: {picked.Count}." : $"Принести: {picked.Count} — сдаются из сумки.", right, 16);
+            UiKit.Lbl($"Сделано {Mathf.Min(have, picked.Count)} из {picked.Count}", right, 11, UiKit.Muted).Size(16);
+            UiKit.Bar(right, UiKit.BarKind.Stamina, Mathf.Clamp01(have / (float)Mathf.Max(1, picked.Count)), 3);
+            Para(session.BountyReady(picked) ? "Готово — вернитесь к доске." : $"Осталось {session.BountyDaysLeft(picked)} дн. (взято в день {picked.Day}).", right, 14, session.BountyReady(picked) ? UiKit.Essence : UiKit.Muted);
+
+            if (!session.BountyReady(picked))
+            {
+                var heroAt = Game.Hero != null ? new MapPoint(Game.Hero.transform.position.x, Game.Hero.transform.position.z) : new MapPoint(0, 0);
+                var (where, at) = session.BountyWhere(picked, heroAt);
+                Para(where, right, 14, UiKit.Text2);
+
+                if (at != null)
+                {
+                    var point = at.Value;
+                    UiKit.HexButton("Показать на карте", right, () => { mapFocus = point; mapPick = ("point", null, -1, point); Show(Page.Map); }, UiKit.HexKind.Ghost, 11, 40, "M").Size(40, 240, 0);
+                }
+            }
+            Gap(right, 8);
+            UiKit.Lbl("Награда", right, 11, UiKit.LabelGold).Size(16);
+            Para($"{picked.Stones} камней" + (picked.Insight > 0 ? $" · {picked.Insight} прорыва" : "") + (picked.Reputation > 0 ? $" · репутация +{picked.Reputation}" : ""), right, 15);
+            Gap(right, 8);
+            UiKit.HexButton("Удерживать — оставить", right, () => { session.AbandonBounty(picked); journalBounty = null; Redraw(); }, UiKit.HexKind.Bad, 11, 40).Held(1.2f).Size(40, 280, 0);
+        }
+
+        static string BoardName(BountyState bounty) => Regions.Settlement(bounty.Settlement)?.Name ?? Atlas.Place(bounty.Settlement)?.Name ?? "доска";
+
+        /// <summary>What is done, chapter by chapter: the story's steps and the side quests behind the hero.</summary>
+        void JournalDone(RectTransform list, RectTransform right, List<QuestDef> done)
+        {
+            if (pickedQuest == null || !done.Exists(q => q.Id == pickedQuest))
+            {
+                pickedQuest = done.Count > 0 ? done[done.Count - 1].Id : null;
+            }
+
+            for (var i = done.Count - 1; i >= 0; i--)
+            {
+                var def = done[i];
+                var id = def.Id;
+                ListLine(list, def.Main ? "道" : "行", def.Title, def.Main ? $"глава {def.Chapter}" : "поручение", UiKit.Muted, id == pickedQuest, () => { pickedQuest = id; Redraw(); });
+            }
+
+            if (done.Count == 0)
+            {
+                Para("Пока ничего не сделано.", list, 15, UiKit.Muted);
+            }
+
+            var picked = done.Find(q => q.Id == pickedQuest);
+
+            if (picked == null)
+            {
+                return;
+            }
+
+            UiKit.Lbl(picked.Main ? $"Глава {picked.Chapter} · {Story.ChapterNames[picked.Chapter]} · выполнено" : "Поручение · выполнено", right, 11, UiKit.LabelGold).Size(16);
+            UiKit.Disp(picked.Title, right, 34, UiKit.Text2).Size(42);
+            UiKit.Rule(right);
+            Para(picked.Summary, right, 16, UiKit.Text2);
+            JournalReward(right, picked.Reward);
         }
 
         // ------------------------------------------------------------------ Map

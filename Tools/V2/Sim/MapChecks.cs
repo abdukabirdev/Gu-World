@@ -56,5 +56,40 @@ static partial class Program
         Check(m.RemoveMark(0) && m.State.Marks.Count == Session.MostMarks - 1 && !m.RemoveMark(99), "map: a mark is taken away");
         m.AddMark(99999, -99999);
         Check(Math.Abs(m.State.Marks.Last().X) <= Regions.Half && Math.Abs(m.State.Marks.Last().Z) <= Regions.Half, "map: a mark stays on the mountain");
+
+        // The journal's errands (ROADMAP 3.3): where to go, days left, leaving one.
+        var b = new Session(Session.NewGame("Мин"), 5);
+        var boards = Session.Boards.Select(x => x.Settlement).ToList();
+        var taken = 0;
+
+        foreach (var board in boards)
+        {
+            foreach (var errand in b.BoardToday(board))
+            {
+                if (taken < 4 && b.TakeBounty(errand))
+                {
+                    taken++;
+                }
+            }
+        }
+
+        Check(taken > 0 && b.BountiesTaken().Count == taken, $"journal: errands taken show in the journal ({taken})");
+        // A hunt whose beast has a den on the map (some come only with the wild lands' packs and the bandits' ambushes).
+        var anyKill = b.BountiesTaken().FirstOrDefault(x => x.Kind == "kill" && Atlas.Spawns.Any(sp => sp.Enemy == x.Target));
+        var anyGather = b.BountiesTaken().FirstOrDefault(x => x.Kind != "kill");
+
+        anyKill = anyKill ?? new BountyState { Kind = "kill", Target = Atlas.Spawns.First(sp => sp.Needs == "" && sp.GoneAfter == "").Enemy, Count = 3, Taken = true };
+        var (where, at) = b.BountyWhere(anyKill, new MapPoint(0, 0));
+        Check(at != null && where.Contains("км"), $"journal: a hunt says where its beast lives ({anyKill.Target}: {where})");
+
+        if (anyGather != null)
+        {
+            var (grows, _) = b.BountyWhere(anyGather, new MapPoint(0, 0));
+            Check(grows.Length > 10, $"journal: a gathering says where it grows ({grows})");
+        }
+
+        var first2 = b.BountiesTaken()[0];
+        Check(b.BountyDaysLeft(first2) == Session.BountyDays, "journal: a fresh errand has all its days");
+        Check(b.AbandonBounty(first2) && !b.BountiesTaken().Contains(first2) && !b.AbandonBounty(first2), "journal: an errand left frees its place, once");
     }
 }

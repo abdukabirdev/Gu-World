@@ -324,7 +324,7 @@ namespace GuWorld.UI
             var settlement = Regions.Settlement(boardSettlement);
             var body = Frame("榜", "Доска поручений", settlement != null ? settlement.Name : "", false, null, Purse);
             var left = Column(body, 0, 0.46f, 6);
-            UiKit.Lbl($"День {session.State.Day}", left, 11, UiKit.LabelGold).Size(18);
+            UiKit.Lbl($"День {session.State.Day} · взято {session.BountiesRunning} из 6", left, 11, UiKit.LabelGold).Size(18);
             var list = Scroll(Rest(left));
             var errands = session.BoardToday(boardSettlement);
 
@@ -363,7 +363,19 @@ namespace GuWorld.UI
                 Fact(right, Clans.Get(Clans.OfSettlement(settlement.Id))?.Name ?? "", $"+{picked.Reputation}", UiKit.Ok);
             }
 
-            Fact(right, "Срок", $"{Session.BountyDays} дн.");
+            Fact(right, "Срок", picked.Taken && !picked.Done ? $"осталось {session.BountyDaysLeft(picked)} дн." : $"{Session.BountyDays} дн.");
+            var heroAt = Game.Hero != null ? new MapPoint(Game.Hero.transform.position.x, Game.Hero.transform.position.z) : settlement?.At ?? new MapPoint(0, 0);
+            var (where, at) = session.BountyWhere(picked, heroAt);
+            Gap(right, 4);
+            UiKit.Lbl("Где", right, 11, UiKit.LabelGold).Size(16);
+            Para(where, right, 14, UiKit.Text2);
+
+            if (at != null && !picked.Done)
+            {
+                var point = at.Value;
+                UiKit.HexButton("Показать на карте", right, () => { mapFocus = point; mapPick = ("point", null, -1, point); Show(Page.Map); }, UiKit.HexKind.Ghost, 11, 40).Size(40, 240, 0);
+            }
+
             Gap(right, 10);
 
             if (picked.Done)

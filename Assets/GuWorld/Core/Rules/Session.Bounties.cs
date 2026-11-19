@@ -244,6 +244,111 @@ namespace GuWorld.Core
         }
 
         public int BountiesRunning => State.Bounties.FindAll(b => b.Taken && !b.Done).Count;
+
+        /// <summary>Days left to hand an errand in (taken ones; at dawn past them it is dropped).</summary>
+        public int BountyDaysLeft(BountyState bounty) => bounty == null || !bounty.Taken ? BountyDays : Math.Max(0, BountyDays - (State.Day - bounty.Day));
+
+        /// <summary>
+        /// Where to go for an errand (ROADMAP 3.3, «где»): for a hunt, the nearest den of the beast to `from` (its
+        /// place's name and the point); for a gathering, the lands the herb grows in. Null point if nowhere known.
+        /// </summary>
+        public (string where, MapPoint? at) BountyWhere(BountyState bounty, MapPoint from)
+        {
+            if (bounty == null)
+            {
+                return ("", null);
+            }
+
+            if (bounty.Kind == "kill")
+            {
+                SpawnDef best = null;
+                var bestDistance = float.MaxValue;
+
+                foreach (var spawn in Atlas.Spawns)
+                {
+                    var distance = spawn.At.DistanceTo(from);
+
+                    if (Matches(bounty.Target, spawn.Enemy) && (spawn.Needs == "" || Meets(spawn.Needs)) && (spawn.GoneAfter == "" || !Has(spawn.GoneAfter)) && distance < bestDistance)
+                    {
+                        best = spawn;
+                        bestDistance = distance;
+                    }
+                }
+
+                if (best == null)
+                {
+                    return ("Где водится — не записано: спросите у стражи или ищите в диких землях.", null);
+                }
+
+                var place = Atlas.PlaceAt(best.At);
+                var settlement = Atlas.SettlementAt(best.At);
+                var name = place?.Name ?? settlement?.Name;
+
+                return ((name != null ? $"Ближе всего — {name}" : "Ближе всего — в лесах горы") + $", {Math.Round(bestDistance / 100) / 10:0.0} км отсюда.", best.At);
+            }
+
+            var lands = new List<string>();
+
+            foreach (var biome in (Gen.Biome[])Enum.GetValues(typeof(Gen.Biome)))
+            {
+                foreach (var (item, rare) in Forage.GrowsIn(biome))
+                {
+                    if (item == bounty.Target)
+                    {
+                        lands.Add(BiomeName(biome) + (rare ? " (редко)" : ""));
+                    }
+                }
+            }
+
+            return (lands.Count > 0 ? "Растёт: " + string.Join(", ", lands) + "." : "Продаётся в лавках и падает с добычи.", null);
+        }
+
+        public static string BiomeName(Gen.Biome biome)
+        {
+            switch (biome)
+            {
+                case Gen.Biome.Meadow: return "луга";
+                case Gen.Biome.PineForest: return "сосновый лес";
+                case Gen.Biome.Broadleaf: return "лиственный лес";
+                case Gen.Biome.Bamboo: return "бамбук";
+                case Gen.Biome.Deadwood: return "сухостой";
+                case Gen.Biome.Rock: return "скалы";
+                case Gen.Biome.Marsh: return "болото";
+                case Gen.Biome.Riverbank: return "берега рек";
+                case Gen.Biome.Settled: return "деревни";
+                case Gen.Biome.Field: return "поля";
+                case Gen.Biome.Fir: return "ельник";
+                default: return "клёны";
+            }
+        }
+
+        /// <summary>The errands taken and not yet handed in, in the order taken.</summary>
+        public List<BountyState> BountiesTaken() => State.Bounties.FindAll(b => b.Taken && !b.Done);
+
+        /// <summary>
+        /// Leaves an errand (the journal's «Оставить»): its place frees for another; the board's clan minds a
+        /// little (a point of reputation) once anything was done for it.
+        /// </summary>
+        public bool AbandonBounty(BountyState bounty)
+        {
+            if (bounty == null || !bounty.Taken || bounty.Done || !State.Bounties.Contains(bounty))
+            {
+                return false;
+            }
+
+            State.Bounties.Remove(bounty);
+            var board = Board(bounty.Settlement);
+
+            if (board != null && bounty.Progress > 0)
+            {
+                ChangeReputation(board.Clan, -1, false);
+            }
+
+            Say($"Поручение оставлено: {BountyText(bounty)}");
+            Touch();
+
+            return true;
+        }
     }
 
     static class StableHash
