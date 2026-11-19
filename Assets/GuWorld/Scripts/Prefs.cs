@@ -77,6 +77,8 @@ namespace GuWorld
         public static float HudOpacity { get => Float("gw2.hudalpha", 1); set => Float("gw2.hudalpha", value, true); }
         public static bool Compass { get => Bool("gw2.compass", true); set => Bool("gw2.compass", value, true); }
         public static bool Minimap { get => Bool("gw2.minimap", true); set => Bool("gw2.minimap", value, true); }
+        /// <summary>The hour, the sky and the day by the minimap.</summary>
+        public static bool Clock { get => Bool("gw2.clock", true); set => Bool("gw2.clock", value, true); }
         /// <summary>The conversations' words bigger.</summary>
         public static bool LargeText { get => Bool("gw2.largetext", false); set => Bool("gw2.largetext", value, true); }
 
@@ -116,7 +118,7 @@ namespace GuWorld
 
         public static void ResetInterface()
         {
-            Delete("gw2.hudscale", "gw2.hudalpha", "gw2.compass", "gw2.minimap", "gw2.largetext", "gw2.noflash", "gw2.colourblind");
+            Delete("gw2.hudscale", "gw2.hudalpha", "gw2.compass", "gw2.minimap", "gw2.clock", "gw2.largetext", "gw2.noflash", "gw2.colourblind");
         }
 
         // ------------------------------------------------------------------ The screen

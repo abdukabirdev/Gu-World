@@ -300,6 +300,7 @@ namespace GuWorld.UI
             Slide(list, "Прозрачность HUD", "Насколько он плотный", 0.4f, 1, Prefs.HudOpacity, v => $"{v * 100:0}%", v => Prefs.HudOpacity = v);
             Switch(list, "Компас", "Полоса сторон света вверху экрана: задание, фонари, деревни, набеги", Prefs.Compass, on => Prefs.Compass = on);
             Switch(list, "Миникарта", "Круг местности в углу: враги рядом, фонари, задание, набеги", Prefs.Minimap, on => Prefs.Minimap = on);
+            Switch(list, "Часы и погода", "Над миникартой: знак неба, час, погода, день", Prefs.Clock, on => Prefs.Clock = on);
             Switch(list, "Крупный текст в разговорах", "Реплики и ответы крупнее", Prefs.LargeText, on => Prefs.LargeText = on);
         }
 

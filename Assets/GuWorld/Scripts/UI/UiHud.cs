@@ -224,6 +224,7 @@ namespace GuWorld.UI
             dot.rectTransform.At(new Vector2(0.5f, 0.5f), Vector2.zero, new Vector2(5, 5));
             BuildCompass(stage);
             BuildMinimap(stage);
+            BuildClock(stage);
             hudRoot.gameObject.SetActive(false);
         }
 
@@ -550,6 +551,7 @@ namespace GuWorld.UI
             markRoot.gameObject.SetActive(marked && Prefs.QuestMark == 0);
             TickCompass(session, hero, camera);
             TickMinimap(session, hero, camera);
+            TickClock(session);
 
             // A boss that has seen the hero.
             Enemy boss = null;

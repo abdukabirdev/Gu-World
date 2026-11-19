@@ -31,6 +31,58 @@ namespace GuWorld.UI
         /// <summary>Raids and tides on or foretold (ROADMAP 12.9): a red mark with the name and how far.</summary>
         readonly List<(RectTransform mark, Text name)> compassThreats = new List<(RectTransform, Text)>();
         readonly List<Image> minimapThreats = new List<Image>();
+
+        // ------------------------------------------------------------------ The hour and the sky (ROADMAP 3.1)
+
+        RectTransform clockRoot;
+        Text clockSeal, clockLine;
+
+        /// <summary>A small line by the minimap: the sky's seal, the hour (to ten minutes), the weather, the day.</summary>
+        void BuildClock(RectTransform stage)
+        {
+            clockRoot = UiKit.Rect("Clock", stage);
+            clockRoot.anchorMin = clockRoot.anchorMax = clockRoot.pivot = new Vector2(1, 0);
+            clockRoot.sizeDelta = new Vector2(260, 24);
+            clockSeal = UiKit.Zh("", clockRoot, 18, UiKit.GoldLit, TextAnchor.MiddleRight);
+            clockSeal.rectTransform.Place(new Vector2(0, 0), new Vector2(1, 1), 0, 0, 0, 0);
+            clockLine = UiKit.Label("", clockRoot, 13, UiKit.Muted, TextAnchor.MiddleRight).Shadowed();
+            clockLine.rectTransform.Place(new Vector2(0, 0), new Vector2(1, 1), 0, 0, 26, 0);
+        }
+
+        static string SealOf(Sky sky, bool night)
+        {
+            switch (sky)
+            {
+                case Sky.Cloudy: return "云";
+                case Sky.Rain: return "雨";
+                case Sky.Storm: return "雷";
+                case Sky.Fog: return "雾";
+                case Sky.Snow: return "雪";
+                default: return night ? "月" : "阳";
+            }
+        }
+
+        void TickClock(Session session)
+        {
+            var shown = Prefs.Clock && !Game.Busy;
+            clockRoot.gameObject.SetActive(shown);
+
+            if (!shown)
+            {
+                return;
+            }
+
+            // Above the minimap when it is up, else in the corner itself.
+            var minimapUp = Prefs.Minimap && minimapRoot != null && minimapRoot.gameObject.activeSelf;
+            clockRoot.anchoredPosition = new Vector2(-40, minimapUp ? 40 + MinimapSize + 30 : 40);
+            var hour = World.Atmosphere.Hour;
+            var minutes = (int)(hour * 6) * 10 % 60;
+            var sky = World.Atmosphere.Sky;
+            var night = World.Atmosphere.Night;
+            clockSeal.text = SealOf(sky, night);
+            clockSeal.color = night ? UiKit.Moon : UiKit.GoldLit;
+            clockLine.text = $"{(int)hour:00}:{minutes:00} · {Weather.Name(sky).ToLowerInvariant()} · день {session.State.Day + 1}";
+        }
         readonly List<(RectTransform mark, Text name)> compassPlaces = new List<(RectTransform, Text)>();
 
         static readonly string[] Quarters = { "С", "СВ", "В", "ЮВ", "Ю", "ЮЗ", "З", "СЗ" };
