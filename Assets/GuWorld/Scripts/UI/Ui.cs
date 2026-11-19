@@ -74,6 +74,12 @@ namespace GuWorld.UI
             var was = Open;
             Open = page;
 
+            // Leaving the bag: what was new in it has been seen.
+            if (was == Page.Bag && page != Page.Bag && Game.Session != null)
+            {
+                Game.Session.SeenBag();
+            }
+
             // The map opened afresh: on the hero, nothing picked (the journal may have asked for a point: mapFocus).
             if (page == Page.Map && was != Page.Map)
             {

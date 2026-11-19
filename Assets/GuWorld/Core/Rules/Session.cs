@@ -107,6 +107,7 @@ namespace GuWorld.Core
             State.Explored = State.Explored ?? "";
             State.Marks = State.Marks ?? new List<MapMark>();
             State.Treetops = State.Treetops ?? new List<string>();
+            State.Fresh = State.Fresh ?? new List<string>();
             ExploreOldSave();
             // A game stopped inside the immortal aperture: its loans go back.
             DropBorrowed();

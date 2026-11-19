@@ -543,7 +543,9 @@ namespace GuWorld.UI
             {
                 var def = ItemBook.Get(stack.Item);
                 var id = stack.Item;
-                ListLine(list, def.Seal, def.Name, $"× {stack.Count}", UiKit.Hex(def.Colour), id == pickedItem, () => { pickedItem = id; Redraw(); }, UiKit.Text2);
+                // What came in since the bag was last looked at is marked new (gold), until the bag is closed.
+                var fresh = session.IsFresh(id);
+                ListLine(list, def.Seal, def.Name, fresh ? $"новое · × {stack.Count}" : $"× {stack.Count}", UiKit.Hex(def.Colour), id == pickedItem, () => { pickedItem = id; Redraw(); }, fresh ? UiKit.GoldText : UiKit.Text2);
             }
 
             if (items.Count == 0)

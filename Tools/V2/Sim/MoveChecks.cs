@@ -187,3 +187,28 @@ static partial class Program
         Check(!s.BeginKick() && Math.Abs(s.Stamina - 5) < 0.01f, "blows: out of breath, no kick (and nothing spent)");
     }
 }
+
+static partial class Program
+{
+    /// <summary>The bag's «новое» marks (ROADMAP 3.2).</summary>
+    static void FreshRules()
+    {
+        var s = new Session(Session.NewGame("Мин"), 5);
+        s.SeenBag();
+        s.AddItem("honey", 2, true);
+        Check(s.IsFresh("honey") && !s.IsFresh("heal_pill"), "bag: a thing just come in is new, the others are not");
+        s.AddItem("honey", 1, true);
+        Check(s.State.Fresh.Count(i => i == "honey") == 1, "bag: a thing is marked new once");
+        var options = new JsonSerializerOptions { IncludeFields = true };
+        var back = new Session(JsonSerializer.Deserialize<SaveData>(JsonSerializer.Serialize(s.State, options), options), 5);
+        Check(back.IsFresh("honey"), "bag: the new marks survive the save");
+        s.SeenBag();
+        Check(!s.IsFresh("honey"), "bag: looked at, nothing is new");
+        foreach (var item in ItemBook.All.Take(Session.MostFresh + 10))
+        {
+            s.AddItem(item.Id, 1, true);
+        }
+
+        Check(s.State.Fresh.Count <= Session.MostFresh, "bag: the marks stay few");
+    }
+}

@@ -163,6 +163,8 @@ namespace GuWorld.Core
         public List<MapMark> Marks = new List<MapMark>();
         /// <summary>The great trees whose tops the hero has reached (Movement.TreeKey: x:z to the metre).</summary>
         public List<string> Treetops = new List<string>();
+        /// <summary>Things that came into the bag since it was last looked at (marked «новое» there).</summary>
+        public List<string> Fresh = new List<string>();
     }
 
     /// <summary>A mark the player put on the map (right click), with an optional word.</summary>

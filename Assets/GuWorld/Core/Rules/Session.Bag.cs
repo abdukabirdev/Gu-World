@@ -20,6 +20,15 @@ namespace GuWorld.Core
             return 0;
         }
 
+        /// <summary>The most things marked new at once (the oldest marks go first).</summary>
+        public const int MostFresh = 60;
+
+        /// <summary>Whether a thing came into the bag since it was last looked at.</summary>
+        public bool IsFresh(string item) => State.Fresh != null && State.Fresh.Contains(item);
+
+        /// <summary>The bag has been looked at: nothing in it is new any more.</summary>
+        public void SeenBag() => State.Fresh?.Clear();
+
         public void AddItem(string item, int count = 1, bool quiet = false)
         {
             if (count <= 0 || ItemBook.Get(item) == null)
@@ -36,6 +45,19 @@ namespace GuWorld.Core
             else
             {
                 stack.Count += count;
+            }
+
+            // New in the bag until the bag is looked at (ROADMAP 3.2: «новое» точкой).
+            State.Fresh = State.Fresh ?? new List<string>();
+
+            if (!State.Fresh.Contains(item))
+            {
+                State.Fresh.Add(item);
+
+                if (State.Fresh.Count > MostFresh)
+                {
+                    State.Fresh.RemoveAt(0);
+                }
             }
 
             if (!quiet)
