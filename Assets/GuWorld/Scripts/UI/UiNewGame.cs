@@ -1,6 +1,7 @@
 using System;
 using System.Collections.Generic;
 using GuWorld.Core;
+using GuWorld.Core.Gen.People;
 using UnityEngine;
 using UnityEngine.InputSystem;
 using UnityEngine.UI;
@@ -12,13 +13,16 @@ namespace GuWorld.UI
     /// Step 1, the path: five cards side by side, each a difficulty that is also the talent one is born
     /// with — its sea drawn full to the talent's share, what it does to the mountain, how hard it is in
     /// dots; the chosen card stands taller in gold; the player's own rules under them. Step 2, the hero:
-    /// the name after the clan's, the path chosen, what lies ahead, Begin.
+    /// the name after the clan's and the look (sex, height, skin, hair, the hanfu) at the left, the hero
+    /// as a paper cut-out in the middle (until the model itself stands there), the path chosen, the price
+    /// of a fall and what lies ahead at the right, Begin.
     /// </summary>
     public partial class Ui
     {
         Difficulty newPath = Beginnings.Default;
         string newName = "";
         Core.Settings newRules = new Core.Settings();
+        Appearance newLook = new Appearance();
 
         /// <summary>The paths' colours, easiest first: jade, essence, gold, amber, coral.</summary>
         static readonly Color[] PathColours =
@@ -32,6 +36,7 @@ namespace GuWorld.UI
             newPath = Beginnings.Default;
             newName = "";
             newRules = new Core.Settings();
+            newLook = new Appearance();
             Show(Page.NewPath);
         }
 
@@ -344,72 +349,20 @@ namespace GuWorld.UI
             var stage = UiKit.Stage(pageRoot);
             UiKit.Backdrop(stage, "人", 560);
             NewGameHeader(stage, 2, "Герой",
-                "Имя после имени клана и цена смерти. Внешность — пол, рост, кожа, причёска и цвет ханьфу — появится здесь вместе со второй моделью и перекрасками.");
-            var way = Beginnings.Of(newPath);
-            var colour = PathColours[DifficultyRules.Order(newPath)];
+                "Имя после имени клана, облик и цена смерти. Облик — на всё прохождение: рост, кожа, причёска и цвет ханьфу; девушка придёт вместе со своей моделью.");
+            newLook = Appearances.Clamp(newLook);
 
-            // The name.
-            var left = UiKit.Rect("Left", stage);
-            left.Place(new Vector2(0, 0), new Vector2(0.5f, 1), 56, 150, 24, 200);
-            left.Stack<VerticalLayoutGroup>(10);
-            UiKit.Lbl("Имя", left, 11, UiKit.LabelGold).Size(16);
-            var nameRow = UiKit.Rect("Name", left);
-            nameRow.Size(56);
-            var across = nameRow.Stack<HorizontalLayoutGroup>(14, null, TextAnchor.MiddleLeft);
-            across.childForceExpandWidth = false;
-            UiKit.Disp("Гу Юэ", nameRow, 26, UiKit.Gold).Size(56, 100, 0);
-            var fieldHolder = UiKit.Rect("Field", nameRow);
-            fieldHolder.Size(56, 300, 0);
-            var field = UiKit.Field(fieldHolder, newName, Look.DefaultName, Look.NameLength, text => newName = text);
-            ((RectTransform)field.transform).Fill();
-            UiKit.HexButton("Случайно", nameRow, () => { newName = Look.RandomName(new System.Random()); Redraw(); }, UiKit.HexKind.Ghost, 12, 44).Size(44, 150, 0);
-            Para($"Своё имя — после имени клана, до {Look.NameLength} знаков. Пусто — «{Look.DefaultName}».", left, 13, UiKit.Muted);
+            LookPanel(stage);
 
-            // What a fall costs: chosen once, for the whole playthrough.
-            Gap(left, 14);
-            UiKit.Lbl("Цена смерти · на всё прохождение", left, 11, UiKit.LabelGold).Size(16);
-            var deathRow = UiKit.Rect("Death", left);
-            deathRow.Size(48);
-            var deaths = new List<string>();
-
-            foreach (var rule in DeathRules.All)
+            // The hero in the middle, where the stage is wide enough for three columns.
+            if (Screen.height > 0 && Screen.width * 900f / Screen.height >= 1400)
             {
-                deaths.Add(DeathRules.Name(rule));
+                var middle = UiKit.Rect("Figure", stage);
+                middle.At(new Vector2(0.5f, 0), new Vector2(-10, 410), new Vector2(380, 560));
+                LookFigure(middle, newLook);
             }
 
-            UiKit.Choices(deathRow, deaths, Array.IndexOf(DeathRules.All, newRules.Death), i => { newRules.Death = DeathRules.All[i]; Redraw(); }, 15);
-            Para(DeathRules.Text(newRules.Death), left, 14, newRules.Death == DeathRule.Hardcore ? UiKit.Danger : UiKit.Text2);
-
-            Gap(left, 14);
-            UiKit.Lbl("Что ждёт", left, 11, UiKit.LabelGold).Size(16);
-            Para("Вам пятнадцать. Завтра — обряд пробуждения апертуры в академии клана Гу Юэ. Камень предков покажет, сколько света в вашей чаше.", left, 16, UiKit.Text2);
-
-            var save = Game.ReadSave();
-
-            if (save != null)
-            {
-                Gap(left, 18);
-                UiKit.Lbl("Ячейка занята", left, 11, UiKit.Danger).Size(16);
-                Para($"В ячейке {Game.Slot + 1} — Гу Юэ {save.HeroName}, {Cultivation.Name(save.Step)}, {Mathf.RoundToInt(save.PlayedSeconds / 60)} мин. " +
-                     "Новый путь заменит это сохранение.", left, 14, UiKit.Text2);
-            }
-
-            // The path chosen.
-            var right = UiKit.Image("Path", stage, Color.white, UiKit.Plain);
-            right.rectTransform.Place(new Vector2(0.5f, 0), new Vector2(1, 1), 24, 150, 56, 200);
-            right.Gradient(new Color(12 / 255f, 16 / 255f, 24 / 255f, 0.72f), new Color(5 / 255f, 7 / 255f, 12 / 255f, 0.84f));
-            UiKit.Frame(right.transform, new Color(200 / 255f, 230 / 255f, 240 / 255f, 0.1f));
-            var inside = UiKit.Rect("Inside", right.transform).Fill();
-            inside.Stack<VerticalLayoutGroup>(8, new RectOffset(28, 28, 24, 24));
-            UiKit.Lbl("Ваш путь", inside, 11, UiKit.LabelGold).Size(16);
-            UiKit.Disp($"{way.Name} · талант {way.Grade} · {way.Talent * 100:0}%", inside, 28, colour).Size(36);
-            Para(way.About, inside, 14, UiKit.Text2);
-            Para(DifficultyRules.Text(newPath), inside, 14, UiKit.Muted);
-            Gap(inside, 6);
-            var hunger = newRules.Hunger == HungerRule.Off ? "нет" : newRules.Hunger == HungerRule.Soft ? "мягкий" : "как в каноне";
-            Para($"Смерть: {DeathRules.Name(newRules.Death).ToLowerInvariant()} · голод Гу: {hunger} · Гу едят сами: {(newRules.AutoFeed ? "да" : "нет")} · переходы платные: {(newRules.TravelCosts ? "да" : "нет")}", inside, 13, UiKit.Muted);
-            Gap(inside, 4);
-            UiKit.HexButton("Изменить путь", inside, () => Show(Page.NewPath), UiKit.HexKind.Ghost, 12, 44).Size(44, 220, 0);
+            WayColumn(stage);
 
             // Back and Begin.
             var foot = UiKit.Rect("Begin", stage);
@@ -427,7 +380,288 @@ namespace GuWorld.UI
             keys.On(Key.Escape, () => Show(Page.NewPath));
         }
 
-        void BeginNewGame() => Game.Instance.BeginNew(newName, newPath, newRules);
+        /// <summary>The left of the hero's page: the name, then the look, each choice a row under its label (the label tells what is chosen).</summary>
+        void LookPanel(RectTransform stage)
+        {
+            var left = UiKit.Rect("Look", stage);
+            left.Place(new Vector2(0, 0), new Vector2(0, 1), 56, 128, -540, 186);
+            left.Stack<VerticalLayoutGroup>(6);
+
+            LookLabel(left, "Имя", null);
+            var nameRow = UiKit.Rect("Name", left);
+            nameRow.Size(48);
+            var across = nameRow.Stack<HorizontalLayoutGroup>(12, null, TextAnchor.MiddleLeft);
+            across.childForceExpandWidth = false;
+            UiKit.Disp("Гу Юэ", nameRow, 24, UiKit.Gold).Size(48, 84, 0);
+            var fieldHolder = UiKit.Rect("Field", nameRow);
+            fieldHolder.Size(48, 250, 0);
+            var field = UiKit.Field(fieldHolder, newName, Look.DefaultName, Look.NameLength, text => newName = text);
+            ((RectTransform)field.transform).Fill();
+            UiKit.HexButton("Случайно", nameRow, () => { newName = Look.RandomName(new System.Random()); Redraw(); }, UiKit.HexKind.Ghost, 11, 40).Size(40, 128, 0);
+
+            Gap(left, 4);
+            LookLabel(left, "Пол", "девушка — когда будет её модель");
+            var sexes = UiKit.Rect("Sex", left);
+            sexes.Size(36);
+            sexes.Stack<HorizontalLayoutGroup>(6, null, TextAnchor.MiddleLeft).childForceExpandWidth = true;
+
+            for (var i = 0; i < Appearances.Sexes.Length; i++)
+            {
+                var sex = i;
+                var ready = Appearances.SexReady(i);
+                var button = UiKit.Tb(ready ? Appearances.Sexes[i] : Appearances.Sexes[i] + " · скоро", sexes, newLook.Sex == i, () =>
+                {
+                    if (ready)
+                    {
+                        newLook.Sex = sex;
+                        Redraw();
+                    }
+                }, 11);
+                button.Size(36, -1, 1);
+
+                if (!ready)
+                {
+                    button.Words.color = UiKit.Muted;
+                    button.enabled = false;
+                }
+            }
+
+            LookLabel(left, "Рост", $"{Appearances.Centimetres(newLook.Height)} см");
+            LookChoices(left, Appearances.StatureNames, newLook.Height, 3, i => newLook.Height = i);
+
+            LookLabel(left, "Кожа", Appearances.Skins[newLook.Skin].Name);
+            var tones = new Color[Appearances.Skins.Length];
+
+            for (var i = 0; i < tones.Length; i++)
+            {
+                tones[i] = UiKit.Hex(Appearances.Skins[i].Swatch);
+            }
+
+            Swatches(left, tones, newLook.Skin, i => newLook.Skin = i);
+
+            LookLabel(left, "Причёска", Appearances.Hairs[newLook.Hair]);
+            LookChoices(left, Appearances.Hairs, newLook.Hair, 2, i => newLook.Hair = i);
+
+            LookLabel(left, "Ханьфу", Appearances.Robes[newLook.Robe].Name);
+            var dyes = new Color[Appearances.Robes.Length];
+
+            for (var i = 0; i < dyes.Length; i++)
+            {
+                dyes[i] = UiKit.Hex(Appearances.Robes[i].Swatch);
+            }
+
+            Swatches(left, dyes, newLook.Robe, i => newLook.Robe = i);
+
+            Gap(left, 4);
+            var chance = UiKit.Rect("Chance", left);
+            chance.Size(40);
+            var chanceRow = chance.Stack<HorizontalLayoutGroup>(12, null, TextAnchor.MiddleLeft);
+            chanceRow.childForceExpandWidth = false;
+            UiKit.HexButton("Случайный облик", chance, () => { newLook = Appearances.Random(new System.Random(), newLook); Redraw(); }, UiKit.HexKind.Ghost, 11, 40).Size(40, 220, 0);
+            UiKit.HexButton("Как в модели", chance, () => { newLook = new Appearance { Sex = newLook.Sex }; Redraw(); }, UiKit.HexKind.Ghost, 11, 40).Size(40, 180, 0);
+        }
+
+        /// <summary>A choice's label (gold, spaced), what is chosen at its right.</summary>
+        static void LookLabel(Transform parent, string name, string chosen)
+        {
+            var row = UiKit.Rect(name, parent);
+            row.Size(18);
+            UiKit.Lbl(name, row, 11, UiKit.LabelGold).rectTransform.Fill();
+
+            if (!string.IsNullOrEmpty(chosen))
+            {
+                UiKit.Label(chosen, row, 13, UiKit.Text2, TextAnchor.MiddleRight).rectTransform.Fill();
+            }
+        }
+
+        /// <summary>Filter buttons, `across` in a row, the chosen one gold; a pick redraws the page.</summary>
+        void LookChoices(Transform parent, string[] names, int chosen, int across, Action<int> pick)
+        {
+            for (var i = 0; i < names.Length; i += across)
+            {
+                var row = UiKit.Rect("Choices", parent);
+                row.Size(36);
+                row.Stack<HorizontalLayoutGroup>(6, null, TextAnchor.MiddleLeft).childForceExpandWidth = true;
+
+                for (var k = i; k < i + across; k++)
+                {
+                    if (k >= names.Length)
+                    {
+                        // Keep the last row's buttons as wide as the others.
+                        UiKit.Rect("Empty", row).Size(36, -1, 1);
+                        continue;
+                    }
+
+                    var index = k;
+                    UiKit.Tb(names[k], row, k == chosen, () => { pick(index); Redraw(); }, 11).Size(36, -1, 1);
+                }
+            }
+        }
+
+        /// <summary>Round swatches, 36 across; the chosen one ringed in light; a pick redraws the page.</summary>
+        void Swatches(Transform parent, Color[] colours, int chosen, Action<int> pick)
+        {
+            var row = UiKit.Rect("Swatches", parent);
+            row.Size(44);
+            var group = row.Stack<HorizontalLayoutGroup>(12, new RectOffset(4, 0, 0, 0), TextAnchor.MiddleLeft);
+            group.childForceExpandWidth = false;
+
+            for (var i = 0; i < colours.Length; i++)
+            {
+                var index = i;
+                var holder = UiKit.Rect("Swatch", row);
+                holder.Size(44, 40, 0);
+
+                if (i == chosen)
+                {
+                    UiKit.HaloAt(holder, UiKit.GoldLit.A(0.35f), Vector2.zero, 60);
+                    UiKit.Image("Ring", holder, UiKit.GoldLit, UiKit.RingLine(44)).rectTransform.At(new Vector2(0.5f, 0.5f), Vector2.zero, new Vector2(44, 44));
+                }
+                else
+                {
+                    UiKit.Image("Ring", holder, new Color(234 / 255f, 240 / 255f, 242 / 255f, 0.2f), UiKit.RingLine(40)).rectTransform.At(new Vector2(0.5f, 0.5f), Vector2.zero, new Vector2(40, 40));
+                }
+
+                var dot = UiKit.Image("Colour", holder, colours[i], UiKit.Disc);
+                dot.rectTransform.At(new Vector2(0.5f, 0.5f), Vector2.zero, new Vector2(34, 34));
+                dot.raycastTarget = true;
+                dot.gameObject.AddComponent<Clickable>().Click = () => { pick(index); Redraw(); };
+            }
+        }
+
+        /// <summary>
+        /// The hero as a paper cut-out on the pad in the rings: boots, the robe in its dye with the sash and
+        /// the white of the under-robe at the throat, sleeves with dark bracers, the skin's tone, the loose
+        /// hair and its style; taller or shorter with the height. Stands in for the model until it is shown here.
+        /// </summary>
+        static void LookFigure(RectTransform box, Appearance look)
+        {
+            UiKit.Orbit(box, 360, UiKit.Gold.A(0.15f), 140, 0).rectTransform.anchoredPosition = new Vector2(0, 60);
+            UiKit.Orbit(box, 290, UiKit.Gold.A(0.12f), 0, 4).rectTransform.anchoredPosition = new Vector2(0, 60);
+            var pad = UiKit.Image("Pad", box, UiKit.Essence.A(0.4f), UiKit.Radial);
+            pad.rectTransform.At(new Vector2(0.5f, 0), new Vector2(0, 40), new Vector2(380, 70));
+            var padRing = UiKit.Image("Pad ring", box, new Color(160 / 255f, 240 / 255f, 220 / 255f, 0.35f), UiKit.RingLine(240));
+            padRing.rectTransform.At(new Vector2(0.5f, 0), new Vector2(0, 40), new Vector2(240, 40));
+
+            // The figure stands on the pad; its height is the look's, the steps drawn a little larger than life so they show.
+            var h = 420 * (1 + (Appearances.Stature(look.Height) - 1) * 2.2f);
+            var robe = UiKit.Hex(Appearances.Robes[look.Robe].Swatch);
+            var skin = UiKit.Hex(Appearances.Skins[look.Skin].Swatch);
+            var hair = UiKit.Hex(HeroHair.HairColour).A(1);
+            var dark = UiKit.Hex(0x1E2024);
+            var foot = 44f;
+
+            Image Part(string name, Color colour, Sprite sprite, float x, float y, float w, float height, float turn = 0)
+            {
+                var part = UiKit.Image(name, box, colour, sprite);
+                part.rectTransform.At(new Vector2(0.5f, 0), new Vector2(x, foot + y), new Vector2(w, height));
+                part.rectTransform.localRotation = Quaternion.Euler(0, 0, turn);
+
+                return part;
+            }
+
+            // The ribbon's tails hang behind everything.
+            if (look.Hair == 3)
+            {
+                Part("Tail L", UiKit.Hex(0xE6ECF2), UiKit.Plain, -12, h * 0.86f, 7, h * 0.22f, 4);
+                Part("Tail R", UiKit.Hex(0xE6ECF2), UiKit.Plain, 12, h * 0.86f, 7, h * 0.22f, -4);
+            }
+
+            Part("Hair", hair, UiKit.Rounded, 0, h * 0.83f, 84, h * 0.26f);
+            Part("Boot L", dark, UiKit.Rounded, -21, h * 0.1f, 32, h * 0.2f);
+            Part("Boot R", dark, UiKit.Rounded, 21, h * 0.1f, 32, h * 0.2f);
+            Part("Sleeve L", robe, UiKit.Rounded, -70, h * 0.6f, 36, h * 0.3f, -8);
+            Part("Sleeve R", robe, UiKit.Rounded, 70, h * 0.6f, 36, h * 0.3f, 8);
+            Part("Bracer L", dark, UiKit.Rounded, -75, h * 0.47f, 26, h * 0.08f, -8);
+            Part("Bracer R", dark, UiKit.Rounded, 75, h * 0.47f, 26, h * 0.08f, 8);
+            Part("Hand L", skin, UiKit.Disc, -77, h * 0.41f, 20, 22);
+            Part("Hand R", skin, UiKit.Disc, 77, h * 0.41f, 20, 22);
+            Part("Skirt", robe, UiKit.Rounded, 0, h * 0.35f, 128, h * 0.38f);
+            Part("Body", robe, UiKit.Rounded, 0, h * 0.64f, 108, h * 0.27f);
+            Part("Sash", dark, UiKit.Plain, 0, h * 0.525f, 112, h * 0.045f);
+            Part("Neck", skin, UiKit.Plain, 0, h * 0.775f, 22, h * 0.05f);
+            Part("Under-robe", UiKit.Hex(0xE6E4DE), UiKit.Diamond, 0, h * 0.74f, 30, h * 0.09f);
+            Part("Locks L", hair, UiKit.Rounded, -24, h * 0.76f, 14, h * 0.12f);
+            Part("Locks R", hair, UiKit.Rounded, 24, h * 0.76f, 14, h * 0.12f);
+            Part("Head", skin, UiKit.Disc, 0, h * 0.885f, 52, h * 0.15f);
+            Part("Crown", hair, UiKit.Disc, 0, h * 0.935f, 58, h * 0.09f);
+
+            if (look.Hair > 0)
+            {
+                Part("Knot", hair, UiKit.Disc, 0, h * 0.985f, 28, 26);
+            }
+
+            switch (look.Hair)
+            {
+                case 1:
+                    Part("Pin", UiKit.Hex(0x7A5034), UiKit.Plain, 0, h * 0.99f, 64, 4, 6);
+                    break;
+                case 2:
+                    Part("Guan", UiKit.Hex(0xB9BFC7), UiKit.Rounded, 0, h * 0.98f, 34, 14);
+                    Part("Pin", UiKit.Hex(0x6FB592), UiKit.Plain, 0, h * 0.985f, 66, 4, 6);
+                    break;
+                case 3:
+                    Part("Ribbon", UiKit.Hex(0xE6ECF2), UiKit.Plain, 0, h * 0.968f, 30, 6);
+                    break;
+            }
+
+            var words = UiKit.Lbl(Appearances.Describe(look), box, 10, UiKit.Hex(0x8A9A9D), 0.12f, TextAnchor.MiddleCenter);
+            words.rectTransform.At(new Vector2(0.5f, 0), new Vector2(0, 8), new Vector2(380, 16));
+        }
+
+        /// <summary>The right of the hero's page: the path chosen, what a fall costs, what lies ahead, and a warning if the slot is taken.</summary>
+        void WayColumn(RectTransform stage)
+        {
+            var way = Beginnings.Of(newPath);
+            var colour = PathColours[DifficultyRules.Order(newPath)];
+            var right = UiKit.Rect("Way", stage);
+            right.Place(new Vector2(1, 0), new Vector2(1, 1), -500, 128, 56, 186);
+            right.Stack<VerticalLayoutGroup>(8);
+
+            var card = UiKit.Image("Path", right, Color.white, UiKit.Plain);
+            card.Gradient(new Color(12 / 255f, 16 / 255f, 24 / 255f, 0.72f), new Color(5 / 255f, 7 / 255f, 12 / 255f, 0.84f));
+            UiKit.Frame(card.transform, new Color(200 / 255f, 230 / 255f, 240 / 255f, 0.1f));
+            card.Size(188);
+            var inside = UiKit.Rect("Inside", card.transform).Fill();
+            inside.Stack<VerticalLayoutGroup>(6, new RectOffset(22, 22, 16, 14));
+            UiKit.Lbl("Ваш путь", inside, 11, UiKit.LabelGold).Size(16);
+            UiKit.Disp($"{way.Name} · {way.Grade} · {way.Talent * 100:0}%", inside, 24, colour).Size(30);
+            Para(way.About, inside, 13, UiKit.Text2).Size(-1).flexibleHeight = 1;
+            var hunger = newRules.Hunger == HungerRule.Off ? "нет" : newRules.Hunger == HungerRule.Soft ? "мягкий" : "как в каноне";
+            Para($"Голод Гу: {hunger} · Гу едят сами: {(newRules.AutoFeed ? "да" : "нет")} · переходы платные: {(newRules.TravelCosts ? "да" : "нет")}", inside, 12, UiKit.Muted).Size(18);
+            UiKit.HexButton("Изменить путь", inside, () => Show(Page.NewPath), UiKit.HexKind.Ghost, 11, 36).Size(36, 200, 0);
+
+            // What a fall costs: chosen once, for the whole playthrough.
+            Gap(right, 6);
+            UiKit.Lbl("Цена смерти · на всё прохождение", right, 11, UiKit.LabelGold).Size(16);
+            var deathRow = UiKit.Rect("Death", right);
+            deathRow.Size(40);
+            var deaths = new List<string>();
+
+            foreach (var rule in DeathRules.All)
+            {
+                deaths.Add(DeathRules.Name(rule));
+            }
+
+            UiKit.Choices(deathRow, deaths, Array.IndexOf(DeathRules.All, newRules.Death), i => { newRules.Death = DeathRules.All[i]; Redraw(); }, 14);
+            Para(DeathRules.Text(newRules.Death), right, 13, newRules.Death == DeathRule.Hardcore ? UiKit.Danger : UiKit.Text2).Size(40);
+
+            Gap(right, 6);
+            UiKit.Lbl("Что ждёт", right, 11, UiKit.LabelGold).Size(16);
+            Para("Вам пятнадцать. Завтра — обряд пробуждения апертуры в академии клана Гу Юэ. Камень предков покажет, сколько света в вашей чаше.", right, 14, UiKit.Text2).Size(60);
+
+            var save = Game.ReadSave();
+
+            if (save != null)
+            {
+                Gap(right, 4);
+                UiKit.Lbl("Ячейка занята", right, 11, UiKit.Danger).Size(16);
+                Para($"В ячейке {Game.Slot + 1} — Гу Юэ {save.HeroName}, {Cultivation.Name(save.Step)}, {Mathf.RoundToInt(save.PlayedSeconds / 60)} мин. " +
+                     "Новый путь заменит это сохранение.", right, 13, UiKit.Text2).Size(36);
+            }
+        }
+
+        void BeginNewGame() => Game.Instance.BeginNew(newName, newPath, newRules, Appearances.Copy(newLook));
     }
 
     /// <summary>Runs a repeating texture sideways, one tile in `Period` seconds (the sea's wave).</summary>

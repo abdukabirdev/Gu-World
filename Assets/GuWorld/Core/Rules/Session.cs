@@ -102,6 +102,8 @@ namespace GuWorld.Core
             State.Hints = State.Hints ?? new List<string>();
             State.Stash = State.Stash ?? new List<ItemStack>();
             State.Nursery = State.Nursery ?? new List<int>();
+            // A save from before the hero's looks were chosen wears the model's own; a look out of the tables is brought back into them.
+            State.Appearance = Appearances.Clamp(State.Appearance);
             // A game stopped inside the immortal aperture: its loans go back.
             DropBorrowed();
             State.Move = State.Move ?? "";
@@ -125,12 +127,12 @@ namespace GuWorld.Core
 
         /// <summary>
         /// A new game: the hero's name, the path chosen (its talent, its difficulty), the player's own rules
-        /// (null: the defaults) and a seed for the one roll a new game makes — the Ten Extreme Physique on a
-        /// path that offers it (0: the time).
+        /// (null: the defaults), a seed for the one roll a new game makes — the Ten Extreme Physique on a
+        /// path that offers it (0: the time) — and how the hero looks (null: the model's own look).
         /// </summary>
-        public static SaveData NewGame(string heroName, Difficulty path, Settings rules, int seed)
+        public static SaveData NewGame(string heroName, Difficulty path, Settings rules, int seed, Appearance look = null)
         {
-            var state = new SaveData { HeroName = Look.CleanName(heroName) };
+            var state = new SaveData { HeroName = Look.CleanName(heroName), Appearance = Appearances.Clamp(Appearances.Copy(look)) };
             var way = Beginnings.Of(path);
             state.Settings = rules ?? new Settings();
             state.Settings.Difficulty = path;

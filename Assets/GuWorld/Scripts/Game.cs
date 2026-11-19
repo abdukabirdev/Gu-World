@@ -441,13 +441,13 @@ namespace GuWorld
         /// <summary>The new game the new game pages chose (the name, the path, the player's rules), started on the next Begin(true).</summary>
         SaveData chosenNew;
 
-        /// <summary>Begins a new game as the new game pages chose it: the hero is born on the path now (the one roll — the extreme physique — made here).</summary>
-        public void BeginNew(string name, Difficulty path, Core.Settings rules)
+        /// <summary>Begins a new game as the new game pages chose it: the hero is born on the path now (the one roll — the extreme physique — made here), in the look chosen.</summary>
+        public void BeginNew(string name, Difficulty path, Core.Settings rules, Appearance look = null)
         {
             // A new life in this slot: whatever was there (its backup, its arcs' starts) goes.
             SandboxOnly = false;
             DeleteSlot(Slot);
-            chosenNew = Session.NewGame(name, path, rules, 0);
+            chosenNew = Session.NewGame(name, path, rules, 0, look);
             Begin(true);
         }
 

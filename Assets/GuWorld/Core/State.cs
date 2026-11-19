@@ -155,6 +155,28 @@ namespace GuWorld.Core
         public List<string> Homes = new List<string>();
         public List<ItemStack> Stash = new List<ItemStack>();
         public List<int> Nursery = new List<int>();
+        /// <summary>How the hero looks (chosen at a new game; a save from before has the model's own look).</summary>
+        public Appearance Appearance = new Appearance();
+    }
+
+    /// <summary>
+    /// How the hero looks (ROADMAP 2.5): chosen on the new game's hero page, kept in the save, put on
+    /// the model at every load. Each is a place in a table of Appearances — saved as a number, so the
+    /// tables only ever grow at their end.
+    /// </summary>
+    [Serializable]
+    public class Appearance
+    {
+        /// <summary>0 a youth; 1 a girl (she waits for her own model).</summary>
+        public int Sex;
+        /// <summary>0 shorter, 1 middling, 2 taller.</summary>
+        public int Height = 1;
+        /// <summary>The skin's tone (0: the model's own).</summary>
+        public int Skin;
+        /// <summary>How the hair is worn (0: loose, as the model has it).</summary>
+        public int Hair;
+        /// <summary>The hanfu's dye (0: the model's own dark one).</summary>
+        public int Robe;
     }
 
     [Serializable]

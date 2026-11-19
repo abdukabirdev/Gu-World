@@ -4,12 +4,18 @@ Makes the hero's game models from the full one (gu-hero.glb, 626 000 triangles):
   gu-hero-game.glb   about 70 000 triangles: the hero on ordinary quality
   gu-npc.glb         about 18 000 triangles: villagers, bandits, the other clans' fighters
   Looks/<look>.jpg   the body's texture dyed for each of them (robe, hair, skin)
+  Looks/hero_zones.png  for the hero's own looks (ROADMAP 2.5): where the body's texture is hair,
+                     skin, and what keeps its dark colour under any dye (Core.Appearances.DyeBody)
 
 The full model stays as it is for high quality. Same skeleton and bone names in all three,
 so one set of animations (anim.py) moves them all.
 
   python hero.py            (from Tools/V2/models; needs: pip install bpy pillow numpy)
+  python hero.py zones      only the hero's zones
+  python hero.py preview    Logs/V2/hero_looks.png: every dye, skin and hair style on the model,
+                            dyed by the game's own code (Tools/V2/Sim `looks`; needs .NET 8)
 """
+import subprocess
 import colorsys
 import os
 import sys
@@ -170,6 +176,169 @@ def looks():
     print(f'{len(LOOK_TABLE) + 1} looks in {LOOKS}')
 
 
+def smooth(e0, e1, v):
+    t = np.clip((v - e0) / (e1 - e0), 0, 1)
+    return t * t * (3 - 2 * t)
+
+
+def positions(size=2048):
+    """Where each texel of the body's texture lies on the model at rest (Blender's axes, metres), rows as in the picture."""
+    reset()
+    objects = load_glb(SOURCE)
+    body = next(o for o in objects if o.name == 'GuHero_Body')
+    for other in [o for o in bpy.data.objects if o is not body and o.type == 'MESH']:
+        bpy.data.objects.remove(other)
+    image = bpy.data.images.new('positions', size, size, float_buffer=True, alpha=True)
+    tree = body.data.materials[0].node_tree
+    for node in [n for n in tree.nodes if n.type != 'OUTPUT_MATERIAL']:
+        tree.nodes.remove(node)
+    output = next(n for n in tree.nodes if n.type == 'OUTPUT_MATERIAL')
+    geometry = tree.nodes.new('ShaderNodeNewGeometry')
+    emission = tree.nodes.new('ShaderNodeEmission')
+    tree.links.new(geometry.outputs['Position'], emission.inputs['Color'])
+    tree.links.new(emission.outputs['Emission'], output.inputs['Surface'])
+    target = tree.nodes.new('ShaderNodeTexImage')
+    target.image = image
+    tree.nodes.active = target
+    scene = bpy.context.scene
+    scene.render.engine = 'CYCLES'
+    scene.cycles.samples = 1
+    scene.render.bake.margin = 6
+    bpy.context.view_layer.objects.active = body
+    for o in bpy.data.objects:
+        o.select_set(o is body)
+    bpy.ops.object.bake(type='EMIT')
+    return np.array(image.pixels[:], dtype=np.float32).reshape(size, size, 4)[::-1, :, :3]
+
+
+def zones():
+    """
+    Looks/hero_zones.png (1024, 16 levels a channel): red — the model's hair: the hood of it over the head
+    and the two locks hanging over the chest; green — where its skin may show: the head and the bare feet
+    (the colour then decides, Core.Appearances.Warm); blue — what keeps its own dark colour under any dye:
+    the boots, the sash, the bracers. Measured on the model at rest (its head's middle is 3 cm off its axis).
+    """
+    p = positions()
+    covered = np.abs(p).sum(2) > 0
+    x, y, z = p[..., 0], p[..., 1], p[..., 2]
+    off = x - 0.03
+    cap = smooth(1.455, 1.485, z)
+    front = 1 - smooth(0.04, 0.08, y)
+    left = smooth(0.025, 0.045, -off) * (1 - smooth(0.115, 0.14, -off)) * smooth(1.36, 1.40, z)
+    right = smooth(0.025, 0.045, off) * (1 - smooth(0.105, 0.13, off)) * smooth(1.38, 1.42, z)
+    hair = np.maximum(cap, np.maximum(left, right) * front)
+    skin = np.maximum(smooth(1.44, 1.48, z), 1 - smooth(0.08, 0.12, z))
+
+    def band(low, high, v, soft):
+        return smooth(low - soft, low + soft, v) * (1 - smooth(high - soft, high + soft, v))
+
+    boots = 1 - smooth(0.385, 0.425, z)
+    sash = band(1.035, 1.11, z, 0.006) * (1 - smooth(0.19, 0.22, np.abs(off)))
+    bracers = band(0.92, 1.125, z, 0.008) * smooth(0.17, 0.20, np.abs(off))
+    keep = np.maximum(boots, np.maximum(sash, bracers))
+    m = np.stack([hair, skin, keep], 2)
+    m[~covered] = 0
+    half = m.shape[0] // 2
+    m = m.reshape(half, 2, half, 2, 3).mean((1, 3))
+    m = np.round(m * 255 / 17) * 17
+    out = os.path.join(LOOKS, 'hero_zones.png')
+    Image.fromarray(m.astype(np.uint8)).save(out, optimize=True)
+    print(f'{out}: {os.path.getsize(out) // 1024} KB')
+
+
+def preview():
+    """Logs/V2/hero_looks.png: the hero in each dye (front and back), each skin, each hair style — the texture dyed by Core's own code."""
+    import json
+    import struct
+    import io
+    import math
+    from mathutils import Vector
+    work = os.path.normpath(os.path.join(HERE, '../../../Logs/V2/looks'))
+    os.makedirs(work, exist_ok=True)
+    game = os.path.join(MODELS, 'gu-hero-game.glb')
+    data = open(game, 'rb').read()
+    length = struct.unpack('<I', data[12:16])[0]
+    gltf = json.loads(data[20:20 + length])
+    blob = data[20 + length + 8:]
+    material = next(m for m in gltf['materials'] if m['name'] == 'Body')
+    view = gltf['bufferViews'][gltf['images'][gltf['textures'][material['pbrMetallicRoughness']['baseColorTexture']['index']]['source']]['bufferView']]
+    body = Image.open(io.BytesIO(blob[view.get('byteOffset', 0):view.get('byteOffset', 0) + view['byteLength']])).convert('RGBA')
+    zone = Image.open(os.path.join(LOOKS, 'hero_zones.png')).convert('RGBA')
+    open(os.path.join(work, 'body.rgba'), 'wb').write(np.asarray(body).tobytes())
+    open(os.path.join(work, 'zones.rgba'), 'wb').write(np.asarray(zone).tobytes())
+    sim = os.path.normpath(os.path.join(HERE, '../Sim'))
+    subprocess.run(['dotnet', 'run', '-c', 'Release', '--project', sim, '--', 'looks', os.path.join(work, 'body.rgba'), str(body.width), str(body.height),
+                    os.path.join(work, 'zones.rgba'), str(zone.width), str(zone.height), work], check=True)
+    for name in os.listdir(work):
+        if name.endswith('.rgba') and name.startswith('skin'):
+            raw = np.frombuffer(open(os.path.join(work, name), 'rb').read(), dtype=np.uint8).reshape(body.height, body.width, 4)
+            Image.fromarray(raw[..., :3]).save(os.path.join(work, name[:-5] + '.png'))
+
+    # The skins' tints, as Core.Appearances.Tint (the swatch over the first one's), in Blender's linear light.
+    swatches = [0xF4E4D6, 0xEBD2BA, 0xD9B28E, 0xC08E66, 0x9A6A48, 0x6E4A32]
+    tint = lambda i: [(((swatches[i] >> s) & 255) / ((swatches[0] >> s) & 255)) ** 2.2 for s in (16, 8, 0)]
+    reset()
+    load_glb(game)
+    for extra in [o for o in bpy.data.objects if o.type == 'MESH' and not o.name.startswith('GuHero')]:
+        bpy.data.objects.remove(extra)
+    hair = {style: load_glb(os.path.join(work, f'hair{style}.glb')) for style in (1, 2, 3)}
+    for objects in hair.values():
+        for o in objects:
+            for m in (o.data.materials if o.type == 'MESH' else []):
+                principled = next((n for n in m.node_tree.nodes if n.type == 'BSDF_PRINCIPLED'), None)
+                if principled:
+                    colours = m.node_tree.nodes.new('ShaderNodeVertexColor')
+                    m.node_tree.links.new(colours.outputs['Color'], principled.inputs['Base Color'])
+    body_object = bpy.data.objects['GuHero_Body']
+    texture_node = next(n for n in body_object.data.materials[0].node_tree.nodes if n.type == 'TEX_IMAGE')
+    own_texture = texture_node.image
+    face = bpy.data.objects['GuHero_Face'].data.materials[0].node_tree
+    face_texture = next(n for n in face.nodes if n.type == 'TEX_IMAGE')
+    multiply = face.nodes.new('ShaderNodeMix')
+    multiply.data_type, multiply.blend_type = 'RGBA', 'MULTIPLY'
+    multiply.inputs[0].default_value = 1
+    face.links.new(face_texture.outputs['Color'], multiply.inputs[6])
+    face.links.new(multiply.outputs[2], next(n for n in face.nodes if n.type == 'BSDF_PRINCIPLED').inputs['Base Color'])
+    hands = next(n for n in bpy.data.objects['GuHero_Hands'].data.materials[0].node_tree.nodes if n.type == 'BSDF_PRINCIPLED')
+    hands_own = list(hands.inputs['Base Color'].default_value)
+    from common import render
+
+    def dress(texture, skin, style):
+        texture_node.image = bpy.data.images.load(texture) if texture else own_texture
+        k = tint(skin)
+        multiply.inputs[7].default_value = (k[0], k[1], k[2], 1)
+        hands.inputs['Base Color'].default_value = (hands_own[0] * k[0], hands_own[1] * k[1], hands_own[2] * k[2], 1)
+        for s, objects in hair.items():
+            for o in objects:
+                o.hide_render = s != style
+
+    shots = []
+    for robe in range(7):
+        dress(os.path.join(work, f'skin0_robe{robe}.png') if robe else None, 0, 0)
+        for yaw in (0, 180):
+            path = os.path.join(work, f'robe{robe}_{yaw}.png')
+            render(path, target=(0.03, 0, 0.95), distance=3.0, yaw=yaw, height=1.15, size=(240, 400), samples=8)
+            shots.append((path, 0 if yaw == 0 else 1, robe))
+    for skin in range(6):
+        dress(os.path.join(work, f'skin{skin}_robe0.png') if skin else None, skin, 0)
+        path = os.path.join(work, f'skin{skin}.png')
+        render(path, target=(0.03, 0, 1.55), distance=1.2, yaw=20, height=1.6, size=(240, 300), samples=10)
+        shots.append((path, 2, skin))
+    for style in range(4):
+        dress(None, 0, style)
+        for i, (yaw, h) in enumerate(((15, 1.68), (160, 1.74))):
+            path = os.path.join(work, f'hair{style}_{yaw}.png')
+            render(path, target=(0.03, 0, 1.62), distance=0.95, yaw=yaw, height=h, size=(240, 300), samples=10)
+            shots.append((path, 3 + i, style))
+    sheet = Image.new('RGB', (7 * 240, 2 * 400 + 3 * 300), (40, 44, 50))
+    tops = [0, 400, 800, 1100, 1400]
+    for path, row, column in shots:
+        sheet.paste(Image.open(path).convert('RGB'), (column * 240, tops[row]))
+    out = os.path.normpath(os.path.join(HERE, '../../../Logs/V2/hero_looks.png'))
+    sheet.save(out)
+    print(out)
+
+
 if __name__ == '__main__':
     what = sys.argv[1] if len(sys.argv) > 1 else 'all'
     if what in ('all', 'game'):
@@ -178,3 +347,7 @@ if __name__ == '__main__':
         build(os.path.join(MODELS, 'gu-npc.glb'), NPC)
     if what in ('all', 'looks'):
         looks()
+    if what in ('all', 'zones'):
+        zones()
+    if what == 'preview':
+        preview()

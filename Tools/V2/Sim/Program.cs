@@ -28,6 +28,12 @@ static partial class Program
     {
         var repo = args.Length > 0 && Directory.Exists(args[0]) ? args[0] : FindRepo();
 
+        // The hero's looks on the real texture (raw bytes in, raw bytes out) and the hair styles as .glb: `looks …`.
+        if (Array.IndexOf(args, "looks") >= 0)
+        {
+            return Looks(args);
+        }
+
         // The generators alone: `gen` checks and draws them, `gen export` also writes the viewer's models.
         if (Array.IndexOf(args, "gen") >= 0)
         {
@@ -104,6 +110,7 @@ static partial class Program
         GrassRules();
         GreetingRules();
         SaveRoundTrip();
+        LookRules();
         var report = new List<string>();
 
         if (Array.IndexOf(args, "audio") >= 0 || Array.IndexOf(args, "all") >= 0)

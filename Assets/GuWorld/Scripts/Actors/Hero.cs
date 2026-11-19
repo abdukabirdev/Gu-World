@@ -72,7 +72,10 @@ namespace GuWorld.Actors
             }
         }
 
-        /// <summary>The model for the quality chosen (the full 626 000-triangle one on high).</summary>
+        /// <summary>The hero's height against a middling one's (the look chosen at a new game): the model's scale, the camera's eyes.</summary>
+        public float Stature => Appearances.Stature(Session?.State.Appearance?.Height ?? 1);
+
+        /// <summary>The model for the quality chosen (the full 626 000-triangle one on high), in the hero's look.</summary>
         public void MakeModel()
         {
             if (model != null)
@@ -81,7 +84,9 @@ namespace GuWorld.Actors
             }
 
             model = Models.Human(transform, "hero", true, Quality.FullHero, out rig).transform;
-            model.localScale = Vector3.one * 0.97f;
+            // Still at rest: the look's skin, robe and hair go on before the first pose.
+            HeroLook.Apply(model, Session?.State.Appearance, rig != null && rig.Mirrored);
+            model.localScale = Vector3.one * Appearances.ModelScale * Stature;
             rig?.Play("idle", 0);
             springs = Quality.Level >= 1 ? new SpringBones(model) : null;
         }
