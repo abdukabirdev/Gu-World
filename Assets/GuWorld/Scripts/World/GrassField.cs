@@ -42,9 +42,11 @@ namespace GuWorld.World
             root.transform.SetParent(parent, false);
             var field = root.AddComponent<GrassField>();
             field.plan = plan;
-            field.radius = Quality.Level >= 2 ? 70 : Quality.Level == 1 ? 46 : 28;
+            // The tier's own, times the settings' share (thicker and a little farther, or thinner and nearer).
+            var share = Quality.Grass;
+            field.radius = (Quality.Level >= 2 ? 70 : Quality.Level == 1 ? 46 : 28) * Mathf.Lerp(0.8f, 1.2f, (share - 0.3f) / 1.3f);
             field.baseRadius = field.radius;
-            field.density = Quality.Level >= 2 ? 4f : Quality.Level == 1 ? 2.6f : 1.5f;
+            field.density = (Quality.Level >= 2 ? 4f : Quality.Level == 1 ? 2.6f : 1.5f) * share;
             field.meshes = new Mesh[Grass.Kinds];
 
             for (var kind = 0; kind < Grass.Kinds; kind++)

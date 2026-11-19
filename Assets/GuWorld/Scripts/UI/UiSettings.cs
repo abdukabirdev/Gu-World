@@ -263,6 +263,8 @@ namespace GuWorld.UI
             Choice(list, "Тени", "Как далеко от камеры", new[] { "Нет", "30 м", "60 м", "130 м", "220 м" }, shadowAt, i => { var n = Quality.Now; n.Shadows = shadowSteps[i]; Quality.Change(n); });
             Slide(list, "Деревья", "Сколько деревьев плана сажать", 0.3f, 1, now.Trees, v => $"{v * 100:0}%",
                 v => { var n = Quality.Now; n.Trees = Mathf.Round(v * 20) / 20; Quality.Change(n); });
+            Slide(list, "Трава", "Густота и дальность травы · сменится при загрузке мира", 0.3f, 1.6f, Quality.Grass, v => $"{v * 100:0}%",
+                v => { var n = Quality.Now; n.Grass = Mathf.Round(v * 20) / 20; Quality.Change(n); });
             Choice(list, "Детализация мира", InGame ? "Лес, трава, люди, рельеф — перестроятся при загрузке" : "Лес, трава, люди, рельеф", new[] { "Лёгкая", "Обычная", "Высокая" }, now.Tier, i =>
             {
                 var n = Quality.Now;

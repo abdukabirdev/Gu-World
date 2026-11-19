@@ -32,15 +32,17 @@ namespace GuWorld
             public float LodBias;
             public float Trees;
             public bool Smaa;
+            /// <summary>How thick and how far the grass is, as a share of the tier's own (0.3–1.6).</summary>
+            public float Grass;
         }
 
         public static readonly Numbers[] Presets =
         {
-            new Numbers { Tier = 0, Scale = 0.6f, Msaa = 1, Shadows = 0, LodBias = 0.4f, Trees = 0.35f },
-            new Numbers { Tier = 0, Scale = 0.75f, Msaa = 1, Shadows = 30, LodBias = 0.55f, Trees = 0.45f },
-            new Numbers { Tier = 1, Scale = 0.9f, Msaa = 2, Shadows = 60, LodBias = 0.9f, Trees = 0.75f },
-            new Numbers { Tier = 2, Scale = 1f, Msaa = 4, Shadows = 130, LodBias = 1.6f, Trees = 1f, Smaa = true },
-            new Numbers { Tier = 2, Scale = 1f, Msaa = 4, Shadows = 220, LodBias = 2.4f, Trees = 1f, Smaa = true },
+            new Numbers { Tier = 0, Scale = 0.6f, Msaa = 1, Shadows = 0, LodBias = 0.4f, Trees = 0.35f, Grass = 0.5f },
+            new Numbers { Tier = 0, Scale = 0.75f, Msaa = 1, Shadows = 30, LodBias = 0.55f, Trees = 0.45f, Grass = 0.75f },
+            new Numbers { Tier = 1, Scale = 0.9f, Msaa = 2, Shadows = 60, LodBias = 0.9f, Trees = 0.75f, Grass = 1 },
+            new Numbers { Tier = 2, Scale = 1f, Msaa = 4, Shadows = 130, LodBias = 1.6f, Trees = 1f, Smaa = true, Grass = 1 },
+            new Numbers { Tier = 2, Scale = 1f, Msaa = 4, Shadows = 220, LodBias = 2.4f, Trees = 1f, Smaa = true, Grass = 1.3f },
         };
 
         /// <summary>The preset chosen (0 minimum … 4 ultra), or Custom.</summary>
@@ -52,6 +54,8 @@ namespace GuWorld
         public static bool FullHero => Level >= 2;
         /// <summary>The share of the plan's trees that are planted.</summary>
         public static float Trees => Now.Trees;
+        /// <summary>The grass's share of its tier's thickness and reach.</summary>
+        public static float Grass => Mathf.Clamp(Now.Grass <= 0 ? 1 : Now.Grass, 0.3f, 1.6f);
         public static string Name => Preset == Custom ? "Свои" : Names[Preset];
 
         public static void Load()
@@ -73,6 +77,7 @@ namespace GuWorld
                     LodBias = PlayerPrefs.GetFloat("gw2.q.lod", 0.9f),
                     Trees = PlayerPrefs.GetFloat("gw2.q.trees", 0.75f),
                     Smaa = PlayerPrefs.GetInt("gw2.q.smaa", 0) == 1,
+                    Grass = PlayerPrefs.GetFloat("gw2.q.grass", 1),
                 };
                 Preset = Custom;
                 Apply();
@@ -114,6 +119,7 @@ namespace GuWorld
             PlayerPrefs.SetFloat("gw2.q.lod", numbers.LodBias);
             PlayerPrefs.SetFloat("gw2.q.trees", numbers.Trees);
             PlayerPrefs.SetInt("gw2.q.smaa", numbers.Smaa ? 1 : 0);
+            PlayerPrefs.SetFloat("gw2.q.grass", numbers.Grass);
             PlayerPrefs.Save();
             Apply();
         }
