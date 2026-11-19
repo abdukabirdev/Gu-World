@@ -21,7 +21,8 @@ namespace GuWorld.World
         public enum View { Behind, FirstPerson, OtherShoulder }
 
         Vector3 lastHeroAt;
-        float heroSpeed, bobPhase, bobWeight;
+        float heroSpeed, bobPhase, bobWeight, lookIdle;
+        bool distanceSet;
 
         public View Mode { get; private set; } = View.Behind;
         /// <summary>The eyes' view is in use now (it gives way to the shoulder in talks and when the hero is down).</summary>
@@ -141,6 +142,22 @@ namespace GuWorld.World
                 if (Mathf.Abs(wheel) > 0.01f)
                 {
                     distance = Mathf.Clamp(distance - Mathf.Sign(wheel) * 0.7f, 2.4f, 11);
+                }
+
+                // The settings' default distance, until the wheel moves it (ROADMAP 2.7.2).
+                if (!distanceSet)
+                {
+                    distanceSet = true;
+                    distance = shown = Mathf.Clamp(Prefs.CameraDistance, 2.4f, 11);
+                }
+
+                // Recentring (a setting): walking without touching the mouse for a while, the view drifts round behind the hero.
+                lookIdle = look.sqrMagnitude > 0.01f ? 0 : lookIdle + dt;
+
+                if (Prefs.CameraRecenter && hero.Target == null && Mode != View.FirstPerson && lookIdle > 1.2f && heroSpeed > 1.5f)
+                {
+                    var facing = hero.transform.eulerAngles.y;
+                    yaw = Mathf.MoveTowardsAngle(yaw, facing, Mathf.Abs(Mathf.DeltaAngle(yaw, facing)) * 1.2f * dt);
                 }
 
                 // A held target draws the camera round behind the hero.

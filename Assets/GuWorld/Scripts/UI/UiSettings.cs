@@ -175,6 +175,8 @@ namespace GuWorld.UI
             Slide(list, "Поле зрения глазами героя", "Вид от первого лица (F5)", 55, 110, Prefs.FovFirst, v => $"{v:0}°", v => { Prefs.FovFirst = Mathf.Round(v); Game.Rig?.Dress(); });
             Slide(list, "Тряска камеры", "От ударов и взрывов", 0, 1, Prefs.CameraShake, v => $"{v * 100:0}%", v => Prefs.CameraShake = v);
             Slide(list, "Покачивание головы", "Вид глазами героя (F5): шаги качают взгляд", 0, 1, Prefs.HeadBob, v => $"{v * 100:0}%", v => Prefs.HeadBob = v);
+            Slide(list, "Дистанция камеры", "С какой начинать; в игре — колесо", 2.4f, 11, Prefs.CameraDistance, v => $"{v:0.0} м", v => Prefs.CameraDistance = Mathf.Round(v * 10) / 10);
+            Switch(list, "Камера сама за спину", "Идёте, не трогая мышь, — взгляд плавно встаёт за спиной героя", Prefs.CameraRecenter, on => Prefs.CameraRecenter = on);
             Choice(list, "Бег во весь дух", "Удерживать клавишу — или нажать раз: бег до остановки", new[] { "Удерживать", "Переключать" }, Prefs.SprintToggle ? 1 : 0, i => Prefs.SprintToggle = i == 1);
             Choice(list, "Захват цели", "Нажать — взять и отпустить цель; или держать, пока клавиша нажата", new[] { "Нажатием", "Удержанием" }, Prefs.TargetHold ? 1 : 0, i => Prefs.TargetHold = i == 1);
 

@@ -53,6 +53,10 @@ namespace GuWorld
         /// <summary>How much the view bobs with the steps from the hero's eyes (0–1; weak by default).</summary>
         /// <summary>The first run's page (the picture's level, the brightness) has been passed.</summary>
         public static bool FirstRunDone { get => Bool("gw2.firstrun", false); set => Bool("gw2.firstrun", value, true); }
+        /// <summary>How far behind the hero the camera starts, metres (the wheel moves it in play).</summary>
+        public static float CameraDistance { get => Float("gw2.camdist", 5.2f); set => Float("gw2.camdist", value, true); }
+        /// <summary>Whether the view drifts round behind the hero while they walk and the mouse rests.</summary>
+        public static bool CameraRecenter { get => Bool("gw2.camrecenter", false); set => Bool("gw2.camrecenter", value, true); }
         public static float HeadBob { get => Float("gw2.headbob", 0.3f); set => Float("gw2.headbob", value, true); }
 
         // ------------------------------------------------------------------ Picture
@@ -105,7 +109,7 @@ namespace GuWorld
 
         public static void ResetControls()
         {
-            Delete("gw2.sensx", "gw2.sensy", "gw2.inverty", "gw2.fov", "gw2.fov1", "gw2.shake", "gw2.headbob", "gw2.sprinttoggle", "gw2.targethold");
+            Delete("gw2.sensx", "gw2.sensy", "gw2.inverty", "gw2.fov", "gw2.fov1", "gw2.shake", "gw2.headbob", "gw2.camdist", "gw2.camrecenter", "gw2.sprinttoggle", "gw2.targethold");
             Actors.Bindings.Reset();
         }
 
