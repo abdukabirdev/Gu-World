@@ -196,7 +196,7 @@ namespace GuWorld.UI
         void BoardPage()
         {
             var session = S;
-            var body = Frame("族", "Доска поручений", "Клан платит по исполнении", false, null, Purse);
+            var body = Frame("族", "Доска поручений", "Клан платит по исполнении", false, null, Purse, new[] { ("ЛКМ", "Поручение"), ("↑↓", "Выбор"), ("Esc", "Уйти") });
             var left = Column(body, 0, 0.46f, 6);
             UiKit.Lbl("Поручения", left, 11, UiKit.LabelGold).Size(18);
             var list = Scroll(Rest(left));

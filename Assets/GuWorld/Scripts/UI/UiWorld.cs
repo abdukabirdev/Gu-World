@@ -322,7 +322,7 @@ namespace GuWorld.UI
         {
             var session = S;
             var settlement = Regions.Settlement(boardSettlement);
-            var body = Frame("榜", "Доска поручений", settlement != null ? settlement.Name : "", false, null, Purse);
+            var body = Frame("榜", "Доска поручений", settlement != null ? settlement.Name : "", false, null, Purse, new[] { ("ЛКМ", "Поручение"), ("↑↓", "Выбор"), ("Esc", "Уйти") });
             var left = Column(body, 0, 0.46f, 6);
             UiKit.Lbl($"День {session.State.Day} · взято {session.BountiesRunning} из 6", left, 11, UiKit.LabelGold).Size(18);
             var list = Scroll(Rest(left));
